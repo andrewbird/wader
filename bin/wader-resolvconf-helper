@@ -1,0 +1,5 @@
+#!/bin/bash
+# Debian/Ubuntu only helper for setting resolvconf info
+# twisted's getProcessValue never returned with this command :?
+/sbin/resolvconf -a $1 < $2
+exit 0

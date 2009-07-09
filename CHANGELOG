@@ -1,0 +1,215 @@
+=======================================
+Wader-0.3.6
+Overview of changes since Wader-0.3.5.2
+=======================================
+
+This is a new minor stable release of Wader. List of changes:
+
+* wader-core
+    * DNS update mechanisms have been harmonized, see #154. On Ubuntu
+      hardy, wader-core does not depend on resolvconf anymore as it
+      causes conflicts with the stock NetworkManager.
+    * New device supported: Novatel MC990D
+    * Start and restart scripts merged into one: wader-core-ctl
+
+* wader-gtk
+    * Fix PUK/PUK2 handling, see #148
+    * Make sure profiles work with GConf-DBus, see #144
+
+* wader-doc
+    * Documentation migrated to Sphinx and revised
+    * wader-doc is no longer built by default, thus saving us from
+      maintaining many, buggy, dependencies.
+
+=====================================
+Wader-0.3.5.2
+Overview of changes since Wader-0.3.5
+=====================================
+
+This is a new nano stable release of Wader. wader-0.3.5.1 was quickly
+replaced by wader-0.3.5.2 as it didn't built on hardy. List of changes:
+
+* wader-core
+    * Some HSO bugs introduced in 0.3.{4,5} have been fixed. This is what
+      you get when you don't test a release with every supported device.
+    * Do not execute set_network_type if network_type is None
+    * wader._version allows nano releases
+    * wader-core depends on resolvconf as its not included by default
+      on Hardy.
+
+* wader-gtk
+    * Handle NoKeyringDaemonError exceptions, not finished. #149
+
+=====================================
+Wader-0.3.5
+Overview of changes since Wader-0.3.4
+=====================================
+
+This is a new minor stable release of Wader. List of changes:
+
+* wader-core
+    * DBusDevicePlugin merged into DevicePlugin
+    * Separate better the ModemManager and Wader exceptions
+    * get_radio_status return value fixed
+    * Some fixes for hotplugging events
+    * Huawei:
+        * get_driver_name fixed for Nozomi
+        * use HuaweiE620's cmd_dict rather than Huawei's
+        * Handle ^MODE: 0,2 in Huawei
+        * Handle error in ^CURC=1 command
+    * Do not use os.system but subprocess.call instead
+    * Set a registering lock to avoid multiple attempts of registration
+    * Add the U1900 band
+    * org.freedesktop.ModemManager.Modem.Simple interface implemented
+      (and untested)
+    * Device creation time has been reduced
+    * Fix "undefined reference to ser" while probing ports
+    * Unused stuff removed
+
+* wader-gtk
+    * Many profiles bugs fixed
+    * Only ask for profile when self.profile is None
+    * Add Ctrl+Q accelerator to log window
+    * Stop throbber if device is not present
+    * Remove standard gtk symbols from translation
+
+=====================================
+Wader-0.3.4
+Overview of changes since Wader-0.3.3
+=====================================
+
+This is a new minor stable release of Wader. List of changes:
+
+* wader-core
+    * WVDIAL: Use either the 'Connected' string or the DNS info to ack that we are
+    connected.
+    * Get rid of python-axiom
+* wader-gtk
+    * Handle gracefully errors in SetBand and SetConnectionMode
+    * Use translated strings for mode changes
+
+=====================================
+Wader-0.3.3
+Overview of changes since Wader-0.3.2
+=====================================
+
+This is a new minor stable release of Wader. List of changes:
+
+* wader-core
+    * Fix initialization routine so it bails with cards that insist on
+    replying SimBusy to +CPBR=? commands. Next time is necessary will be
+    requested again and will succeed.
+    * Use PDP context in HSO dialer
+    * Only enable/disable radio if necessary
+    * Some wvdial fixes make it more robust
+    * CLeanup CGMM response if echo was enabled
+    * Some ZTE love
+    * Fix dialup with Option GTM378, it must use the hso dialer.
+    * Better responsiveness in network registration state machine
+    * Many, many bug fixes.
+
+* wader-gtk
+    * only enable PIN/PUK if what user entered is meaningful
+    * new wader icon
+    * make sure bytes are resetted
+
+=====================================
+Wader-0.3.2
+Overview of changes since Wader-0.3.1
+=====================================
+
+This is a new minor stable release of Wader. List of changes:
+
+* wader-core
+    * NetworkManager compatibility has been temporally disabled, our
+    three target distros ship with different snapshots of NM/MM and
+    they don't include some later patches required for compatibility.
+    See [0] for more info. This has the downside of firefox not realizing
+    that we are connected and it will insist on that we are disconnected. A
+    simple workaround is to check the "Work offline" checkbox in "File".
+    * New device added (untested): ZTE MF632
+    * NMPPPDDialer now listens to PropertyChanged signals
+    * Make sure dialers are unexported upon unsuccessful connection attempt.
+    * wader-core now depends on ozerocdoff.
+    * Many, many bug fixes.
+
+* wader-gtk
+    * Problems with unsigned ints and some DNS have been fixed.
+    * Get rid of GtkSpinButton warning.
+    * Handle gracefully unsucessful connection attempts [1].
+    * Do not allow Set{Band,ConnectionMode} if we are connected.
+
+[0] http://trac.warp.es/wader/ticket/133
+[1] http://trac.warp.es/wader/ticket/132
+
+=====================================
+Wader-0.3.1
+Overview of changes since Wader-0.3.0
+=====================================
+
+This is a new minor stable release of Wader. List of changes:
+
+* wader-core
+    * Really restart the core upon upgrade (Debian/Ubuntu only)
+    * Plugins are only included once and at /usr/share/wader/plugins. An
+    upgrade routine has been added to ensure a smooth transition.
+    * wader-core now mimics the udis that ModemManager uses to export devices.
+    * wader-core enables/disables radio too now (+CFUN=0,1)
+    * Use o.fd.MM.Modem rather than o.fd.ModemManager for properties
+    * OS detection has been improved by not relying on lsb_release
+    * wader-core runs on python2.6
+    * wader-core now depends on python-messaging. A joint project between
+    Warp (Wader) & OpenShine (MobileManager) to create a solid SMS
+    encoding/decoding library.
+    * New models supported: Huawei E169, Huawei E180
+    * o.fd.DBus.Properties.GetAll implemented
+
+* wader-gtk
+    * The UI has been gettex'd and there are Spanish and French translations
+    * The SMS/Contacts UI has been polished and some interesting
+    new features have been added:
+        * Support for multipart SMS (only sending for now)
+        * Support for categories (Inbox, Drafts and Sent for now)
+        * Support for storing SMS and sending it from SIM
+        * Support for searching contacts
+        * Support for searching SMS (not enabled unless pygtk >= 2.14.0
+        because of a bug on set_visible_func)
+    * A throbber is shown for every potentially long (IO) operations
+    * Log window now updates the log every second
+    * .desktop added for supported RPM systems
+    * Copyright changed to 'Wader contributors'
+    * Many, many bugs fixed
+
+* doc
+    * User tutorial added
+
+
+=====================================
+Wader-0.3.0
+Overview of changes since Wader-0.2.X
+=====================================
+
+This is a new major stable release of Wader. List of changes:
+
+* wader-core
+    * Wader is the first project that implements the ModemManager API
+      apart from MM itself. It implements the whole MM API except for
+      the new Ericsson's MBM devices (introduced late in the MM
+      development cycle, will support them as soon as we get our hands
+      in one of them). For more info check out[0].
+    * Wader ditches the session bus and works exclusively on the system bus.
+    * Dialup support for system with NM 0.6.X, NM0.7 and NM0.7.X.
+    * Multiple active devices.
+    * Wader doesn't depends on hsolink any more.
+    * New devices supported: Option Icon 401, Huawei EM730V, Huawei K3520,
+      ZTE K3520 and ZTE K3565.
+    * Initial support for OSX. No dialup, no UI, only DBus functionality.
+
+* wader-gtk
+    * Wader now uses gconf to store all its config settings.
+    * Initial support for SMS/Contacts. The UI is not that great, it will
+      be improved in next release.
+
+[0] http://trac.warp.es/wader/wiki/WhatsModemManager
+
+

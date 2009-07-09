@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- xml -*- --> 
+
+<deviceinfo version="0.2">
+    <device>
+      <!-- Novatel -->
+      <match key="@info.parent:usb.vendor_id" int="0x1410">  <!-- USB -->
+
+        <!-- MC990D -->
+        <match key="@info.parent:usb.product_id" int="0x7001">
+          <match key="@info.parent:usb.interface.number" int="0">
+            <append key="info.capabilities" type="strlist">modem</append>
+            <append key="modem.command_sets" type="strlist">GSM-07.07</append>
+            <append key="modem.command_sets" type="strlist">GSM-07.05</append>
+          </match>
+        </match>
+
+    </match>
+    <!-- Option -->
+      <match key="@info.parent:usb.vendor_id" int="0x0af0">
+
+        <!-- Icon401 -->
+        <match key="@info.parent:usb.product_id" int="0x7401">
+          <match key="@info.parent:usb.interface.number" int="0">
+            <append key="info.capabilities" type="strlist">modem</append>
+            <append key="modem.command_sets" type="strlist">GSM-07.07</append>
+            <append key="modem.command_sets" type="strlist">GSM-07.05</append>
+          </match>
+        </match>
+        <!-- Icon401 -->
+        <match key="@info.parent:usb.product_id" int="0x7501">
+          <match key="@info.parent:usb.interface.number" int="0">
+            <append key="info.capabilities" type="strlist">modem</append>
+            <append key="modem.command_sets" type="strlist">GSM-07.07</append>
+            <append key="modem.command_sets" type="strlist">GSM-07.05</append>
+          </match>
+        </match>
+
+      </match>
+
+
+  </device>
+</deviceinfo>

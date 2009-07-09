@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+case "$1" in
+    (remove)
+    rm -rf /usr/share/wader-core/plugins/dropin.cache
+    rm -rf /usr/share/wader-core/plugins
+    rm -rf /usr/share/wader-core/.setup-done
+    if [ -d /usr/local/lib/python2.6/dist-packages/wader ]; then
+        find /usr/local/lib/python2.6/dist-packages/wader -name "*.pyc" 2>/dev/null | xargs rm -rf
+    fi
+    if [ -d /usr/lib/python2.5/site-packages/wader ]; then
+        find /usr/lib/python2.5/site-packages/wader -name "*.pyc" 2>/dev/null | xargs rm -rf
+    fi
+    ;;
+    (purge)
+    if [ -e /usr/share/wader-core/networks.db ]; then
+        rm -f /usr/share/wader-core/networks.db
+    fi
+    ;;
+esac
+
+#DEBHELPER#

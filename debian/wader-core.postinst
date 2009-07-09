@@ -1,0 +1,77 @@
+#!/bin/sh
+
+set -e
+
+UPDATENOTIFIERDIR=/var/lib/update-notifier/user.d
+LIBDIR=/usr/share/wader-core
+UPDATENOTIFIERTOUCH=/var/lib/update-notifier/dpkg-run-stamp
+
+fix_peers()
+{
+    if [ -e /etc/ppp/peers ];then
+        chown -R :dialout /etc/ppp/peers
+        chmod -R g+w /etc/ppp/peers
+    fi
+}
+
+fix_pap()
+{
+    if [ -e /etc/ppp/pap-secrets ]; then
+        chown :dialout /etc/ppp/pap-secrets
+        chmod g+rw /etc/ppp/pap-secrets
+    fi
+}
+
+fix_chap()
+{
+    if [ -e /etc/ppp/chap-secrets ]; then
+        chown :dialout /etc/ppp/chap-secrets
+        chmod g+rw /etc/ppp/chap-secrets
+    fi
+}
+
+show_update()
+{
+    if [ -d $UPDATENOTIFIERDIR ] ; then
+        if [ `ps aux | grep wader | grep twistd | wc -l` -ne 0 ] ;  then
+            cp -f $LIBDIR/wader-core-restart-required.update-notifier \
+                $UPDATENOTIFIERDIR/wader-core-restart-required
+            # if we don't do this touch it wont work
+            touch $UPDATENOTIFIERTOUCH
+        else
+            rm -f $UPDATENOTIFIERDIR/wader-core-restart-required
+        fi
+    fi
+}
+
+reload_udev_rules()
+{
+    if [ ! -x /sbin/udevcontrol ] ; then
+        /sbin/udevadm control --reload-rules
+    else
+        /sbin/udevcontrol reload_rules
+    fi
+}
+
+clear_plugin_cache()
+{
+    rm -rf /usr/share/wader-core/plugins/dropin.cache
+    python -c "from twisted.plugin import IPlugin, getPlugins;import wader.plugins; list(getPlugins(IPlugin, package=wader.plugins))"
+}
+
+case "$1" in
+    (configure)
+       fix_peers
+       fix_pap
+       fix_chap
+       kill -HUP `cat /var/run/dbus/pid`
+       [ -n "$2" ] && clear_plugin_cache && show_update
+    ;;
+esac
+
+reload_udev_rules
+
+exit 0
+
+#DEBHELPER#
+

@@ -1,0 +1,15 @@
+#!/bin/sh -e
+
+case "$1" in
+    (upgrade)
+    # kill wader
+    kill -9 `cat /var/run/wader.pid` 2>/dev/null || true
+    # clean up
+    rm /var/run/wader.pid 2>/dev/null || true
+    # remove traces of old dir
+    if [ -d /usr/share/wader ]; then
+        rm -rf /usr/share/wader
+    fi
+esac
+
+#DEBHELPER#

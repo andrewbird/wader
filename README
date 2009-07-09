@@ -1,0 +1,95 @@
+Wader is a 3G daemon accessible via DBus, written in Python and released
+under the GPLv2. Wader runs on Linux and OSX.
+
+Wader's target audience are developers. If you would like your application to
+interact with a UMTS device, such as a mobile data card or a mobile phone,
+then stop searching! Features:
+
+    * Built upon modern technologies such as dbus and hal
+    * Service invoked via DBus
+    * A single process handles n devices
+    * Dialup via NM 0.7+ (if present) or Wvdial on systems with NM < 0.7
+    * Extensible AT Engine
+    * Pluggable support for devices: Adding support for a new device is
+    usually a matter of copying an skeleton, changing the device IDs and
+    dropping the plugin in /usr/share/wader-core/plugins
+    * A python shell to interact with the device in runtime
+
+History
+
+Wader is a fork of the core of Vodafone Mobile Connect Card driver for Linux[0]
+
+Some of its parts have been completely rewritten and the most juicy bits have
+been exported over DBus to allow other applications of the Linux desktop to
+use Wader. Wader is the first project (apart from ModemManager itself) that
+implements ModemManager's API[1]. This means that NetworkManager 0.7.X/0.8
+will be able to use wader-core to perform operations on devices.
+
+Supported devices
+
+    * Huawei E170/E172
+    * Huawei E620/E660/E660a
+    * Huawei E220
+    * Huawei E270/E272
+    * Huawei E870
+    * Huawei EM730V
+    * Huawei K3520
+    * Option Nozomi, Etna
+    * Option Icon 225
+    * Option Icon 401
+    * Novatel Ovation
+
+Devices that are known to work although we haven't tested:
+
+    * Huawei E169
+    * Huawei E180
+    * Novatel U630 (plugin written by Pablo Marti with help from Andrew Gee)
+    * Novatel U740 (plugin written by Adam King)
+    * Novatel EU740
+    * Novatel XU870
+    * Option Colt (It's recommended to disable PIN, it has a rather buggy fw)
+    * Option GlobeSurfer? Icon (plugin contributed by Simone Tolotti)
+    * Option GT Fusion (plugin contributed by Stefano Rivera)
+    * Option GT Fusion Quad Lite (plugin contributed by Stefano Rivera)
+    * Option GT M 378
+    * Option GT Max 3.6 (plugin contributed by kgb0y)
+    * SierraWireless 850, 875
+    * ZTE MF620
+    * ZTE K3520, K3565
+
+This software should work (in theory) with any device that follows the relevant GSM and 3G specs. Nonetheless, every device is different and it may not work in an untested device. Try it at your own risk. If you speak Python and feel adventurous you could get involved by supporting a new device/distro.
+SVN access
+
+Project SVN:
+
+svn co http://pubsvn.warp.es/wader/node/core/trunk wader-core-trunk-ro
+
+Contact the developers if you want commit access
+
+
+LICENSE
+
+Wader is distributed under the GPLv2. See the LICENSE file for the gory
+details.
+
+FAQ
+
+0 .- Wader fails horribly with my OS
+
+   Wader has been tested on the following distros:
+     - Ubuntu 8.04+
+     - OpenSUSE 11+
+     - Fedora 10+
+
+   You can find instructions of how to add a new OS/Distro in the doc.
+
+1 .- Wader fails horribly with my device
+
+   Chances are that your device is a cousin of one of our supported devices.
+   Adding support for a new device is relatively easy (as long as it behaves),
+   you can find instructions of how to add a new device in the doc.
+
+
+[0] https://forge.vodafonebetavine.net/projects/vodafonemobilec/
+[1] http://trac.warp.es/wader/wiki/WhatsModemManager
+

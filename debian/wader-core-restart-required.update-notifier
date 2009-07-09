@@ -1,0 +1,8 @@
+Name: wader-core restart required
+Priority: High
+Terminal: False
+DontShowAfterReboot: True
+DisplayIf: ps aux | grep wader | grep twistd
+Command: gksudo /usr/bin/wader-core-ctl --restart
+Description: Wader has been upgraded (or reinstalled) and must be restarted.
+ Please press the command button in order to stop Wader.

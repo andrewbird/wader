@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.freedesktop.ModemManager
+Exec=/usr/bin/wader-core-ctl --start
+User=root

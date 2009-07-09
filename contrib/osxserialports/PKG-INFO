@@ -1,0 +1,16 @@
+Metadata-Version: 1.0
+Name: MacOS_X_SerialPorts
+Version: 0.2
+Summary: An extension for detecting available serial modems on MacOS X.
+Home-page: http://www.wader-project.org/
+Author: Pablo Marti
+Author-email: pmarti@warp.es
+License: GNU GPL
+Description: An extension for MacOS X
+        
+        It allows you to detect all serial modems on OSX.
+
+        Based on Pascal Oberndoerfer's osxserialports module,
+        placed on the public domain.
+        
+Platform: MacOS

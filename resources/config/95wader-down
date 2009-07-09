@@ -1,0 +1,24 @@
+#!/bin/sh -e
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+RESOLVCONF="/etc/resolv.conf"
+BACKRESOLV="/etc/resolv.wader.backup"
+WADERCONN="/tmp/wader-conn.lock"
+
+! test -f "$WADERCONN" || exit 0
+
+# remove connection lock
+rm -f $WADERCONN
+
+# is dhclient running?
+DHCP=`ps aux | grep dhclient | grep -v grep`
+
+if [ -n "$DHCP" ]; then
+    # we are going to back up resolv.conf
+    mv $BACKRESOLV $RESOLVCONF
+    # restart nscd because resolv.conf has changed
+    if [ -e /var/run/nscd.pid ]; then
+        /etc/init.d/nscd restart || true
+    fi
+fi
+

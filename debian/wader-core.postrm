@@ -1,0 +1,11 @@
+#!/bin/sh -e
+
+case "$1" in
+    (remove)
+    if [ -e /var/run/wader.pid ]; then
+        kill -9 `cat /var/run/wader.pid` 2>/dev/null || true
+    fi
+    ;;
+esac
+
+#DEBHELPER#
