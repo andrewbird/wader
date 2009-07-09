@@ -30,8 +30,4 @@ try:
 except dbus.DBusException:
     nm07_present = False
 
-# disable NM0.7+ compatibility till they release NM0.8, see
-# http://trac.warp.es/wader/ticket/133
-nm07_present = False
-
 resolvconf_present = exists('/sbin/resolvconf')
