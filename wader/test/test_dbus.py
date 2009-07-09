@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -16,666 +15,1168 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""Unittests for DBus exported methods"""
+"""
+Self-contained unittest suite for ModemManager implementations
+"""
+
+# install the following packages on Ubuntu
+# python-dbus, python-gconf, python-gobject, python-twisted-core
+#
+# install the following packages On OpenSuSE
+# dbus-1-python, python-gnome, python-gobject2, python-twisted
+#
+# to run the tests:
+# trial -e -r glib2 --tbformat=verbose /path/to/test_dbus.py
+
+import os
+import random
+import time
 
 import dbus
 import dbus.mainloop.glib
-gloop = dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-
+import gconf
 from twisted.internet import defer
 from twisted.python import log
 from twisted.trial import unittest
 
-from wader.common.config import config
-from wader.common.consts import (WADER_SERVICE, CTS_INTFACE, SMS_INTFACE,
-                                 NET_INTFACE, CRD_INTFACE)
-import wader.common.aterrors as E
-from wader.common.startup import (attach_to_serial_port,
-                                  setup_and_export_device)
-from wader.common.middleware import NetworkOperator
-from wader.common.contact import Contact
-from wader.common.oal import osobj
+MM_SERVICE = 'org.freedesktop.ModemManager'
+MM_OBJPATH = '/org/freedesktop/ModemManager'
+MM_INTFACE = MM_SERVICE
+
+MDM_INTFACE = 'org.freedesktop.ModemManager.Modem'
+SPL_INTFACE = 'org.freedesktop.ModemManager.Modem.Simple'
+CRD_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Card'
+CTS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Contacts'
+SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.SMS'
+NET_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Network'
+
+MM_NETWORK_BAND_EGSM  = 1    #  900 MHz
+MM_NETWORK_BAND_DCS   = 2    # 1800 MHz
+MM_NETWORK_BAND_PCS   = 4    # 1900 MHz
+MM_NETWORK_BAND_G850  = 8    #  850 MHz
+MM_NETWORK_BAND_U2100 = 16   # WCDMA 2100 MHz               (Class I)
+MM_NETWORK_BAND_U1700 = 32   # WCDMA 3GPP UMTS1800 MHz      (Class III)
+MM_NETWORK_BAND_17IV  = 64   # WCDMA 3GPP AWS 1700/2100 MHz (Class IV)
+MM_NETWORK_BAND_U800  = 128  # WCDMA 3GPP UMTS800 MHz       (Class VI)
+MM_NETWORK_BAND_U850  = 256  # WCDMA 3GPP UMTS850 MHz       (Class V)
+MM_NETWORK_BAND_U900  = 512  # WCDMA 3GPP UMTS900 MHz       (Class VIII)
+MM_NETWORK_BAND_U17IX = 1024 # WCDMA 3GPP UMTS MHz          (Class IX)
+MM_NETWORK_BAND_U1900 = 2048 # WCDMA 3GPP UMTS MHz          (Class IX)
+MM_NETWORK_BAND_ANY   = 65535
+
+MM_NETWORK_MODE_ANY          = 0
+MM_NETWORK_MODE_GPRS         = 1
+MM_NETWORK_MODE_EDGE         = 2
+MM_NETWORK_MODE_UMTS         = 3
+MM_NETWORK_MODE_HSDPA        = 4
+MM_NETWORK_MODE_2G_PREFERRED = 5
+MM_NETWORK_MODE_3G_PREFERRED = 6
+MM_NETWORK_MODE_2G_ONLY      = 7
+MM_NETWORK_MODE_3G_ONLY      = 8
+MM_NETWORK_MODE_HSUPA        = 9
+MM_NETWORK_MODE_HSPA         = 10
 
 
-class TestDBusExportedMethods(unittest.TestCase):
-    """
-    Tests for the exported methods over D-Bus
-    """
-    def setUp(self):
-        self.sconn = None
-        self.serial = None
+# should the extensions introduced by the Wader project be tested?
+TEST_WADER_EXTENSIONS = True
+# generic message for [wader] skipped tests
+GENERIC_SKIP_MSG = "Wader extension to MM"
+GCONF_BASE = '/apps/wader-core'
+
+class Config(object):
+    """Simple GConf wrapper for string-only gets"""
+    def __init__(self, path):
+        self.path = path
+        self.client = gconf.client_get_default()
+
+    def get(self, section, key, default=None):
+        path = os.path.join(self.path, section, key)
+        value = self.client.get(path)
+        if not value:
+            return (default if default is not None else "")
+
+        assert value.type == gconf.VALUE_STRING, "Unhandled type"
+        return value.get_string()
+
+
+config = Config(GCONF_BASE)
+
+# ==================================================
+#                    ATTENTION
+# ==================================================
+# in order to store the PIN in gconf for testing run
+# gconftool-2 -s -t string /apps/wader-core/test/pin 0000
+# gconftool-2 -s -t string /apps/wader-core/test/phone 876543210
+#
+# edit the GCONF_BASE variable above, to change the '/apps/wader-core'
+
+class DBusTestCase(unittest.TestCase):
+    """Test-suite for ModemManager DBus exported methods"""
+
+    def setUpClass(self):
+        # setUpClass is meant to be deprecated, and setUp should be
+        # used instead, however setUp's behaviour doesn't replicates
+        # setUpClass' one, so for now we're going to use this
+        # Twisted deprecated function
+        d = defer.Deferred()
         self.device = None
-        self.remote_obj = None
-        try:
-            d = osobj.hw_manager.get_devices()
-            def get_device_cb(devices):
-                if not devices:
-                    self.skip = "No devices found"
-                    return
 
-                device = attach_to_serial_port(devices[0])
-                self.device = setup_and_export_device(device)
-                self.sconn = self.device.sconn
-                d2 = self.device.initialize()
-                d2.addCallback(self._get_remote_obj)
-                d2.addCallback(lambda ign: self.sconn.delete_all_sms())
-                d2.addCallback(lambda ign: self.sconn.delete_all_contacts())
-                return d2
+        loop = dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+        bus = dbus.SystemBus(mainloop=loop)
 
-            d.addCallback(get_device_cb)
-            return d
-        except:
-            log.err()
+        def enable_device_cb():
+            # if we don't sleep for a sec, the test will start too soon
+            # and Enable won't be finished yet, yielding spurious results.
+            time.sleep(1)
+            d.callback(True)
 
-    def tearDown(self):
-        return self.device.close()
+        def enable_device_eb(e):
+            error = e.get_dbus_message()
+            if 'SimPinRequired' in error:
+                pin = config.get('test', 'pin', '0000')
+                self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
+                                    reply_handler=enable_device_cb,
+                                    error_handler=log.err)
+            else:
+                raise unittest.SkipTest("Cannot handle error %s" % error)
 
-    def _get_remote_obj(self, ignored=None):
-        bus = dbus.SystemBus(mainloop=gloop)
-        try:
-            self.remote_obj = bus.get_object(WADER_SERVICE, self.device.udi)
-            self.remote_obj.Enable(dbus_interface=CRD_INTFACE)
-        except:
-            log.err()
-        return True
+        def get_device_from_opath(opaths):
+            if not len(opaths):
+                raise unittest.SkipTest("Can't run this test without devices")
 
-    def test_AddContact(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Contacts.Add"""
-        c = Contact("Johnny", "+435443434343")
+            self.device = bus.get_object(MM_SERVICE, opaths[0])
+            self.device.Enable(True, dbus_interface=MDM_INTFACE,
+                               reply_handler=enable_device_cb,
+                               error_handler=enable_device_eb)
+
+        obj = bus.get_object(MM_SERVICE, MM_OBJPATH)
+        obj.EnumerateDevices(dbus_interface=MM_INTFACE,
+                             reply_handler=get_device_from_opath,
+                             error_handler=log.err)
+        return d
+
+    def tearDownClass(self):
         d = defer.Deferred()
-        def remote_add_contact_cb(index):
-            d2 = self.sconn.get_contact_by_index(index)
-            d2.addCallback(lambda contact: self.assertEqual(contact, c))
-            d2.addCallback(lambda _: self.sconn.delete_contact(index))
-            d2.addCallback(lambda _: d.callback(True))
-
-        def remote_add_contact_eb(failure):
-            log.err(failure)
-
-        self.remote_obj.Add(c.name, c.number,
-                            dbus_interface=CTS_INTFACE,
-                            reply_handler=remote_add_contact_cb,
-                            error_handler=remote_add_contact_eb)
+        # disable device at the end of the test
+        self.device.Enable(False,
+                           dbus_interface=MDM_INTFACE,
+                           reply_handler=lambda: d.callback(True),
+                           error_handler=log.err)
         return d
 
-    def test_DeleteContact(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Contacts.Delete"""
-        def remove_contact(index):
-            d = defer.Deferred()
-            def remote_del_contact_cb():
-                d2 = self.sconn.get_contact_by_index(index)
-                d3 = self.failUnlessFailure(d2, E.GenericError)
-                d3.chainDeferred(d)
+    # org.freedesktop.ModemManager.Modem.Gsm.Card tests
 
-            def remote_del_contact_eb(failure):
-                log.err(failure)
+    def test_CardChangePin(self):
+        """Test for Card.ChangePin"""
+        d = defer.Deferred()
+        good_pin = config.get('test', 'pin', '0000')
+        bad_pin = '1111'
 
-            self.remote_obj.Delete(index,
-                                   dbus_interface=CTS_INTFACE,
-                                   reply_handler=remote_del_contact_cb,
-                                   error_handler=remote_del_contact_eb)
+        def pin_changed_cb():
+            self.device.ChangePin(bad_pin, good_pin,
+                                  dbus_interface=CRD_INTFACE,
+                                  reply_handler=lambda: d.callback(True),
+                                  error_handler=log.err)
 
-            return d
+        self.device.ChangePin(good_pin, bad_pin,
+                              dbus_interface=CRD_INTFACE,
+                              reply_handler=pin_changed_cb,
+                              error_handler=log.err)
 
-        c = Contact("OM", "+215443434343")
-        d = self.sconn.add_contact(c)
-        d.addCallback(remove_contact)
         return d
 
-    def test_DisablePin(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Card.Enable(pin, False)
-        """
+    def test_CardCheck(self):
+        """Test for Card.Check"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
+
+        d = defer.Deferred()
+
+        def card_check_cb(status):
+            self.assertEqual(status, "READY")
+            d.callback(True)
+
+        self.device.Check(dbus_interface=CRD_INTFACE,
+                          reply_handler=card_check_cb,
+                          error_handler=log.err)
+
+        return d
+
+    def test_CardEnableEcho(self):
+        """Test for Card.EnableEcho"""
+        # disabling Echo will probably leave Wader unusable
+        raise unittest.SkipTest("Untestable method")
+
+    def test_CardEnablePin(self):
+        """Test for Card.EnablePin"""
+        d = defer.Deferred()
         pin = config.get('test', 'pin', '0000')
+
+        def disable_pin_cb():
+            # now enable it again
+            self.device.EnablePin(pin, True,
+                                  dbus_interface=CRD_INTFACE,
+                                  reply_handler=lambda: d.callback(True),
+                                  error_handler=log.err)
+        # disable PIN auth
+        self.device.EnablePin(pin, False,
+                              dbus_interface=CRD_INTFACE,
+                              reply_handler=disable_pin_cb,
+                              error_handler=log.err)
+        return d
+
+    def test_CardGetCharset(self):
+        """Test for Card.GetCharset"""
         d = defer.Deferred()
-        def remote_disable_pin_cb():
-            d2 = self.sconn.get_pin_status()
-            d2.addCallback(lambda status: self.assertEqual(status, 0))
-            d3 = self.sconn.enable_pin(pin)
-            d3.addCallback(lambda ignored: d.callback(True))
 
-        def remote_disable_pin_eb(failure):
-            log.msg("FAILURE RECEIVED %s" % repr(failure))
-            log.err(failure)
-            d.errback(failure)
+        def get_charset_cb(charset):
+            self.failUnlessIn(charset, ['GSM', 'IRA', 'UCS2'])
+            d.callback(True)
 
-        self.remote_obj.EnablePin(pin, False,
-                               dbus_interface=CRD_INTFACE,
-                               reply_handler=remote_disable_pin_cb,
-                               error_handler=remote_disable_pin_eb)
+        self.device.GetCharset(dbus_interface=CRD_INTFACE,
+                               reply_handler=get_charset_cb,
+                               error_handler=log.err)
         return d
 
-    def test_EnablePin(self):
-        """
-        Test that org.freedesktop.ModemManager.Modem.Gsm.Card.Enable
-        """
-        pin = config.get('test', 'pin', '0000')
+    def test_CardGetCharsets(self):
+        """Test for Card.GetCharsets"""
         d = defer.Deferred()
-        def remote_enable_pin_cb():
-            # it seems to have worked
-            d2 = self.sconn.get_pin_status()
-            d2.addCallback(lambda status: self.assertEqual(status, 1))
-            d2.addCallback(lambda _: d.callback(True))
 
-        def remote_enable_pin_eb(exception):
-            log.err(exception)
-            d.errback(exception)
+        def get_charsets_cb(charsets):
+            self.failUnlessIn('IRA', charsets)
+            self.failUnlessIn('UCS2', charsets)
+            d.callback(True)
 
-        self.remote_obj.EnablePin(pin, True,
-                               dbus_interface=CRD_INTFACE,
-                               reply_handler=remote_enable_pin_cb,
-                               error_handler=remote_enable_pin_eb)
+        self.device.GetCharsets(dbus_interface=CRD_INTFACE,
+                                reply_handler=get_charsets_cb,
+                                error_handler=log.err)
         return d
 
-    def test_FindContacts(self):
-        """
-        Test that org.freedesktop.ModemManager.Modem.Gsm.Contacts.Find works
-        """
-        contact = Contact("Eugene", "+43534534")
-        d = self.sconn.add_contact(contact)
-        def callback(index):
-            contact.index = index
-            d2 = defer.Deferred()
-            def remote_find_contacts_cb(reply):
-                self.assertEqual(len(reply), 1)
-                reply = list(reply[0])
-                self.assertIn(contact.name, reply)
-                self.assertIn(contact.number, reply)
-                self.assertIn(contact.index, reply)
+    def test_CardGetImei(self):
+        """Test for Card.GetImei"""
+        d = defer.Deferred()
 
-                d3 = self.sconn.delete_contact(contact.index)
-                d3.addCallback(lambda _: d2.callback(True))
+        def get_imei_cb(imei):
+            self.failUnless(len(imei) >= 14) # 14 <= IMEI <= 17
+            d.callback(True)
 
-            def remote_find_contacts_eb(reply):
-                log.err(reply)
-                d2.errback(reply)
-
-            self.remote_obj.Find("Euge", dbus_interface=CTS_INTFACE,
-                                    reply_handler=remote_find_contacts_cb,
-                                    error_handler=remote_find_contacts_eb)
-            return d2
-        d.addCallback(callback)
+        self.device.GetImei(dbus_interface=CRD_INTFACE,
+                            reply_handler=get_imei_cb,
+                            error_handler=log.err)
         return d
 
-    def test_Get_Contact(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Contacts.Get"""
-        contact = Contact("Mario", "+312232332")
-        d = self.sconn.add_contact(contact)
-        def callback(index):
-            contact.index = index
-            d2 = defer.Deferred()
-            def remote_get_contact_by_index_cb(reply):
-                reply = list(reply)
-                self.assertIn(contact.name, reply)
-                self.assertIn(contact.number, reply)
-                self.assertIn(contact.index, reply)
+    def test_CardGetImsi(self):
+        """Test for Card.GetImsi"""
+        d = defer.Deferred()
 
-                d3 = self.sconn.delete_contact(contact.index)
-                d3.addCallback(lambda _: d2.callback(True))
+        def get_imsi_cb(imsi):
+            # according to http://en.wikipedia.org/wiki/IMSI there are
+            # also IMSIs with 14 digits
+            self.failUnless(len(imsi) >= 14)
+            d.callback(True)
 
-            def remote_get_contact_by_index_eb(reply):
-                log.err(reply)
-                d2.errback(reply)
-
-            self.remote_obj.Get(index,
-                                dbus_interface=CTS_INTFACE,
-                                reply_handler=remote_get_contact_by_index_cb,
-                                error_handler=remote_get_contact_by_index_eb)
-            return d2
-        d.addCallback(callback)
+        self.device.GetImsi(dbus_interface=CRD_INTFACE,
+                            reply_handler=get_imsi_cb,
+                            error_handler=log.err)
         return d
 
-    def test_ListContacts(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Contacts.List"""
-        contact = Contact("Jauma", "+356456445654")
-        d = self.sconn.add_contact(contact)
-        def callback(index):
-            contact.index = index
-            d2 = defer.Deferred()
-            def get_contacts_cb(contacts):
-                def remote_get_contacts_cb(reply):
-                    reply = list(reply[0])
-                    self.assertIn(contact.name, reply)
-                    self.assertIn(contact.number, reply)
-                    self.assertIn(contact.index, reply)
+    def test_CardGetInfo(self):
+        """Test for Card.GetInfo"""
+        d = defer.Deferred()
 
-                    d3 = self.sconn.delete_contact(contact.index)
-                    d3.addCallback(lambda _: d2.callback(True))
+        def get_info_cb(info):
+            self.failUnless(len(info) == 3)
+            self.failUnlessIsInstance(info[1], basestring)
+            d.callback(True)
 
-                def remote_get_contacts_eb(reply):
-                    log.err(reply)
-                    d2.errback(reply)
-
-                self.remote_obj.List(dbus_interface=CTS_INTFACE,
-                                     reply_handler=remote_get_contacts_cb,
-                                     error_handler=remote_get_contacts_eb)
-
-            self.sconn.get_contacts().addCallback(get_contacts_cb)
-            return d2
-
-        d.addCallback(callback)
+        self.device.GetInfo(dbus_interface=CRD_INTFACE,
+                            reply_handler=get_info_cb,
+                            error_handler=log.err)
         return d
 
-    def test_GetBands(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetBands"""
-        d = self.sconn.get_bands()
-        def get_bands_cb(bands):
-            d2 = defer.Deferred()
-            def remote_get_bands_cb(reply):
-                self.assertEqual(reply, bands)
-                d2.callback(True)
-            def remote_get_bands_eb(reply):
-                log.err(reply)
-                d2.errback(reply)
+    def test_CardGetManufacturer(self):
+        """Test for Card.GetManufacturer"""
+        d = defer.Deferred()
 
-            self.remote_obj.GetBands(dbus_interface=CRD_INTFACE,
-                                     reply_handler=remote_get_bands_cb,
-                                     error_handler=remote_get_bands_eb)
-            return d2
+        def get_manufacturer_cb(name):
+            self.failUnless(len(name) > 1)
+            d.callback(True)
 
-        d.addCallback(get_bands_cb)
+        self.device.GetManufacturer(dbus_interface=CRD_INTFACE,
+                                    reply_handler=get_manufacturer_cb,
+                                    error_handler=log.err)
         return d
 
-    def test_GetCardModel(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetModel"""
-        d = self.sconn.get_card_model()
-        def callback(model):
-            d2 = defer.Deferred()
-            def remote_get_card_model_cb(reply):
-                self.assertEqual(model, reply)
-                d2.callback(True)
-            def remote_get_card_model_eb(reply):
-                log.err(reply)
-                d2.errback(reply)
+    def test_CardGetModel(self):
+        """Test for Card.GetModel"""
+        d = defer.Deferred()
 
-            self.remote_obj.GetModel(dbus_interface=CRD_INTFACE,
-                                     reply_handler=remote_get_card_model_cb,
-                                     error_handler=remote_get_card_model_eb)
-            return d2
-        d.addCallback(callback)
+        def get_model_cb(model):
+            self.failUnless(len(model) > 1)
+            d.callback(True)
+
+        self.device.GetModel(dbus_interface=CRD_INTFACE,
+                             reply_handler=get_model_cb,
+                             error_handler=log.err)
         return d
 
-    def test_GetCardVersion(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetVersion"""
-        d = self.sconn.get_card_version()
-        def callback(version):
-            d2 = defer.Deferred()
-            def remote_get_card_version_cb(reply):
-                self.assertEqual(version, reply)
-                d2.callback(True)
-            def remote_get_card_version_eb(reply):
-                log.err(reply)
-                d.errback(reply)
+    def test_CardGetVersion(self):
+        """Test for Card.GetVersion"""
+        d = defer.Deferred()
 
-            self.remote_obj.GetVersion(dbus_interface=CRD_INTFACE,
-                                   reply_handler=remote_get_card_version_cb,
-                                   error_handler=remote_get_card_version_eb)
-            return d2
-        d.addCallback(callback)
+        def get_version_cb(version):
+            self.failUnless(len(version) > 1)
+            d.callback(True)
+
+        self.device.GetVersion(dbus_interface=CRD_INTFACE,
+                               reply_handler=get_version_cb,
+                               error_handler=log.err)
         return d
 
-    def test_GetCharsets(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetCharsets"""
-        d = self.sconn.get_charsets()
-        def process_charsets(charsets):
-            d2 = defer.Deferred()
+    def test_CardResetSettings(self):
+        """Test for Card.ResetSettings"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
 
-            def get_charsets_cb(reply):
-                self.assertEquals(reply, charsets)
-                d2.callback(True)
+        raise unittest.SkipTest("Untested")
 
-            def get_charsets_eb(reply):
-                log.err(reply)
-                d2.errback(reply)
+    def test_SendATString(self):
+        """Test for Card.SendATString"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
 
-            self.remote_obj.GetCharsets(dbus_interface=CRD_INTFACE,
-                                        reply_handler=get_charsets_cb,
-                                        error_handler=get_charsets_eb)
+        raise unittest.SkipTest("Untested")
 
-            return d2
+    def test_SendPin(self):
+        """Test for Card.SendPin"""
+        raise unittest.SkipTest("Untested")
 
-        d.addCallback(process_charsets)
-        return d
-
-    def test_GetCharset(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetCharset"""
-        d = self.sconn.get_charset()
-        def callback(charset):
-            d2 = defer.Deferred()
-            def remote_get_charset_cb(reply):
-                self.assertEqual(charset, reply)
-                d2.callback(True)
-            def remote_get_charset_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetCharset(dbus_interface=CRD_INTFACE,
-                                    reply_handler=remote_get_charset_cb,
-                                    error_handler=remote_get_charset_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_GetImei(self):
-        """Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetImei"""
-        d = self.sconn.get_imei()
-        def callback(imei):
-            d2 = defer.Deferred()
-            def remote_get_imei_cb(reply):
-                self.assertEqual(imei, reply)
-                d2.callback(True)
-            def remote_get_imei_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetImei(dbus_interface=CRD_INTFACE,
-                                    reply_handler=remote_get_imei_cb,
-                                    error_handler=remote_get_imei_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_GetImsi(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetImsi
-        """
-        d = self.sconn.get_imsi()
-        def callback(imsi):
-            d2 = defer.Deferred()
-            def remote_get_imsi_cb(reply):
-                self.assertEqual(imsi, reply)
-                d2.callback(True)
-            def remote_get_imsi_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetImsi(dbus_interface=CRD_INTFACE,
-                                    reply_handler=remote_get_imsi_cb,
-                                    error_handler=remote_get_imsi_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_GetManufacturerName(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Card.GetManufacturer
-        """
-        d = self.sconn.get_manufacturer_name()
-        def callback(name):
-            d2 = defer.Deferred()
-            def remote_get_manfname_cb(reply):
-                self.assertEqual(name, reply)
-                d2.callback(True)
-            def remote_get_manfname_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetManufacturer(dbus_interface=CRD_INTFACE,
-                                    reply_handler=remote_get_manfname_cb,
-                                    error_handler=remote_get_manfname_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_GetRegistrationInfo(self):
-        """
-        Test org.freedesktop.ModemManager.Gsm.Network.GetRegistrationInfo
-        """
-        d = self.sconn.get_netreg_status()
-        def callback(status):
-            d2 = defer.Deferred()
-            def remote_get_netreg_status_cb(reply):
-                _status, numeric_oper, long_oper = reply
-                self.assertEqual(status, _status)
-                d2.callback(True)
-            def remote_get_netreg_status_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetRegistrationInfo(dbus_interface=NET_INTFACE,
-                                    reply_handler=remote_get_netreg_status_cb,
-                                    error_handler=remote_get_netreg_status_eb)
-            return d2
-
-        d.addCallback(callback)
-        return d
-
-    def test_GetNetworkInfo(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Network.GetInfo
-        """
-        d = self.sconn.get_network_info()
-        def callback(netinfo):
-            d2 = defer.Deferred()
-            def remote_get_netinfo_cb(reply):
-                self.assertEqual(netinfo, reply)
-                d2.callback(True)
-            def remote_get_netinfo_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetInfo(dbus_interface=NET_INTFACE,
-                                    reply_handler=remote_get_netinfo_cb,
-                                    error_handler=remote_get_netinfo_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_Scan(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Network.Scan
-        """
-        raise unittest.SkipTest("Not ready")
-        d = self.sconn.get_network_names()
-        def callback(netobjs):
-            d2 = defer.Deferred()
-            def scan_cb(reply):
-                for struct in reply:
-                    self.assertIn(NetworkOperator(*list(struct)), netobjs)
-
-                d2.callback(True)
-
-            def scan_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.Scan(dbus_interface=NET_INTFACE,
-                                 reply_handler=scan_cb,
-                                 error_handler=scan_eb)
-            return d2
-
-        d.addCallback(callback)
-        return d
-
-    def test_GetPhonebookSize(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Contacts.GetPhonebookSize
-        """
-        d = self.sconn.get_phonebook_size()
-        def callback(size):
-            d2 = defer.Deferred()
-            def remote_get_phonebooksize_cb(reply):
-                self.assertEqual(size, reply)
-                d2.callback(True)
-            def remote_get_phonebooksize_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetPhonebookSize(dbus_interface=CTS_INTFACE,
-                                    reply_handler=remote_get_phonebooksize_cb,
-                                    error_handler=remote_get_phonebooksize_eb)
-            return d2
-
-        d.addCallback(callback)
-        return d
-
-    def test_GetRoamingIDs(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Network.GetRoamingIDs
-        """
-        d = self.sconn.get_roaming_ids()
-        def callback(roaming_ids):
-            d2 = defer.Deferred()
-            def remote_get_smsc_cb(reply):
-                rids = [obj.netid for obj in roaming_ids]
-                for netid in reply:
-                    self.assertIn(netid, rids)
-
-                d2.callback(True)
-            def remote_get_smsc_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetRoamingIDs(dbus_interface=NET_INTFACE,
-                                    reply_handler=remote_get_smsc_cb,
-                                    error_handler=remote_get_smsc_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_GetSignalQuality(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Network.GetSignalQuality
-        """
-        d = self.sconn.get_signal_quality()
-        def callback(rids):
-            d2 = defer.Deferred()
-            def remote_get_sigqual_cb(reply):
-                self.assertEqual(rids, reply)
-                d2.callback(True)
-            def remote_get_sigqual_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetSignalQuality(dbus_interface=NET_INTFACE,
-                                      reply_handler=remote_get_sigqual_cb,
-                                      error_handler=remote_get_sigqual_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_GetSmsc(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.SMS.GetSmsc
-        """
-        d = self.sconn.get_smsc()
-        def callback(smsc):
-            d2 = defer.Deferred()
-            def remote_get_smsc_cb(reply):
-                self.assertEqual(smsc, reply)
-                d2.callback(True)
-            def remote_get_smsc_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetSmsc(dbus_interface=SMS_INTFACE,
-                                    reply_handler=remote_get_smsc_cb,
-                                    error_handler=remote_get_smsc_eb)
-            return d2
-        d.addCallback(callback)
-        return d
-
-    def test_GetFormat(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.SMS.GetFormat
-        """
-        d = self.sconn.get_sms_format()
-        def callback(_format):
-            d2 = defer.Deferred()
-            def remote_get_smsc_cb(reply):
-                self.assertEqual(_format, reply)
-                d2.callback(True)
-            def remote_get_smsc_eb(reply):
-                log.err(reply)
-                d.errback(reply)
-
-            self.remote_obj.GetFormat(dbus_interface=SMS_INTFACE,
-                                      reply_handler=remote_get_smsc_cb,
-                                      error_handler=remote_get_smsc_eb)
-            return d2
-        d.addCallback(callback)
-        return d
+    def test_SendPuk(self):
+        """Test for Card.SendPuk"""
+        raise unittest.SkipTest("Untested")
 
     def test_SetCharset(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.Card.SetCharset
-        """
-        bad_charset = 'IRA'
-        old_charset = self.device.sim.charset
+        """Test for Card.SetCharset"""
         d = defer.Deferred()
-        def remote_set_charset_cb():
-            def check_and_set_good_charset_cb(charset):
-                self.assertEqual(charset, bad_charset)
-                d2 = self.sconn.set_charset(old_charset)
-                d2.addCallback(lambda _: d.callback(True))
-                return d2
+        charsets = ["IRA", "GSM", "UCS2"]
 
-            # check that the charset we just set over D-Bus is correct
-            d2 = self.sconn.get_charset()
-            d2.addCallback(check_and_set_good_charset_cb)
-            return d2
+        def get_charset_cb(charset):
+            self.failUnlessIn(charset, charsets)
+            # now pick a new charset
+            new_charset = ""
+            while True:
+                new_charset = random.choice(charsets)
+                if new_charset != charset:
+                    break
 
-        def remote_set_charset_eb(reply):
-            log.err(reply)
-            d.errback(reply)
+            def get_charset2_cb(_charset):
+                # check that the new charset is the expected one
+                self.assertEqual(new_charset, _charset)
+                # leave everything as found
+                self.device.SetCharset(charset,
+                                       dbus_interface=CRD_INTFACE,
+                                       reply_handler=lambda: d.callback(True),
+                                       error_handler=log.err)
 
-        self.remote_obj.SetCharset(bad_charset,
-                                dbus_interface=CRD_INTFACE,
-                                reply_handler=remote_set_charset_cb,
-                                error_handler=remote_set_charset_eb)
+            # set the charset to new_charset
+            self.device.SetCharset(new_charset,
+                                   dbus_interface=CRD_INTFACE,
+                                   error_handler=log.err,
+                                   reply_handler=lambda:
+                                       self.device.GetCharset(
+                                           dbus_interface=CRD_INTFACE,
+                                           reply_handler=get_charset2_cb,
+                                           error_handler=log.err))
+
+        # get the current charset
+        self.device.GetCharset(dbus_interface=CRD_INTFACE,
+                               reply_handler=get_charset_cb,
+                               error_handler=log.err)
         return d
 
-    def test_SetFormat(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.SMS.SetFormat
-        """
-        def check_and_set_format(_format):
-            d2 = defer.Deferred()
-            def remote_set_format_cb():
-                # leave it like we found it
-                d3 = self.sconn.set_sms_format(0)
-                d3.chainDeferred(d2)
+    # org.freedesktop.ModemManager.Modem.Gsm.Contacts tests
 
-            def remote_set_format_eb(failure):
-                log.err(failure)
-                d2.errback(failure)
+    def test_ContactsAdd(self):
+        """Test for Contacts.Add"""
+        d = defer.Deferred()
+        name, number = "John", "+435443434343"
 
-            self.assertEquals(_format, 0)
-            self.remote_obj.SetFormat(1,
+        def add_contact_cb(index):
+            def on_contact_fetched((_index, _name, _number)):
+                self.assertEqual(name, _name)
+                self.assertEqual(number, _number)
+                # leave everything as found
+                self.device.Delete(_index, dbus_interface=CTS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   # test finishes with lambda
+                                   error_handler=log.err)
+
+            # get the object via DBus and check that its data is correct
+            self.device.Get(index, dbus_interface=CTS_INTFACE,
+                            reply_handler=on_contact_fetched,
+                            error_handler=log.err)
+
+        self.device.Add(name, number,
+                        dbus_interface=CTS_INTFACE,
+                        reply_handler=add_contact_cb,
+                        error_handler=log.err)
+        return d
+
+    def test_ContactsDelete(self):
+        """Test for Contacts.Delete"""
+        d = defer.Deferred()
+        name, number = "Juan", "+21544343434"
+
+        def on_contact_added(index):
+            def is_it_present(contacts):
+                self.assertNotIn(index, [c[0] for c in contacts])
+                d.callback(True)
+
+            # now delete it and check that its index is no longer present
+            # if we list all the contacts
+            self.device.Delete(index, dbus_interface=CTS_INTFACE,
+                               error_handler=log.err,
+                               reply_handler=lambda:
+                                  self.device.List(dbus_interface=CTS_INTFACE,
+                                                   reply_handler=is_it_present,
+                                                   error_handler=log.err))
+
+        # add a contact, and delete it
+        self.device.Add(name, number, dbus_interface=CTS_INTFACE,
+                        reply_handler=on_contact_added,
+                        error_handler=log.err)
+        return d
+
+    def test_ContactsEdit(self):
+        """Test for Contacts.Edit"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
+
+        d = defer.Deferred()
+        name, number = "Eugenio", "+435345342121"
+        new_name, new_number = "Eugenia", "+43542323122"
+
+        def add_contact_cb(index):
+            def get_contact_cb((_index, _name, _number)):
+                self.assertEqual(_name, new_name)
+                self.assertEqual(_number, new_number)
+                # leave everything as found
+                self.device.Delete(_index, dbus_interface=CTS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=log.err)
+
+            # edit it and get by index to check that the new values are set
+            self.device.Edit(new_name, new_number, index,
+                             dbus_interface=CTS_INTFACE,
+                             error_handler=log.err,
+                             reply_handler=lambda index:
+                                self.device.Get(index,
+                                                dbus_interface=CTS_INTFACE,
+                                                reply_handler=get_contact_cb,
+                                                error_handler=log.err))
+        # add a contact
+        self.device.Add(name, number,
+                        dbus_interface=CTS_INTFACE,
+                        reply_handler=add_contact_cb,
+                        error_handler=log.err)
+        return d
+
+    def test_ContactsFind(self):
+        """Test for Contacts.Find"""
+        d = defer.Deferred()
+        name, number = "Eugene", "+435345342121"
+
+        def add_contact_cb(index):
+            def find_contacts_cb(reply):
+                self.assertEqual(len(reply), 1)
+                reply = list(reply[0])
+                self.assertIn(name, reply)
+                self.assertIn(number, reply)
+                self.assertIn(index, reply)
+                # leave everything as found
+
+                self.device.Delete(index, dbus_interface=CTS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=log.err)
+
+            self.device.Find("Euge",
+                             dbus_interface=CTS_INTFACE,
+                             reply_handler=find_contacts_cb,
+                             error_handler=log.err)
+
+        self.device.Add(name, number,
+                        dbus_interface=CTS_INTFACE,
+                        reply_handler=add_contact_cb,
+                        error_handler=log.err)
+        return d
+
+    def test_ContactsFindByNumber(self):
+        """Test for Contacts.FindByNumber"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
+
+        d = defer.Deferred()
+        name, number = "Juan", "+3456564454"
+
+        def add_contact_cb(index):
+            def find_by_number_cb(matches):
+                self.assertEqual(len(matches), 1)
+                match = list(matches[0])
+                self.assertEqual(index, match[0])
+                self.assertEqual(name, match[1])
+                self.assertEqual(number, match[2])
+                # leave everything as found
+                self.device.Delete(index, dbus_interface=CTS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=log.err)
+
+            # test find by number
+            self.device.FindByNumber(number, dbus_interface=CTS_INTFACE,
+                                     reply_handler=find_by_number_cb,
+                                     error_handler=log.err)
+
+        # add a contact
+        self.device.Add(name, number,
+                        dbus_interface=CTS_INTFACE,
+                        reply_handler=add_contact_cb,
+                        error_handler=log.err)
+        return d
+
+    def test_ContactsGet(self):
+        """Test Contacts.Get"""
+        d = defer.Deferred()
+        name, number = "Mario", "+312232332"
+
+        def add_contact_cb(index):
+            def get_contact_cb(reply):
+                reply = list(reply)
+                self.assertIn(name, reply)
+                self.assertIn(number, reply)
+                self.assertIn(index, reply)
+
+                # leave everything as found
+                self.device.Delete(index,
+                                   dbus_interface=CTS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=log.err)
+
+            # test get by index
+            self.device.Get(index,
+                            dbus_interface=CTS_INTFACE,
+                            reply_handler=get_contact_cb,
+                            error_handler=log.err)
+        # add a contact
+        self.device.Add(name, number,
+                        dbus_interface=CTS_INTFACE,
+                        reply_handler=add_contact_cb,
+                        error_handler=log.err)
+        return d
+
+    def test_ContactsGetCount(self):
+        """Test for Contacts.GetCount"""
+        d = defer.Deferred()
+
+        def get_count_cb(count):
+            def list_contacts_cb(contacts):
+                # this two should match
+                self.assertEqual(count, len(contacts))
+                d.callback(True)
+
+            self.device.List(dbus_interface=CTS_INTFACE,
+                             reply_handler=list_contacts_cb,
+                             error_handler=log.err)
+
+        # get the total count and compare it
+        self.device.GetCount(dbus_interface=CTS_INTFACE,
+                             reply_handler=get_count_cb,
+                             error_handler=log.err)
+        return d
+
+    def test_ContactsGetPhonebookSize(self):
+        """Test for Contacts.GetPhonebookSize"""
+        d = defer.Deferred()
+
+        def get_phonebooksize_cb(size):
+            self.failUnlessIsInstance(size, int)
+            self.failUnless(size >= 250)
+            d.callback(True)
+
+        self.device.GetPhonebookSize(dbus_interface=CTS_INTFACE,
+                                     reply_handler=get_phonebooksize_cb,
+                                     error_handler=log.err)
+        return d
+
+    def test_ContactsList(self):
+        """Test for Contacts.List"""
+        d = defer.Deferred()
+        name, number = "Jauma", "+356456445654"
+
+        def add_contact_cb(index):
+            def list_contacts_cb(reply):
+                reply = list(reply[-1])
+                self.assertIn(name, reply)
+                self.assertIn(number, reply)
+                self.assertIn(index, reply)
+
+                # leave everything as found
+                self.device.Delete(index,
+                                   dbus_interface=CTS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=log.err)
+
+            self.device.List(dbus_interface=CTS_INTFACE,
+                             reply_handler=list_contacts_cb,
+                             error_handler=log.err)
+
+        self.device.Add(name, number,
+                        dbus_interface=CTS_INTFACE,
+                        reply_handler=add_contact_cb,
+                        error_handler=log.err)
+        return d
+
+    # org.freedesktop.ModemManager.Modem.Gsm.Network tests
+
+    def test_NetworkGetApns(self):
+        """Test for Network.GetApns"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
+
+        raise unittest.SkipTest("Untested")
+
+    def test_NetworkGetBand(self):
+        """Test for Network.GetBand"""
+        d = defer.Deferred()
+
+        def get_band_cb(band):
+            self.failUnlessIsInstance(band, (dbus.UInt32, int))
+            self.failUnless(band > 0)
+            d.callback(True)
+
+        self.device.GetBand(dbus_interface=NET_INTFACE,
+                            reply_handler=get_band_cb,
+                            error_handler=log.err)
+        return d
+
+    def test_NetworkGetBands(self):
+        """Test for Network.GetBands"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
+
+        d = defer.Deferred()
+
+        def get_bands_cb(bands):
+            self.failUnlessIn(MM_NETWORK_BAND_ANY, bands)
+            self.failUnlessIn(MM_NETWORK_BAND_DCS, bands)
+            self.failUnlessIn(MM_NETWORK_BAND_U850, bands)
+
+            d.callback(True)
+
+        self.device.GetBands(dbus_interface=NET_INTFACE,
+                             reply_handler=get_bands_cb,
+                             error_handler=log.err)
+        return d
+
+    def test_NetworkGetInfo(self):
+        """Test for Network.GetInfo"""
+        d = defer.Deferred()
+
+        def get_netinfo_cb(reply):
+            self.failUnless(len(reply) == 2)
+            d.callback(True)
+
+        self.device.GetInfo(dbus_interface=NET_INTFACE,
+                            reply_handler=get_netinfo_cb,
+                            error_handler=log.err)
+        return d
+
+    def test_NetworkGetNetworkMode(self):
+        """Test for Network.GetNetworkMode"""
+        d = defer.Deferred()
+
+        def get_network_mode_cb(mode):
+            self.failUnlessIsInstance(mode, (dbus.UInt32, int))
+            # currently goes between 1 and 12
+            self.failUnless(mode > 0 or mode < 20)
+            d.callback(True)
+
+        self.device.GetNetworkMode(dbus_interface=NET_INTFACE,
+                                   reply_handler=get_network_mode_cb,
+                                   error_handler=log.err)
+        return d
+
+    def test_NetworkGetRegistrationInfo(self):
+        """Test for Network.GetRegistrationInfo"""
+        d = defer.Deferred()
+
+        def get_registration_info_cb(reply):
+            status, numeric_oper = reply[:2]
+            # we must be registered to our home network or roaming
+            self.failUnlessIn(status, [1, 5])
+
+            def check_numeric_oper_too(imsi):
+                # we should be registered with out home network
+                self.failUnless(imsi.startswith(numeric_oper))
+                d.callback(True)
+
+            # get the IMSI and check that we are connected to a network
+            # with a netid that matches the beginning of our IMSI
+            self.device.GetImsi(dbus_interface=CRD_INTFACE,
+                                reply_handler=check_numeric_oper_too,
+                                error_handler=log.err)
+
+        self.device.GetRegistrationInfo(dbus_interface=NET_INTFACE,
+                                        reply_handler=get_registration_info_cb,
+                                        error_handler=log.err)
+        return d
+
+    def test_NetworkGetRoamingIDs(self):
+        """Test for Network.GetRoamingIDs"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
+
+        raise unittest.SkipTest("This method is device-dependent")
+
+    def test_NetworkGetSignalQuality(self):
+        """Test for Network.GetSignalQuality"""
+        d = defer.Deferred()
+
+        def get_signal_quality_cb(quality):
+            # signal quality should be an int between 1 and 100
+            self.failUnlessIsInstance(quality, (dbus.UInt32, int))
+            self.failUnless(quality >= 1 and quality <= 100)
+            d.callback(True)
+
+        self.device.GetSignalQuality(dbus_interface=NET_INTFACE,
+                                     reply_handler=get_signal_quality_cb,
+                                     error_handler=log.err)
+        return d
+
+    def test_NetworkScan(self):
+        """Test for Network.Scan"""
+        d = defer.Deferred()
+
+        def get_imsi_cb(imsi):
+            def network_scan_cb(networks):
+                home_network_found = False
+                for network in networks:
+                    if network['operator-num'] == imsi[:5]:
+                        home_network_found = True
+                        break
+
+                # our home network has to be around
+                # unless we are roaming ;)
+                self.assertEqual(home_network_found, True)
+                d.callback(True)
+
+            self.device.Scan(dbus_interface=NET_INTFACE,
+                             # increase the timeout as Scan is a
+                             # potentially long operation
+                             timeout=45,
+                             reply_handler=network_scan_cb,
+                             error_handler=log.err)
+
+        # get the first five digits of the IMSI and check that its around
+        self.device.GetImsi(dbus_interface=CRD_INTFACE,
+                            reply_handler=get_imsi_cb,
+                            error_handler=log.err)
+        return d
+
+    def test_NetworkSetApn(self):
+        """Test for Network.SetApn"""
+        raise unittest.SkipTest("Untested")
+
+    def test_NetworkSetBand_ANY(self):
+        """Test for Network.SetBand"""
+        d = defer.Deferred()
+
+        def get_band_cb(band):
+            self.failUnless(band & MM_NETWORK_BAND_ANY)
+            d.callback(True)
+
+        self.device.SetBand(MM_NETWORK_BAND_ANY,
+                            dbus_interface=NET_INTFACE,
+                            error_handler=log.err,
+                            reply_handler=lambda:
+                               self.device.GetBand(
+                                   dbus_interface=NET_INTFACE,
+                                   reply_handler=get_band_cb,
+                                   error_handler=log.err))
+        return d
+
+    def test_NetworkSetBand_U850(self):
+        """Test for Network.SetBand"""
+        d = defer.Deferred()
+
+        def get_band_cb(band):
+            self.failUnless(band & MM_NETWORK_BAND_U850)
+            # leave it in ANY (as found)
+            self.device.SetBand(MM_NETWORK_BAND_ANY,
+                                dbus_interface=NET_INTFACE,
+                                reply_handler=lambda: d.callback(True),
+                                error_handler=log.err)
+
+        self.device.SetBand(MM_NETWORK_BAND_U850,
+                            dbus_interface=NET_INTFACE,
+                            error_handler=log.err,
+                            reply_handler=lambda:
+                               self.device.GetBand(
+                                   dbus_interface=NET_INTFACE,
+                                   reply_handler=get_band_cb,
+                                   error_handler=log.err))
+        return d
+
+    #def test_NetworkSetNetworkMode_ANY(self):
+    #    """Test for Network.SetNetworkMode"""
+    #    d = defer.Deferred()
+
+    #    def get_network_mode_cb(mode):
+    #        self.assertEqual(mode, MM_NETWORK_MODE_ANY)
+    #        d.callback(True)
+
+    #    # set the network mode to ANY, get it and compare
+    #    self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
+    #                               dbus_interface=NET_INTFACE,
+    #                               error_handler=log.err,
+    #                               reply_handler=lambda:
+    #                                   self.device.GetNetworkMode(
+    #                                       dbus_interface=NET_INTFACE,
+    #                                       reply_handler=get_network_mode_cb,
+    #                                       error_handler=log.err))
+
+    #    return d
+
+    def test_NetworkSetNetworkMode_3GONLY(self):
+        """Test for Network.SetNetworkMode"""
+        d = defer.Deferred()
+
+        def get_network_mode_cb(mode):
+            self.assertEqual(mode, MM_NETWORK_MODE_3G_ONLY)
+            d.callback(True)
+
+        # set the network mode to ANY, get it and compare
+        self.device.SetNetworkMode(MM_NETWORK_MODE_3G_ONLY,
+                                   dbus_interface=NET_INTFACE,
+                                   error_handler=log.err,
+                                   reply_handler=lambda:
+                                       self.device.GetNetworkMode(
+                                           dbus_interface=NET_INTFACE,
+                                           reply_handler=get_network_mode_cb,
+                                           error_handler=log.err))
+        return d
+
+    def test_NetworkSetRegistrationNotification(self):
+        """Test for Network.SetRegistrationNotification"""
+        raise unittest.SkipTest("Untested")
+
+    def test_NetworkSetInfoFormat(self):
+        """Test for Network.SetInfoFormat"""
+        raise unittest.SkipTest("Untested")
+
+    def test_NetworkRegister(self):
+        """Test for Network.Register"""
+        raise unittest.SkipTest("Untested")
+
+    # org.freedesktop.ModemManager.Modem.Gsm.Simple tests
+
+    def test_SimpleConnect(self):
+        """Test for Simple.Connect"""
+        raise unittest.SkipTest("Untested")
+
+    def test_SimpleDisconnect(self):
+        """Test for Simple.Disconnect"""
+        raise unittest.SkipTest("Untested")
+
+    def test_SimpleGetStatus(self):
+        """Test for Simple.GetStatus"""
+        d = defer.Deferred()
+
+        def get_status_cb(status):
+            self.failUnless('band' in status)
+            self.failUnless('signal_quality' in status)
+            self.failUnless('operator_code' in status)
+            self.failUnless('operator_name' in status)
+            self.failUnlessIsInstance(status['operator_name'], basestring)
+            self.failUnlessIsInstance(status['operator_name'], basestring)
+            self.failUnlessIsInstance(status['signal_quality'], dbus.UInt32)
+            self.failUnlessIsInstance(status['band'], dbus.UInt32)
+
+            d.callback(True)
+
+        self.device.GetStatus(dbus_interface=SPL_INTFACE,
+                              reply_handler=get_status_cb,
+                              error_handler=log.err)
+        return d
+
+    # org.freedesktop.ModemManager.Modem.Gsm.SMS tests
+
+    def test_SmsDelete(self):
+        """Test for SMS.Delete"""
+        d = defer.Deferred()
+        sms = {'number' : '+33622754135', 'text' : 'delete test'}
+
+        def sms_saved_cb(indexes):
+            def on_sms_list_cb(messages):
+                sms_found = False
+                for msg in messages:
+                    if msg['index'] == indexes[0]:
+                        sms_found = True
+
+                # the index should not be present
+                self.assertEqual(sms_found, False)
+                d.callback(True)
+
+            self.assertEqual(len(indexes), 1)
+            self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE,
+                               error_handler=log.err,
+                               reply_handler=lambda:
+                                   self.device.List(
+                                       dbus_interface=SMS_INTFACE,
+                                       reply_handler=on_sms_list_cb,
+                                       error_handler=log.err))
+
+        # save a sms, delete it and check is no longer present
+        self.device.Save(sms, dbus_interface=SMS_INTFACE,
+                         reply_handler=sms_saved_cb,
+                         error_handler=log.err)
+        return d
+
+    def test_SmsGet(self):
+        """Test for SMS.Get"""
+        # test_SmsGet and test_SmsSave are the same test as you
+        # pretty much test the same stuff
+        d = defer.Deferred()
+        sms = {'number' : '+33646754145', 'text' : 'get test'}
+
+        def sms_get_cb(_sms):
+            self.assertEqual(sms['number'], _sms['number'])
+            self.assertEqual(sms['text'], _sms['text'])
+            # leave everything as found
+            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
+                               reply_handler=lambda: d.callback(True),
+                               error_handler=log.err)
+
+        # save the message, get it by index, and check its values match
+        self.device.Save(sms, dbus_interface=SMS_INTFACE,
+                         error_handler=log.err,
+                         reply_handler=lambda indexes:
+                             self.device.Get(indexes[0],
+                                             dbus_interface=SMS_INTFACE,
+                                             reply_handler=sms_get_cb,
+                                             error_handler=log.err))
+        return d
+
+    def test_SmsGetSmsc(self):
+        """Test for SMS.GetSmsc"""
+        d = defer.Deferred()
+
+        def get_smsc_cb(smsc):
+            self.failUnless(smsc.startswith('+'))
+            d.callback(True)
+
+        self.device.GetSmsc(dbus_interface=SMS_INTFACE,
+                            reply_handler=get_smsc_cb,
+                            error_handler=log.err)
+        return d
+
+    def test_SmsGetFormat(self):
+        """Test for SMS.GetFormat"""
+        d = defer.Deferred()
+
+        def get_format_cb(fmt):
+            self.failUnlessIn(fmt, [0, 1])
+            d.callback(True)
+
+        self.device.GetFormat(dbus_interface=SMS_INTFACE,
+                              reply_handler=get_format_cb,
+                              error_handler=log.err)
+        return d
+
+    def test_SmsList(self):
+        """Test for SMS.List"""
+        d = defer.Deferred()
+        sms = {'number' : '+33622754135', 'text' : 'list test'}
+
+        def sms_saved_cb(indexes):
+            # now check that the indexes are present in a List
+            def sms_list_cb(messages):
+                sms_found = False
+
+                for msg in messages:
+                    if msg['index'] == indexes[0]:
+                        sms_found = True
+                        break
+
+                self.assertEqual(sms_found, True)
+
+                # leave everything as found
+                self.device.Delete(indexes[0],
+                                   dbus_interface=SMS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=log.err)
+
+            self.device.List(dbus_interface=SMS_INTFACE,
+                             reply_handler=sms_list_cb,
+                             error_handler=log.err)
+
+        self.device.Save(sms, dbus_interface=SMS_INTFACE,
+                         reply_handler=sms_saved_cb,
+                         error_handler=log.err)
+        return d
+
+    def test_SmsSave(self):
+        """Test for SMS.Save"""
+        d = defer.Deferred()
+        sms = {'number' : '+34645454445', 'text' : 'save test'}
+
+        def sms_get_cb(_sms):
+            self.assertEqual(sms['number'], _sms['number'])
+            self.assertEqual(sms['text'], _sms['text'])
+            # leave everything as found
+            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
+                               reply_handler=lambda: d.callback(True),
+                               error_handler=log.err)
+
+        # save the message, get it by index, and check its values match
+        self.device.Save(sms, dbus_interface=SMS_INTFACE,
+                         error_handler=log.err,
+                         reply_handler=lambda indexes:
+                             self.device.Get(indexes[0],
+                                             dbus_interface=SMS_INTFACE,
+                                             reply_handler=sms_get_cb,
+                                             error_handler=log.err))
+        return d
+
+    def test_SmsSend(self):
+        """Test for SMS.Send"""
+        raise unittest.SkipTest("Not ready")
+        #number = config.get('test', 'phone')
+        #if not number:
+        #    raise unittest.SkipTest("Cannot run this test without a number")
+
+        #d = defer.Deferred()
+        #sm = None  # SignalMatch
+        #sms = {'number' : number, 'text' : 'send test'}
+
+        #def on_sms_received_cb(index):
+        #    def compare_messages(_sms):
+        #        self.assertEqual(_sms['text'], sms['text'])
+        #        sm.remove() # remove SignalMatch
+        #        # leave everything as found
+        #        self.device.Delete(index, dbus_interface=SMS_INTFACE,
+        #                           reply_handler=lambda: d.callback(True),
+        #                           error_handler=log.err)
+
+        #    self.device.Get(index, dbus_interface=SMS_INTFACE,
+        #                    reply_handler=compare_messages,
+        #                    error_handler=log.err)
+
+        #sm = self.device.connect_to_signal("SMSReceived", on_sms_received_cb,
+        #                                   dbus_interface=SMS_INTFACE)
+
+        #self.device.Send(sms, dbus_interface=SMS_INTFACE,
+        #                 # we are not interested in the callback
+        #                 reply_handler=lambda indexes: None,
+        #                 error_handler=log.err)
+
+        #return d
+
+    def test_SmsSendFromStorage(self):
+        """Test for SMS.SendFromStorage"""
+        raise unittest.SkipTest("Not ready")
+        #number = config.get('test', 'phone')
+        #if not number:
+        #    raise unittest.SkipTest("Cannot run this test without a number")
+        #d = defer.Deferred()
+        #sm = None  # SignalMatch
+        #sms = {'number' : number, 'text' : 'send from storage test' }
+
+        #def on_sms_received_cb(index):
+        #    def compare_messages(_sms):
+        #        self.assertEqual(_sms['text'], sms['text'])
+        #        sm.remove() # remove SignalMatch
+        #        # leave everything as found
+        #        self.device.Delete(index, dbus_interface=SMS_INTFACE,
+        #                           reply_handler=lambda: d.callback(True),
+        #                           error_handler=log.err)
+
+        #    # now get it by index and check text is the same
+        #    self.device.Get(index, dbus_interface=SMS_INTFACE,
+        #                    reply_handler=compare_messages,
+        #                    error_handler=log.err)
+
+        #def on_sms_saved_cb(indexes):
+        #    self.assertEqual(len(indexes), 1)
+
+        #    # send it from storage and wait for the signal
+        #    self.device.SendFromStorage(indexes[0],
+        #                                dbus_interface=SMS_INTFACE,
+        #                                # we are not interested in the callback
+        #                                reply_handler=lambda indexes: None,
+        #                                error_handler=log.err)
+
+        #sm = self.device.connect_to_signal("SMSReceived", on_sms_received_cb)
+
+        ## save the message and send it to ourselves
+        #self.device.Save(sms, dbus_interface=SMS_INTFACE,
+        #                 reply_handler=on_sms_saved_cb,
+        #                 error_handler=log.err)
+
+        #return d
+
+    def test_SmsSetFormat(self):
+        """Test for SMS.SetFormat"""
+        d = defer.Deferred()
+
+        def get_format_cb(fmt):
+            self.assertEquals(fmt, 1)
+            # leave format as found
+            self.device.SetFormat(0,
+                                  dbus_interface=SMS_INTFACE,
+                                  reply_handler=lambda: d.callback(True),
+                                  error_handler=log.err)
+
+        # set text format and check immediately that a
+        # GetFormat call returns 1
+        self.device.SetFormat(1, dbus_interface=SMS_INTFACE,
+                              error_handler=log.err,
+                              reply_handler=lambda:
+                                    self.device.GetFormat(
                                       dbus_interface=SMS_INTFACE,
-                                      reply_handler=remote_set_format_cb,
-                                      error_handler=remote_set_format_eb)
-
-            return d2
-
-        d = self.sconn.get_sms_format()
-        d.addCallback(check_and_set_format)
+                                      reply_handler=get_format_cb,
+                                      error_handler=log.err))
         return d
 
-    def test_SetSmsc(self):
-        """
-        Test org.freedesktop.ModemManager.Modem.Gsm.SMS.SetSmsc
-        """
-        badsmsc = '+3453456343'
+    def test_SmsSetIndication(self):
+        """Test for SMS.SetIndication"""
+        raise unittest.SkipTest("Untested")
+
+    def test_SmsSetSmsc(self):
+        """Test for SMS.SetSmsc"""
         d = defer.Deferred()
-        def remote_set_smsc_cb():
-            def check_and_set_good_smsc_cb(smsc):
-                self.assertEqual(smsc, badsmsc)
-                goodsmsc = config.get('test', 'smsc', '+34607003110')
-                d3 = self.sconn.set_smsc(goodsmsc)
-                d3.addCallback(lambda ignored: d.callback(True))
-                return d3
+        bad_smsc = '+3453456343'
 
-            d2 = self.sconn.get_smsc()
-            d2.addCallback(check_and_set_good_smsc_cb)
-            return d2
+        def get_smsc_cb(smsc):
+            # smsc == "good" smsc
+            def get_bad_smsc_cb(_bad_smsc):
+                # bad_smsc has been correctly set
+                self.assertEqual(bad_smsc, _bad_smsc)
+                # leave everything as found
+                self.device.SetSmsc(smsc, dbus_interface=SMS_INTFACE,
+                                    reply_handler=lambda: d.callback(True),
+                                    error_handler=log.err)
 
-        def remote_set_smsc_eb(reply):
-            log.err(reply)
-            d.errback(reply)
+            # set the SMSC to a bad value and read it to confirm it worked
+            self.device.SetSmsc(bad_smsc, dbus_interface=SMS_INTFACE,
+                                error_handler=log.err,
+                                reply_handler=lambda:
+                                   self.device.GetSmsc(
+                                       dbus_interface=SMS_INTFACE,
+                                       reply_handler=get_bad_smsc_cb,
+                                       error_handler=log.err))
 
-        self.remote_obj.SetSmsc(str(badsmsc),
-                                dbus_interface=SMS_INTFACE,
-                                reply_handler=remote_set_smsc_cb,
-                                error_handler=remote_set_smsc_eb)
+        # get the original SMSC and memoize it
+        self.device.GetSmsc(dbus_interface=SMS_INTFACE,
+                            reply_handler=get_smsc_cb,
+                            error_handler=log.err)
         return d
+
