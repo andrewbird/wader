@@ -449,9 +449,6 @@ class DBusTestCase(unittest.TestCase):
 
     def test_ContactsEdit(self):
         """Test for Contacts.Edit"""
-        if not TEST_WADER_EXTENSIONS:
-            raise unittest.SkipTest(GENERIC_SKIP_MSG)
-
         d = defer.Deferred()
         name, number = "Eugenio", "+435345342121"
         new_name, new_number = "Eugenia", "+43542323122"
@@ -466,7 +463,7 @@ class DBusTestCase(unittest.TestCase):
                                    error_handler=log.err)
 
             # edit it and get by index to check that the new values are set
-            self.device.Edit(new_name, new_number, index,
+            self.device.Edit(index, new_name, new_number,
                              dbus_interface=CTS_INTFACE,
                              error_handler=log.err,
                              reply_handler=lambda index:
@@ -481,8 +478,8 @@ class DBusTestCase(unittest.TestCase):
                         error_handler=log.err)
         return d
 
-    def test_ContactsFind(self):
-        """Test for Contacts.Find"""
+    def test_ContactsFindByName(self):
+        """Test for Contacts.FindByName"""
         d = defer.Deferred()
         name, number = "Eugene", "+435345342121"
 
@@ -499,10 +496,10 @@ class DBusTestCase(unittest.TestCase):
                                    reply_handler=lambda: d.callback(True),
                                    error_handler=log.err)
 
-            self.device.Find("Euge",
-                             dbus_interface=CTS_INTFACE,
-                             reply_handler=find_contacts_cb,
-                             error_handler=log.err)
+            self.device.FindByName("Euge",
+                                   dbus_interface=CTS_INTFACE,
+                                   reply_handler=find_contacts_cb,
+                                   error_handler=log.err)
 
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
@@ -512,9 +509,6 @@ class DBusTestCase(unittest.TestCase):
 
     def test_ContactsFindByNumber(self):
         """Test for Contacts.FindByNumber"""
-        if not TEST_WADER_EXTENSIONS:
-            raise unittest.SkipTest(GENERIC_SKIP_MSG)
-
         d = defer.Deferred()
         name, number = "Juan", "+3456564454"
 
@@ -659,6 +653,7 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkGetBands(self):
         """Test for Network.GetBands"""
+        # this will be a property soon
         if not TEST_WADER_EXTENSIONS:
             raise unittest.SkipTest(GENERIC_SKIP_MSG)
 

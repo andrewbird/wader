@@ -684,9 +684,9 @@ class ContactsExporter(SMSExporter):
         d = self.sconn.delete_contact(index)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
-    @method(CTS_INTFACE, in_signature='ssu', out_signature='u',
+    @method(CTS_INTFACE, in_signature='uss', out_signature='u',
             async_callbacks=('async_cb', 'async_eb'))
-    def Edit(self, name, number, index, async_cb, async_eb):
+    def Edit(self, index, name, number, async_cb, async_eb):
         """
         Edits the contact at ``index``
 
@@ -699,9 +699,9 @@ class ContactsExporter(SMSExporter):
 
     @method(CTS_INTFACE, in_signature='s', out_signature='a(uss)',
             async_callbacks=('async_cb', 'async_eb'))
-    def Find(self, pattern, async_cb, async_eb):
+    def FindByName(self, pattern, async_cb, async_eb):
         """
-        Returns list of contacts that match ``pattern``
+        Returns list of contacts whose name match ``pattern``
 
         :param pattern: The pattern to match contacts against
         :rtype: list
@@ -715,7 +715,7 @@ class ContactsExporter(SMSExporter):
             async_callbacks=('async_cb', 'async_eb'))
     def FindByNumber(self, number, async_cb, async_eb):
         """
-        Returns list of contacts that match the given ``number``
+        Returns list of contacts whose number match ``number``
 
         :param number: The number to match contacts against
         :rtype: list
