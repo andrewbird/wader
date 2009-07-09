@@ -38,8 +38,8 @@ class WCDMACustomizer(object):
     :cvar exporter_klass: DBus Exporter for the device
     :cvar async_regexp: regexp to parse asynchronous notifications emited
           by the device.
-    :cvar conn_dict: Dictionary with the AT strings necessary to change
-          between the different connection modes
+    :cvar band_dict: Dictionary with the supported bands
+    :cvar conn_dict: Dictionary with the supported network modes
     :cvar cmd_dict: Dictionary with commands info
     :cvar device_capabilities: List with the unsolicited notifications that
           this device supports
