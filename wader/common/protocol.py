@@ -714,7 +714,7 @@ class WCDMAProtocol(SerialProtocol):
         :raise GenericError: Exception raised by Nozomi when PIN is incorrect.
         :raise IncorrectPassword: Exception raised when the PIN is incorrect
         """
-        cmd = ATCmd('AT+CPIN=%s' % str(pin), name='send_pin')
+        cmd = ATCmd('AT+CPIN="%s"' % str(pin), name='send_pin')
         return self.queue_at_cmd(cmd)
 
     def send_puk(self, puk, pin):
