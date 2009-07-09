@@ -60,6 +60,10 @@ class SerialResponseTimeout(dbus.DBusException):
     """Serial response timed out"""
     _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SerialResponseTimeout')
 
+class Connected(dbus.DBusException):
+    """Operation attempted whilst connected"""
+    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'Connected')
+
 class PhoneFailure(dbus.DBusException):
     """Phone failure"""
     _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'PhoneFailure')
