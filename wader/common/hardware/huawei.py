@@ -23,8 +23,15 @@ import re
 from twisted.python import log
 
 from wader.common.middleware import WCDMAWrapper
-from wader.common.command import get_cmd_dict_copy, build_cmd_dict
+from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
+from wader.common.contact import Contact
 from wader.common import consts
+from wader.common.encoding import (from_ucs2, from_u,
+                                   unpack_ucs2_bytes_in_ts31101_80,
+                                   unpack_ucs2_bytes_in_ts31101_81,
+                                   unpack_ucs2_bytes_in_ts31101_82,
+                                   pack_ucs2_bytes)
+
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.netspeed import bps_to_human
 from wader.common.plugin import DevicePlugin
@@ -77,10 +84,12 @@ def huawei_new_conn_mode(args):
         '3,1' : S.GPRS_SIGNAL,
         '3,2' : S.GPRS_SIGNAL,
         '3,3' : S.GPRS_SIGNAL,
+        '5,0' : S.NO_SIGNAL,
         '5,4' : S.UMTS_SIGNAL,
         '5,5' : S.HSDPA_SIGNAL,
         '5,6' : S.HSUPA_SIGNAL,
         '5,7' : S.HSPA_SIGNAL,
+        '5,9' : S.HSPA_SIGNAL, # doc says HSPA+
     }
     return mode_args_dict[args]
 
@@ -179,12 +188,102 @@ class HuaweiWrapper(WCDMAWrapper):
                          callback=parse_syscfg)
         return d
 
+    #def add_contact(self, contact):
+    #   """
+    #   Adds ``contact`` to the SIM and returns the index where was stored
+
+    #   :rtype: int
+    #   """
+
+    #   def hw_add_contact(name, number, index):
+    #       """
+    #       Adds a contact to the SIM card
+    #       """
+    #       raw = 0
+    #       if 'UCS2' in self.device.sim.charset:
+    #           # write in TS31.101 type 80 raw format
+    #           # name = '80%sFF' % pack_ucs2_bytes(name)
+    #           name = '80%s' % pack_ucs2_bytes(name)
+    #           raw = 1
+
+    #       category = 145 if number.startswith('+') else 129
+    #       args = (index, number, category, name, raw)
+    #       cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
+    #       return self.queue_at_cmd(cmd)
+
+    #   name = from_u(contact.name)
+
+    #   # common arguments for both operations (name and number)
+    #   args = [name, from_u(contact.number)]
+
+    #   if contact.index:
+    #       # contact.index is set, user probably wants to overwrite an
+    #       # existing contact
+    #       args.append(contact.index)
+    #       d = hw_add_contact(*args)
+    #       d.addCallback(lambda _: contact.index)
+    #       return d
+
+    #   # contact.index is not set, this means that we need to obtain the
+    #   # first slot free on the phonebook and then add the contact
+    #   def get_next_id_cb(index):
+    #       args.append(index)
+    #       d2 = hw_add_contact(*args)
+    #       # now we just fake add_contact's response and we return the index
+    #       d2.addCallback(lambda _: index)
+    #       return d2
+
+    #   d = self._get_next_contact_id()
+    #   d.addCallback(get_next_id_cb)
+    #   return d
+
     def get_band(self):
         """Returns the current used band"""
         d = self._get_syscfg()
         d.addCallback(lambda ret: ret['band'])
         d.addErrback(log.err)
         return d
+
+    #def get_contacts(self):
+    #    """Returns a list with all the contacts in the SIM"""
+    #    cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size, name='get_contacts')
+    #    d = self.queue_at_cmd(cmd)
+
+    #    def not_found_eb(failure):
+    #        failure.trap(E.NotFound, E.GenericError)
+    #        return []
+
+    #    d.addCallback(lambda matches:
+    #                    [self._hw_process_contact_match(m) for m in matches])
+    #    d.addErrback(not_found_eb)
+    #    return d
+
+    def _hw_process_contact_match(self, match):
+        """I process a contact match and return a C{Contact} object out of it"""
+        if int(match.group('raw')) == 0:
+            name = match.group('name').decode('utf8','ignore')
+        else:
+            encoding = match.group('name')[:2]
+            hexbytes = match.group('name')[2:]
+            if encoding == '80':   # example '80058300440586FF'
+                name = unpack_ucs2_bytes_in_ts31101_80(hexbytes)
+            elif encoding == '81': # example '810602A46563746F72FF'
+                name = unpack_ucs2_bytes_in_ts31101_81(hexbytes)
+            elif encoding == '82': # example '820505302D82D32D31'
+                name = unpack_ucs2_bytes_in_ts31101_82(hexbytes)
+            else:
+                name = "Unsupported encoding"
+
+        number = from_ucs2(match.group('number'))
+        index = int(match.group('id'))
+
+        return Contact(name, number, index=index)
+
+    #def get_contact_by_index(self, index):
+    #    cmd = ATCmd('AT^CPBR=%d' % index, name='get_contact_by_index')
+    #    d = self.queue_at_cmd(cmd)
+    #    d.addCallback(lambda match: self._hw_process_contact_match(match[0]))
+    #    return d
 
     def get_network_info(self):
         def process_netinfo_cb(info):
@@ -284,7 +383,12 @@ class HuaweiSIMClass(SIMBaseClass):
             d = self.sconn.send_at('AT^CURC=1')
             d.addErrback(at_curc_eb)
 
+            # XXX: not ported yet
+            # make sure we are in 3g pref before registration
+            # self.sconn.send_at(HUAWEI_DICT['3GPREF'])
+
             self.sconn.send_at('AT+COPS=3,0')
+            self.sconn.send_at('AT+CPMS="SM","SM","SM"')
             return size
 
         d.addCallback(init_cb)
