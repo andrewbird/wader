@@ -129,10 +129,16 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
         '^MODE' : (S.SIG_NETWORK_MODE, huawei_new_conn_mode),
         '^RSSI' : (S.SIG_RSSI, lambda rssi: rssi_to_percentage(int(rssi))),
         '^DSFLOWRPT' : (S.SIG_SPEED, huawei_new_speed_link),
+        # Notification disabled as there is no match in ModemManager API
+        # '^RFSWITCH' : (notifications.SIG_RFSWITCH, huawei_radio_switch),
+
         '^BOOT' : (None, None),
         '^SRVST' : (None, None),
         '^SIMST' : (None, None),
         '^CEND' : (None, None),
+        '^EARST' : (None, None),
+        '^STIN' : (None, None),
+        '^SMMEMFULL' : (None, None),
     }
 
 
@@ -398,6 +404,35 @@ class HuaweiSIMClass(SIMBaseClass):
 class HuaweiCustomizer(HuaweiWCDMACustomizer):
     """Customizer for all Huawei cards"""
     wrapper_klass = HuaweiWrapper
+
+
+class HuaweiEMXXWrapper(HuaweiWrapper):         # Modules have RFSWITCH
+    """
+    Wrapper for all Huawei embedded modules
+    """
+    def __init__(self, device):
+        super(HuaweiEMXXWrapper, self).__init__(device)
+
+    def get_signal_level(self):
+        """
+        Returns the signal level
+
+        Overloaded to poll the RFSWITCH status
+
+        :rtype: `Deferred`
+        """
+
+        cmd = ATCmd('AT^RFSWITCH?', name='get_radio')
+        d = self.queue_at_cmd(cmd)
+        d.addCallback(lambda _: super(HuaweiEMXXWrapper, self).get_signal_level())
+        return d
+
+
+class HuaweiEMXXCustomizer(HuaweiCustomizer):
+    """
+    Customizer for all Huawei embedded modules
+    """
+    adapter = HuaweiEMXXWrapper
 
 
 class HuaweiWCDMADevicePlugin(DevicePlugin):

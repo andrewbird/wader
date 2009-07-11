@@ -16,13 +16,15 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import HuaweiWCDMADevicePlugin
+from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+                                          HuaweiEMXXCustomizer)
 
 class HuaweiEM730V(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's EM730V"""
     name = "Huawei EM730V"
     version = "0.1"
     author = u"Pablo Martí"
+    custom = HuaweiEMXXCustomizer()
 
     __remote_name__ = "EM730V"
 
