@@ -108,6 +108,8 @@ class OptionSIMClass(SIMBaseClass):
         deferred = defer.Deferred()
 
         def init_callback(size):
+            # make sure we are in 3g pref before registration
+            self.sconn.set_network_mode(consts.MM_NETWORK_MODE_3G_ONLY)
             # setup asynchronous notifications
             self.sconn.send_at('AT_OSSYS=1') # cell change notification
             self.sconn.send_at('AT_OSQI=1') # signal quality notification
