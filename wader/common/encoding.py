@@ -18,19 +18,13 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Helper methods for dealing with encoded strings"""
 
-import codecs
-
-ucs2_encoder = codecs.getencoder("utf_16be")
-ucs2_decoder = codecs.getdecoder("utf_16be")
-hex_decoder = codecs.getdecoder("hex_codec")
-
 def pack_ucs2_bytes(s):
     """
     Converts string ``s`` to UCS2
 
     :rtype: str
     """
-    return "".join(["%02X" % ord(c) for c in ucs2_encoder(s)[0]])
+    return s.encode('utf_16_be').encode('hex').upper()
 
 def unpack_ucs2_bytes(s):
     """
@@ -38,7 +32,7 @@ def unpack_ucs2_bytes(s):
 
     :rtype: unicode
     """
-    return codecs.utf_16_be_decode(s.decode('hex'))[0]
+    return s.decode('hex').decode('utf_16_be')
 
 def unpack_ucs2_bytes_in_ts31101_80(s):
     """
@@ -160,7 +154,8 @@ def check_if_ucs2(text):
 
     :rtype: bool
     """
-    if isinstance(text, str) and (len(text) % 4 == 0):
+    # XXX: Returns false positives
+    if isinstance(text, basestring) and (len(text) % 4 == 0):
         try:
             unpack_ucs2_bytes(text)
         except (UnicodeDecodeError, TypeError):

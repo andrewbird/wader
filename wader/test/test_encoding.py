@@ -21,17 +21,17 @@
 from twisted.trial import unittest
 
 from wader.common.encoding import (check_if_ucs2,
-                                 pack_ucs2_bytes, unpack_ucs2_bytes)
+                                   pack_ucs2_bytes, unpack_ucs2_bytes)
 
 class TestEncoding(unittest.TestCase):
     """Tests for encoding"""
 
     def test_check_if_ucs2(self):
-        self.assertEqual(check_if_ucs2('00'), False)
-        self.assertEqual(check_if_ucs2('mañico'), False)
+        self.assertEqual(check_if_ucs2('6C34'), True)
         self.assertEqual(check_if_ucs2('0056006F006400610066006F006E0065'),
                          True)
-        self.assertEqual(check_if_ucs2('1234'), False)
+        # XXX: This should fail but doesn't
+        self.assertEqual(check_if_ucs2('D834DD1E'), False)
 
     def test_pack_ucs2_bytes(self):
         # 07911356131313F311000A9260214365870008AA080068006F006C0061
