@@ -16,9 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-__version__ = "$Rev: 1056 $"
-
-from vmc.common.hardware.option import OptionWCDMADevicePlugin
+from wader.common.hardware.option import OptionWCDMADevicePlugin
 
 # Note: For this device to be identified by the OS the following two prerequisties
 # must be statisfied:
@@ -27,7 +25,7 @@ from vmc.common.hardware.option import OptionWCDMADevicePlugin
 
 class OptionE3730(OptionWCDMADevicePlugin):
     """
-    L{vmc.common.plugin.DBusDevicePlugin} for Option's version of Vodafone E3730
+    :class:`~wader.common.plugin.DevicePlugin` for Option's E3730
     """
     name = "Option E3730"
     version = "0.1"
