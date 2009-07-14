@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2009  Vodafone España, S.A.
-# Copyright (C) 2008-2009  Warp Networks, S.L.
-# Author:  Adam King - heavily based on Pablo Marti's U630 plugin
+# Copyright (C) 2009  Vodafone España, S.A.
+# Author: Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,20 +19,26 @@
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
 import serial
 
-class NovatelU740(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's U740"""
-    name = "Novatel U740"
+class NovatelMiFi2352(NovatelWCDMADevicePlugin):
+    """
+    :class:`~wader.common.plugin.DevicePlugin` for Novatel's MiFi 2352
+    """
+    name = "Novatel MiFi2352"
     version = "0.1"
-    author = "Adam King"
+    author = u"Andrew Bird"
 
-    __remote_name__ = "Merlin U740 (HW REV [0:33])"
+    __remote_name__ = "MiFi2352 "
 
     __properties__ = {
         'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x1400, 0x1410]
+        'usb_device.product_id' : [0x7003],
     }
 
     def preprobe_init(self, ports, info):
+        # This device might be found by means of the mother plugin too
+        if info['usb_device.product_id'] == 0x7001:
+            self.__properties__['usb_device.product_id'][0] = 0x7001
+
         # Novatel secondary port needs to be flipped from DM to AT mode
         # before it will answer our AT queries. So the primary port
         # needs this string first or auto detection of ctrl port fails.
@@ -42,4 +47,4 @@ class NovatelU740(NovatelWCDMADevicePlugin):
         ser.write('AT$NWDMAT=1\r\n')
         ser.close()
 
-novatelu740 = NovatelU740()
+novatelmifi2352 = NovatelMiFi2352()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2006-2009  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
-# Author:  Adam King - heavily based on Pablo Marti's U630 plugin
+# Author:  Pablo Martí
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,17 +20,17 @@
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
 import serial
 
-class NovatelU740(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's U740"""
-    name = "Novatel U740"
+class NovatelMC950D(NovatelWCDMADevicePlugin):
+    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's Ovation MC950D"""
+    name = "Novatel MC950D"
     version = "0.1"
-    author = "Adam King"
+    author = u"Pablo Martí"
 
-    __remote_name__ = "Merlin U740 (HW REV [0:33])"
+    __remote_name__ = "Ovation MC950D Card"
 
     __properties__ = {
         'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x1400, 0x1410]
+        'usb_device.product_id' : [0x4400],
     }
 
     def preprobe_init(self, ports, info):
@@ -42,4 +42,5 @@ class NovatelU740(NovatelWCDMADevicePlugin):
         ser.write('AT$NWDMAT=1\r\n')
         ser.close()
 
-novatelu740 = NovatelU740()
+novatelmc950d = NovatelMC950D()
+

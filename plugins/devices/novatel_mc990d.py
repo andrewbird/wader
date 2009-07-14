@@ -15,13 +15,9 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""
-Plugin for Novatel Ovation MC990D
-"""
-
-import serial
 
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+import serial
 
 class NovatelMC990D(NovatelWCDMADevicePlugin):
     """
@@ -46,7 +42,4 @@ class NovatelMC990D(NovatelWCDMADevicePlugin):
         ser = serial.Serial(ports[0], timeout=1)
         ser.write('AT$NWDMAT=1\r\n')
         ser.close()
-
-
-novatelmc990d = NovatelMC990D()
 

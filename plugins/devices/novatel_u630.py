@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2009  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -26,9 +26,14 @@ class NovatelU630(NovatelWCDMADevicePlugin):
     version = "0.1"
     author = u"Pablo Martí"
 
+    __remote_name__ = "Merlin U630 (HW REV Rev 2)"
+
     __properties__ = {
-        'pcmcia.manf_id': [0xa4],
-        'pcmcia.card_id': [0x276],
+        'pcmcia.manf_id': [0x00a4],
+        'pcmcia.card_id': [0x0276],
     }
+
+    # Unfortunately it is not possible to switch the Second port from DM
+    # to AT mode on the x6xx models, so we have to run with only one port
 
 novatelu630 = NovatelU630()

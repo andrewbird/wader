@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2009  Vodafone España, S.A.
-# Author: Pablo Martí
+# Copyright (C) 2009  Vodafone España, S.A.
+# Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,26 +19,33 @@
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
 import serial
 
-class NovatelXU870(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's XU870"""
-    name = "Novatel XU870"
-    version = "0.1"
-    author = u"Pablo Martí"
+from wader.plugins.novatel_mc990d import NovatelMC990D
+from wader.plugins.novatel_mifi2352 import NovatelMiFi2352
 
-    __remote_name__ = "Merlin XU870 ExpressCard"
+class NovatelMother(NovatelWCDMADevicePlugin):
+    """
+    :class:`~wader.common.plugin.DevicePlugin` Novatel's Ovation/MiFi
+    devices that share a common PID
+    """
+    name = "Novatel Mother"
+    version = "0.1"
+    author = u"Andrew Bird"
+
+    __remote_name__ = None
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x1430],
+        'usb_device.vendor_id': [0x1410],
+        'usb_device.product_id': [0x7001],
     }
 
-    def preprobe_init(self, ports, info):
-        # Novatel secondary port needs to be flipped from DM to AT mode
-        # before it will answer our AT queries. So the primary port
-        # needs this string first or auto detection of ctrl port fails.
-        # Note: Early models/firmware were DM only
-        ser = serial.Serial(ports[0], timeout=1)
-        ser.write('AT$NWDMAT=1\r\n')
-        ser.close()
+    def __init__(self):
+        super(NovatelMother, self).__init__()
 
-novatelxu870 = NovatelXU870()
+        self.mapping = {
+            'Ovation MC990D Card' : NovatelMC990D,
+            'MiFi2352 '           : NovatelMiFi2352,
+
+            'default'             : NovatelMiFi2352,
+        }
+
+novatelmother = NovatelMother()

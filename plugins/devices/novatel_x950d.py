@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2009  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -16,23 +16,30 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""
-Plugin for Novatel Ovation
-"""
 
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+import serial
 
-class NovatelOvation(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's Ovation"""
-    name = "Novatel MC950D"
+class NovatelX950D(NovatelWCDMADevicePlugin):
+    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's X950D"""
+    name = "Novatel X950D"
     version = "0.1"
     author = u"Pablo Martí"
 
-    __remote_name__ = "Ovation MC950D Card"
+    __remote_name__ = "Merlin X950D ExpressCard"
 
     __properties__ = {
         'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x4400],
+        'usb_device.product_id' : [0x1450],
     }
 
-novatelovation = NovatelOvation()
+    def preprobe_init(self, ports, info):
+        # Novatel secondary port needs to be flipped from DM to AT mode
+        # before it will answer our AT queries. So the primary port
+        # needs this string first or auto detection of ctrl port fails.
+        # Note: Early models/firmware were DM only
+        ser = serial.Serial(ports[0], timeout=1)
+        ser.write('AT$NWDMAT=1\r\n')
+        ser.close()
+
+novatelx950d = NovatelX950D()
