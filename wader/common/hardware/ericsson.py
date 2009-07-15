@@ -31,6 +31,9 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
 
+ERICSSON_BAND_DICT = {
+}
+
 ERICSSON_CONN_DICT = {
     consts.MM_NETWORK_MODE_GPRS : 5,
     consts.MM_NETWORK_MODE_EDGE : 5,
@@ -44,7 +47,12 @@ ERICSSON_CONN_DICT = {
     consts.MM_NETWORK_MODE_3G_ONLY : 6,
 
     consts.MM_NETWORK_MODE_3G_PREFERRED: 1,
+}
 
+ERICSSON_CONN_DICT_REV = {
+    1 : consts.MM_NETWORK_MODE_3G_PREFERRED,
+    5 : consts.MM_NETWORK_MODE_2G_PREFERRED,
+    6 : consts.MM_NETWORK_MODE_3G_ONLY,
 }
 
 ERICSSON_CMD_DICT = get_cmd_dict_copy()
@@ -137,6 +145,20 @@ class EricssonWrapper(WCDMAWrapper):
         d.addCallback(get_next_id_cb)
         return d
 
+    def get_band(self):
+        raise NotImplementedError()
+
+    def get_network_mode(self):
+        def get_radio_status_cb(mode):
+            if mode in ERICSSON_CONN_DICT_REV:
+                return ERICSSON_CONN_DICT_REV[mode]
+
+            raise KeyError("Unknown network mode %d" % mode)
+
+        d = self.get_radio_status()
+        d.addCallback(get_radio_status_cb)
+        return d
+
     def get_signal_quality(self):
         # On Ericsson, AT+CSQ only returns valid data in GPRS mode
         # So we need to override and provide an alternative. +CIND
@@ -172,6 +194,12 @@ class EricssonWrapper(WCDMAWrapper):
         d.addErrback(aterror_eb)
         return d
 
+    def set_band(self, band):
+        if band not in self.custom.band_dict:
+            raise KeyError("Band %d not found" % band)
+
+        raise NotImplementedError()
+
     def set_charset(self, charset):
         # The oddity here is that the set command needs to have its charset value
         # encoded in the current character set
@@ -180,6 +208,12 @@ class EricssonWrapper(WCDMAWrapper):
 
         d = super(EricssonWrapper, self).set_charset(charset)
         return d
+
+    def set_network_mode(self, mode):
+        if mode not in self.custom.conn_dict:
+            raise KeyError("Mode %d not found" % mode)
+
+        return self.send_at("AT+CFUN=%d" % mode)
 
     def reset_settings(self):
         cmd = ATCmd('AT&F', name='reset_settings')
@@ -197,6 +231,7 @@ class EricssonCustomizer(WCDMACustomizer):
     async_regexp = re.compile("\r\n(?P<signal>[*+][A-Z]{3,}):(?P<args>.*)\r\n",
                               re.MULTILINE)
 
+    band_dict = ERICSSON_BAND_DICT
     cmd_dict = ERICSSON_CMD_DICT
     conn_dict = ERICSSON_CONN_DICT
 
