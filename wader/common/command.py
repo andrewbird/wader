@@ -148,7 +148,8 @@ CMD_DICT = {
                               "(?P<sname>[^"]*)",
                               "(?P<netid>\d+)",
                               (?P<type>\d)
-                              \),?""", re.X)),
+                              \),?""", re.X),
+                              end=re.compile('\r\n\r\nOK\r\n')),
 
     'get_signal_quality' : build_cmd_dict(re.compile(r"""
                               \r\n

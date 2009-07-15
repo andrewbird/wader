@@ -35,17 +35,17 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['check_pin']['extract']
         text = '\r\n+CPIN: READY\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('resp'), 'READY')
         # [-] WAITING: DATA_RCV = '\r\n+CPIN: SIM PIN\r\n\r\nOK\r\n'
         text2 = '\r\n+CPIN: SIM PIN\r\n\r\nOK\r\n'
         match = extract.match(text2)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('resp'), 'SIM PIN')
         # [-] WAITING: DATA_RCV = '\r\n+CPIN: SIM PUK2\r\n\r\nOK\r\n'
         text3 = '\r\n+CPIN: SIM PUK2\r\n\r\nOK\r\n'
         match = extract.match(text3)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('resp'), 'SIM PUK2')
 
     def test_find_contacts_regexp(self):
@@ -87,7 +87,7 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_charset']['extract']
         text = '\r\n+CSCS: "UCS2"\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('lang'), 'UCS2')
 
     def test_get_card_model_regexp(self):
@@ -96,7 +96,7 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_card_model']['extract']
         text = '\r\nE220\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('model'), 'E220')
 
     def test_get_card_version_regexp(self):
@@ -105,7 +105,7 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_card_version']['extract']
         text = '\r\n11.110.01.03.00\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('version'), '11.110.01.03.00')
 
     def test_get_contacts_regexp(self):
@@ -114,7 +114,7 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_contacts']['extract']
         text = '\r\n+CPBR: 1,"+23434432",145,"0050006100620065006C0073"\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('number'), '+23434432')
         self.assertEqual(match.group('name'), '0050006100620065006C0073')
 
@@ -124,7 +124,7 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_imei']['extract']
         text = '\r\n351834012602323\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('imei'), '351834012602323')
 
     def test_get_imsi_regexp(self):
@@ -133,14 +133,14 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_imsi']['extract']
         text = '\r\n214012001727132\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('imsi'), '214012001727132')
 
     def test_get_netreg_status_regexp(self):
         extract = cmd_dict['get_netreg_status']['extract']
         text = '\r\n+CREG: 0,1\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('mode'), '0')
         self.assertEqual(match.group('status'), '1')
 
@@ -150,13 +150,13 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_network_info']['extract']
         text = '\r\n+COPS: 0,2,"21401",0\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('netname'), '21401')
         self.assertEqual(match.group('status'), '0')
 
         text2 = '\r\n+COPS: 0,0,"vodafone ES",0\r\n\r\nOK\r\n'
         match2 = extract.match(text2)
-        self.failIf(match2 == None)
+        self.failIf(match2 is None)
         self.assertEqual(match2.group('netname'), 'vodafone ES')
         self.assertEqual(match2.group('status'), '0')
 
@@ -166,14 +166,14 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_network_info']['extract']
         text = '\r\n+COPS: 0\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.failIf(int(match.group('error')), 0)
 
     def test_get_network_info_regexp_ucs2(self):
         extract = cmd_dict['get_network_info']['extract']
         text = '\r\n+COPS: 0,0,"0076006f006400610066006f006e0065002000450053",2\r\n\r\nOK\r\n'
         match = extract.match(text)
-        self.failIf(match == None)
+        self.failIf(match is None)
         self.assertEqual(match.group('netname'), '0076006f006400610066006f006e0065002000450053')
         self.assertEqual(match.group('status'), '2')
 
@@ -181,7 +181,7 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_network_names']['extract']
         text = '\r\n+COPS: (1,"0076006f006400610066006f006e0065002000450053","0076006f00640061002000450053","21401",0),(2,"0076006f0064006100660)\r\n'
         matches = list(re.finditer(extract, text))
-        self.failIf(matches == None)
+        self.failIf(matches is None)
         self.assertEqual(matches[0].group('lname'), '0076006f006400610066006f006e0065002000450053')
         self.assertEqual(matches[0].group('sname'), '0076006f00640061002000450053')
         self.assertEqual(matches[0].group('netid'), '21401')
@@ -193,7 +193,16 @@ class TestCommandsRegexps(unittest.TestCase):
         extract = cmd_dict['get_network_names']['extract']
         text = '\r\n+COPS: (1,"vodafone ES","voda ES","21401",0)\r\n+COPS: (2,"vodafone ES","voda ES","21401",2)\r\n+COPS: (1,"Orange","Orange","21403",2)\r\n+COPS: (1,"Yoigo","YOIGO","21404",2)\r\n+COPS: (1,"Orange","Orange","21403",0)\r\n+COPS: (1,"movistar","movistar","21407",0)\r\n+COPS: (1,"movistar","movistar","21407",2)\r\n\r\nOK\r\n'
         matches = list(re.finditer(extract, text))
-        self.failIf(matches == None)
+        self.failIf(matches is None)
+        self.assertEqual(matches[0].group('lname'), 'vodafone ES')
+        self.assertEqual(matches[0].group('sname'), 'voda ES')
+        self.assertEqual(matches[0].group('netid'), '21401')
+
+    def test_get_network_names_k3715_regexp(self):
+        extract = cmd_dict['get_network_names']['extract']
+        text = '\r\n+COPS: (1,"vodafone ES","voda ES","21401",0),(2,"vodafone ES@","vodafone","21401",2),(1,"movistar","movistar","21407",2),(1,"OrangeES","Orange","21403",2),(1,"Yoigo Moviles SA","Yoigo","21404",2),(1,"OrangeES","Orange","21403",0),(1,"movistar","movistar","21407",0),,(0,1,2,3,4),(0,1,2)\r\n\r\nOK\r\n'
+        matches = list(re.finditer(extract, text))
+        self.failIf(matches is None)
         self.assertEqual(matches[0].group('lname'), 'vodafone ES')
         self.assertEqual(matches[0].group('sname'), 'voda ES')
         self.assertEqual(matches[0].group('netid'), '21401')
