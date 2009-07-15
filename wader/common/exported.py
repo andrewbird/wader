@@ -26,7 +26,7 @@ from twisted.python import log
 from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
                                  HSO_INTFACE, SPL_INTFACE, PROPS_INTFACE)
-from wader.common.sms import sms_to_dict, dict_to_sms
+from wader.common.sms import Message
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import convert_ip_to_int
@@ -562,7 +562,7 @@ class SMSExporter(NetworkExporter):
         :param index: The SMS index
         """
         d = self.sconn.get_sms_by_index(index)
-        d.addCallback(lambda sms: sms_to_dict(sms))
+        d.addCallback(lambda sms: sms.to_dict())
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='', out_signature='s',
@@ -584,7 +584,7 @@ class SMSExporter(NetworkExporter):
     def List(self, async_cb, async_eb):
         """Returns all the SMS stored in SIM"""
         d = self.sconn.get_sms()
-        d.addCallback(lambda messages: map(sms_to_dict, messages))
+        d.addCallback(lambda messages: [sms.to_dict() for sms in messages])
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='a{sv}', out_signature='au',
@@ -596,7 +596,7 @@ class SMSExporter(NetworkExporter):
         :param sms: dictionary with the settings to use
         :rtype: int
         """
-        d = self.sconn.save_sms(dict_to_sms(sms))
+        d = self.sconn.save_sms(Message.from_dict(sms))
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='a{sv}', out_signature='au',
@@ -608,7 +608,7 @@ class SMSExporter(NetworkExporter):
         :param sms: dictionary with the settings to use
         :rtype: list
         """
-        d = self.sconn.send_sms(dict_to_sms(sms))
+        d = self.sconn.send_sms(Message.from_dict(sms))
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='u', out_signature='u',

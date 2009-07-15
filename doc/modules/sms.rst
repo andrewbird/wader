@@ -19,7 +19,3 @@ Functions
 
 .. autofunction:: message_to_pdu
 
-.. autofunction:: sms_to_dict
-
-.. autofunction:: dict_to_sms
-

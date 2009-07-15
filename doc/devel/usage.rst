@@ -154,7 +154,7 @@ Sending a SMS
 
 Sending a SMS can not be any easier::
 
-    from wader.common.sms import Message, sms_to_dict
+    from wader.common.sms import Message
 
     ...
 
@@ -162,14 +162,14 @@ Sending a SMS can not be any easier::
     def sms_eb(e): print "Error sending SMS", e
 
     sms = Message("+34606575119", "hey dude")
-    device.Send(sms_to_dict(sms),
+    device.Send(sms.to_dict(),
                 dbus_interface=consts.SMS_INTFACE,
                 reply_handler=sms_cb,
                 error_handler=sms_eb)
 
 And sending an UCS2 encoded SMS can't get any easier either::
 
-    from wader.common.sms import Message, sms_to_dict
+    from wader.common.sms import Message
 
     ...
 
@@ -177,7 +177,7 @@ And sending an UCS2 encoded SMS can't get any easier either::
     def sms_eb(e): print "Error sending SMS", e
 
     sms = Message("+34606575119", "àèìòù")
-    device.Send(sms_to_dict(sms),
+    device.Send(sms.to_dict(),
                 dbus_interface=consts.SMS_INTFACE,
                 reply_handler=sms_cb,
                 error_handler=sms_eb)

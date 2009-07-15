@@ -55,6 +55,48 @@ class Message(object):
     def __ne__(self, m):
         return not self.__eq__(m)
 
+    @classmethod
+    def from_dict(cls, d, tz=None):
+        """
+        Converts ``d`` to a :class:`Message`
+
+        :param d: The dict to be converted
+        :param tz: The timezone of the datetime
+        :rtype: ``Message``
+        """
+        m = cls(d['number'], d['text'])
+        if 'index' in d:
+            m.index = d['index']
+        if 'where' in d:
+            m.where = d['where']
+        if 'smsc' in d:
+            m.csca = d['smsc']
+        if 'timestamp' in d:
+            m.datetime = datetime.fromtimestamp(d['timestamp'], tz)
+
+        return m
+
+    def to_dict(self):
+        """
+        Returns a dict ready to be sent via DBus
+
+        :rtype: dict
+        """
+        ret = {}
+
+        ret['number'] = self.number
+        ret['text'] = self.text
+        if self.where is not None:
+            ret['where'] = self.where
+        elif self.index is not None:
+            ret['index'] = self.index
+        if self.datetime is not None:
+            ret['timestamp'] = mktime(self.datetime.timetuple())
+        if self.csca is not None:
+            ret['smsc'] = self.csca
+
+        return ret
+
 
 def extract_datetime(datestr):
     """
@@ -105,47 +147,4 @@ def message_to_pdu(sms, store=False):
         csca = sms.csca
 
     return p.encode_pdu(sms.number, sms.text, csca=csca, store=store)
-
-def sms_to_dict(sms, index=None):
-    """
-    Converts ``sms`` to a dict ready to be sent via DBus
-
-    :param sms: The ``Message`` object to be converted
-    :rtype: dict
-    """
-    ret = {}
-
-    ret['number'] = sms.number
-    ret['text'] = sms.text
-    if sms.where is not None:
-        ret['where'] = sms.where
-    if index:
-        ret['index'] = index
-    elif sms.index is not None:
-        ret['index'] = sms.index
-    if sms.datetime is not None:
-        ret['timestamp'] = mktime(sms.datetime.timetuple())
-    if sms.csca is not None:
-        ret['smsc'] = sms.csca
-
-    return ret
-
-def dict_to_sms(d, tz=None):
-    """
-    Converts ``d`` to a :class:`~wader.common.sms.Message` object
-
-    :param d: The dict to be converted
-    :rtype: ``Message``
-    """
-    m = Message(d['number'], d['text'])
-    if 'index' in d:
-        m.index = d['index']
-    if 'where' in d:
-        m.where = d['where']
-    if 'smsc' in d:
-        m.csca = d['smsc']
-    if 'timestamp' in d:
-        m.datetime = datetime.fromtimestamp(d['timestamp'], tz)
-
-    return m
 
