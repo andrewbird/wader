@@ -17,7 +17,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
-import serial
 
 from wader.plugins.novatel_mc990d import NovatelMC990D
 from wader.plugins.novatel_mifi2352 import NovatelMiFi2352
