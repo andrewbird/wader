@@ -88,7 +88,7 @@ class Message(object):
         ret['text'] = self.text
         if self.where is not None:
             ret['where'] = self.where
-        elif self.index is not None:
+        if self.index is not None:
             ret['index'] = self.index
         if self.datetime is not None:
             ret['timestamp'] = mktime(self.datetime.timetuple())
