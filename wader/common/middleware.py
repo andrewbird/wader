@@ -490,7 +490,7 @@ class WCDMAWrapper(WCDMAProtocol):
     def get_radio_status(self):
         """Returns whether the radio is enabled or disabled"""
         d = super(WCDMAWrapper, self).get_radio_status()
-        d.addCallback(lambda resp: bool(int(resp[0].group('status'))))
+        d.addCallback(lambda resp: int(resp[0].group('status')))
         return d
 
     def get_roaming_ids(self):
