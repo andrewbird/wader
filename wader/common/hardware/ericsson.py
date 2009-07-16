@@ -144,6 +144,29 @@ class EricssonWrapper(WCDMAWrapper):
         d.addCallback(get_next_id_cb)
         return d
 
+    def change_pin(self, oldpin, newpin):
+        where = "SC"
+        if 'UCS2' in self.device.sim.charset:
+            where = pack_ucs2_bytes("SC")
+            oldpin = pack_ucs2_bytes(oldpin)
+            newpin = pack_ucs2_bytes(newpin)
+
+        atstr = 'AT+CPWD="%s","%s","%s"' % (where, oldpin, newpin)
+        d = self.queue_at_cmd(ATCmd(atstr, name='change_pin'))
+        d.addCallback(lambda result: result[0].group('resp'))
+        return d
+
+    def enable_pin(self, pin, enable):
+        where = "SC"
+        if 'UCS2' in self.device.sim.charset:
+            where = pack_ucs2_bytes("SC")
+            pin = pack_ucs2_bytes(pin)
+
+        at_str = 'AT+CLCK="%s",%d,"%s"' % (where, int(enable), pin)
+        d = self.queue_at_cmd(ATCmd(at_str, name='enable_pin'))
+        d.addCallback(lambda result: result[0].group('resp'))
+        return d
+
     def enable_radio(self, enable):
         d = self.get_radio_status()
         def get_radio_status_cb(status):
