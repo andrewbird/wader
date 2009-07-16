@@ -604,7 +604,7 @@ class DBusTestCase(unittest.TestCase):
 
         def get_phonebooksize_cb(size):
             self.failUnlessIsInstance(size, int)
-            self.failUnless(size >= 250)
+            self.failUnless(size >= 200)
             d.callback(True)
 
         self.device.GetPhonebookSize(dbus_interface=CTS_INTFACE,
