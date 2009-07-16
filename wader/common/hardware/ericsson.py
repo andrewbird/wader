@@ -21,6 +21,8 @@ Common stuff for all Ericsson's cards
 
 import re
 
+from twisted.internet import defer, reactor
+
 from wader.common.command import (get_cmd_dict_copy, build_cmd_dict,
                                   ATCmd)
 from wader.common import consts
@@ -30,6 +32,9 @@ from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
+
+MAX_RETRIES = 3
+RETRY_TIMEOUT = 5
 
 ERICSSON_BAND_DICT = {
 }
@@ -63,7 +68,7 @@ ERICSSON_CMD_DICT['get_card_model'] = build_cmd_dict('\s*(?P<model>\S*)\r\n')
 ERICSSON_CMD_DICT['get_signal_quality'] = build_cmd_dict(
                 '\s*\+CIND:\s+[0-9]*,(?P<sig>[0-9]*),.*')
 
-ERICSSON_CMD_DICT['get_network_info'] =  build_cmd_dict(r"""
+ERICSSON_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
                 \r\n
                 \+COPS:\s+
                 (
@@ -73,16 +78,16 @@ ERICSSON_CMD_DICT['get_network_info'] =  build_cmd_dict(r"""
                 (?P<status>\d)
                 )                  # end of group
                 \s*\r\n
-                """, re.VERBOSE)
+                """, re.VERBOSE))
 
 # +CPBR: 1,"002B003500350035",145,"0041004A0042"\r\n'
-ERICSSON_CMD_DICT['get_contacts'] = build_cmd_dict(r"""
+ERICSSON_CMD_DICT['get_contacts'] = build_cmd_dict(re.compile(r"""
                 \r\n
                 \+CPBR:\s(?P<id>\d+),
                 "(?P<number>\+?[0-9A-Fa-f]+)",
                 (?P<cat>\d+),
                 "(?P<name>.*)"
-                """, re.VERBOSE)
+                """, re.VERBOSE))
 
 
 class EricssonSIMClass(SIMBaseClass):
@@ -95,6 +100,8 @@ class EricssonSIMClass(SIMBaseClass):
     def initialize(self, set_encoding=True):
         self.sconn.reset_settings()
         self.sconn.disable_echo()
+        # self.sconn.enable_radio(True)
+        # self.sconn.set_network_mode(consts.MM_NETWORK_MODE_3G_PREFERRED)
 
         d = super(EricssonSIMClass, self).initialize(set_encoding=set_encoding)
         def init_callback(size):
@@ -145,6 +152,18 @@ class EricssonWrapper(WCDMAWrapper):
         d.addCallback(get_next_id_cb)
         return d
 
+    def enable_radio(self, enable):
+        d = self.get_radio_status()
+        def get_radio_status_cb(status):
+            if status in [0, 4] and enable:
+                return self.send_at('AT+CFUN=1')
+
+            elif status in [1, 5, 6] and not enable:
+                return self.send_at('AT+CFUN=0')
+
+        d.addCallback(get_radio_status_cb)
+        return d
+
     def get_band(self):
         raise NotImplementedError()
 
@@ -159,14 +178,35 @@ class EricssonWrapper(WCDMAWrapper):
         d.addCallback(get_radio_status_cb)
         return d
 
+    def get_netreg_status(self):
+        deferred = defer.Deferred()
+        self.state_dict['creg_retries'] = 0
+
+        def get_it(auxdef=None):
+            def get_netreg_status_cb((mode, status)):
+                self.state_dict['creg_retries'] += 1
+                if self.state_dict['creg_retries'] > MAX_RETRIES:
+                    auxdef.callback((mode, status))
+
+                if status == 4:
+                    reactor.callLater(RETRY_TIMEOUT, get_it, auxdef)
+                else:
+                    auxdef.callback((mode, status))
+
+            d = super(EricssonWrapper, self).get_netreg_status()
+            d.addCallback(get_netreg_status_cb)
+            return auxdef
+
+        return get_it(deferred)
+
     def get_signal_quality(self):
         # On Ericsson, AT+CSQ only returns valid data in GPRS mode
         # So we need to override and provide an alternative. +CIND
         # returns an indication between 0-5 so let's just multiply
-        # that by 20 to get a normalized RSSI
+        # that by 6 to get a RSSI between 0-30
         cmd = ATCmd('AT+CIND?',name='get_signal_quality')
         d = self.queue_at_cmd(cmd)
-        d.addCallback(lambda response: int(response[0].group('sig')) * 20)
+        d.addCallback(lambda response: int(response[0].group('sig')) * 6)
         return d
 
     def get_pin_status(self):
@@ -186,9 +226,11 @@ class EricssonWrapper(WCDMAWrapper):
             # return the failure or wont work
             return failure
 
-        facility = pack_ucs2_bytes('SC') if self.device.sim.charset == 'UCS2' else 'SC'
+        facility = 'SC'
+        if self.device.sim.charset == 'UCS2':
+            facility = pack_ucs2_bytes('SC')
 
-        d = ericsson_get_pin_status(facility)                    # call the local one
+        d = ericsson_get_pin_status(facility)  # call the local one
         d.addCallback(lambda response: int(response[0].group('status')))
         d.addErrback(pinreq_errback)
         d.addErrback(aterror_eb)
