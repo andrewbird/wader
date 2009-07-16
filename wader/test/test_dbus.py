@@ -876,9 +876,14 @@ class DBusTestCase(unittest.TestCase):
 
         def get_network_mode_cb(mode):
             self.assertEqual(mode, MM_NETWORK_MODE_3G_ONLY)
-            d.callback(True)
 
-        # set the network mode to ANY, get it and compare
+            # leave it in ANY (as found)
+            self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
+                                dbus_interface=NET_INTFACE,
+                                reply_handler=lambda: d.callback(True),
+                                error_handler=log.err)
+
+        # set the network mode to 3G Only, get it and compare
         self.device.SetNetworkMode(MM_NETWORK_MODE_3G_ONLY,
                                    dbus_interface=NET_INTFACE,
                                    error_handler=log.err,
