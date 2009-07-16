@@ -122,9 +122,19 @@ class NovatelWrapper(WCDMAWrapper):
 
     def get_band(self):
         """Returns the current used band"""
+        if not len(self.custom.band_dict):
+            raise NotImplementedError("Band setting/querying not supported")
+
         def get_band_cb(resp):
             band = int(resp[0].group('band'), 16)
-            return revert_dict(self.custom.band_dict)[band]
+            if band == 0x3FFFFFFF:
+                return consts.MM_NETWORK_BAND_ANY
+
+            ret = 0 
+            for key, value in NOVATEL_BAND_DICT.items():
+                if value & band:
+                    ret |= key
+            return ret
 
         return self.send_at("AT$NWBAND?", name='get_band',
                             callback=get_band_cb)
@@ -140,10 +150,25 @@ class NovatelWrapper(WCDMAWrapper):
 
     def set_band(self, band):
         """Sets the band to ``band``"""
-        if band not in self.custom.band_dict:
-            raise KeyError("Unknown band %d" % band)
+        if not len(self.custom.band_dict):
+            raise NotImplementedError("Band setting/querying not supported")
 
-        return self.send_at("AT$NWBAND=%08x" % self.custom.band_dict[band])
+        if band == consts.MM_NETWORK_BAND_ANY:
+            _band = 0x3FFFFFFF
+        else:
+            _band = 0
+            for key, value in self.custom.band_dict.items():
+                if key == consts.MM_NETWORK_BAND_ANY:
+                    continue
+
+                if key & band:
+                    _band |= value
+
+            if _band == 0:
+                # if we could not satisfy the request, tell someone
+                raise KeyError("Unsupported band %d" % band)
+
+        return self.send_at("AT$NWBAND=%08x" % _band)
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
