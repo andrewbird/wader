@@ -27,7 +27,8 @@ from wader.common.command import (get_cmd_dict_copy, build_cmd_dict,
                                   ATCmd)
 from wader.common import consts
 import wader.common.aterrors as E
-from wader.common.encoding import pack_ucs2_bytes, from_u
+from wader.common.encoding import (pack_ucs2_bytes, from_u, check_if_ucs2,
+                                   from_ucs2)
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
@@ -78,15 +79,6 @@ ERICSSON_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
                 (?P<status>\d)
                 )                  # end of group
                 \s*\r\n
-                """, re.VERBOSE))
-
-# +CPBR: 1,"002B003500350035",145,"0041004A0042"\r\n'
-ERICSSON_CMD_DICT['get_contacts'] = build_cmd_dict(re.compile(r"""
-                \r\n
-                \+CPBR:\s(?P<id>\d+),
-                "(?P<number>\+?[0-9A-Fa-f]+)",
-                (?P<cat>\d+),
-                "(?P<name>.*)"
                 """, re.VERBOSE))
 
 
@@ -148,7 +140,7 @@ class EricssonWrapper(WCDMAWrapper):
             d2.addCallback(lambda _: index)
             return d2
 
-        d = super(WCDMAWrapper, self).get_next_contact_id()
+        d = self._get_next_contact_id()
         d.addCallback(get_next_id_cb)
         return d
 
@@ -165,7 +157,31 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_band(self):
-        raise NotImplementedError()
+        return defer.succeed(consts.MM_NETWORK_BAND_ANY)
+
+    def get_charset(self):
+        d = super(EricssonWrapper, self).get_charset()
+        def get_charset_cb(charset):
+            if check_if_ucs2(charset):
+                charset = from_ucs2(charset)
+            return charset
+
+        d.addCallback(get_charset_cb)
+        return d
+
+    def get_charsets(self):
+        d = super(EricssonWrapper, self).get_charsets()
+        def get_charsets_cb(charsets):
+            ret = []
+            for charset in charsets:
+                if check_if_ucs2(charset):
+                    charset = from_ucs2(charset)
+                ret.append(charset)
+
+            return ret
+
+        d.addCallback(get_charsets_cb)
+        return d
 
     def get_network_mode(self):
         def get_radio_status_cb(mode):
@@ -255,7 +271,7 @@ class EricssonWrapper(WCDMAWrapper):
         if mode not in self.custom.conn_dict:
             raise KeyError("Mode %d not found" % mode)
 
-        return self.send_at("AT+CFUN=%d" % mode)
+        return self.send_at("AT+CFUN=%d" % self.custom.conn_dict[mode])
 
     def reset_settings(self):
         cmd = ATCmd('AT&F', name='reset_settings')

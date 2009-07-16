@@ -48,7 +48,7 @@ class TestCommandsRegexps(unittest.TestCase):
         self.failIf(match is None)
         self.assertEqual(match.group('resp'), 'SIM PUK2')
 
-    def test_find_contacts_regexp(self):
+    def test_find_contacts(self):
         # [-] SENDING ATCMD 'AT+CPBF="0050"\r\n'
         # [-] WAITING: DATA_RCV = '\r\n+CPBF: 1,"+23434432",145,"0050006100620065006C0073"\r\n+CPBF: 53,"342239262",129,"005000410043004F0020004D0056002F004D"\r\n+CPBF: 36,"34233231481",129,"005000410043004F002F004D"\r\n+CPBF: 92,"43223963522",129,"0050004100500041002000500041005200540020004D0056002F004D"\r\n+CPBF: 93,"543453302",129,"005000410050004100200054005200420020004D0076002F004D"\r\n+CPBF: 103,"666",129,"005000610073006300750061006C002000560061006C002F004D"\r\n+CPBF: 109,"4534534532070",129,"00500045004F0050004C0045002F004D"\r\n+CPBF: 115,"623434212",129,"005000720069006D006F0020004E00630068006F002F004D"\r\n\r\nOK\r\n'
         extract = cmd_dict['find_contacts']['extract']
@@ -61,6 +61,15 @@ class TestCommandsRegexps(unittest.TestCase):
 
         self.assertEqual(matches[7].group('name'), '005000720069006D006F0020004E00630068006F002F004D')
         self.assertEqual(matches[7].group('number'), '623434212')
+
+    def test_find_contacts_ericsson(self):
+        extract = cmd_dict['find_contacts']['extract']
+        text = '\r\n+CPBF: 7,"002B003400330035003300340035003300340032003100320031",145,"0045007500670065006E0065"\r\n'
+        matches = list(re.finditer(extract, text))
+
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0].group('name'), '0045007500670065006E0065')
+        self.assertEqual(matches[0].group('number'), '002B003400330035003300340035003300340032003100320031')
 
     def test_get_charsets(self):
         extract = cmd_dict['get_charsets']['extract']

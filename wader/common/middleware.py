@@ -212,9 +212,6 @@ class WCDMAWrapper(WCDMAProtocol):
 
         :rtype: list
         """
-        if not self.custom or not self.custom.band_dict:
-            raise AttributeError("No band dict registered for this device")
-
         return defer.succeed(sorted(self.custom.band_dict.keys()))
 
     def get_card_model(self):
@@ -539,8 +536,8 @@ class WCDMAWrapper(WCDMAProtocol):
         def get_sms_cb(rawsms):
             try:
                 sms = pdu_to_message(rawsms[0].group('pdu'))
-                sms.index = index
                 sms.where = int(rawsms[0].group('where'))
+                sms.index = index
             except IndexError:
                 # handle bogus CMTI notifications, see #180
                 return None
@@ -902,7 +899,10 @@ class BasicNetworkOperator(object):
     """A Network operator with a netid"""
     def __init__(self, netid):
         super(BasicNetworkOperator, self).__init__()
-        self.netid = netid
+        if check_if_ucs2(netid):
+            self.netid = from_ucs2(netid)
+        else:
+            self.netid = netid
 
     def __repr__(self):
         return '<BasicNetworkOperator: %s>' % self.netid

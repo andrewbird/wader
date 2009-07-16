@@ -80,7 +80,7 @@ CMD_DICT = {
                             \r\n
                             \+CPBF:\s
                             (?P<id>\d+),
-                            "(?P<number>\+?\d+)",
+                            "(?P<number>[+0-9a-fA-F]+)",
                             (?P<category>\d+),
                             \"(?P<name>.*)\"
                             """, re.X)),
@@ -99,7 +99,7 @@ CMD_DICT = {
     'get_contact_by_index' : build_cmd_dict(re.compile(r"""
                             \r\n
                             \+CPBR:\s(?P<id>\d+),
-                            "(?P<number>\+?\d+)",
+                            "(?P<number>[+0-9a-fA-F]+)",
                             (?P<cat>\d+),
                             "(?P<name>.*)"
                             \r\n""", re.X)),
@@ -107,12 +107,12 @@ CMD_DICT = {
     'get_contacts' : build_cmd_dict(
                         end=re.compile('(\r\n)?\r\n(OK)\r\n'),
                         extract=re.compile(r"""
-                              \r\n
-                              \+CPBR:\s(?P<id>\d+),
-                              "(?P<number>\+?\d+)",
-                              (?P<cat>\d+),
-                              "(?P<name>.*)"
-                              """, re.X)),
+                            \r\n
+                            \+CPBR:\s(?P<id>\d+),
+                            "(?P<number>[+0-9a-fA-F]+)",
+                            (?P<cat>\d+),
+                            "(?P<name>.*)"
+                            """, re.X)),
 
     'get_card_version' : build_cmd_dict(re.compile(
                               '\r\n(\+C?GMR:)?(?P<version>.*)\r\n\r\nOK\r\n')),
@@ -224,7 +224,7 @@ CMD_DICT = {
     'reset_settings' : build_cmd_dict(),
 
     'save_sms' : build_cmd_dict(re.compile(
-                              '\r\n\r\n\+CMGW:\s(?P<index>\d+)\r\n')),
+                              '(\r\n)?\r\n\+CMGW:\s(?P<index>\d+)\r\n')),
 
     'send_at' : build_cmd_dict(),
 

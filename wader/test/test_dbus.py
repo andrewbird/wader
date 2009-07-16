@@ -140,11 +140,19 @@ class DBusTestCase(unittest.TestCase):
             else:
                 raise unittest.SkipTest("Cannot handle error %s" % error)
 
+        def get_bands_cb(bands):
+            self.bands = bands
+
         def get_device_from_opath(opaths):
             if not len(opaths):
                 raise unittest.SkipTest("Can't run this test without devices")
 
             self.device = bus.get_object(MM_SERVICE, opaths[0])
+            # we will need this info later on
+            self.device.GetBands(dbus_interface=NET_INTFACE,
+                                 reply_handler=get_bands_cb,
+                                 error_handler=log.err)
+            # enable the device
             self.device.Enable(True, dbus_interface=MDM_INTFACE,
                                reply_handler=enable_device_cb,
                                error_handler=enable_device_eb)
@@ -185,6 +193,8 @@ class DBusTestCase(unittest.TestCase):
 
         return d
 
+    test_CardChangePin.timeout = 15
+
     def test_CardCheck(self):
         """Test for Card.Check"""
         if not TEST_WADER_EXTENSIONS:
@@ -224,6 +234,8 @@ class DBusTestCase(unittest.TestCase):
                               reply_handler=disable_pin_cb,
                               error_handler=log.err)
         return d
+
+    test_CardEnablePin.timeout = 15
 
     def test_CardGetCharset(self):
         """Test for Card.GetCharset"""
@@ -657,9 +669,15 @@ class DBusTestCase(unittest.TestCase):
         if not TEST_WADER_EXTENSIONS:
             raise unittest.SkipTest(GENERIC_SKIP_MSG)
 
+        if not self.bands:
+            raise unittest.SkipTest("Cannot be tested")
+
         d = defer.Deferred()
 
         def get_bands_cb(bands):
+            if not bands:
+                d.callback(True)
+
             self.failUnlessIn(MM_NETWORK_BAND_ANY, bands)
             self.failUnlessIn(MM_NETWORK_BAND_DCS, bands)
             self.failUnlessIn(MM_NETWORK_BAND_U850, bands)
@@ -782,6 +800,9 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkSetBand_ANY(self):
         """Test for Network.SetBand"""
+        if MM_NETWORK_BAND_ANY not in self.bands:
+            raise unittest.SkipTest("Cannot be tested")
+
         d = defer.Deferred()
 
         def get_band_cb(band):
@@ -796,10 +817,14 @@ class DBusTestCase(unittest.TestCase):
                                    dbus_interface=NET_INTFACE,
                                    reply_handler=get_band_cb,
                                    error_handler=log.err))
+
         return d
 
     def test_NetworkSetBand_U850(self):
         """Test for Network.SetBand"""
+        if MM_NETWORK_BAND_U850 not in self.bands:
+            raise unittest.SkipTest("Cannot be tested")
+
         d = defer.Deferred()
 
         def get_band_cb(band):
@@ -810,6 +835,10 @@ class DBusTestCase(unittest.TestCase):
                                 reply_handler=lambda: d.callback(True),
                                 error_handler=log.err)
 
+        def get_bands_cb(bands):
+            if MM_NETWORK_BAND_U850 not in bands:
+                raise unittest.SkipTest("Cannot be tested")
+
         self.device.SetBand(MM_NETWORK_BAND_U850,
                             dbus_interface=NET_INTFACE,
                             error_handler=log.err,
@@ -818,6 +847,7 @@ class DBusTestCase(unittest.TestCase):
                                    dbus_interface=NET_INTFACE,
                                    reply_handler=get_band_cb,
                                    error_handler=log.err))
+
         return d
 
     #def test_NetworkSetNetworkMode_ANY(self):
@@ -1130,10 +1160,17 @@ class DBusTestCase(unittest.TestCase):
                                   reply_handler=lambda: d.callback(True),
                                   error_handler=log.err)
 
+        def set_format_eb(e):
+            if 'CMSError303' in e.get_dbus_name():
+                # it does not support setting +CMFG=1 (Ericsson)
+                d.callback(True)
+            else:
+                d.errback(e)
+
         # set text format and check immediately that a
         # GetFormat call returns 1
         self.device.SetFormat(1, dbus_interface=SMS_INTFACE,
-                              error_handler=log.err,
+                              error_handler=set_format_eb,
                               reply_handler=lambda:
                                     self.device.GetFormat(
                                       dbus_interface=SMS_INTFACE,
