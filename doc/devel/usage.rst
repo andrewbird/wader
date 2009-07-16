@@ -189,7 +189,7 @@ Adding a contact to the SIM and getting the index where it was stored::
 
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
         /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
-        org.freedesktop.ModemManager.Contacts.Add string:Pablo string:+34545665655
+        org.freedesktop.ModemManager.Modem.Gsm.Contacts.Add string:Pablo string:+34545665655
     method return sender=:1.54 -> dest=:1.57 reply_serial=2
        uint32 1
 
@@ -197,7 +197,7 @@ And reading it again::
 
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
         /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
-        org.freedesktop.ModemManager.Contacts.Get uint32:1
+        org.freedesktop.ModemManager.Modem.Gsm.Contacts.Get uint32:1
     method return sender=:1.54 -> dest=:1.58 reply_serial=2
        struct {
           uint32 1
@@ -209,12 +209,12 @@ Now lets add another contact and read all the contacts in the SIM card::
 
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
         /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
-        org.freedesktop.ModemManager.Contacts.Add string:John string:+33546657784
+        org.freedesktop.ModemManager.Modem.Gsm.Contacts.Add string:John string:+33546657784
     method return sender=:1.54 -> dest=:1.60 reply_serial=2
        uint32 2
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
         /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
-        org.freedesktop.ModemManager.Contacts.List
+        org.freedesktop.ModemManager.Modem.Gsm.Contacts.List
     method return sender=:1.54 -> dest=:1.61 reply_serial=2
        array [
           struct {
