@@ -28,6 +28,14 @@ OK_REGEXP = re.compile("\r\n(?P<resp>OK)\r\n")
 
 def build_cmd_dict(extract=OK_REGEXP, end=OK_REGEXP, error=ERROR_REGEXP):
     """Returns a dictionary ready to be used in ``CMD_DICT``"""
+    for regexp in [extract, end, error]:
+        if isinstance(regexp, basestring):
+            regexp = re.compile(regexp)
+        if hasattr(regexp, 'search'):
+            pass
+        else:
+            raise ValueError("Don't know what to do with %r" % regexp)
+
     return dict(extract=extract, end=end, error=error)
 
 def get_cmd_dict_copy():
