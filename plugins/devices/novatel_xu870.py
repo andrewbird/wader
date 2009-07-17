@@ -16,14 +16,51 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
+                                           NovatelWCDMACustomizer,
+                                           NOVATEL_BAND_DICT)
+from wader.common.hardware.base import build_band_dict
+from wader.common import consts
+
 import serial
+
+class NovatelXU870Customizer(NovatelWCDMACustomizer):
+    """:class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for Novatel's XU870"""
+
+    # Supported bands (from Novatel docs)
+    # GSM/GPRS
+    #    GSM 850             824 -894MHz
+    #    EGSM 900            880-960MHz
+    #    DCS 1800            1710-1880MHz
+    #    PCS 1900            1850-1990MHz
+    # WCDMA
+    #    UMTS 850 (Band V)   824 -894MHz
+    #    UMTS 1900 (Band II) 1850-1990MHz
+    #    UMTS 2100 (Band I)  1920-2170MHz
+
+    band_dict = build_band_dict(
+                  NOVATEL_BAND_DICT,
+                  [ consts.MM_NETWORK_BAND_ANY,
+
+                    consts.MM_NETWORK_BAND_G850,
+                    consts.MM_NETWORK_BAND_EGSM,
+                    consts.MM_NETWORK_BAND_DCS,
+                    consts.MM_NETWORK_BAND_PCS,
+
+                    consts.MM_NETWORK_BAND_U850,
+                    consts.MM_NETWORK_BAND_U1900, # XXX: Novatel docs show UMTS 1900 (Band II)
+                                                  # but consts.py has this as UMTS 1900 Class IX
+                    consts.MM_NETWORK_BAND_U2100,
+                  ]
+                )
+
 
 class NovatelXU870(NovatelWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Novatel's XU870"""
     name = "Novatel XU870"
     version = "0.1"
     author = u"Pablo Martí"
+    custom = NovatelXU870Customizer()
 
     __remote_name__ = "Merlin XU870 ExpressCard"
 
