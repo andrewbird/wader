@@ -936,7 +936,7 @@ class DBusTestCase(unittest.TestCase):
             self.failUnless('operator_code' in status)
             self.failUnless('operator_name' in status)
             self.failUnlessIsInstance(status['operator_name'], basestring)
-            self.failUnlessIsInstance(status['operator_name'], basestring)
+            self.failUnlessIsInstance(status['operator_code'], basestring)
             self.failUnlessIsInstance(status['signal_quality'], dbus.UInt32)
             self.failUnlessIsInstance(status['band'], dbus.UInt32)
 
