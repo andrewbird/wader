@@ -130,7 +130,7 @@ class NovatelWrapper(WCDMAWrapper):
             if band == 0x3FFFFFFF:
                 return consts.MM_NETWORK_BAND_ANY
 
-            ret = 0 
+            ret = 0
             for key, value in NOVATEL_BAND_DICT.items():
                 if value & band:
                     ret |= key
@@ -182,7 +182,8 @@ class NovatelWCDMACustomizer(WCDMACustomizer):
     """WCDMA customizer for Novatel cards"""
     async_regexp = None
     conn_dict = NOVATEL_MODE_DICT
-    band_dict = NOVATEL_BAND_DICT
+    band_dict = {}  # let the cards that support band switching define
+                    # the bands they support
     cmd_dict = NOVATEL_CMD_DICT
     wrapper_klass = NovatelWrapper
 
