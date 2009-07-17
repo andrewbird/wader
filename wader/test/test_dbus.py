@@ -83,6 +83,11 @@ TEST_WADER_EXTENSIONS = True
 GENERIC_SKIP_MSG = "Wader extension to MM"
 GCONF_BASE = '/apps/wader-core'
 
+if dbus.version >= (0, 83, 0):
+    def get_dbus_error(e): return e.get_dbus_message()
+else:
+    def get_dbus_error(e): return e.message
+
 class Config(object):
     """Simple GConf wrapper for string-only gets"""
     def __init__(self, path):
@@ -131,7 +136,7 @@ class DBusTestCase(unittest.TestCase):
             d.callback(True)
 
         def enable_device_eb(e):
-            error = e.get_dbus_message()
+            error = get_dbus_error(e)
             if 'SimPinRequired' in error:
                 pin = config.get('test', 'pin', '0000')
                 self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
