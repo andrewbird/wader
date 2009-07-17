@@ -47,7 +47,7 @@ show_update()
 reload_udev_rules()
 {
     if [ ! -x /sbin/udevcontrol ] ; then
-        /sbin/udevadm control --reload-rules
+        (/sbin/udevadm control --reload-rules 2>/dev/null || /sbin/udevadm control --reload_rules)
     else
         /sbin/udevcontrol reload_rules
     fi
