@@ -198,7 +198,8 @@ class DBusTestCase(unittest.TestCase):
 
         return d
 
-    test_CardChangePin.timeout = 15
+    test_CardChangePin.timeout = 30 # if we unlocked the PIN at enable we must allow
+                                    # for the requisite settling that's applied in core
 
     def test_CardCheck(self):
         """Test for Card.Check"""
