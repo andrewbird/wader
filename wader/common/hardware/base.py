@@ -60,6 +60,13 @@ class WCDMACustomizer(object):
     simp_klass = SimpleStateMachine
     netr_klass = NetworkRegistrationStateMachine
 
+def build_band_dict(family_dict, supported_list):
+    """Returns a new dict with just the supported bands of the family"""
+    band_dict = {}
+    for band in supported_list:
+        band_dict[band] = family_dict[band]
+
+    return band_dict
 
 def _identify_device(port):
     """Returns the model of the device present at `port`"""
