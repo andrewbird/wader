@@ -19,6 +19,7 @@
 """Common stuff for all Novatel's cards"""
 
 import re
+from twisted.internet import defer
 
 from wader.common import consts
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict
@@ -123,7 +124,6 @@ class NovatelWrapper(WCDMAWrapper):
     def get_band(self):
         """Returns the current used band"""
         if not len(self.custom.band_dict):
-            from twisted.internet import defer
             return defer.succeed(consts.MM_NETWORK_BAND_ANY)
 
         def get_band_cb(resp):
@@ -152,7 +152,10 @@ class NovatelWrapper(WCDMAWrapper):
     def set_band(self, band):
         """Sets the band to ``band``"""
         if not len(self.custom.band_dict):
-            raise NotImplementedError("Band setting/querying not supported")
+            if band == consts.MM_NETWORK_BAND_ANY:
+                return defer.succeed('')
+            else:
+                raise KeyError("Unsupported band %d" % band)
 
         if band == consts.MM_NETWORK_BAND_ANY:
             _band = 0x3FFFFFFF
