@@ -823,9 +823,6 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkSetBand_ANY(self):
         """Test for Network.SetBand"""
-        if MM_NETWORK_BAND_ANY not in self.bands:
-            raise unittest.SkipTest("Cannot be tested")
-
         d = defer.Deferred()
 
         def get_band_cb(band):
