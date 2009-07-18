@@ -123,7 +123,8 @@ class NovatelWrapper(WCDMAWrapper):
     def get_band(self):
         """Returns the current used band"""
         if not len(self.custom.band_dict):
-            raise NotImplementedError("Band setting/querying not supported")
+            from twisted.internet import defer
+            return defer.succeed(consts.MM_NETWORK_BAND_ANY)
 
         def get_band_cb(resp):
             band = int(resp[0].group('band'), 16)
