@@ -17,14 +17,37 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
+                                           NovatelWCDMACustomizer,
+                                           NovatelWrapper)
 import serial
+
+class NovatelU740Wrapper(NovatelWrapper):
+
+    def find_contacts(self, pattern):
+        """Returns a list of `Contact` whose name matches pattern"""
+        # U740's AT+CPBF function is broken, it always raises a
+        # CME ERROR: Not Found
+        # We have no option but to use this little hack and emulate AT+CPBF
+        # getting all contacts and returning those whose name match pattern
+        # this will be slower than AT+CPBF with many contacts but at least
+        # works
+        d = self.get_contacts()
+        d.addCallback(lambda contacts:
+                        [c for c in contacts if c.name.startswith(pattern)])
+        return d
+
+
+class NovatelU740Customizer(NovatelWCDMACustomizer):
+    wrapper_klass = NovatelU740Wrapper
+
 
 class NovatelU740(NovatelWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Novatel's U740"""
     name = "Novatel U740"
     version = "0.1"
     author = "Adam King"
+    custom = NovatelU740Customizer()
 
     __remote_name__ = "Merlin U740 (HW REV [0:33])"
 
