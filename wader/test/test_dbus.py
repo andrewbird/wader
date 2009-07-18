@@ -657,11 +657,6 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkGetBand(self):
         """Test for Network.GetBand"""
-        # this will be a property soon
-        if TEST_WADER_EXTENSIONS:
-            if not self.bands:
-                raise unittest.SkipTest("Cannot be tested")
-
         d = defer.Deferred()
 
         def get_band_cb(band):
