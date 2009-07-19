@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2007  Vodafone España, S.A.
+# Copyright (C) 2006-2009  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -20,12 +20,13 @@
 __version__ = "$Rev: 1209 $"
 
 from wader.common.hardware.zte import ZTEWCDMADevicePlugin
+from twisted.python import log
 
 class ZTEK3565(ZTEWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for ZTE K3565
+    :class:`~wader.common.plugin.DevicePlugin` for ZTE K3565-Z
     """
-    name = "Vodafone K3565-Z"
+    name = "ZTE K3565-Z"
     version = "0.1"
     author = "Andrew Bird"
 
@@ -33,10 +34,16 @@ class ZTEK3565(ZTEWCDMADevicePlugin):
 
     __properties__ = {
         'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0049, 0x0052], # depends on firmware version
+        'usb_device.product_id': [0x0049, 0x0052, 0x0063], # depends on firmware version
     }
 
-    hardcoded_ports = (2, 1)
+    def preprobe_init(self, ports, info):
+        if info['usb_device.product_id'] == 0x0052:
+            self.hardcoded_ports = (2,1) # K3565-Z (0x0052) uses ttyUSB2(data) and ttyUSB1(status)
+        elif info['usb_device.product_id'] == 0x0063:
+            self.hardcoded_ports = (3,1) # K3565-Z (0x0063) uses ttyUSB3(data) and ttyUSB1(status)
+        else: # let probing occur
+            log.msg("Unknown K3565-Z product ID, falling through to probing")
 
 zte_k3565 = ZTEK3565()
 
