@@ -19,6 +19,7 @@
 """Common stuff for all zte's cards"""
 
 import re
+from twisted.internet import defer
 
 from wader.common import consts
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict
@@ -33,16 +34,36 @@ ZTE_MODE_DICT = {
     consts.MM_NETWORK_MODE_2G_ONLY      : (1, 0, 0),
     consts.MM_NETWORK_MODE_3G_ONLY      : (2, 0, 0),
     consts.MM_NETWORK_MODE_2G_PREFERRED : (0, 0, 1),
-    consts.MM_NETWORK_MODE_3G_PREFERRED : (1, 0, 2),
+    consts.MM_NETWORK_MODE_3G_PREFERRED : (0, 0, 2),
 }
 
+# FIXME: what to do about this many to one mapping
 ZTE_BAND_DICT = {
-    consts.MM_NETWORK_BAND_PCS   : 4, # PCS (1900MHz)
-    consts.MM_NETWORK_BAND_G850  : 3, # GSM (850 MHz)
-    consts.MM_NETWORK_BAND_U2100 : 2, # WCDMA 2100Mhz            (Class I)
-    consts.MM_NETWORK_BAND_U850  : 1, # WCDMA 3GPP UMTS850       (Class V)
-    consts.MM_NETWORK_BAND_ANY   : 0, # any band
+    consts.MM_NETWORK_BAND_ANY      : 0, # any band
+
+    (consts.MM_NETWORK_BAND_U850  |
+     consts.MM_NETWORK_BAND_EGSM  |
+     consts.MM_NETWORK_BAND_DCS   ) : 1,
+
+    (consts.MM_NETWORK_BAND_U2100 |
+     consts.MM_NETWORK_BAND_EGSM  |
+     consts.MM_NETWORK_BAND_DCS   ) : 2, # Europe
+
+    (consts.MM_NETWORK_BAND_U850  |
+     consts.MM_NETWORK_BAND_U2100 |
+     consts.MM_NETWORK_BAND_EGSM  |
+     consts.MM_NETWORK_BAND_DCS   ) : 3,
+
+    (consts.MM_NETWORK_BAND_U850  |
+     consts.MM_NETWORK_BAND_U1900 |
+     consts.MM_NETWORK_BAND_G850  |
+     consts.MM_NETWORK_BAND_PCS   ) : 4,
 }
+# AT+ZBANDI=0 : Automatic (Auto) - Default
+# AT+ZBANDI=1 : UMTS 850 + GSM 900/1800
+# AT+ZBANDI=2 : UMTS 2100 + GSM 900/1800 (Europe)
+# AT+ZBANDI=3 : UMTS 850/2100 + GSM 900/1800
+# AT+ZBANDI=4 : UMTS 850/1900 + GSM 850/1900
 
 ZTE_CMD_DICT = get_cmd_dict_copy()
 
@@ -63,12 +84,11 @@ ZTE_CMD_DICT['get_netreg_status'] = build_cmd_dict(re.compile(r"""
 ZTE_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
                                 \r\n
                                 \+ZPAS:\s
-                                "(?P<mode>.*)",
-                                "(?P<srv>.*)",
+                                "(?P<mode>.*?)"
+                                (?:,\s*"(?P<srv>.*?)")?
                                 \r\n""", re.VERBOSE))
 
 def zte_new_conn_mode(args):
-    what = args.replace('"', '')
     if what in "UMTS":
         return S.UMTS_SIGNAL
     elif what in ["GPRS", "GSM"]:
@@ -79,7 +99,7 @@ def zte_new_conn_mode(args):
         return S.HSDPA_SIGNAL
     elif what in "EDGE":
         return S.EDGE_SIGNAL
-    elif what in ["No service", "Limited Service"]:
+    elif what in ["No Service", "Limited Service"]:
         return S.NO_SIGNAL
 
 
@@ -88,19 +108,41 @@ class ZTEWrapper(WCDMAWrapper):
 
     def get_band(self):
         """Returns the current used band"""
+        if not len(self.custom.band_dict):
+            return defer.succeed(consts.MM_NETWORK_BAND_ANY)
+
         def get_band_cb(resp):
             band = int(resp[0].group('band'))
             return revert_dict(ZTE_BAND_DICT)[band]
 
-        return self.send_at("at+zbandi?", name='get_band',
+        return self.send_at("AT+ZBANDI?", name='get_band',
                             callback=get_band_cb)
 
     def set_band(self, band):
         """Sets the band to ``band``"""
-        if band not in ZTE_BAND_DICT:
-            raise KeyError("Band %d not found" % band)
+        if not len(self.custom.band_dict):
+            if band == consts.MM_NETWORK_BAND_ANY:
+                return defer.succeed('')
+            else:
+                raise KeyError("Unsupported band %d" % band)
 
-        return self.send_at("at+zbandi=%d" % ZTE_BAND_DICT[band])
+        if band == consts.MM_NETWORK_BAND_ANY:
+            pass
+        else:
+            # XXX: These are supposed to be freely mixed bit values,
+            #      but we have fixed modes that set several bands.
+            #      For now we'll just reject anything but 'any' until
+            #      we figure out how we are going to handle it
+            #      Questions:
+            #          1/ Should we silently set several bands at once on
+            #             the card? That leads to set_band(single) != get_band()
+            #          2/ Should we change GetBands to advertise an array of
+            #             modes, of which each item could be single band or a
+            #             bitmap of modes? This pushes the logic down to the
+            #             clients.
+            raise KeyError("Unsupported band %d" % band)
+
+        return self.send_at("AT+ZBANDI=%d" % self.custom.band_dict[band])
 
     def get_network_mode(self):
         """Returns the current used network mode"""
@@ -127,10 +169,10 @@ class ZTEWrapper(WCDMAWrapper):
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
-        if mode not in ZTE_MODE_DICT:
+        if mode not in self.custom.conn_dict:
             raise KeyError("Mode %s not found" % mode)
 
-        return self.send_at("AT^ZSNT=%d,%d,%d" % ZTE_MODE_DICT[mode])
+        return self.send_at("AT+ZSNT=%d,%d,%d" % self.custom.conn_dict[mode])
 
 
 class ZTEWCDMACustomizer(WCDMACustomizer):
@@ -139,14 +181,16 @@ class ZTEWCDMACustomizer(WCDMACustomizer):
                     \r\n
                     (?P<signal>\+Z[A-Z]{3,}):\s*(?P<args>.*)
                     \r\n""", re.VERBOSE)
-    band_dict = ZTE_BAND_DICT
+    band_dict = {}
     conn_dict = ZTE_MODE_DICT
     cmd_dict = ZTE_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE]
     signal_translations = {
-        '+ZDONR' : (None, None),
-        '+ZPASR' : (S.SIG_NETWORK_MODE, zte_new_conn_mode),
+        '+ZDONR'  : (None, None),
+        '+ZPASR'  : (S.SIG_NETWORK_MODE, zte_new_conn_mode),
         '+ZUSIMR' : (None, None),
+        '+ZPSTM'  : (None, None),
+        '+ZEND'   : (None, None),
     }
     wrapper_klass = ZTEWrapper
 
