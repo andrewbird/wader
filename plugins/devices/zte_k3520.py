@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2007  Vodafone España, S.A.
+# Copyright (C) 2006-2009  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Andrew Bird
 #
@@ -32,7 +32,7 @@ class ZTEK3520(ZTEWCDMADevicePlugin):
         'usb_device.product_id': [0x0025, 0x0055], # depends on fw rev
     }
 
-    harcoded_ports = (1, 3)
+    hardcoded_ports = (1, 3)
 
 zte_k3520 = ZTEK3520()
 
