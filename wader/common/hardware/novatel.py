@@ -172,7 +172,13 @@ class NovatelWrapper(WCDMAWrapper):
                 # if we could not satisfy the request, tell someone
                 raise KeyError("Unsupported band %d" % band)
 
-        return self.send_at("AT$NWBAND=%08x" % _band)
+        def settle_cb(result):
+            from time import sleep
+            sleep(1)
+            return result
+
+        return self.send_at("AT$NWBAND=%08x" % _band,
+                            callback=settle_cb)
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
