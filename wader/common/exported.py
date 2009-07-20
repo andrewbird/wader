@@ -375,13 +375,6 @@ class NetworkExporter(CardExporter):
         d = self.sconn.get_bands()
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(NET_INTFACE, in_signature='', out_signature='(ss)',
-            async_callbacks=('async_cb', 'async_eb'))
-    def GetInfo(self, async_cb, async_eb):
-        """Returns the current operator name and link type"""
-        d = self.sconn.get_network_info()
-        return self.add_callbacks(d, async_cb, async_eb)
-
     @method(NET_INTFACE, in_signature='', out_signature='u',
             async_callbacks=('async_cb', 'async_eb'))
     def GetNetworkMode(self, async_cb, async_eb):

@@ -698,19 +698,6 @@ class DBusTestCase(unittest.TestCase):
                              error_handler=log.err)
         return d
 
-    def test_NetworkGetInfo(self):
-        """Test for Network.GetInfo"""
-        d = defer.Deferred()
-
-        def get_netinfo_cb(reply):
-            self.failUnless(len(reply) == 2)
-            d.callback(True)
-
-        self.device.GetInfo(dbus_interface=NET_INTFACE,
-                            reply_handler=get_netinfo_cb,
-                            error_handler=log.err)
-        return d
-
     def test_NetworkGetNetworkMode(self):
         """Test for Network.GetNetworkMode"""
         d = defer.Deferred()
