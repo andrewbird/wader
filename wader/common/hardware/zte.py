@@ -30,14 +30,13 @@ from wader.common.utils import revert_dict
 import wader.common.signals as S
 
 ZTE_MODE_DICT = {
-    consts.MM_NETWORK_MODE_ANY          : (0, 0, 0),
-    consts.MM_NETWORK_MODE_2G_ONLY      : (1, 0, 0),
-    consts.MM_NETWORK_MODE_3G_ONLY      : (2, 0, 0),
-    consts.MM_NETWORK_MODE_2G_PREFERRED : (0, 0, 1),
-    consts.MM_NETWORK_MODE_3G_PREFERRED : (0, 0, 2),
+    consts.MM_NETWORK_MODE_ANY          : (0, 0),
+    consts.MM_NETWORK_MODE_2G_ONLY      : (1, 0),
+    consts.MM_NETWORK_MODE_3G_ONLY      : (2, 0),
+    consts.MM_NETWORK_MODE_2G_PREFERRED : (0, 1),
+    consts.MM_NETWORK_MODE_3G_PREFERRED : (0, 2),
 }
 
-# FIXME: what to do about this many to one mapping
 ZTE_BAND_DICT = {
     consts.MM_NETWORK_BAND_ANY      : 0, # any band
 
@@ -75,18 +74,29 @@ ZTE_CMD_DICT['get_band'] = build_cmd_dict(re.compile(r"""
                                             """, re.VERBOSE))
 
 ZTE_CMD_DICT['get_netreg_status'] = build_cmd_dict(re.compile(r"""
-                                \r\n
-                                \+CREG:\s
-                                (?P<mode>\d),
-                                (?P<status>\d+)(,[0-9a-fA-F]*,[0-9a-fA-F]*)?
-                                \r\n""", re.VERBOSE))
+                                                     \r\n
+                                                     \+CREG:\s
+                                                     (?P<mode>\d),
+                                                     (?P<status>\d+)(,[0-9a-fA-F]*,[0-9a-fA-F]*)?
+                                                     \r\n
+                                                     """, re.VERBOSE))
 
 ZTE_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
-                                \r\n
-                                \+ZPAS:\s
-                                "(?P<mode>.*?)"
-                                (?:,\s*"(?P<srv>.*?)")?
-                                \r\n""", re.VERBOSE))
+                                                    \r\n
+                                                    \+ZSNT:\s
+                                                    (?P<only>\d+),
+                                                    (?P<netsel>\d+),
+                                                    (?P<order>\d+)
+                                                    \r\n
+                                                    """, re.VERBOSE))
+
+#ZTE_CMD_DICT['get_network_type'] = build_cmd_dict(re.compile(r"""
+#                                                   \r\n
+#                                                   \+ZPAS:\s
+#                                                   "(?P<mode>.*?)"
+#                                                   (?:,\s*"(?P<srv>.*?)")?
+#                                                   \r\n
+#                                                   """, re.VERBOSE))
 
 def zte_new_conn_mode(what):
     if what in "UMTS":
@@ -118,6 +128,39 @@ class ZTEWrapper(WCDMAWrapper):
         return self.send_at("AT+ZBANDI?", name='get_band',
                             callback=get_band_cb)
 
+    def get_network_mode(self):
+        """Returns the current network mode preference"""
+        def get_network_mode_cb(resp):
+            only = int(resp[0].group('only'))
+            order = int(resp[0].group('order'))
+            return revert_dict(ZTE_MODE_DICT)[(only, order)]
+
+        return self.send_at("AT+ZSNT?", name='get_network_mode',
+                            callback=get_network_mode_cb)
+
+#    def get_network_type(self):
+#        """Returns the current network type"""
+#        def get_network_type_cb(resp):
+#            mode = resp[0].group('mode')
+#
+#            if mode in "UMTS":
+#                return consts.MM_NETWORK_MODE_UMTS
+#            elif mode in ["GPRS", "GSM"]:
+#                return consts.MM_NETWORK_MODE_GPRS
+#            elif mode in ["EDGE"]:
+#                return consts.MM_NETWORK_MODE_EDGE
+#            elif mode in ["HSDPA"]:
+#                return consts.MM_NETWORK_MODE_HSDPA
+#            elif mode in ["HSUPA"]:
+#                return consts.MM_NETWORK_MODE_HSUPA
+#            elif mode in ["HSPA"]:
+#                return consts.MM_NETWORK_MODE_HSPA
+#
+#            raise ValueError("Can not translate mode %s" % mode)
+#
+#        return self.send_at("AT+ZPAS?", name='get_network_type',
+#                            callback=get_network_type_cb)
+
     def set_band(self, band):
         """Sets the band to ``band``"""
         if not len(self.custom.band_dict):
@@ -132,35 +175,12 @@ class ZTEWrapper(WCDMAWrapper):
 
         raise KeyError("Unsupported band %d" % band)
 
-    def get_network_mode(self):
-        """Returns the current used network mode"""
-        def get_network_mode_cb(resp):
-            mode = resp[0].group('mode')
-
-            if mode in "UMTS":
-                return consts.MM_NETWORK_MODE_UMTS
-            elif mode in ["GPRS", "GSM"]:
-                return consts.MM_NETWORK_MODE_GPRS
-            elif mode in ["EDGE"]:
-                return consts.MM_NETWORK_MODE_EDGE
-            elif mode in ["HSDPA"]:
-                return consts.MM_NETWORK_MODE_HSDPA
-            elif mode in ["HSUPA"]:
-                return consts.MM_NETWORK_MODE_HSUPA
-            elif mode in ["HSPA"]:
-                return consts.MM_NETWORK_MODE_HSPA
-
-            raise ValueError("Can not translate mode %s" % mode)
-
-        return self.send_at("AT+ZPAS?", name='get_network_mode',
-                            callback=get_network_mode_cb)
-
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
         if mode not in self.custom.conn_dict:
             raise KeyError("Mode %s not found" % mode)
 
-        return self.send_at("AT+ZSNT=%d,%d,%d" % self.custom.conn_dict[mode])
+        return self.send_at("AT+ZSNT=%d,0,%d" % self.custom.conn_dict[mode])
 
 
 class ZTEWCDMACustomizer(WCDMACustomizer):
