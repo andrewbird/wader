@@ -41,6 +41,8 @@ ERICSSON_BAND_DICT = {
 }
 
 ERICSSON_CONN_DICT = {
+    consts.MM_NETWORK_MODE_ANY : 1,
+
     consts.MM_NETWORK_MODE_GPRS : 5,
     consts.MM_NETWORK_MODE_EDGE : 5,
     consts.MM_NETWORK_MODE_2G_ONLY : 5,
@@ -276,10 +278,10 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def set_band(self, band):
-        if band not in self.custom.band_dict:
-            raise KeyError("Band %d not found" % band)
+        if band == consts.MM_NETWORK_BAND_ANY:
+            return defer.succeed('')
 
-        raise NotImplementedError()
+        raise KeyError("Unsupported band %d" % band)
 
     def set_charset(self, charset):
         # The oddity here is that the set command needs to have its charset value
@@ -312,7 +314,7 @@ class EricssonCustomizer(WCDMACustomizer):
     async_regexp = re.compile("\r\n(?P<signal>[*+][A-Z]{3,}):(?P<args>.*)\r\n",
                               re.MULTILINE)
 
-    band_dict = ERICSSON_BAND_DICT
+    band_dict = {}
     cmd_dict = ERICSSON_CMD_DICT
     conn_dict = ERICSSON_CONN_DICT
 
