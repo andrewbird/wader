@@ -473,6 +473,8 @@ class HardwareManager(DBusComponent):
             # set DBus properties
             props = plugin.props[consts.MDM_INTFACE]
             props['IpMethod'] = consts.MM_IP_METHOD_PPP
+            # XXX: Fix MasterDevice
+            props['MasterDevice'] = 'udev:/sys/devices/not/implemented'
             # XXX: Fix CDMA
             props['Type'] = consts.MM_MODEM_TYPE_REV['GSM']
             props['Driver'] = self._get_driver_name(root_udi, context)

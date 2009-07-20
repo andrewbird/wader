@@ -88,6 +88,8 @@ class HardwareManager(object):
             props = plugin.props[consts.MDM_INTFACE]
             props['Device'] = dev_info['callout']
             props['Control'] = dev_info['dialin']
+            # XXX: Fix MasterDevice
+            props['MasterDevice'] = 'iokit:com.vodafone.BMC.NotImplemented'
             # XXX: Fix CDMA
             props['Type'] = consts.MM_MODEM_TYPE_REV['GSM']
             plugin.udi = self._get_udi_from_devinfo(dev_info, model)
