@@ -19,7 +19,7 @@
 """Common stuff for all Novatel's cards"""
 
 import re
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 
 from wader.common import consts
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict
@@ -172,13 +172,15 @@ class NovatelWrapper(WCDMAWrapper):
                 # if we could not satisfy the request, tell someone
                 raise KeyError("Unsupported band %d" % band)
 
-        def settle_cb(result):
-            from time import sleep
-            sleep(1)
-            return result
 
-        return self.send_at("AT$NWBAND=%08x" % _band,
-                            callback=settle_cb)
+        deferred = defer.Deferred()
+        d = self.send_at("AT$NWBAND=%08x" % _band)
+
+        def delay_result(result):
+            reactor.callLater(1, deferred.callback, True)
+
+        d.addCallback(delay_result)
+        return deferred
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
