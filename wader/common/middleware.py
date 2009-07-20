@@ -919,8 +919,8 @@ class NetworkOperator(BasicNetworkOperator):
     def __init__(self, stat, long_name, short_name, netid, rat):
         super(NetworkOperator, self).__init__(netid)
         self.stat = int(stat)
-        self.long_name = from_ucs2(long_name)
-        self.short_name = from_ucs2(short_name)
+        self.long_name = from_ucs2(long_name).decode('utf8', 'replace')
+        self.short_name = from_ucs2(short_name).decode('utf8', 'replace')
         self.rat = int(rat)
 
     def __repr__(self):
