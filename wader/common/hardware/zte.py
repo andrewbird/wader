@@ -126,23 +126,11 @@ class ZTEWrapper(WCDMAWrapper):
             else:
                 raise KeyError("Unsupported band %d" % band)
 
-        if band == consts.MM_NETWORK_BAND_ANY:
-            pass
-        else:
-            # XXX: These are supposed to be freely mixed bit values,
-            #      but we have fixed modes that set several bands.
-            #      For now we'll just reject anything but 'any' until
-            #      we figure out how we are going to handle it
-            #      Questions:
-            #          1/ Should we silently set several bands at once on
-            #             the card? That leads to set_band(single) != get_band()
-            #          2/ Should we change GetBands to advertise an array of
-            #             modes, of which each item could be single band or a
-            #             bitmap of modes? This pushes the logic down to the
-            #             clients.
-            raise KeyError("Unsupported band %d" % band)
+        for key, value in self.custom.band_dict.items():
+            if band & key:
+                return self.send_at("AT+ZBANDI=%d" % self.custom.band_dict[key])
 
-        return self.send_at("AT+ZBANDI=%d" % self.custom.band_dict[band])
+        raise KeyError("Unsupported band %d" % band)
 
     def get_network_mode(self):
         """Returns the current used network mode"""
