@@ -194,6 +194,22 @@ class DBusTestCase(unittest.TestCase):
             self.netinit = False
             time.sleep(5)
 
+    # org.freedesktop.ModemManager.Modem tests
+
+    def test_ModemGetInfo(self):
+        """Test for Modem.GetInfo"""
+        d = defer.Deferred()
+
+        def get_info_cb(info):
+            self.failUnless(len(info) == 3)
+            self.failUnlessIsInstance(info[1], basestring)
+            d.callback(True)
+
+        self.device.GetInfo(dbus_interface=MDM_INTFACE,
+                            reply_handler=get_info_cb,
+                            error_handler=log.err)
+        return d
+
     # org.freedesktop.ModemManager.Modem.Gsm.Card tests
 
     def test_CardChangePin(self):
@@ -813,6 +829,8 @@ class DBusTestCase(unittest.TestCase):
 
         return d
 
+    test_NetworkSetBand_ANY.timeout = 15
+
     def test_NetworkSetBand_U850(self):
         """Test for Network.SetBand"""
         if MM_NETWORK_BAND_U850 not in self.bands:
@@ -840,6 +858,8 @@ class DBusTestCase(unittest.TestCase):
                                    error_handler=log.err))
 
         return d
+
+    test_NetworkSetBand_U850.timeout = 15
 
     #def test_NetworkSetNetworkMode_ANY(self):
     #    """Test for Network.SetNetworkMode"""
@@ -904,20 +924,6 @@ class DBusTestCase(unittest.TestCase):
     def test_SimpleDisconnect(self):
         """Test for Simple.Disconnect"""
         raise unittest.SkipTest("Untested")
-
-    def test_SimpleGetInfo(self):
-        """Test for Simple.GetInfo"""
-        d = defer.Deferred()
-
-        def get_info_cb(info):
-            self.failUnless(len(info) == 3)
-            self.failUnlessIsInstance(info[1], basestring)
-            d.callback(True)
-
-        self.device.GetInfo(dbus_interface=SPL_INTFACE,
-                            reply_handler=get_info_cb,
-                            error_handler=log.err)
-        return d
 
     def test_SimpleGetStatus(self):
         """Test for Simple.GetStatus"""

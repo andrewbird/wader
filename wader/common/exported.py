@@ -105,7 +105,7 @@ class ModemExporter(Object, DBusExporterHelper):
         if interface_name in self.device.props:
             return self.device.props[interface_name]
 
-    @method(SPL_INTFACE, in_signature='', out_signature='(sss)',
+    @method(MDM_INTFACE, in_signature='', out_signature='(sss)',
             async_callbacks=('async_cb', 'async_eb'))
     def GetInfo(self, async_cb, async_eb):
         """
