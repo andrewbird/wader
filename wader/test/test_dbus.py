@@ -315,20 +315,6 @@ class DBusTestCase(unittest.TestCase):
                             error_handler=log.err)
         return d
 
-    def test_CardGetInfo(self):
-        """Test for Card.GetInfo"""
-        d = defer.Deferred()
-
-        def get_info_cb(info):
-            self.failUnless(len(info) == 3)
-            self.failUnlessIsInstance(info[1], basestring)
-            d.callback(True)
-
-        self.device.GetInfo(dbus_interface=CRD_INTFACE,
-                            reply_handler=get_info_cb,
-                            error_handler=log.err)
-        return d
-
     def test_CardGetManufacturer(self):
         """Test for Card.GetManufacturer"""
         d = defer.Deferred()
@@ -931,6 +917,20 @@ class DBusTestCase(unittest.TestCase):
     def test_SimpleDisconnect(self):
         """Test for Simple.Disconnect"""
         raise unittest.SkipTest("Untested")
+
+    def test_SimpleGetInfo(self):
+        """Test for Simple.GetInfo"""
+        d = defer.Deferred()
+
+        def get_info_cb(info):
+            self.failUnless(len(info) == 3)
+            self.failUnlessIsInstance(info[1], basestring)
+            d.callback(True)
+
+        self.device.GetInfo(dbus_interface=CRD_INTFACE,
+                            reply_handler=get_info_cb,
+                            error_handler=log.err)
+        return d
 
     def test_SimpleGetStatus(self):
         """Test for Simple.GetStatus"""

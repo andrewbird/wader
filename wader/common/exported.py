@@ -105,6 +105,17 @@ class ModemExporter(Object, DBusExporterHelper):
         if interface_name in self.device.props:
             return self.device.props[interface_name]
 
+    @method(SPL_INTFACE, in_signature='', out_signature='(sss)',
+            async_callbacks=('async_cb', 'async_eb'))
+    def GetInfo(self, async_cb, async_eb):
+        """
+        Returns the manufacturer, modem model and firmware version
+
+        :rtype: tuple
+        """
+        d = self.sconn.get_hardware_info()
+        return self.add_callbacks(d, async_cb, async_eb)
+
     @method(MDM_INTFACE, in_signature='', out_signature='(uuuu)',
             async_callbacks=('async_cb', 'async_eb'))
     def GetIP4Config(self, async_cb, async_eb):
@@ -252,17 +263,6 @@ class CardExporter(SimpleExporter):
     def GetImsi(self, async_cb, async_eb):
         """Returns the IMSI"""
         d = self.sconn.get_imsi()
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(CRD_INTFACE, in_signature='', out_signature='(sss)',
-            async_callbacks=('async_cb', 'async_eb'))
-    def GetInfo(self, async_cb, async_eb):
-        """
-        Returns the manufacturer, modem model and firmware version
-
-        :rtype: tuple
-        """
-        d = self.sconn.get_hardware_info()
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(CRD_INTFACE, in_signature='', out_signature='s',
