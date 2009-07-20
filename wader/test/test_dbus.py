@@ -927,7 +927,7 @@ class DBusTestCase(unittest.TestCase):
             self.failUnlessIsInstance(info[1], basestring)
             d.callback(True)
 
-        self.device.GetInfo(dbus_interface=CRD_INTFACE,
+        self.device.GetInfo(dbus_interface=SPL_INTFACE,
                             reply_handler=get_info_cb,
                             error_handler=log.err)
         return d
