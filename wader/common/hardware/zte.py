@@ -88,7 +88,7 @@ ZTE_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
                                 (?:,\s*"(?P<srv>.*?)")?
                                 \r\n""", re.VERBOSE))
 
-def zte_new_conn_mode(args):
+def zte_new_conn_mode(what):
     if what in "UMTS":
         return S.UMTS_SIGNAL
     elif what in ["GPRS", "GSM"]:
