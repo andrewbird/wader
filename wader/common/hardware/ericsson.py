@@ -57,12 +57,6 @@ ERICSSON_CONN_DICT = {
     consts.MM_NETWORK_MODE_3G_PREFERRED: 1,
 }
 
-ERICSSON_CONN_DICT_REV = {
-    1 : consts.MM_NETWORK_MODE_3G_PREFERRED,
-    5 : consts.MM_NETWORK_MODE_2G_PREFERRED,
-    6 : consts.MM_NETWORK_MODE_3G_ONLY,
-}
-
 ERICSSON_CMD_DICT = get_cmd_dict_copy()
 
 ERICSSON_CMD_DICT['get_card_model'] = build_cmd_dict('\s*(?P<model>\S*)\r\n')
@@ -210,6 +204,11 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_network_mode(self):
+        ERICSSON_CONN_DICT_REV = {
+            1 : consts.MM_NETWORK_MODE_ANY,
+            5 : consts.MM_NETWORK_MODE_2G_PREFERRED,
+            6 : consts.MM_NETWORK_MODE_3G_ONLY,
+        }
         def get_radio_status_cb(mode):
             if mode in ERICSSON_CONN_DICT_REV:
                 return ERICSSON_CONN_DICT_REV[mode]
