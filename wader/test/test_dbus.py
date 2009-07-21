@@ -415,8 +415,6 @@ class DBusTestCase(unittest.TestCase):
             raise unittest.SkipTest("Cannot be tested")
 
         self.failUnlessIn(MM_NETWORK_BAND_ANY, bands)
-        self.failUnlessIn(MM_NETWORK_BAND_DCS, bands)
-        self.failUnlessIn(MM_NETWORK_BAND_U850, bands)
 
     def test_CardSupportedModesProperty(self):
         """Test for Card.SupportedModes property"""
