@@ -176,7 +176,7 @@ class EricssonWrapper(WCDMAWrapper):
                 return self.send_at('AT+CFUN=1')
 
             elif status in [1, 5, 6] and not enable:
-                return self.send_at('AT+CFUN=0')
+                return self.send_at('AT+CFUN=4')
 
         d.addCallback(get_radio_status_cb)
         return d
