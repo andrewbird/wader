@@ -19,7 +19,6 @@
 DevicePlugin for the HP branded Sierra Wireless MC8755 embedded device
 """
 
-from wader.common.plugin import DevicePlugin
 from wader.common.hardware.sierra import SierraWCDMADevicePlugin
 
 # Community developed plugin
