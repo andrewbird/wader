@@ -34,7 +34,7 @@ NOVATEL_MODE_DICT = {
     consts.MM_NETWORK_MODE_2G_ONLY      : '1,2',
     consts.MM_NETWORK_MODE_3G_ONLY      : '2,2',
 
-    consts.MM_NETWORK_MODE_3G_PREFERRED : '0,2', # just a duplicate of automatic
+    consts.MM_NETWORK_MODE_3G_PREFERRED : '0,2', # just a dup of automatic
 }
 
 NOVATEL_BAND_DICT = {
@@ -93,10 +93,10 @@ NOVATEL_BAND_DICT = {
 NOVATEL_CMD_DICT = get_cmd_dict_copy()
 
 NOVATEL_CMD_DICT['get_network_mode'] = build_cmd_dict(
-                            re.compile("\r\n\$NWRAT:\s?(?P<mode>\d,\d),\d\r\n"))
+                          re.compile("\r\n\$NWRAT:\s?(?P<mode>\d,\d),\d\r\n"))
 
 NOVATEL_CMD_DICT['get_band'] = build_cmd_dict(
-                            re.compile("\r\n\$NWBAND:\s?(?P<band>[0-9A-Fa-f]+)"))
+                          re.compile("\r\n\$NWBAND:\s?(?P<band>[0-9A-Fa-f]+)"))
 
 class NovatelSIMClass(SIMBaseClass):
     """Novatel SIM Class"""

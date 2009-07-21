@@ -246,7 +246,7 @@ class EricssonWrapper(WCDMAWrapper):
         # So we need to override and provide an alternative. +CIND
         # returns an indication between 0-5 so let's just multiply
         # that by 6 to get a RSSI between 0-30
-        cmd = ATCmd('AT+CIND?',name='get_signal_quality')
+        cmd = ATCmd('AT+CIND?', name='get_signal_quality')
         d = self.queue_at_cmd(cmd)
         d.addCallback(lambda response: int(response[0].group('sig')) * 6)
         return d
