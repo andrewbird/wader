@@ -21,6 +21,7 @@
 from time import time
 from os.path import join, exists
 
+from dbus import Array
 import serial
 from zope.interface import implements
 from twisted.internet import defer, reactor, utils, error
@@ -480,9 +481,12 @@ class HardwareManager(DBusComponent):
             props['Driver'] = self._get_driver_name(root_udi, context)
 
             # set DBus properties (Card interface)
+            def to_a(l):
+                return Array(sorted(l), signature='u')
+
             crd_props = plugin.props[consts.CRD_INTFACE]
-            crd_props['SupportedBands'] = sorted(plugin.custom.band_dict.keys())
-            crd_props['SupportedModes'] = sorted(plugin.custom.conn_dict.keys())
+            crd_props['SupportedBands'] = to_a(plugin.custom.band_dict.keys())
+            crd_props['SupportedModes'] = to_a(plugin.custom.conn_dict.keys())
 
             # preprobe stuff
             if hasattr(plugin, 'preprobe_init'):

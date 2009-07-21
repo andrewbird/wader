@@ -38,15 +38,6 @@ MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
 
 ERICSSON_BAND_DICT = {
-    # there is a bug in python-dbus where if we try to return an empty list
-    # (Array in DBus lingo), it will fail because there is no signature.
-    # However if we provide a signature, it exposes the following bug:
-    # ERROR:dbus.service:Unable to append (dbus.Array([0, 1, 2, 3, 4, 5, 6,
-    # 7, 8, 9, 10], signature=dbus.Signature('au')),) to message with
-    # signature v: <type 'exceptions.TypeError'>: 'int' object is not iterable
-    #
-    # Thus we provide a dummy value here (ANY)
-    consts.MM_NETWORK_BAND_ANY : None,
 }
 
 ERICSSON_CONN_DICT = {
@@ -288,7 +279,7 @@ class EricssonWrapper(WCDMAWrapper):
 
     def set_band(self, band):
         # XXX: Fix set_band ASAP
-        if band in self.custom.band_dict:
+        if band == consts.MM_NETWORK_BAND_ANY:
             return defer.succeed('OK')
 
         raise KeyError("Unsupported band %d" % band)
