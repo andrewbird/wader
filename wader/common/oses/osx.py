@@ -19,9 +19,10 @@
 
 import sys
 
-from zope.interface import implements
+from dbus import Array
 from twisted.internet import defer
 from twisted.python import log
+from zope.interface import implements
 
 from wader.common import consts
 from wader.common.hardware.base import _identify_device
@@ -90,6 +91,12 @@ class HardwareManager(object):
             props['Control'] = dev_info['dialin']
             # XXX: Fix MasterDevice
             props['MasterDevice'] = 'iokit:com.vodafone.BMC.NotImplemented'
+            # set DBus properties (Card interface)
+            crd_props = plugin.props[consts.CRD_INTFACE]
+            bands = Array(plugin.custom.band_dict.keys())
+            modes = Array(plugin.custom.conn_dict.keys())
+            crd_props['SupportedBands'] = bands
+            crd_props['SupportedModes'] = modes
             # XXX: Fix CDMA
             props['Type'] = consts.MM_MODEM_TYPE_REV['GSM']
             plugin.udi = self._get_udi_from_devinfo(dev_info, model)
