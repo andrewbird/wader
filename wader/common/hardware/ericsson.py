@@ -182,6 +182,7 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_band(self):
+        # XXX: Fix this ASAP
         return defer.succeed(consts.MM_NETWORK_BAND_ANY)
 
     def get_charset(self):
@@ -227,12 +228,12 @@ class EricssonWrapper(WCDMAWrapper):
             def get_netreg_status_cb((mode, status)):
                 self.state_dict['creg_retries'] += 1
                 if self.state_dict['creg_retries'] > MAX_RETRIES:
-                    auxdef.callback((mode, status))
+                    return auxdef.callback((mode, status))
 
                 if status == 4:
                     reactor.callLater(RETRY_TIMEOUT, get_it, auxdef)
                 else:
-                    auxdef.callback((mode, status))
+                    return auxdef.callback((mode, status))
 
             d = super(EricssonWrapper, self).get_netreg_status()
             d.addCallback(get_netreg_status_cb)
