@@ -21,8 +21,10 @@ import re
 from twisted.internet import defer
 
 from wader.common import consts
+import wader.common.aterrors as E
 from wader.common.command import build_cmd_dict
 from wader.common.encoding import unpack_ucs2_bytes, pack_ucs2_bytes, check_if_ucs2
+from wader.common.exceptions import LimitedServiceNetworkError
 from wader.common.middleware import WCDMAWrapper, NetworkOperator
 from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
@@ -118,7 +120,7 @@ class ZTEK2525Wrapper(ZTEWrapper):
 
             if netname in ['Limited Service',
                            pack_ucs2_bytes('Limited Service')]:
-                raise ex.LimitedServiceNetworkError
+                raise LimitedServiceNetworkError()
 
             # netname can be in UCS2, as a string, or as a network id (int)
             if check_if_ucs2(netname):
