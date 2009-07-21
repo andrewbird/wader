@@ -172,7 +172,6 @@ class NovatelWrapper(WCDMAWrapper):
                 # if we could not satisfy the request, tell someone
                 raise KeyError("Unsupported band %d" % band)
 
-
         deferred = defer.Deferred()
         d = self.send_at("AT$NWBAND=%08x" % _band)
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
-# Copyright (C) 2008-2009  Warp Networks, S.L.
-# Author:  Pablo Martí
+# Copyright (C) 2009  Vodafone España, S.A.
+# Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,21 +15,26 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""DevicePlugin for the Sierra Wireless 875 datacard"""
+"""
+DevicePlugin for the HP branded Sierra Wireless MC8755 embedded device
+"""
 
+from wader.common.plugin import DevicePlugin
 from wader.common.hardware.sierra import SierraWCDMADevicePlugin
 
-class SierraWireless875(SierraWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for SierraWireless 875"""
-    name = "SierraWireless 875"
+# Community developed plugin
+class SierraWirelessMC8755(SierraWCDMADevicePlugin):
+    """:class:`~wader.common.plugin.DevicePlugin` for SierraWireless MC 8755"""
+    name = "SierraWireless MC8755"
     version = "0.1"
-    author = "anmsid, kgb0y"
+    author = "John J Doe"
 
-    __remote_name__ = "AC875"   #response from AT+CGMM
+    __remote_name__ = "MC8755"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1199],
-        'usb_device.product_id': [0x6820],
+        'usb_device.vendor_id' : [0x03f0],
+        'usb_device.product_id': [0x1e1d],
     }
 
-sierrawireless875 = SierraWireless875()
+sierrawirelessmc8755 = SierraWirelessMC8755()
+
