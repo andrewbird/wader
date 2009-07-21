@@ -99,7 +99,7 @@ def extract_info(props):
     elif 'usb_device.vendor_id' in props:
         info['usb_device.vendor_id'] = props['usb_device.vendor_id']
         info['usb_device.product_id'] = props['usb_device.product_id']
-    elif 'pcmia.manf_id' in props:
+    elif 'pcmcia.manf_id' in props:
         info['pcmcia.manf_id'] = props['pcmcia.manf_id']
         info['pcmcia.card_id'] = props['pcmcia.card_id']
     elif 'pci.vendor_id' in props:
