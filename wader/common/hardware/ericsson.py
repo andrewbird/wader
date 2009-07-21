@@ -34,8 +34,8 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
 
-MAX_RETRIES = 3
-RETRY_TIMEOUT = 5
+MAX_RETRIES = 6
+RETRY_TIMEOUT = 4
 
 ERICSSON_BAND_DICT = {
 }
