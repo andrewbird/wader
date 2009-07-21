@@ -285,8 +285,8 @@ class EricssonWrapper(WCDMAWrapper):
         raise KeyError("Unsupported band %d" % band)
 
     def set_charset(self, charset):
-        # The oddity here is that the set command needs to have its charset value
-        # encoded in the current character set
+        # The oddity here is that the set command needs to have its charset
+        # value encoded in the current character set
         if self.device.sim.charset == 'UCS2':
             charset = pack_ucs2_bytes(charset)
 
