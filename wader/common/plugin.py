@@ -22,7 +22,7 @@ from zope.interface import implements
 from twisted.python import log
 from twisted.plugin import IPlugin, getPlugins
 
-from wader.common.consts import MDM_INTFACE, HSO_INTFACE
+from wader.common.consts import MDM_INTFACE, HSO_INTFACE, CRD_INTFACE
 from wader.common.daemon import build_daemon_collection
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
@@ -68,7 +68,7 @@ class DevicePlugin(object):
         # used to identify the rest of the family
         self.mapping = {}
         # dictionary with org.freedesktop.DBus.Properties
-        self.props = { MDM_INTFACE : {}, HSO_INTFACE : {} }
+        self.props = { MDM_INTFACE : {}, HSO_INTFACE : {}, CRD_INTFACE : {} }
         self.ports = None
 
     def __repr__(self):

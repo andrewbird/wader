@@ -44,6 +44,8 @@ NETINFO_REGEXP = re.compile('[^a-zA-Z0-9.\-\s]*')
 BADOPER_REGEXP = re.compile('FFF*')
 
 HUAWEI_CONN_DICT = {
+    consts.MM_NETWORK_MODE_ANY : (2, 0),
+
     consts.MM_NETWORK_MODE_GPRS : (13, 1),
     consts.MM_NETWORK_MODE_EDGE : (13, 1),
     consts.MM_NETWORK_MODE_2G_ONLY : (13, 1),
@@ -169,6 +171,8 @@ class HuaweiWrapper(WCDMAWrapper):
                 ret['mode'] = consts.MM_NETWORK_MODE_2G_ONLY
             elif mode_a == 14 and mode_b == 2:
                 ret['mode'] = consts.MM_NETWORK_MODE_3G_ONLY
+            elif mode_a == 2 and mode_b == 0:
+                ret['mode'] = consts.MM_NETWORK_MODE_ANY
 
             # band
             not_combinable_band = False

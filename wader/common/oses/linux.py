@@ -470,7 +470,7 @@ class HardwareManager(DBusComponent):
                 plugin.udi = root_udi
 
             plugin.root_udi = root_udi
-            # set DBus properties
+            # set DBus properties (Modem interface)
             props = plugin.props[consts.MDM_INTFACE]
             props['IpMethod'] = consts.MM_IP_METHOD_PPP
             # XXX: Fix MasterDevice
@@ -479,6 +479,12 @@ class HardwareManager(DBusComponent):
             props['Type'] = consts.MM_MODEM_TYPE_REV['GSM']
             props['Driver'] = self._get_driver_name(root_udi, context)
 
+            # set DBus properties (Card interface)
+            crd_props = plugin.props[consts.CRD_INTFACE]
+            crd_props['SupportedBands'] = sorted(plugin.custom.band_dict.keys())
+            crd_props['SupportedModes'] = sorted(plugin.custom.conn_dict.keys())
+
+            # preprobe stuff
             if hasattr(plugin, 'preprobe_init'):
                 # this plugin requires special initialisation before probing
                 plugin.preprobe_init(ports, extract_info(info))
@@ -486,6 +492,7 @@ class HardwareManager(DBusComponent):
             # now get the ports
             ports_need_probe = True
             if props['Driver'] == 'hso':
+                # set DBus properties (Modem.Gsm.Hso interface)
                 hso_props = plugin.props[consts.HSO_INTFACE]
                 net_device = self._get_network_device(root_udi, context)
                 hso_props['NetworkDevice'] = net_device

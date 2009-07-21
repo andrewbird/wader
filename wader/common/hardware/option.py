@@ -53,7 +53,7 @@ OPTION_BAND_MAP_DICT = {
 }
 
 OPTION_CONN_DICT = {
-    consts.MM_NETWORK_MODE_ANY     : 0,
+
     consts.MM_NETWORK_MODE_GPRS    : 0,
     consts.MM_NETWORK_MODE_EDGE    : 0,
     consts.MM_NETWORK_MODE_2G_ONLY : 0,
@@ -67,6 +67,8 @@ OPTION_CONN_DICT = {
     consts.MM_NETWORK_MODE_2G_PREFERRED : 2,
 
     consts.MM_NETWORK_MODE_3G_PREFERRED : 3,
+
+    consts.MM_NETWORK_MODE_ANY     : 5,
 }
 
 # The option band dictionary does not need to be specified as we

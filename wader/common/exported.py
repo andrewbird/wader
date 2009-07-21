@@ -364,17 +364,6 @@ class NetworkExporter(CardExporter):
         d = self.sconn.get_band()
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(NET_INTFACE, in_signature='', out_signature='au',
-            async_callbacks=('async_cb', 'async_eb'))
-    def GetBands(self, async_cb, async_eb):
-        """
-        Returns the supported bands
-
-        :rtype: list
-        """
-        d = self.sconn.get_bands()
-        return self.add_callbacks(d, async_cb, async_eb)
-
     @method(NET_INTFACE, in_signature='', out_signature='u',
             async_callbacks=('async_cb', 'async_eb'))
     def GetNetworkMode(self, async_cb, async_eb):

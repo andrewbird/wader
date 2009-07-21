@@ -32,7 +32,7 @@ def unpack_ucs2_bytes(s):
 
     :rtype: unicode
     """
-    return s.decode('hex').decode('utf_16_be')
+    return s.decode('hex').decode('utf_16_be', 'ignore')
 
 def unpack_ucs2_bytes_in_ts31101_80(s):
     """

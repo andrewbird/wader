@@ -125,7 +125,6 @@ class DBusTestCase(unittest.TestCase):
         # Twisted deprecated function
         d = defer.Deferred()
         self.device = None
-        self.netinit = True
 
         loop = dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
         bus = dbus.SystemBus(mainloop=loop)
@@ -146,18 +145,11 @@ class DBusTestCase(unittest.TestCase):
             else:
                 raise unittest.SkipTest("Cannot handle error %s" % error)
 
-        def get_bands_cb(bands):
-            self.bands = bands
-
         def get_device_from_opath(opaths):
             if not len(opaths):
                 raise unittest.SkipTest("Can't run this test without devices")
 
             self.device = bus.get_object(MM_SERVICE, opaths[0])
-            # we will need this info later on
-            self.device.GetBands(dbus_interface=NET_INTFACE,
-                                 reply_handler=get_bands_cb,
-                                 error_handler=log.err)
             # enable the device
             self.device.Enable(True, dbus_interface=MDM_INTFACE,
                                reply_handler=enable_device_cb,
@@ -177,22 +169,6 @@ class DBusTestCase(unittest.TestCase):
                            reply_handler=lambda: d.callback(True),
                            error_handler=log.err)
         return d
-
-    def setUp(self):
-        if self.netinit:
-            if MM_NETWORK_BAND_ANY in self.bands:
-                self.device.SetBand(MM_NETWORK_BAND_ANY,
-                                    dbus_interface=NET_INTFACE,
-                                    reply_handler=lambda: True,
-                                    error_handler=log.err)
-
-            self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
-                                    dbus_interface=NET_INTFACE,
-                                    reply_handler=lambda: True,
-                                    error_handler=log.err)
-
-            self.netinit = False
-            time.sleep(5)
 
     # org.freedesktop.ModemManager.Modem tests
 
@@ -377,22 +353,22 @@ class DBusTestCase(unittest.TestCase):
 
         raise unittest.SkipTest("Untested")
 
-    def test_SendATString(self):
+    def test_CardSendATString(self):
         """Test for Card.SendATString"""
         if not TEST_WADER_EXTENSIONS:
             raise unittest.SkipTest(GENERIC_SKIP_MSG)
 
         raise unittest.SkipTest("Untested")
 
-    def test_SendPin(self):
+    def test_CardSendPin(self):
         """Test for Card.SendPin"""
         raise unittest.SkipTest("Untested")
 
-    def test_SendPuk(self):
+    def test_CardSendPuk(self):
         """Test for Card.SendPuk"""
         raise unittest.SkipTest("Untested")
 
-    def test_SetCharset(self):
+    def test_CardSetCharset(self):
         """Test for Card.SetCharset"""
         d = defer.Deferred()
         charsets = ["IRA", "GSM", "UCS2"]
@@ -430,6 +406,28 @@ class DBusTestCase(unittest.TestCase):
                                reply_handler=get_charset_cb,
                                error_handler=log.err)
         return d
+
+    def test_CardSupportedBandsProperty(self):
+        """Test for Card.SupportedBands property"""
+        bands = self.device.Get(CRD_INTFACE, 'SupportedBands',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+        if not bands:
+            raise unittest.SkipTest("Cannot be tested")
+
+        self.failUnlessIn(MM_NETWORK_BAND_ANY, bands)
+        self.failUnlessIn(MM_NETWORK_BAND_DCS, bands)
+        self.failUnlessIn(MM_NETWORK_BAND_U850, bands)
+
+    def test_CardSupportedModesProperty(self):
+        """Test for Card.SupportedModes property"""
+        modes = self.device.Get(CRD_INTFACE, 'SupportedModes',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+        if not modes:
+            raise unittest.SkipTest("Cannot be tested")
+
+        self.failUnlessIn(MM_NETWORK_MODE_ANY, modes)
+        self.failUnlessIn(MM_NETWORK_MODE_GPRS, modes)
+        self.failUnlessIn(MM_NETWORK_MODE_3G_ONLY, modes)
 
     # org.freedesktop.ModemManager.Modem.Gsm.Contacts tests
 
@@ -688,32 +686,6 @@ class DBusTestCase(unittest.TestCase):
                             error_handler=log.err)
         return d
 
-    def test_NetworkGetBands(self):
-        """Test for Network.GetBands"""
-        # this will be a property soon
-        if not TEST_WADER_EXTENSIONS:
-            raise unittest.SkipTest(GENERIC_SKIP_MSG)
-
-        if not self.bands:
-            raise unittest.SkipTest("Cannot be tested")
-
-        d = defer.Deferred()
-
-        def get_bands_cb(bands):
-            if not bands:
-                d.callback(True)
-
-            self.failUnlessIn(MM_NETWORK_BAND_ANY, bands)
-            self.failUnlessIn(MM_NETWORK_BAND_DCS, bands)
-            self.failUnlessIn(MM_NETWORK_BAND_U850, bands)
-
-            d.callback(True)
-
-        self.device.GetBands(dbus_interface=NET_INTFACE,
-                             reply_handler=get_bands_cb,
-                             error_handler=log.err)
-        return d
-
     def test_NetworkGetNetworkMode(self):
         """Test for Network.GetNetworkMode"""
         d = defer.Deferred()
@@ -816,6 +788,7 @@ class DBusTestCase(unittest.TestCase):
 
         def get_band_cb(band):
             self.failUnless(band & MM_NETWORK_BAND_ANY)
+            # band is ANY, not need to do anything
             d.callback(True)
 
         self.device.SetBand(MM_NETWORK_BAND_ANY,
@@ -831,66 +804,77 @@ class DBusTestCase(unittest.TestCase):
 
     test_NetworkSetBand_ANY.timeout = 15
 
-    def test_NetworkSetBand_U850(self):
-        """Test for Network.SetBand"""
-        if MM_NETWORK_BAND_U850 not in self.bands:
-            raise unittest.SkipTest("Cannot be tested")
+    #def test_NetworkSetBand_U2100(self):
+    #    """Test for Network.SetBand"""
+    #    bands = self.device.Get(CRD_INTFACE, 'SupportedBands',
+    #                            dbus_interface=dbus.PROPERTIES_IFACE)
+    #    if MM_NETWORK_BAND_U2100 not in bands:
+    #        raise unittest.SkipTest("Cannot be tested")
 
-        self.netinit = True
-
-        d = defer.Deferred()
-
-        def get_band_cb(band):
-            self.failUnless(band & MM_NETWORK_BAND_U850)
-            d.callback(True)
-
-        def get_bands_cb(bands):
-            if MM_NETWORK_BAND_U850 not in bands:
-                raise unittest.SkipTest("Cannot be tested")
-
-        self.device.SetBand(MM_NETWORK_BAND_U850,
-                            dbus_interface=NET_INTFACE,
-                            error_handler=log.err,
-                            reply_handler=lambda:
-                               self.device.GetBand(
-                                   dbus_interface=NET_INTFACE,
-                                   reply_handler=get_band_cb,
-                                   error_handler=log.err))
-
-        return d
-
-    test_NetworkSetBand_U850.timeout = 15
-
-    #def test_NetworkSetNetworkMode_ANY(self):
-    #    """Test for Network.SetNetworkMode"""
     #    d = defer.Deferred()
 
-    #    def get_network_mode_cb(mode):
-    #        self.assertEqual(mode, MM_NETWORK_MODE_ANY)
-    #        d.callback(True)
+    #    def get_band_cb(band):
+    #        self.failUnless(band & MM_NETWORK_BAND_U2100)
+    #        # set band to ANY again
+    #        self.device.SetBand(MM_NETWORK_BAND_ANY,
+    #                            dbus_interface=NET_INTFACE,
+    #                            error_handler=log.err,
+    #                            reply_handler=lambda: d.callback(True))
 
-    #    # set the network mode to ANY, get it and compare
-    #    self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
+    #    self.device.SetBand(MM_NETWORK_BAND_U850,
+    #                        dbus_interface=NET_INTFACE,
+    #                        error_handler=log.err,
+    #                        reply_handler=lambda:
+    #                           self.device.GetBand(
     #                               dbus_interface=NET_INTFACE,
-    #                               error_handler=log.err,
-    #                               reply_handler=lambda:
-    #                                   self.device.GetNetworkMode(
-    #                                       dbus_interface=NET_INTFACE,
-    #                                       reply_handler=get_network_mode_cb,
-    #                                       error_handler=log.err))
+    #                               reply_handler=get_band_cb,
+    #                               error_handler=log.err))
 
     #    return d
 
+    #test_NetworkSetBand_U2100.timeout = 15
+
+    def test_NetworkSetNetworkMode_ANY(self):
+        """Test for Network.SetNetworkMode"""
+        modes = self.device.Get(CRD_INTFACE, 'SupportedModes',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+        if MM_NETWORK_MODE_ANY not in modes:
+            raise unittest.SkipTest("Cannot be tested")
+
+        d = defer.Deferred()
+
+        def get_network_mode_cb(mode):
+            self.assertEqual(mode, MM_NETWORK_MODE_ANY)
+            # no need to do anything as mode == ANY
+            d.callback(True)
+
+        # set the network mode to ANY, get it and compare
+        self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
+                                   dbus_interface=NET_INTFACE,
+                                   error_handler=log.err,
+                                   reply_handler=lambda:
+                                       self.device.GetNetworkMode(
+                                           dbus_interface=NET_INTFACE,
+                                           reply_handler=get_network_mode_cb,
+                                           error_handler=log.err))
+
+        return d
+
     def test_NetworkSetNetworkMode_3GONLY(self):
         """Test for Network.SetNetworkMode"""
-
-        self.netinit = True
+        modes = self.device.Get(CRD_INTFACE, 'SupportedModes',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+        if MM_NETWORK_MODE_3G_ONLY not in modes:
+            raise unittest.SkipTest("Cannot be tested")
 
         d = defer.Deferred()
 
         def get_network_mode_cb(mode):
             self.assertEqual(mode, MM_NETWORK_MODE_3G_ONLY)
-            d.callback(True)
+            self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
+                                       dbus_interface=NET_INTFACE,
+                                       error_handler=log.err,
+                                       reply_handler=lambda: d.callback(True))
 
         # set the network mode to 3G Only, get it and compare
         self.device.SetNetworkMode(MM_NETWORK_MODE_3G_ONLY,
