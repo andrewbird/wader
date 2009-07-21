@@ -784,6 +784,11 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkSetBand_ANY(self):
         """Test for Network.SetBand"""
+        bands = self.device.Get(CRD_INTFACE, 'SupportedBands',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+        if MM_NETWORK_BAND_ANY not in bands:
+            raise unittest.SkipTest("Cannot be tested")
+
         d = defer.Deferred()
 
         def get_band_cb(band):
