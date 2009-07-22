@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import (HuaweiCustomizer,
+from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
 class HuaweiB970(HuaweiWCDMADevicePlugin):
@@ -24,7 +24,7 @@ class HuaweiB970(HuaweiWCDMADevicePlugin):
     name = "Huawei B970"
     version = "0.1"
     author = u"Andrew Bird"
-    custom = HuaweiCustomizer
+    custom = HuaweiWCDMACustomizer
 
     __remote_name__ = "B970"
 

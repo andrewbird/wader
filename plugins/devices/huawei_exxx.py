@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (C) 2006-2009  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -25,6 +26,7 @@ from wader.plugins.huawei_e220 import HuaweiE220
 from wader.plugins.huawei_e270 import HuaweiE270
 from wader.plugins.huawei_e272 import HuaweiE272
 from wader.plugins.huawei_e510 import HuaweiE510
+from wader.plugins.huawei_e618 import HuaweiE618
 from wader.plugins.huawei_e620 import HuaweiE620
 from wader.plugins.huawei_e660 import HuaweiE660
 from wader.plugins.huawei_e660a import HuaweiE660A
@@ -95,6 +97,7 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
         self.mapping = {
             'E169'  : HuaweiE169,
             'E510'  : HuaweiE510,     # Cardbus
+            '183'   : HuaweiE618,
             'E620'  : HuaweiE620,
             'E660'  : HuaweiE660,
             'E660A' : HuaweiE660A,

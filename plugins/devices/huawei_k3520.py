@@ -17,10 +17,13 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
-                                          HuaweiWrapper, HuaweiWCDMACustomizer)
+                                          HuaweiWCDMAWrapper,
+                                          HuaweiWCDMACustomizer,
+                                          HUAWEI_BAND_DICT)
+from wader.common.hardware.base import build_band_dict
+from wader.common import consts
 
-
-class HuaweiK3520Wrapper(HuaweiWrapper):
+class HuaweiK3520Wrapper(HuaweiWCDMAWrapper):
     def get_contacts(self):
         def get_contacts_cb(contacts):
             d = self.set_charset("UCS2")
@@ -32,15 +35,27 @@ class HuaweiK3520Wrapper(HuaweiWrapper):
                 super(HuaweiK3520Wrapper, self).get_contacts())
         return d
 
-    def find_contacts(self, pattern):
-        d = self.get_contacts()
-        d.addCallback(lambda contacts:
-                        [c for c in contacts if c.name.startswith(pattern)])
-        return d
-
 
 class HuaweiK3520Customizer(HuaweiWCDMACustomizer):
+    """:class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for Huawei's K3520"""
     wrapper_klass = HuaweiK3520Wrapper
+
+    # GSM/GPRS/EDGE 850/900/1800/1900 MHz
+    # HSDPA/UMTS 2100/900 MHz
+
+    band_dict = build_band_dict(
+                  HUAWEI_BAND_DICT,
+                  [ consts.MM_NETWORK_BAND_ANY,
+
+                    consts.MM_NETWORK_BAND_G850,
+                    consts.MM_NETWORK_BAND_EGSM,
+                    consts.MM_NETWORK_BAND_DCS,
+                    consts.MM_NETWORK_BAND_PCS,
+
+#                    consts.MM_NETWORK_BAND_U900, # waiting for docs
+                    consts.MM_NETWORK_BAND_U2100,
+                  ]
+                )
 
 
 class HuaweiK3520(HuaweiWCDMADevicePlugin):

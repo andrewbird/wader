@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import (HuaweiCustomizer,
+from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
 class HuaweiE510(HuaweiWCDMADevicePlugin):
@@ -24,7 +24,7 @@ class HuaweiE510(HuaweiWCDMADevicePlugin):
     name = "Huawei E510"
     version = "0.1"
     author = u"Andrew Bird"
-    custom = HuaweiCustomizer
+    custom = HuaweiWCDMACustomizer
 
     __remote_name__ = "E510"
 

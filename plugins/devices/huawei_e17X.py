@@ -17,22 +17,64 @@
 
 from twisted.internet import defer
 
+from wader.common.contact import Contact
+from wader.common.encoding import from_ucs2
+import wader.common.aterrors as E
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
-                                          HuaweiWrapper)
+                                          HuaweiWCDMAWrapper)
 
-class HuaweiE17XWrapper(HuaweiWrapper):
+class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
     def get_phonebook_size(self):
         # the E170 that we have around keeps raising GenericErrors whenever
         # is asked for its size, we'll have to cheat till we have time
         # to find a workaround
         d = super(HuaweiE17XWrapper, self).get_phonebook_size()
-        d.addErrback(lambda failure: defer.succeed(250))
+        d.addErrback(lambda failure: defer.succeed(200))
         return d
 
     def get_contacts(self):
-        # we return a list with all the contacts that match '', i.e. all
-        return self.find_contacts('')
+        """
+        We return a list of all the contacts without knowing the phonebook size
+
+        1/ We first find the highest index of what's there already
+        2/ We can't use the results of the AT+CPBF='' search because it
+           returns rubbish for valid contacts stored on the SIM by other
+           devices. That means any contact not written by an E172 using
+           AT+CPBW is invalid without this method.
+        3/ Now we can use the derived range to use the Huawei proprietary
+           command to return the proper results.
+        """
+
+        def get_max_index_cb(matches):
+            max = 0
+            for m in matches:
+                i = int(m.group('id'))
+                if i > max:
+                    max = i
+            return max
+
+        def no_contacts_eb(failure):
+            failure.trap(E.NotFound, E.GenericError)
+            return 0
+
+        def get_valid_contacts(max):
+            if max == 0:
+                return defer.succeed([])
+
+            def results_cb(matches):
+                return [self._hw_process_contact_match(m) for m in matches]
+
+            d = self.send_at('AT^CPBR=1,%d' % max, name='get_contacts',
+                               callback=results_cb)
+            return d
+
+        d = self.send_at('AT+CPBF=""', name='find_contacts',
+                           callback=get_max_index_cb)
+        d.addErrback(no_contacts_eb)
+        d.addCallback(get_valid_contacts)
+
+        return d
 
 
 class HuaweiE17XCustomizer(HuaweiWCDMACustomizer):

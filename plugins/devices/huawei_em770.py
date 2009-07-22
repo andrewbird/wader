@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import (HuaweiCustomizer,
+from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
 class HuaweiEM770(HuaweiWCDMADevicePlugin):
@@ -24,8 +24,8 @@ class HuaweiEM770(HuaweiWCDMADevicePlugin):
     name = "Huawei EM770"
     version = "0.1"
     author = u"Andrew Bird"
-    custom = HuaweiCustomizer   # Radio Switch query/response different from EM730V :-)
-                                # so ignore that for now until we get a device
+    custom = HuaweiWCDMACustomizer   # Radio Switch query/response different from EM730V :-)
+                                     # so ignore that for now until we get a device
 
     __remote_name__ = "EM770"
 
