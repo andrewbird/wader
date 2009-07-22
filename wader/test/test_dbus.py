@@ -642,10 +642,14 @@ class DBusTestCase(unittest.TestCase):
 
         def add_contact_cb(index):
             def list_contacts_cb(reply):
-                reply = list(reply[-1])
-                self.assertIn(name, reply)
-                self.assertIn(number, reply)
-                self.assertIn(index, reply)
+                found = False
+                for contact in reply:
+                    if (index, name, number) == contact:
+                        found = True
+                        break
+
+                # check that we found it
+                self.failUnless(found == True)
 
                 # leave everything as found
                 self.device.Delete(index,
