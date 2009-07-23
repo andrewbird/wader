@@ -17,8 +17,6 @@
 
 from twisted.internet import defer
 
-from wader.common.contact import Contact
-from wader.common.encoding import from_ucs2
 import wader.common.aterrors as E
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
@@ -34,17 +32,15 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
         return d
 
     def get_contacts(self):
-        """
-        We return a list of all the contacts without knowing the phonebook size
-
-        1/ We first find the highest index of what's there already
-        2/ We can't use the results of the AT+CPBF='' search because it
-           returns rubbish for valid contacts stored on the SIM by other
-           devices. That means any contact not written by an E172 using
-           AT+CPBW is invalid without this method.
-        3/ Now we can use the derived range to use the Huawei proprietary
-           command to return the proper results.
-        """
+        # Return a list of all the contacts without knowing the phonebook size
+        #
+        # 1. We first find the highest index of what's there already
+        # 2. We can't use the results of the AT+CPBF='' search because it
+        #    returns rubbish for valid contacts stored on the SIM by other
+        #    devices. That means any contact not written by an E172 using
+        #    AT+CPBW is invalid without this method.
+        # 3. Now we can use the derived range to use the Huawei proprietary
+        #    command to return the proper results.
 
         def get_max_index_cb(matches):
             max = 0
@@ -65,15 +61,13 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
             def results_cb(matches):
                 return [self._hw_process_contact_match(m) for m in matches]
 
-            d = self.send_at('AT^CPBR=1,%d' % max, name='get_contacts',
-                               callback=results_cb)
-            return d
+            return self.send_at('AT^CPBR=1,%d' % max, name='get_contacts',
+                             callback=results_cb)
 
         d = self.send_at('AT+CPBF=""', name='find_contacts',
                            callback=get_max_index_cb)
         d.addErrback(no_contacts_eb)
         d.addCallback(get_valid_contacts)
-
         return d
 
 
