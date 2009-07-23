@@ -38,6 +38,7 @@ MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
 
 ERICSSON_BAND_DICT = {
+    consts.MM_NETWORK_BAND_ANY : None,
 }
 
 ERICSSON_CONN_DICT = {
@@ -278,8 +279,8 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def set_band(self, band):
-        # XXX: Fix set_band ASAP
-        if band == consts.MM_NETWORK_BAND_ANY:
+        if band in self.custom.band_dict.keys():
+            # XXX: only ANY is present
             return defer.succeed('OK')
 
         raise KeyError("Unsupported band %d" % band)
