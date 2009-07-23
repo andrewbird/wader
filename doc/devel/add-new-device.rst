@@ -64,16 +64,17 @@ container for all the device-specific customizations such as:
   the first is the signal id and the second is a function that will translate
   the signal arguments and the signal to the internal representation that Wader
   uses. You can find some sample code in the
-  :class:`~wader.common.hardware.huawei` module.
-- ``band_dict``: Dictionary with the AT strings necessary to switch the band
-  technology that the device uses. The number of possible bands is limited by
-  the device itself and the modifications that the manufacturer might have done
-  to the device's firmware. The reference band dictionary is in the
-  :class:`~wader.common.hardware` module.
-- ``conn_dict``: Dictionary with 5 items, each one defines the AT string that
-  must be sent to the device in order to configure the connection mode
-  preferences (Gprs only, 3G preferred, any, etc.) This dictionaries can be
-  shared most of the time between different models from the same manufacturer.
+  :class:`~wader.common.hardware.huawei` module. If a notification should be
+  ignored, then add it as a key like the rest, but its value should be a
+  tuple ``(None, None)``.
+- ``band_dict``: Dictionary with the different bands supported by the device.
+  The keys will *always* be a `MM_NETWORK_BAND_FOO` and the value is up to the
+  implementor. You can see the supported bands in the
+  :mod:`~wader.common.consts` module.
+- ``conn_dict``: Dictionary with the different network modes supported by the
+  device. The keys will *always* be a `MM_NETWORK_MODE_FOO` and the value is
+  up to the implementor. You can see the supported network modes in the
+  :mod:`~wader.common.consts` module.
 - ``cmd_dict``: Dictionary with information about how each command should be
   processed. ``cmd_dict`` most of the time will be a shallow copy of the
   :class:`~wader.common.command` dict with minor modifications about how a
