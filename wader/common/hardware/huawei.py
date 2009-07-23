@@ -181,53 +181,54 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         return d
 
     def add_contact(self, contact):
-       """
-       Adds ``contact`` to the SIM and returns the index where was stored
 
-       :rtype: int
-       """
+        """
+        Adds ``contact`` to the SIM and returns the index where was stored
 
-       def hw_add_contact(name, number, index):
-           """
-           Adds a contact to the SIM card
-           """
-           raw = 0
-           try:     # are all ascii chars
-               name.encode('ascii')
-           except:  # write in TS31.101 type 80 raw format
-               name = '80%sFF' % pack_ucs2_bytes(name)
-               raw = 1
+        :rtype: int
+        """
 
-           category = 145 if number.startswith('+') else 129
-           args = (index, number, category, name, raw)
-           cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
-           return self.queue_at_cmd(cmd)
+        def hw_add_contact(name, number, index):
+            """
+            Adds a contact to the SIM card
+            """
+            raw = 0
+            try:     # are all ascii chars
+                name.encode('ascii')
+            except:  # write in TS31.101 type 80 raw format
+                name = '80%sFF' % pack_ucs2_bytes(name)
+                raw = 1
 
-       name = from_u(contact.name)
+            category = 145 if number.startswith('+') else 129
+            args = (index, number, category, name, raw)
+            cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
+            return self.queue_at_cmd(cmd)
 
-       # common arguments for both operations (name and number)
-       args = [name, from_u(contact.number)]
+        name = from_u(contact.name)
 
-       if contact.index:
-           # contact.index is set, user probably wants to overwrite an
-           # existing contact
-           args.append(contact.index)
-           d = hw_add_contact(*args)
-           d.addCallback(lambda _: contact.index)
-           return d
+        # common arguments for both operations (name and number)
+        args = [name, from_u(contact.number)]
 
-       # contact.index is not set, this means that we need to obtain the
-       # first slot free on the phonebook and then add the contact
-       def get_next_id_cb(index):
-           args.append(index)
-           d2 = hw_add_contact(*args)
-           # now we just fake add_contact's response and we return the index
-           d2.addCallback(lambda _: index)
-           return d2
+        if contact.index:
+            # contact.index is set, user probably wants to overwrite an
+            # existing contact
+            args.append(contact.index)
+            d = hw_add_contact(*args)
+            d.addCallback(lambda _: contact.index)
+            return d
 
-       d = self._get_next_contact_id()
-       d.addCallback(get_next_id_cb)
-       return d
+        # contact.index is not set, this means that we need to obtain the
+        # first slot free on the phonebook and then add the contact
+        def get_next_id_cb(index):
+            args.append(index)
+            d2 = hw_add_contact(*args)
+            # now we just fake add_contact's response and we return the index
+            d2.addCallback(lambda _: index)
+            return d2
+
+        d = self._get_next_contact_id()
+        d.addCallback(get_next_id_cb)
+        return d
 
     def find_contacts(self, pattern):
         d = self.get_contacts()
@@ -257,9 +258,12 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         return d
 
     def _hw_process_contact_match(self, match):
-        """I process a contact match and return a C{Contact} object out of it"""
+        """
+        I process a contact match and return a `Contact` object out of it
+        """
         if int(match.group('raw')) == 0:
-            name = match.group('name').rstrip('\xff') # some buggy firmware appends this
+            # some buggy firmware appends this
+            name = match.group('name').rstrip('\xff')
         else:
             encoding = match.group('name')[:2]
             hexbytes = match.group('name')[2:]
