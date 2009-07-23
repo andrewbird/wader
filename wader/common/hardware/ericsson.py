@@ -206,7 +206,7 @@ class EricssonWrapper(WCDMAWrapper):
     def get_network_mode(self):
         ERICSSON_CONN_DICT_REV = {
             1 : consts.MM_NETWORK_MODE_ANY,
-            5 : consts.MM_NETWORK_MODE_2G_PREFERRED,
+            5 : consts.MM_NETWORK_MODE_2G_ONLY,
             6 : consts.MM_NETWORK_MODE_3G_ONLY,
         }
         def get_radio_status_cb(mode):
