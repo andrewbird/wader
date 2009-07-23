@@ -46,14 +46,8 @@ BADOPER_REGEXP = re.compile('FFF*')
 HUAWEI_CONN_DICT = {
     consts.MM_NETWORK_MODE_ANY : (2, 0),
 
-    consts.MM_NETWORK_MODE_GPRS : (13, 1),
-    consts.MM_NETWORK_MODE_EDGE : (13, 1),
     consts.MM_NETWORK_MODE_2G_ONLY : (13, 1),
 
-    consts.MM_NETWORK_MODE_UMTS : (14, 2),
-    consts.MM_NETWORK_MODE_HSDPA : (14, 2),
-    consts.MM_NETWORK_MODE_HSUPA : (14, 2),
-    consts.MM_NETWORK_MODE_HSPA : (14, 2),
     consts.MM_NETWORK_MODE_3G_ONLY : (14, 2),
 
     consts.MM_NETWORK_MODE_2G_PREFERRED: (2, 1),
@@ -333,8 +327,25 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             if _band == 0:
                 raise KeyError("Unsupported band %d" % band)
 
-            at_str = 'AT^SYSCFG=%d,%d,%X,%d,%d'
+            gsm_bands = (consts.MM_NETWORK_BAND_DCS |
+                         consts.MM_NETWORK_BAND_PCS |
+                         consts.MM_NETWORK_BAND_EGSM |
+                         consts.MM_NETWORK_BAND_G850)
 
+            umts_bands = (consts.MM_NETWORK_BAND_U800 |
+                          consts.MM_NETWORK_BAND_U850 |
+                          consts.MM_NETWORK_BAND_U900 |
+                          consts.MM_NETWORK_BAND_U1900)
+
+            if band & gsm_bands:
+                mode_a, mode_b = 13, 1
+            elif band & umts_bands:
+                mode_a, mode_b = 14, 2
+            else:
+                # ANY and the rest
+                mode_a, mode_b = 2, 0
+
+            at_str = 'AT^SYSCFG=%d,%d,%X,%d,%d'
             return self.send_at(at_str % (mode_a, mode_b, _band, roam, srv))
 
         d = self._get_syscfg()
@@ -350,6 +361,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             if mode in HUAWEI_CONN_DICT:
                 _mode, acqorder = HUAWEI_CONN_DICT[mode]
 
+            band = 0x3FFFFFFF
             at_str = 'AT^SYSCFG=%d,%d,%X,%d,%d'
             return self.send_at(at_str % (_mode, acqorder, band, roam, srv))
 
@@ -374,7 +386,7 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
     """WCDMA Customizer class for Huawei cards"""
     wrapper_klass = HuaweiWCDMAWrapper
     async_regexp = re.compile('\r\n(?P<signal>\^[A-Z]{3,9}):(?P<args>.*)\r\n')
-    band_dict = {}
+    band_dict = HUAWEI_BAND_DICT
     conn_dict = HUAWEI_CONN_DICT
     cmd_dict = HUAWEI_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE,
