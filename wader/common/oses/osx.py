@@ -19,7 +19,6 @@
 
 import sys
 
-from dbus import Array
 from twisted.internet import defer
 from twisted.python import log
 from zope.interface import implements
@@ -91,14 +90,6 @@ class HardwareManager(object):
             props['Control'] = dev_info['dialin']
             # XXX: Fix MasterDevice
             props['MasterDevice'] = 'iokit:com.vodafone.BMC.NotImplemented'
-
-            # set DBus properties (Card interface)
-            def to_a(l):
-                return Array(sorted(l), signature='u')
-
-            crd_props = plugin.props[consts.CRD_INTFACE]
-            crd_props['SupportedBands'] = to_a(plugin.custom.band_dict.keys())
-            crd_props['SupportedModes'] = to_a(plugin.custom.conn_dict.keys())
 
             # XXX: Fix CDMA
             props['Type'] = consts.MM_MODEM_TYPE_REV['GSM']

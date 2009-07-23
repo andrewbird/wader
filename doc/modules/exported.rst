@@ -3,6 +3,12 @@
 
 .. automodule:: wader.common.exported
 
+Functions
+---------
+
+.. autofunction:: to_a(_list, signature='u')
+
+
 Classes
 --------
 

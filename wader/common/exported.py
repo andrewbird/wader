@@ -42,6 +42,14 @@ from wader.common.utils import convert_ip_to_int
 # the appropiated implementation through the MRO. But this leads to MH madness
 # What we can do thou is rely on composition instead of MH for this one
 
+def to_a(_list, signature='u'):
+    """
+    Returns a :class:`dbus.Array` out of `_list`
+
+    :param signature: The dbus signature of the array
+    """
+    return dbus.Array(sorted(l), signature=signature)
+
 
 class ModemExporter(Object, DBusExporterHelper):
     """I export the org.freedesktop.ModemManager.Modem interface"""
@@ -89,15 +97,26 @@ class ModemExporter(Object, DBusExporterHelper):
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(PROPS_INTFACE, in_signature='ss', out_signature='v')
-    def Get(self, interface_name, _property):
+    def Get(self, interface, _property):
         """See org.freedesktop.DBus.Properties documentation"""
-        if interface_name in self.device.props:
-            if _property in self.device.props[interface_name]:
-                return self.device.props[interface_name][_property]
+        if interface in self.device.props:
+            if _property in self.device.props[interface]:
+                return self.device.props[interface][_property]
+
+            # this two values have to been obtained at runtime
+            if interface == CRD_INTFACE:
+                if _property == 'SupportedBands':
+                    bands = to_a(self.device.custom.band_dict.keys())
+                    self.device.props[interface][_property] = bands
+                    return bands
+                elif _property == 'SupportedModes':
+                    modes = to_a(self.device.custom.conn_dict.keys())
+                    self.device.props[interface][_property] = modes
+                    return modes
 
             raise ValueError("Unknown property %s" % _property)
 
-        raise ValueError("Unknown interface %s" % interface_name)
+        raise ValueError("Unknown interface %s" % interface)
 
     @method(PROPS_INTFACE, in_signature='s', out_signature='a{sv}')
     def GetAll(self, interface_name):
