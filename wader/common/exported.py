@@ -48,7 +48,7 @@ def to_a(_list, signature='u'):
 
     :param signature: The dbus signature of the array
     """
-    return dbus.Array(sorted(l), signature=signature)
+    return dbus.Array(sorted(_list), signature=signature)
 
 
 class ModemExporter(Object, DBusExporterHelper):
