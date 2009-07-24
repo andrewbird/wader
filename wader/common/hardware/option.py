@@ -45,7 +45,7 @@ OPTION_BAND_MAP_DICT = {
     'U2100' : consts.MM_NETWORK_BAND_U2100,
     'U1900' : consts.MM_NETWORK_BAND_U1900,
     'U1700' : consts.MM_NETWORK_BAND_U1700,
-    '17IV'  : consts.MM_NETWORK_BAND_17IV,
+#    '17IV'  : consts.MM_NETWORK_BAND_17IV,
     'U850'  : consts.MM_NETWORK_BAND_U850,
     'U800'  : consts.MM_NETWORK_BAND_U850,
     'U900'  : consts.MM_NETWORK_BAND_U900,
@@ -53,21 +53,10 @@ OPTION_BAND_MAP_DICT = {
 }
 
 OPTION_CONN_DICT = {
-
-    consts.MM_NETWORK_MODE_GPRS    : 0,
-    consts.MM_NETWORK_MODE_EDGE    : 0,
     consts.MM_NETWORK_MODE_2G_ONLY : 0,
-
-    consts.MM_NETWORK_MODE_UMTS    : 1,
-    consts.MM_NETWORK_MODE_HSDPA   : 1,
-    consts.MM_NETWORK_MODE_HSUPA   : 1,
-    consts.MM_NETWORK_MODE_HSPA    : 1,
     consts.MM_NETWORK_MODE_3G_ONLY : 1,
-
     consts.MM_NETWORK_MODE_2G_PREFERRED : 2,
-
     consts.MM_NETWORK_MODE_3G_PREFERRED : 3,
-
     consts.MM_NETWORK_MODE_ANY     : 5,
 }
 
@@ -209,17 +198,11 @@ class OptionWrapper(WCDMAWrapper):
 
     def get_network_mode(self):
         """Returns the current network mode"""
-        ret_codes = {
-            0 : consts.MM_NETWORK_MODE_2G_ONLY,
-            1 : consts.MM_NETWORK_MODE_3G_ONLY,
-            2 : consts.MM_NETWORK_MODE_2G_PREFERRED,
-            3 : consts.MM_NETWORK_MODE_3G_PREFERRED,
-            5 : consts.MM_NETWORK_MODE_ANY,
-        }
         def callback(resp):
             mode = int(resp[0].group('mode'))
-            if mode in ret_codes:
-                return ret_codes[mode]
+            OPTION_BAND_DICT_REV = revert_dict(OPTION_CONN_DICT)
+            if mode in OPTION_BAND_DICT_REV:
+                return OPTION_BAND_DICT_REV[mode]
 
             raise KeyError("Unknown network mode %d" % mode)
 
