@@ -43,19 +43,8 @@ ERICSSON_BAND_DICT = {
 
 ERICSSON_CONN_DICT = {
     consts.MM_NETWORK_MODE_ANY : 1,
-
-    consts.MM_NETWORK_MODE_GPRS : 5,
-    consts.MM_NETWORK_MODE_EDGE : 5,
     consts.MM_NETWORK_MODE_2G_ONLY : 5,
-    consts.MM_NETWORK_MODE_2G_PREFERRED: 5,
-
-    consts.MM_NETWORK_MODE_UMTS : 6,
-    consts.MM_NETWORK_MODE_HSDPA : 6,
-    consts.MM_NETWORK_MODE_HSUPA : 6,
-    consts.MM_NETWORK_MODE_HSPA : 6,
     consts.MM_NETWORK_MODE_3G_ONLY : 6,
-
-    consts.MM_NETWORK_MODE_3G_PREFERRED: 1,
 }
 
 ERICSSON_CMD_DICT = get_cmd_dict_copy()
@@ -321,6 +310,7 @@ class EricssonCustomizer(WCDMACustomizer):
     conn_dict = ERICSSON_CONN_DICT
 
     signal_translations = {
+        '*ESTKDISP' : (None, None),
         '*ESTKSMENU': (None, None),
         '*EMWI' : (None, None),
         '+PACSP0' : (None, None),
