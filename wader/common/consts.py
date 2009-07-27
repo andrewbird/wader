@@ -33,7 +33,6 @@ APP_VERSION = '0.3.6'
 WADER_SERVICE = 'org.freedesktop.ModemManager'
 WADER_OBJPATH = '/org/freedesktop/ModemManager'
 WADER_INTFACE = 'org.freedesktop.ModemManager'
-PROPS_INTFACE = 'org.freedesktop.DBus.Properties'
 
 WADER_DIALUP_INTFACE = 'org.freedesktop.ModemManager.Dialup'
 WADER_DIALUP_SERVICE = 'org.freedesktop.ModemManager.Dialup'

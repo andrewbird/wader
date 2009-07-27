@@ -25,7 +25,7 @@ from twisted.python import log
 
 from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
-                                 HSO_INTFACE, SPL_INTFACE, PROPS_INTFACE)
+                                 HSO_INTFACE, SPL_INTFACE)
 from wader.common.sms import Message
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
@@ -96,7 +96,7 @@ class ModemExporter(Object, DBusExporterHelper):
         d = self.sconn.enable_device(enable)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
-    @method(PROPS_INTFACE, in_signature='ss', out_signature='v')
+    @method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
     def Get(self, interface, _property):
         """See org.freedesktop.DBus.Properties documentation"""
         if interface in self.device.props:
@@ -118,7 +118,7 @@ class ModemExporter(Object, DBusExporterHelper):
 
         raise ValueError("Unknown interface %s" % interface)
 
-    @method(PROPS_INTFACE, in_signature='s', out_signature='a{sv}')
+    @method(dbus.PROPERTIES_IFACE, in_signature='s', out_signature='a{sv}')
     def GetAll(self, interface_name):
         """See org.freedesktop.DBus.Properties documentation"""
         if interface_name in self.device.props:
