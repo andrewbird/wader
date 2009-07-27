@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""AT commands errors related functions and exceptions"""
+"""Functions and exceptions that deal with AT errors"""
 
 import re
 
@@ -535,7 +535,7 @@ EXCEPT_TO_HUMAN = {
     'GprsUnspecified' : "Unspecified GPRS error",
     'GprsInvalidClass' : "Invalid mobile class",
 
-    # Wader own errors
+    # Wader's own errors
     'NetworkRegistrationError' : "Could not register with home network",
 }
 

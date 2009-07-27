@@ -108,7 +108,7 @@ class SIMBaseClass(object):
             if reply != charset:
                 return self.sconn.set_charset(charset)
 
-            # we already have the wanted UCS2
+            # we already have the wanted charset
             self.charset = reply
             return defer.succeed(True)
 

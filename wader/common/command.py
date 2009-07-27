@@ -27,7 +27,7 @@ from wader.common.aterrors import ERROR_REGEXP
 OK_REGEXP = re.compile("\r\n(?P<resp>OK)\r\n")
 
 def build_cmd_dict(extract=OK_REGEXP, end=OK_REGEXP, error=ERROR_REGEXP):
-    """Returns a dictionary ready to be used in ``CMD_DICT``"""
+    """Returns a dictionary ready to be used in `CMD_DICT`"""
     for regexp in [extract, end, error]:
         if isinstance(regexp, basestring):
             regexp = re.compile(regexp)
@@ -40,7 +40,7 @@ def build_cmd_dict(extract=OK_REGEXP, end=OK_REGEXP, error=ERROR_REGEXP):
 
 def get_cmd_dict_copy():
     """
-    Returns a copy of the ``CMD_DICT`` dictionary
+    Returns a copy of the `CMD_DICT` dictionary
 
     Use this instead of importing it directly as you may forget to copy() it
     """
