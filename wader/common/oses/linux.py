@@ -21,6 +21,7 @@
 from time import time
 from os.path import join, exists
 
+import dbus
 import serial
 from zope.interface import implements
 from twisted.internet import defer, reactor, utils, error
@@ -208,13 +209,16 @@ class HardwareManager(DBusComponent):
 
         raise RuntimeError("Couldn't find the modem path of %s" % dev_udi)
 
-    def _get_hso_modem_path(self, dport):
-        child_udis = flatten_list(map(self._get_child_udis_from_udi,
-                                      self._get_parent_udis()))
-        for udi in child_udis:
-            props = self.get_properties_from_udi(udi)
-            if 'serial.device' in props and props['serial.device'] == dport:
-                return udi
+    def _get_hso_modem_path(self, udi):
+        child_udis = flatten_list(self._get_child_udis_from_udi(udi))
+        obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
+        devices = obj.GetDevices(dbus_interface=consts.NM_INTFACE)
+
+        while devices:
+            udi = devices.pop()
+            if 'serial.device' in self.get_properties_from_udi(udi):
+                if udi in child_udis:
+                    return udi
 
     def _get_driver_name(self, udi, context=None):
         """Returns the info.linux.driver of `udi`"""
@@ -503,9 +507,9 @@ class HardwareManager(DBusComponent):
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
                 # Fix modem udi path
-                # modem_udi = self._get_hso_modem_path(dport)
-                # if modem_udi:
-                #     plugin.udi = modem_udi
+                modem_udi = self._get_hso_modem_path(plugin.udi)
+                if modem_udi:
+                    plugin.udi = modem_udi
 
             if hasattr(plugin, 'hardcoded_ports'):
                 # if the device has the hardcoded_ports attribute that means
