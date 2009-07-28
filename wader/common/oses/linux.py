@@ -31,7 +31,7 @@ from wader.common.interfaces import IHardwareManager
 from wader.common.plugin import PluginManager
 from wader.common import consts
 from wader.common.oses.unix import UnixPlugin
-from wader.common.utils import get_file_data, natsort
+from wader.common.utils import get_file_data, natsort, flatten_list
 from wader.common.startup import setup_and_export_device
 from wader.common.serialport import Ports
 
@@ -208,12 +208,20 @@ class HardwareManager(DBusComponent):
 
         raise RuntimeError("Couldn't find the modem path of %s" % dev_udi)
 
+    def _get_hso_modem_path(self, dport):
+        child_udis = flatten_list(map(self._get_child_udis_from_udi,
+                                      self._get_parent_udis()))
+        for udi in child_udis:
+            props = self.get_properties_from_udi(udi)
+            if 'serial.device' in props and props['serial.device'] == dport:
+                return udi
+
     def _get_driver_name(self, udi, context=None):
         """Returns the info.linux.driver of `udi`"""
         def do_get_driver_name(key, _udi, props):
             if key in props[_udi]:
                 name = props[_udi][key]
-                if name not in ['usb', 'pci', 'pcmcia']:
+                if name not in ['usb', 'usb-storage', 'pci', 'pcmcia']:
                     return name
 
         if context:
@@ -494,6 +502,10 @@ class HardwareManager(DBusComponent):
                 props['IpMethod'] = consts.MM_IP_METHOD_STATIC
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
+                # Fix modem udi path
+                # modem_udi = self._get_hso_modem_path(dport)
+                # if modem_udi:
+                #     plugin.udi = modem_udi
 
             if hasattr(plugin, 'hardcoded_ports'):
                 # if the device has the hardcoded_ports attribute that means
