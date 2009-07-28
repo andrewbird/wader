@@ -455,6 +455,32 @@ class DBusTestCase(unittest.TestCase):
                         error_handler=log.err)
         return d
 
+    def test_ContactsAdd_UTF8_name(self):
+        """Test for Contacts.Add"""
+        d = defer.Deferred()
+        name, number = u"中华人民共和国", "+43544311113"
+
+        def add_contact_cb(index):
+            def on_contact_fetched((_index, _name, _number)):
+                self.assertEqual(name, _name)
+                self.assertEqual(number, _number)
+                # leave everything as found
+                self.device.Delete(_index, dbus_interface=CTS_INTFACE,
+                                   reply_handler=lambda: d.callback(True),
+                                   # test finishes with lambda
+                                   error_handler=log.err)
+
+            # get the object via DBus and check that its data is correct
+            self.device.Get(index, dbus_interface=CTS_INTFACE,
+                            reply_handler=on_contact_fetched,
+                            error_handler=log.err)
+
+        self.device.Add(name, number,
+                        dbus_interface=CTS_INTFACE,
+                        reply_handler=add_contact_cb,
+                        error_handler=log.err)
+        return d
+
     def test_ContactsDelete(self):
         """Test for Contacts.Delete"""
         d = defer.Deferred()

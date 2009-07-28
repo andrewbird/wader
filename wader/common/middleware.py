@@ -75,10 +75,8 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         Adds ``contact`` to the SIM and returns the index where was stored
         """
-        name = from_u(contact.name)
-
-        if 'UCS2' in self.device.sim.charset:
-            name = pack_ucs2_bytes(name)
+        ucs2 = 'UCS2' in self.device.sim.charset
+        name = pack_ucs2_bytes(contact.name) if ucs2 else from_u(contact.name)
 
         # common arguments for both operations (name and number)
         args = [name, from_u(contact.number)]
