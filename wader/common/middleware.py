@@ -393,6 +393,10 @@ class WCDMAWrapper(WCDMAProtocol):
         """Returns the current network mode"""
         raise NotImplementedError()
 
+    def get_network_modes(self):
+        """Returns the supported network modes"""
+        return defer.succeed(sorted(self.custom.conn_dict.keys()))
+
     def get_network_names(self):
         """
         Performs a network search

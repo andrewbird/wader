@@ -106,11 +106,11 @@ class ModemExporter(Object, DBusExporterHelper):
             # this two values have to been obtained at runtime
             if interface == CRD_INTFACE:
                 if _property == 'SupportedBands':
-                    bands = to_a(self.device.custom.band_dict.keys())
+                    bands = to_a(self.sconn.get_bands())
                     self.device.props[interface][_property] = bands
                     return bands
                 elif _property == 'SupportedModes':
-                    modes = to_a(self.device.custom.conn_dict.keys())
+                    modes = to_a(self.sconn.get_network_modes())
                     self.device.props[interface][_property] = modes
                     return modes
 
