@@ -45,7 +45,7 @@ OPTION_BAND_MAP_DICT = {
     'U2100' : consts.MM_NETWORK_BAND_U2100,
     'U1900' : consts.MM_NETWORK_BAND_U1900,
     'U1700' : consts.MM_NETWORK_BAND_U1700,
-#    '17IV'  : consts.MM_NETWORK_BAND_17IV,
+    '17IV'  : consts.MM_NETWORK_BAND_17IV,
     'U850'  : consts.MM_NETWORK_BAND_U850,
     'U800'  : consts.MM_NETWORK_BAND_U850,
     'U900'  : consts.MM_NETWORK_BAND_U900,
@@ -189,6 +189,20 @@ class OptionWrapper(WCDMAWrapper):
 
                 if name in OPTION_BAND_MAP_DICT:
                     ret |= OPTION_BAND_MAP_DICT[name]
+
+            return ret
+
+        d = self._get_band_dict()
+        d.addCallback(get_band_dict_cb)
+        return d
+
+    def get_bands(self):
+        """Returns the supported bands"""
+        def get_band_dict_cb(bands):
+            ret = 0
+            for key in bands.keys():
+                if key in OPTION_BAND_MAP_DICT:
+                    ret |= OPTION_BAND_MAP_DICT[key]
 
             return ret
 

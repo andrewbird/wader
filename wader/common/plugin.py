@@ -106,7 +106,9 @@ class DevicePlugin(object):
                 self.daemons = build_daemon_collection(self)
 
             self.daemons.start_daemons()
-            return size
+            d = self.sconn.init_properties()
+            d.addCallback(lambda _: size)
+            return d
 
         self.sim = self.sim_klass(self.sconn)
         d = self.sim.initialize()

@@ -30,7 +30,7 @@ from twisted.python import log
 from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
-from wader.common.consts import MM_IP_METHOD_STATIC
+from wader.common.consts import MM_IP_METHOD_STATIC, CRD_INTFACE
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                 pack_ucs2_bytes, check_if_ucs2)
@@ -210,7 +210,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         :rtype: list
         """
-        return defer.succeed(sorted(self.custom.band_dict.keys()))
+        return defer.succeed(sum(self.custom.band_dict.keys()))
 
     def get_card_model(self):
         """Returns the card model"""
@@ -755,6 +755,16 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     # some high-level methods exported over DBus
+    def init_properties(self):
+        def set_property(name, what):
+            self.device.props[CRD_INTFACE][name] = what
+
+        d = self.get_bands()
+        d.addCallback(lambda bands: set_property('SupportedBands', bands))
+        d.addCallback(lambda _: self.get_network_modes())
+        d.addCallback(lambda modes: set_property('SupportedModes', modes))
+        return d
+
     def get_simple_status(self):
         """Returns the status for o.fd.MM.Modem.Simple.GetStatus"""
         def get_simple_status_cb((rssi, netinfo, band, net_mode)):

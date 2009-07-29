@@ -103,18 +103,7 @@ class ModemExporter(Object, DBusExporterHelper):
             if _property in self.device.props[interface]:
                 return self.device.props[interface][_property]
 
-            # this two values have to been obtained at runtime
-            if interface == CRD_INTFACE:
-                if _property == 'SupportedBands':
-                    bands = to_a(self.sconn.get_bands())
-                    self.device.props[interface][_property] = bands
-                    return bands
-                elif _property == 'SupportedModes':
-                    modes = to_a(self.sconn.get_network_modes())
-                    self.device.props[interface][_property] = modes
-                    return modes
-
-            raise ValueError("Unknown property %s" % _property)
+            raise ValueError("Unknown property %s.%s" % (interface, _property))
 
         raise ValueError("Unknown interface %s" % interface)
 

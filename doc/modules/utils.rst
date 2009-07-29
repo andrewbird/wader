@@ -6,6 +6,8 @@
 Functions
 ---------
 
+.. autofunction:: get_bands(bitwised_band)
+
 .. autofunction:: rssi_to_percentage(rssi)
 
 .. autofunction:: convert_ip_to_int(ip)

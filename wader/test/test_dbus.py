@@ -64,6 +64,22 @@ MM_NETWORK_BAND_U17IX = 0x400  # WCDMA 3GPP UMTS MHz          (Class IX)
 MM_NETWORK_BAND_U1900 = 0x800  # WCDMA 3GPP UMTS MHz          (Class IX)
 MM_NETWORK_BAND_ANY   = 0x10000
 
+MM_NETWORK_BANDS = [
+    MM_NETWORK_BAND_EGSM,
+    MM_NETWORK_BAND_DCS,
+    MM_NETWORK_BAND_PCS,
+    MM_NETWORK_BAND_G850,
+    MM_NETWORK_BAND_U2100,
+    MM_NETWORK_BAND_U1700,
+    MM_NETWORK_BAND_17IV,
+    MM_NETWORK_BAND_U800,
+    MM_NETWORK_BAND_U850,
+    MM_NETWORK_BAND_U900,
+    MM_NETWORK_BAND_U17IX,
+    MM_NETWORK_BAND_U1900,
+    MM_NETWORK_BAND_ANY
+]
+
 MM_NETWORK_MODE_ANY          = 0x0
 MM_NETWORK_MODE_GPRS         = 0x1
 MM_NETWORK_MODE_EDGE         = 0x2
@@ -89,6 +105,10 @@ if dbus.version >= (0, 83, 0):
 else:
     def get_dbus_error(e):
         return e.message
+
+def get_bands(bitwised_band):
+    """Returns all the bands bitwised in ``bitwised_band``"""
+    return [band for band in MM_NETWORK_BANDS if band & bitwised_band]
 
 class Config(object):
     """Simple GConf wrapper for string-only gets"""
@@ -416,7 +436,7 @@ class DBusTestCase(unittest.TestCase):
         if not bands:
             raise unittest.SkipTest("Cannot be tested")
 
-        self.failUnlessIn(MM_NETWORK_BAND_ANY, bands)
+        self.failUnlessIn(MM_NETWORK_BAND_ANY, get_bands(bands))
 
     def test_CardSupportedModesProperty(self):
         """Test for Card.SupportedModes property"""
@@ -812,10 +832,12 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkSetBand(self):
         """Test for Network.SetBand"""
-        bands = self.device.Get(CRD_INTFACE, 'SupportedBands',
+        _bands = self.device.Get(CRD_INTFACE, 'SupportedBands',
                                 dbus_interface=dbus.PROPERTIES_IFACE)
-        if not bands:
+        if not _bands:
             raise unittest.SkipTest("Cannot be tested")
+
+        bands = get_bands(_bands)
 
         while bands:
             band = bands.pop()

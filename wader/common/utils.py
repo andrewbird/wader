@@ -26,6 +26,15 @@ import sys
 
 from dbus import Array, UInt32
 
+from wader.common import consts
+
+def get_bands(bitwised_band):
+    """
+    Returns all the bitwised bands in ``bitwised_band``
+
+    :rtype: list
+    """
+    return [band for band in consts.MM_NETWORK_BANDS if band & bitwised_band]
 
 def rssi_to_percentage(rssi):
     """
