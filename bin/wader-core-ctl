@@ -8,6 +8,11 @@ from wader.common.consts import APP_VERSION, LOG_PATH, DATA_DIR, PID_PATH
 
 from twisted.python.release import sh
 
+
+def stop_core():
+    if os.path.exists('/var/run/wader.pid'):
+        sh("kill -9 `cat /var/run/wader.pid`")
+
 parser = OptionParser()
 parser.add_option ("-v", "--version", action="store_true",
                    dest="show_version", default=False,
@@ -18,6 +23,9 @@ parser.add_option ("-r", "--restart", action="store_true",
 parser.add_option ("-s", "--start", action="store_true",
                    dest="should_start", default=True,
                    help="Start wader-core")
+parser.add_option ("-t", "--stop", action="store_true",
+                   dest="should_stop", default=False,
+                   help="Stop wader-core")
 
 options, args = parser.parse_args()
 
@@ -25,9 +33,11 @@ if options.show_version:
     print "%s: version %s" % (os.path.basename(sys.argv[0]), APP_VERSION)
     sys.exit(0)
 
+if options.should_stop:
+    stop_core()
+
 if options.should_restart:
-    if os.path.exists('/var/run/wader.pid'):
-        sh("kill -9 `cat /var/run/wader.pid`")
+    stop_core()
 
     sh("dbus-send --system --dest=org.freedesktop.ModemManager /org/freedesktop/ModemManager org.freedesktop.ModemManager.EnumerateDevices")
 
