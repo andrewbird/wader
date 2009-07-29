@@ -30,13 +30,13 @@ Self-contained unittest suite for ModemManager implementations
 
 import os
 import random
+import re
 import time
 
 import dbus
 import dbus.mainloop.glib
 import gconf
 from twisted.internet import defer
-from twisted.python import log
 from twisted.trial import unittest
 
 MM_SERVICE = 'org.freedesktop.ModemManager'
@@ -107,7 +107,7 @@ else:
         return e.message
 
 def get_bands(bitwised_band):
-    """Returns all the bands bitwised in ``bitwised_band``"""
+    """Returns all the bitwised bands in ``bitwised_band``"""
     return [band for band in MM_NETWORK_BANDS if band & bitwised_band]
 
 class Config(object):
@@ -158,14 +158,13 @@ class DBusTestCase(unittest.TestCase):
             d.callback(True)
 
         def enable_device_eb(e):
-            error = get_dbus_error(e)
-            if 'SimPinRequired' in error:
+            if 'SimPinRequired' in get_dbus_error(e):
                 pin = config.get('test', 'pin', '0000')
                 self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
                                     reply_handler=enable_device_cb,
-                                    error_handler=log.err)
+                                    error_handler=d.errback)
             else:
-                raise unittest.SkipTest("Cannot handle error %s" % error)
+                raise unittest.SkipTest("Cannot handle error %s" % e)
 
         def get_device_from_opath(opaths):
             if not len(opaths):
@@ -180,7 +179,7 @@ class DBusTestCase(unittest.TestCase):
         obj = bus.get_object(MM_SERVICE, MM_OBJPATH)
         obj.EnumerateDevices(dbus_interface=MM_INTFACE,
                              reply_handler=get_device_from_opath,
-                             error_handler=log.err)
+                             error_handler=d.errback)
         return d
 
     def tearDownClass(self):
@@ -189,7 +188,7 @@ class DBusTestCase(unittest.TestCase):
         self.device.Enable(False,
                            dbus_interface=MDM_INTFACE,
                            reply_handler=lambda: d.callback(True),
-                           error_handler=log.err)
+                           error_handler=d.errback)
         return d
 
     # org.freedesktop.ModemManager.Modem tests
@@ -205,7 +204,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetInfo(dbus_interface=MDM_INTFACE,
                             reply_handler=get_info_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         return d
 
     # org.freedesktop.ModemManager.Modem.Gsm.Card tests
@@ -219,13 +218,14 @@ class DBusTestCase(unittest.TestCase):
         def pin_changed_cb():
             self.device.ChangePin(bad_pin, good_pin,
                                   dbus_interface=CRD_INTFACE,
+                                  # test finishes with lambda
                                   reply_handler=lambda: d.callback(True),
-                                  error_handler=log.err)
+                                  error_handler=d.errback)
 
         self.device.ChangePin(good_pin, bad_pin,
                               dbus_interface=CRD_INTFACE,
                               reply_handler=pin_changed_cb,
-                              error_handler=log.err)
+                              error_handler=d.errback)
 
         return d
 
@@ -245,7 +245,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.Check(dbus_interface=CRD_INTFACE,
                           reply_handler=card_check_cb,
-                          error_handler=log.err)
+                          error_handler=d.errback)
 
         return d
 
@@ -263,13 +263,14 @@ class DBusTestCase(unittest.TestCase):
             # now enable it again
             self.device.EnablePin(pin, True,
                                   dbus_interface=CRD_INTFACE,
+                                  # test finishes with lambda
                                   reply_handler=lambda: d.callback(True),
-                                  error_handler=log.err)
+                                  error_handler=d.errback)
         # disable PIN auth
         self.device.EnablePin(pin, False,
                               dbus_interface=CRD_INTFACE,
                               reply_handler=disable_pin_cb,
-                              error_handler=log.err)
+                              error_handler=d.errback)
         return d
 
     test_CardEnablePin.timeout = 15
@@ -284,7 +285,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetCharset(dbus_interface=CRD_INTFACE,
                                reply_handler=get_charset_cb,
-                               error_handler=log.err)
+                               error_handler=d.errback)
         return d
 
     def test_CardGetCharsets(self):
@@ -298,7 +299,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetCharsets(dbus_interface=CRD_INTFACE,
                                 reply_handler=get_charsets_cb,
-                                error_handler=log.err)
+                                error_handler=d.errback)
         return d
 
     def test_CardGetImei(self):
@@ -306,12 +307,13 @@ class DBusTestCase(unittest.TestCase):
         d = defer.Deferred()
 
         def get_imei_cb(imei):
-            self.failUnless(len(imei) >= 14) # 14 <= IMEI <= 17
+            imei_regexp = re.compile('^\d{14,17}$') # 14 <= IMEI <= 17
+            self.failUnless(imei_regexp.match(imei))
             d.callback(True)
 
         self.device.GetImei(dbus_interface=CRD_INTFACE,
                             reply_handler=get_imei_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         return d
 
     def test_CardGetImsi(self):
@@ -321,12 +323,13 @@ class DBusTestCase(unittest.TestCase):
         def get_imsi_cb(imsi):
             # according to http://en.wikipedia.org/wiki/IMSI there are
             # also IMSIs with 14 digits
-            self.failUnless(len(imsi) >= 14)
+            imsi_regexp = re.compile('^\d{14,15}$') # 14 <= IMSI <= 15
+            self.failUnless(imsi_regexp.match(imsi))
             d.callback(True)
 
         self.device.GetImsi(dbus_interface=CRD_INTFACE,
                             reply_handler=get_imsi_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         return d
 
     def test_CardGetManufacturer(self):
@@ -339,7 +342,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetManufacturer(dbus_interface=CRD_INTFACE,
                                     reply_handler=get_manufacturer_cb,
-                                    error_handler=log.err)
+                                    error_handler=d.errback)
         return d
 
     def test_CardGetModel(self):
@@ -352,7 +355,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetModel(dbus_interface=CRD_INTFACE,
                              reply_handler=get_model_cb,
-                             error_handler=log.err)
+                             error_handler=d.errback)
         return d
 
     def test_CardGetVersion(self):
@@ -365,7 +368,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetVersion(dbus_interface=CRD_INTFACE,
                                reply_handler=get_version_cb,
-                               error_handler=log.err)
+                               error_handler=d.errback)
         return d
 
     def test_CardResetSettings(self):
@@ -410,23 +413,24 @@ class DBusTestCase(unittest.TestCase):
                 # leave everything as found
                 self.device.SetCharset(charset,
                                        dbus_interface=CRD_INTFACE,
+                                       # test finishes with lambda
                                        reply_handler=lambda: d.callback(True),
-                                       error_handler=log.err)
+                                       error_handler=d.errback)
 
             # set the charset to new_charset
             self.device.SetCharset(new_charset,
                                    dbus_interface=CRD_INTFACE,
-                                   error_handler=log.err,
+                                   error_handler=d.errback,
                                    reply_handler=lambda:
                                        self.device.GetCharset(
                                            dbus_interface=CRD_INTFACE,
                                            reply_handler=get_charset2_cb,
-                                           error_handler=log.err))
+                                           error_handler=d.errback))
 
         # get the current charset
         self.device.GetCharset(dbus_interface=CRD_INTFACE,
                                reply_handler=get_charset_cb,
-                               error_handler=log.err)
+                               error_handler=d.errback)
         return d
 
     def test_CardSupportedBandsProperty(self):
@@ -460,19 +464,19 @@ class DBusTestCase(unittest.TestCase):
                 self.assertEqual(number, _number)
                 # leave everything as found
                 self.device.Delete(_index, dbus_interface=CTS_INTFACE,
-                                   reply_handler=lambda: d.callback(True),
                                    # test finishes with lambda
-                                   error_handler=log.err)
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=d.errback)
 
             # get the object via DBus and check that its data is correct
             self.device.Get(index, dbus_interface=CTS_INTFACE,
                             reply_handler=on_contact_fetched,
-                            error_handler=log.err)
+                            error_handler=d.errback)
 
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
                         reply_handler=add_contact_cb,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     def test_ContactsAdd_UTF8_name(self):
@@ -486,19 +490,19 @@ class DBusTestCase(unittest.TestCase):
                 self.assertEqual(number, _number)
                 # leave everything as found
                 self.device.Delete(_index, dbus_interface=CTS_INTFACE,
-                                   reply_handler=lambda: d.callback(True),
                                    # test finishes with lambda
-                                   error_handler=log.err)
+                                   reply_handler=lambda: d.callback(True),
+                                   error_handler=d.errback)
 
             # get the object via DBus and check that its data is correct
             self.device.Get(index, dbus_interface=CTS_INTFACE,
                             reply_handler=on_contact_fetched,
-                            error_handler=log.err)
+                            error_handler=d.errback)
 
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
                         reply_handler=add_contact_cb,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     def test_ContactsDelete(self):
@@ -514,16 +518,16 @@ class DBusTestCase(unittest.TestCase):
             # now delete it and check that its index is no longer present
             # if we list all the contacts
             self.device.Delete(index, dbus_interface=CTS_INTFACE,
-                               error_handler=log.err,
+                               error_handler=d.errback,
                                reply_handler=lambda:
                                   self.device.List(dbus_interface=CTS_INTFACE,
                                                    reply_handler=is_it_present,
-                                                   error_handler=log.err))
+                                                   error_handler=d.errback))
 
         # add a contact, and delete it
         self.device.Add(name, number, dbus_interface=CTS_INTFACE,
                         reply_handler=on_contact_added,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     def test_ContactsEdit(self):
@@ -538,23 +542,24 @@ class DBusTestCase(unittest.TestCase):
                 self.assertEqual(_number, new_number)
                 # leave everything as found
                 self.device.Delete(_index, dbus_interface=CTS_INTFACE,
+                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
 
             # edit it and get by index to check that the new values are set
             self.device.Edit(index, new_name, new_number,
                              dbus_interface=CTS_INTFACE,
-                             error_handler=log.err,
+                             error_handler=d.errback,
                              reply_handler=lambda index:
                                 self.device.Get(index,
                                                 dbus_interface=CTS_INTFACE,
                                                 reply_handler=get_contact_cb,
-                                                error_handler=log.err))
+                                                error_handler=d.errback))
         # add a contact
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
                         reply_handler=add_contact_cb,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     def test_ContactsFindByName(self):
@@ -572,18 +577,19 @@ class DBusTestCase(unittest.TestCase):
                 # leave everything as found
 
                 self.device.Delete(index, dbus_interface=CTS_INTFACE,
+                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
 
             self.device.FindByName("Euge",
                                    dbus_interface=CTS_INTFACE,
                                    reply_handler=find_contacts_cb,
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
 
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
                         reply_handler=add_contact_cb,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     def test_ContactsFindByNumber(self):
@@ -600,19 +606,20 @@ class DBusTestCase(unittest.TestCase):
                 self.assertEqual(number, match[2])
                 # leave everything as found
                 self.device.Delete(index, dbus_interface=CTS_INTFACE,
+                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
 
             # test find by number
             self.device.FindByNumber(number, dbus_interface=CTS_INTFACE,
                                      reply_handler=find_by_number_cb,
-                                     error_handler=log.err)
+                                     error_handler=d.errback)
 
         # add a contact
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
                         reply_handler=add_contact_cb,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     def test_ContactsGet(self):
@@ -622,7 +629,6 @@ class DBusTestCase(unittest.TestCase):
 
         def add_contact_cb(index):
             def get_contact_cb(reply):
-                reply = list(reply)
                 self.assertIn(name, reply)
                 self.assertIn(number, reply)
                 self.assertIn(index, reply)
@@ -630,19 +636,20 @@ class DBusTestCase(unittest.TestCase):
                 # leave everything as found
                 self.device.Delete(index,
                                    dbus_interface=CTS_INTFACE,
+                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
 
             # test get by index
             self.device.Get(index,
                             dbus_interface=CTS_INTFACE,
                             reply_handler=get_contact_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         # add a contact
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
                         reply_handler=add_contact_cb,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     def test_ContactsGetCount(self):
@@ -657,12 +664,12 @@ class DBusTestCase(unittest.TestCase):
 
             self.device.List(dbus_interface=CTS_INTFACE,
                              reply_handler=list_contacts_cb,
-                             error_handler=log.err)
+                             error_handler=d.errback)
 
         # get the total count and compare it
         self.device.GetCount(dbus_interface=CTS_INTFACE,
                              reply_handler=get_count_cb,
-                             error_handler=log.err)
+                             error_handler=d.errback)
         return d
 
     def test_ContactsGetPhonebookSize(self):
@@ -676,7 +683,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetPhonebookSize(dbus_interface=CTS_INTFACE,
                                      reply_handler=get_phonebooksize_cb,
-                                     error_handler=log.err)
+                                     error_handler=d.errback)
         return d
 
     def test_ContactsList(self):
@@ -698,17 +705,18 @@ class DBusTestCase(unittest.TestCase):
                 # leave everything as found
                 self.device.Delete(index,
                                    dbus_interface=CTS_INTFACE,
+                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
 
             self.device.List(dbus_interface=CTS_INTFACE,
                              reply_handler=list_contacts_cb,
-                             error_handler=log.err)
+                             error_handler=d.errback)
 
         self.device.Add(name, number,
                         dbus_interface=CTS_INTFACE,
                         reply_handler=add_contact_cb,
-                        error_handler=log.err)
+                        error_handler=d.errback)
         return d
 
     # org.freedesktop.ModemManager.Modem.Gsm.Network tests
@@ -731,7 +739,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetBand(dbus_interface=NET_INTFACE,
                             reply_handler=get_band_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         return d
 
     def test_NetworkGetNetworkMode(self):
@@ -746,7 +754,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetNetworkMode(dbus_interface=NET_INTFACE,
                                    reply_handler=get_network_mode_cb,
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
         return d
 
     def test_NetworkGetRegistrationInfo(self):
@@ -759,7 +767,7 @@ class DBusTestCase(unittest.TestCase):
             self.failUnlessIn(status, [1, 5])
 
             def check_numeric_oper_too(imsi):
-                # we should be registered with out home network
+                # we should be registered with our home network
                 self.failUnless(imsi.startswith(numeric_oper))
                 d.callback(True)
 
@@ -767,11 +775,11 @@ class DBusTestCase(unittest.TestCase):
             # with a netid that matches the beginning of our IMSI
             self.device.GetImsi(dbus_interface=CRD_INTFACE,
                                 reply_handler=check_numeric_oper_too,
-                                error_handler=log.err)
+                                error_handler=d.errback)
 
         self.device.GetRegistrationInfo(dbus_interface=NET_INTFACE,
                                         reply_handler=get_registration_info_cb,
-                                        error_handler=log.err)
+                                        error_handler=d.errback)
         return d
 
     def test_NetworkGetRoamingIDs(self):
@@ -793,7 +801,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetSignalQuality(dbus_interface=NET_INTFACE,
                                      reply_handler=get_signal_quality_cb,
-                                     error_handler=log.err)
+                                     error_handler=d.errback)
         return d
 
     def test_NetworkScan(self):
@@ -818,12 +826,12 @@ class DBusTestCase(unittest.TestCase):
                              # potentially long operation
                              timeout=45,
                              reply_handler=network_scan_cb,
-                             error_handler=log.err)
+                             error_handler=d.errback)
 
         # get the first five digits of the IMSI and check that its around
         self.device.GetImsi(dbus_interface=CRD_INTFACE,
                             reply_handler=get_imsi_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         return d
 
     def test_NetworkSetApn(self):
@@ -909,7 +917,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetStatus(dbus_interface=SPL_INTFACE,
                               reply_handler=get_status_cb,
-                              error_handler=log.err)
+                              error_handler=d.errback)
         return d
 
     # org.freedesktop.ModemManager.Modem.Gsm.SMS tests
@@ -923,7 +931,7 @@ class DBusTestCase(unittest.TestCase):
             def on_sms_list_cb(messages):
                 sms_found = False
                 for msg in messages:
-                    if msg['index'] == indexes[0]:
+                    if msg['index'] in indexes:
                         sms_found = True
 
                 # the index should not be present
@@ -932,17 +940,17 @@ class DBusTestCase(unittest.TestCase):
 
             self.assertEqual(len(indexes), 1)
             self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE,
-                               error_handler=log.err,
+                               error_handler=d.errback,
                                reply_handler=lambda:
                                    self.device.List(
                                        dbus_interface=SMS_INTFACE,
                                        reply_handler=on_sms_list_cb,
-                                       error_handler=log.err))
+                                       error_handler=d.errback))
 
         # save a sms, delete it and check is no longer present
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
                          reply_handler=sms_saved_cb,
-                         error_handler=log.err)
+                         error_handler=d.errback)
         return d
 
     def test_SmsGet(self):
@@ -957,17 +965,18 @@ class DBusTestCase(unittest.TestCase):
             self.assertEqual(sms['text'], _sms['text'])
             # leave everything as found
             self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
+                               # test finishes with lambda
                                reply_handler=lambda: d.callback(True),
-                               error_handler=log.err)
+                               error_handler=d.errback)
 
         # save the message, get it by index, and check its values match
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         error_handler=log.err,
+                         error_handler=d.errback,
                          reply_handler=lambda indexes:
                              self.device.Get(indexes[0],
                                              dbus_interface=SMS_INTFACE,
                                              reply_handler=sms_get_cb,
-                                             error_handler=log.err))
+                                             error_handler=d.errback))
         return d
 
     def test_SmsGetSmsc(self):
@@ -980,7 +989,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetSmsc(dbus_interface=SMS_INTFACE,
                             reply_handler=get_smsc_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         return d
 
     def test_SmsGetFormat(self):
@@ -993,7 +1002,7 @@ class DBusTestCase(unittest.TestCase):
 
         self.device.GetFormat(dbus_interface=SMS_INTFACE,
                               reply_handler=get_format_cb,
-                              error_handler=log.err)
+                              error_handler=d.errback)
         return d
 
     def test_SmsList(self):
@@ -1007,7 +1016,7 @@ class DBusTestCase(unittest.TestCase):
                 sms_found = False
 
                 for msg in messages:
-                    if msg['index'] == indexes[0]:
+                    if msg['index'] in indexes:
                         sms_found = True
                         break
 
@@ -1016,16 +1025,17 @@ class DBusTestCase(unittest.TestCase):
                 # leave everything as found
                 self.device.Delete(indexes[0],
                                    dbus_interface=SMS_INTFACE,
+                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
-                                   error_handler=log.err)
+                                   error_handler=d.errback)
 
             self.device.List(dbus_interface=SMS_INTFACE,
                              reply_handler=sms_list_cb,
-                             error_handler=log.err)
+                             error_handler=d.errback)
 
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
                          reply_handler=sms_saved_cb,
-                         error_handler=log.err)
+                         error_handler=d.errback)
         return d
 
     def test_SmsSave(self):
@@ -1038,17 +1048,18 @@ class DBusTestCase(unittest.TestCase):
             self.assertEqual(sms['text'], _sms['text'])
             # leave everything as found
             self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
+                               # test finishes with lambda
                                reply_handler=lambda: d.callback(True),
-                               error_handler=log.err)
+                               error_handler=d.errback)
 
         # save the message, get it by index, and check its values match
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         error_handler=log.err,
+                         error_handler=d.errback,
                          reply_handler=lambda indexes:
                              self.device.Get(indexes[0],
                                              dbus_interface=SMS_INTFACE,
                                              reply_handler=sms_get_cb,
-                                             error_handler=log.err))
+                                             error_handler=d.errback))
         return d
 
     def test_SmsSend(self):
@@ -1069,11 +1080,11 @@ class DBusTestCase(unittest.TestCase):
         #        # leave everything as found
         #        self.device.Delete(index, dbus_interface=SMS_INTFACE,
         #                           reply_handler=lambda: d.callback(True),
-        #                           error_handler=log.err)
+        #                           error_handler=d.errback)
 
         #    self.device.Get(index, dbus_interface=SMS_INTFACE,
         #                    reply_handler=compare_messages,
-        #                    error_handler=log.err)
+        #                    error_handler=d.errback)
 
         #sm = self.device.connect_to_signal("SMSReceived", on_sms_received_cb,
         #                                   dbus_interface=SMS_INTFACE)
@@ -1081,7 +1092,7 @@ class DBusTestCase(unittest.TestCase):
         #self.device.Send(sms, dbus_interface=SMS_INTFACE,
         #                 # we are not interested in the callback
         #                 reply_handler=lambda indexes: None,
-        #                 error_handler=log.err)
+        #                 error_handler=d.errback)
 
         #return d
 
@@ -1102,12 +1113,12 @@ class DBusTestCase(unittest.TestCase):
         #        # leave everything as found
         #        self.device.Delete(index, dbus_interface=SMS_INTFACE,
         #                           reply_handler=lambda: d.callback(True),
-        #                           error_handler=log.err)
+        #                           error_handler=d.errback)
 
         #    # now get it by index and check text is the same
         #    self.device.Get(index, dbus_interface=SMS_INTFACE,
         #                    reply_handler=compare_messages,
-        #                    error_handler=log.err)
+        #                    error_handler=d.errback)
 
         #def on_sms_saved_cb(indexes):
         #    self.assertEqual(len(indexes), 1)
@@ -1117,14 +1128,14 @@ class DBusTestCase(unittest.TestCase):
         #                                dbus_interface=SMS_INTFACE,
         #                                # we are not interested in the callback
         #                                reply_handler=lambda indexes: None,
-        #                                error_handler=log.err)
+        #                                error_handler=d.errback)
 
         #sm = self.device.connect_to_signal("SMSReceived", on_sms_received_cb)
 
         ## save the message and send it to ourselves
         #self.device.Save(sms, dbus_interface=SMS_INTFACE,
         #                 reply_handler=on_sms_saved_cb,
-        #                 error_handler=log.err)
+        #                 error_handler=d.errback)
 
         #return d
 
@@ -1137,11 +1148,12 @@ class DBusTestCase(unittest.TestCase):
             # leave format as found
             self.device.SetFormat(0,
                                   dbus_interface=SMS_INTFACE,
+                                  # test finishes with lambda
                                   reply_handler=lambda: d.callback(True),
-                                  error_handler=log.err)
+                                  error_handler=d.errback)
 
         def set_format_eb(e):
-            if 'CMSError303' in e.get_dbus_name():
+            if 'CMSError303' in get_dbus_error(e):
                 # it does not support setting +CMFG=1 (Ericsson)
                 d.callback(True)
             else:
@@ -1155,7 +1167,7 @@ class DBusTestCase(unittest.TestCase):
                                     self.device.GetFormat(
                                       dbus_interface=SMS_INTFACE,
                                       reply_handler=get_format_cb,
-                                      error_handler=log.err))
+                                      error_handler=d.errback))
         return d
 
     def test_SmsSetIndication(self):
@@ -1174,21 +1186,22 @@ class DBusTestCase(unittest.TestCase):
                 self.assertEqual(bad_smsc, _bad_smsc)
                 # leave everything as found
                 self.device.SetSmsc(smsc, dbus_interface=SMS_INTFACE,
+                                    # test finishes with lambda
                                     reply_handler=lambda: d.callback(True),
-                                    error_handler=log.err)
+                                    error_handler=d.errback)
 
             # set the SMSC to a bad value and read it to confirm it worked
             self.device.SetSmsc(bad_smsc, dbus_interface=SMS_INTFACE,
-                                error_handler=log.err,
+                                error_handler=d.errback,
                                 reply_handler=lambda:
                                    self.device.GetSmsc(
                                        dbus_interface=SMS_INTFACE,
                                        reply_handler=get_bad_smsc_cb,
-                                       error_handler=log.err))
+                                       error_handler=d.errback))
 
         # get the original SMSC and memoize it
         self.device.GetSmsc(dbus_interface=SMS_INTFACE,
                             reply_handler=get_smsc_cb,
-                            error_handler=log.err)
+                            error_handler=d.errback)
         return d
 
