@@ -87,7 +87,6 @@ class DevicePlugin(object):
                 self.ports.cport.obj.connectionLost("Closing connection")
                 self.ports.cport.obj.loseConnection("Bye!")
                 self.ports.cport.obj = None
-                self.ports.cport.path = None
         except:
             log.err()
 
