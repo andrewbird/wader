@@ -29,6 +29,8 @@ from wader.common.consts import (NM_SERVICE, NM_INTFACE, NM_OBJPATH,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH)
 
+CONNECTED, DISCONNECTED = 1, 2
+
 class NMDialer(Dialer):
     """I wrap NetworkManager's dialer"""
     def __init__(self, device, opath, **kwds):
@@ -37,6 +39,7 @@ class NMDialer(Dialer):
         self.int = None
         self.conn_obj = None
         self.iface = 'ppp0'
+        self.state = DISCONNECTED
 
         self.nm_opath = None
         self.connect_deferred = None
@@ -50,20 +53,22 @@ class NMDialer(Dialer):
         self.sm = None
 
     def _on_properties_changed(self, changed):
-        if 'State' in changed:
-            if changed['State'] == NM_CONNECTED:
-                # emit the connected signal and send back the opath
-                # if the deferred is present
-                self.Connected()
-                if self.connect_deferred and not self.connect_deferred.called:
-                    self.connect_deferred.callback(self.opath)
+        if 'State' not in changed:
+            return
 
-            elif changed['State'] == NM_DISCONNECTED:
+        if changed['State'] == NM_CONNECTED and self.state == DISCONNECTED:
+            # emit the connected signal and send back the opath
+            # if the deferred is present
+            self.state = CONNECTED
+            self.Connected()
+            self.connect_deferred.callback(self.opath)
+
+        if changed['State'] == NM_DISCONNECTED and self.state == CONNECTED:
+            if self.state == CONNECTED:
+                self.state = DISCONNECTED
                 self.Disconnected()
                 self._cleanup()
-                if (self.disconnect_deferred and
-                                        not self.disconnect_deferred.called):
-                    self.disconnect_deferred.callback(self.conn_obj)
+                self.disconnect_deferred.callback(self.conn_obj)
 
     def _setup_signals(self):
         self.sm = self.bus.add_signal_receiver(self._on_properties_changed,
