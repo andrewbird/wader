@@ -44,7 +44,7 @@ class NMDialer(Dialer):
         self.nm_opath = None
         self.connect_deferred = None
         self.disconnect_deferred = None
-        self.sm = []
+        self.sm = None
 
     def _cleanup(self):
         # enable +CREG notifications afterwards
@@ -67,8 +67,11 @@ class NMDialer(Dialer):
             if self.state == CONNECTED:
                 self.state = DISCONNECTED
                 self.Disconnected()
+                if self.disconnect_deferred is not None:
+                    # could happen if we are connected and a NM_DISCONNECTED
+                    # signal arrives without having explicitly disconnected
+                    self.disconnect_deferred.callback(self.conn_obj)
                 self._cleanup()
-                self.disconnect_deferred.callback(self.conn_obj)
 
     def _setup_signals(self):
         self.sm = self.bus.add_signal_receiver(self._on_properties_changed,
