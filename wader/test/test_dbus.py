@@ -31,6 +31,7 @@ Self-contained unittest suite for ModemManager implementations
 import os
 import random
 import re
+import sys
 import time
 
 import dbus
@@ -192,6 +193,43 @@ class DBusTestCase(unittest.TestCase):
         return d
 
     # org.freedesktop.ModemManager.Modem tests
+
+    def test_ModemDeviceProperty(self):
+        if sys.platform != 'linux2':
+            raise unittest.SkipTest("Cannot be tested on OS != Linux")
+
+        device = self.device.Get(MDM_INTFACE, 'Device',
+                                 dbus_interface=dbus.PROPERTIES_IFACE)
+        self.failUnlessIsInstance(device, basestring)
+        self.failUnless('tty' in device)
+
+    def test_ModemMasterDeviceProperty(self):
+        master_device = self.device.Get(MDM_INTFACE, 'MasterDevice',
+                                        dbus_interface=dbus.PROPERTIES_IFACE)
+        # XXX: MasterDevice property not implemented in core
+        self.failUnlessIsInstance(master_device, basestring)
+
+    def test_ModemDriverProperty(self):
+        if sys.platform != 'linux2':
+            raise unittest.SkipTest("Cannot be tested on OS != Linux")
+
+        driver = self.device.Get(MDM_INTFACE, 'Driver',
+                                 dbus_interface=dbus.PROPERTIES_IFACE)
+        # XXX: Am I missing any driver ?
+        self.failUnlessIn(driver, ['hso', 'option', 'mbm', 'sierra'])
+
+    def test_ModemTypeProperty(self):
+        _type = self.device.Get(MDM_INTFACE, 'Type',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+        self.failUnlessIsInstance(_type, (int, dbus.UInt32))
+        self.failUnlessIn(_type, [1, 2])
+
+    def test_ModemIpMethodProperty(self):
+        method = self.device.Get(MDM_INTFACE, 'IpMethod',
+                                 dbus_interface=dbus.PROPERTIES_IFACE)
+        # XXX: IpMethod property hardcoded to 1 (static)
+        self.failUnlessIsInstance(method, (int, dbus.UInt32))
+        self.failUnlessIn(method, [0, 1, 2])
 
     def test_ModemGetInfo(self):
         """Test for Modem.GetInfo"""
