@@ -199,7 +199,9 @@ class DBusTestCase(unittest.TestCase):
 
         def get_info_cb(info):
             self.failUnless(len(info) == 3)
+            self.failUnlessIsInstance(info[0], basestring)
             self.failUnlessIsInstance(info[1], basestring)
+            self.failUnlessIsInstance(info[2], basestring)
             d.callback(True)
 
         self.device.GetInfo(dbus_interface=MDM_INTFACE,
@@ -330,45 +332,6 @@ class DBusTestCase(unittest.TestCase):
         self.device.GetImsi(dbus_interface=CRD_INTFACE,
                             reply_handler=get_imsi_cb,
                             error_handler=d.errback)
-        return d
-
-    def test_CardGetManufacturer(self):
-        """Test for Card.GetManufacturer"""
-        d = defer.Deferred()
-
-        def get_manufacturer_cb(name):
-            self.failUnless(len(name) > 1)
-            d.callback(True)
-
-        self.device.GetManufacturer(dbus_interface=CRD_INTFACE,
-                                    reply_handler=get_manufacturer_cb,
-                                    error_handler=d.errback)
-        return d
-
-    def test_CardGetModel(self):
-        """Test for Card.GetModel"""
-        d = defer.Deferred()
-
-        def get_model_cb(model):
-            self.failUnless(len(model) > 1)
-            d.callback(True)
-
-        self.device.GetModel(dbus_interface=CRD_INTFACE,
-                             reply_handler=get_model_cb,
-                             error_handler=d.errback)
-        return d
-
-    def test_CardGetVersion(self):
-        """Test for Card.GetVersion"""
-        d = defer.Deferred()
-
-        def get_version_cb(version):
-            self.failUnless(len(version) > 1)
-            d.callback(True)
-
-        self.device.GetVersion(dbus_interface=CRD_INTFACE,
-                               reply_handler=get_version_cb,
-                               error_handler=d.errback)
         return d
 
     def test_CardResetSettings(self):
