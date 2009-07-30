@@ -759,7 +759,7 @@ class DBusTestCase(unittest.TestCase):
         def get_network_mode_cb(mode):
             self.failUnlessIsInstance(mode, (dbus.UInt32, int))
             # currently goes between 1 and 12
-            self.failUnless(mode > 0 or mode < 20)
+            self.failUnless(mode > 0 and mode < 20)
             d.callback(True)
 
         self.device.GetNetworkMode(dbus_interface=NET_INTFACE,
