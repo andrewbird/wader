@@ -673,6 +673,15 @@ class DBusTestCase(unittest.TestCase):
                              error_handler=d.errback)
         return d
 
+    def test_ContactsGetCount_2(self):
+        """Test for Contacts.GetCount"""
+        count = self.device.GetCount(dbus_interface=CTS_INTFACE)
+        index = self.device.Add("Boethius", "+21123322323",
+                                dbus_interface=CTS_INTFACE)
+        count2 = self.device.GetCount(dbus_interface=CTS_INTFACE)
+        self.assertEqual(count + 1, count2)
+        self.device.Delete(index, dbus_interface=CTS_INTFACE)
+
     def test_ContactsGetPhonebookSize(self):
         """Test for Contacts.GetPhonebookSize"""
         d = defer.Deferred()
@@ -701,7 +710,7 @@ class DBusTestCase(unittest.TestCase):
                         break
 
                 # check that we found it
-                self.failUnless(found == True)
+                self.failUnless(found)
 
                 # leave everything as found
                 self.device.Delete(index,
