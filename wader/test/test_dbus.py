@@ -753,8 +753,8 @@ class DBusTestCase(unittest.TestCase):
 
         def get_network_mode_cb(mode):
             self.failUnlessIsInstance(mode, (dbus.UInt32, int))
-            # currently goes between 1 and 12
-            self.failUnless(mode > 0 and mode < 20)
+            # currently goes between 0 and 12
+            self.failUnless(mode >= 0 and mode < 20)
             d.callback(True)
 
         self.device.GetNetworkMode(dbus_interface=NET_INTFACE,
@@ -1042,6 +1042,25 @@ class DBusTestCase(unittest.TestCase):
                          reply_handler=sms_saved_cb,
                          error_handler=d.errback)
         return d
+
+    def test_SmsList_2(self):
+        # get the current number of Sms
+        size_before = len(self.device.List(dbus_interface=SMS_INTFACE))
+
+        # add three new ones
+        indexes = []
+        what = [{'number':'+324342322', 'text': 'hey there'},
+                {'number':'+334223312', 'text': 'where you at?'},
+                {'number':'+324323232', 'text': 'hows it going?'}]
+        for sms in what:
+            indexes.extend(self.device.Save(sms, dbus_interface=SMS_INTFACE))
+        size_after = len(self.device.List(dbus_interface=SMS_INTFACE))
+        # and check that the size has increased just three
+        self.assertEqual(size_before + 3, size_after)
+
+        # leave everything as found
+        for index in indexes:
+            self.device.Delete(index, dbus_interface=SMS_INTFACE)
 
     def test_SmsSave(self):
         """Test for SMS.Save"""
