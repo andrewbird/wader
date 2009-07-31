@@ -565,63 +565,58 @@ class DBusTestCase(unittest.TestCase):
 
     def test_ContactsFindByName(self):
         """Test for Contacts.FindByName"""
-        d = defer.Deferred()
-        name, number = "Eugene", "+435345342121"
+        TestData={
+                'JuanFoo': [0,'666066660'],
+                'JuanBar': [0,'666066661'],
+                'JuanBaz': [0,'666166662']
+                }
+        TestSearches=[
+                ['JuanB',2], ['Jua',3], ['JuanFoo',1], ['Stuff',0]
+        ]
 
-        def add_contact_cb(index):
-            def find_contacts_cb(reply):
-                self.assertEqual(len(reply), 1)
-                reply = list(reply[0])
-                self.assertIn(name, reply)
-                self.assertIn(number, reply)
-                self.assertIn(index, reply)
-                # leave everything as found
+        for name,datat in TestData.iteritems():
+            TestData[name][0]=self.device.Add(name, datat[1],
+                                    dbus_interface=CTS_INTFACE)
+        for current_search in TestSearches:
+            ResultList=self.device.FindByName(current_search[0],
+                                                dbus_interface=CTS_INTFACE)
 
-                self.device.Delete(index, dbus_interface=CTS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
+            self.assertEqual(len(ResultList), current_search[1])
+            if current_search[1] != 0: 
+                for Result in ResultList:
+                    self.assertEqual(Result[2],TestData[Result[1]][1])
 
-            self.device.FindByName("Euge",
-                                   dbus_interface=CTS_INTFACE,
-                                   reply_handler=find_contacts_cb,
-                                   error_handler=d.errback)
+        for name,datat in TestData.iteritems():
+            self.device.Delete(datat[0],dbus_interface=CTS_INTFACE)
 
-        self.device.Add(name, number,
-                        dbus_interface=CTS_INTFACE,
-                        reply_handler=add_contact_cb,
-                        error_handler=d.errback)
-        return d
 
     def test_ContactsFindByNumber(self):
         """Test for Contacts.FindByNumber"""
-        d = defer.Deferred()
-        name, number = "Juan", "+3456564454"
+        TestData={
+                '666066660': [0,'JuanFoo'],
+                '666066661': [0,'JuanBar'],
+                '666166662': [0,'JuanBaz']
+                }
+        TestSearches=[
+                ['6660',2], ['666',3], ['666066660',1], ['1234',0]
+        ]
 
-        def add_contact_cb(index):
-            def find_by_number_cb(matches):
-                self.assertEqual(len(matches), 1)
-                match = list(matches[0])
-                self.assertEqual(index, match[0])
-                self.assertEqual(name, match[1])
-                self.assertEqual(number, match[2])
-                # leave everything as found
-                self.device.Delete(index, dbus_interface=CTS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
+        for number,datat in TestData.iteritems():
+            TestData[number][0]=self.device.Add(datat[1],number,
+                                    dbus_interface=CTS_INTFACE)
 
-            # test find by number
-            self.device.FindByNumber(number, dbus_interface=CTS_INTFACE,
-                                     reply_handler=find_by_number_cb,
-                                     error_handler=d.errback)
+        for current_search in TestSearches:
+            ResultList=self.device.FindByNumber(current_search[0],
+                                                dbus_interface=CTS_INTFACE)
+            self.assertEqual(len(ResultList), current_search[1])
 
-        # add a contact
-        self.device.Add(name, number,
-                        dbus_interface=CTS_INTFACE,
-                        reply_handler=add_contact_cb,
-                        error_handler=d.errback)
-        return d
+            if current_search[1] != 0:
+                for Result in ResultList:
+                    self.assertEqual(Result[1],TestData[Result[2]][1])
+
+        for number,datat in TestData.iteritems():
+            self.device.Delete(datat[0],dbus_interface=CTS_INTFACE)
+
 
     def test_ContactsGet(self):
         """Test Contacts.Get"""
