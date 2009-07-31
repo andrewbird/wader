@@ -88,6 +88,42 @@ NOVATEL_BAND_DICT = {
 # $NWBAND: 30 Reserved
 # $NWBAND: 31 Reserved
 
+# Following additional band definitions from MiFi 2352
+# at$NWBAND2=?
+# $NWBAND2: <band> bit definitions
+# $NWBAND2: 00 WLAN US 2400 band
+# $NWBAND2: 01 WLAN ETSI 2400 band
+# $NWBAND2: 02 WLAN FRANCE 2400 band
+# $NWBAND2: 03 WLAN SPAIN 2400 band
+# $NWBAND2: 04 WLAN JAPAN 2400 band
+# $NWBAND2: 05 WLAN US 2400 band
+# $NWBAND2: 06 WLAN EUROPE 5000 band
+# $NWBAND2: 07 WLAN FRANCE 5000 band
+# $NWBAND2: 08 WLAN SPAIN 5000 band
+# $NWBAND2: 09 WLAN JAPAN 5000 band
+# $NWBAND2: 10 Reserved
+# $NWBAND2: 11 Reserved
+# $NWBAND2: 12 Reserved
+# $NWBAND2: 13 Reserved
+# $NWBAND2: 14 Reserved
+# $NWBAND2: 15 Reserved
+# $NWBAND2: 16 WCDMA EUROPE 2600 band
+# $NWBAND2: 17 WCDMA EUROPE & JAPAN 900 band
+# $NWBAND2: 18 WCDMA JAPAN 1700 band
+# $NWBAND2: 19 Reserved for WLAN
+# $NWBAND2: 20 Reserved for WLAN
+# $NWBAND2: 21 Reserved for WLAN
+# $NWBAND2: 22 Reserved for WLAN
+# $NWBAND2: 23 Reserved for WLAN
+# $NWBAND2: 24 Band Class 16
+# $NWBAND2: 25 Reserved
+# $NWBAND2: 26 Reserved
+# $NWBAND2: 27 Reserved
+# $NWBAND2: 28 Reserved
+# $NWBAND2: 29 Reserved
+# $NWBAND2: 30 Persistent value from NV
+# $NWBAND2: 31 Reserved
+
 NOVATEL_CMD_DICT = get_cmd_dict_copy()
 
 NOVATEL_CMD_DICT['get_network_mode'] = build_cmd_dict(
@@ -119,6 +155,7 @@ class NovatelSIMClass(SIMBaseClass):
 class NovatelWrapper(WCDMAWrapper):
     """Wrapper for all Novatel cards"""
 
+# XXX: Needs updating for use of bands in second chunk of bit settings (U900 etc)
     def get_band(self):
         """Returns the current used band"""
         if not len(self.custom.band_dict):
@@ -147,6 +184,7 @@ class NovatelWrapper(WCDMAWrapper):
         return self.send_at("AT$NWRAT?", name='get_network_mode',
                             callback=get_network_mode_cb)
 
+# XXX: Needs updating for use of bands in second chunk of bit settings (U900 etc)
     def set_band(self, band):
         """Sets the band to ``band``"""
         if not len(self.custom.band_dict):
