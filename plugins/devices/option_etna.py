@@ -17,7 +17,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
 from wader.common.hardware.option import (OptionWCDMADevicePlugin,
                                           OptionWCDMACustomizer,
                                           OptionWrapper)
@@ -48,7 +47,8 @@ class OptionEtnaWrapper(OptionWrapper):
         # works
         d = self.get_contacts()
         d.addCallback(lambda contacts:
-                        [c for c in contacts if c.name.startswith(pattern)])
+                        [c for c in contacts
+                            if c.name.lower().startswith(pattern.lower())])
         return d
 
 

@@ -34,7 +34,8 @@ class NovatelU740Wrapper(NovatelWrapper):
         # works
         d = self.get_contacts()
         d.addCallback(lambda contacts:
-                        [c for c in contacts if c.name.startswith(pattern)])
+                        [c for c in contacts
+                            if c.name.lower().startswith(pattern.lower())])
         return d
 
 

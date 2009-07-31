@@ -25,7 +25,8 @@ class OptionK3760Wrapper(OptionWrapper):
     def find_contacts(self, pattern):
         d = self.get_contacts()
         d.addCallback(lambda contacts:
-                        [c for c in contacts if c.name.startswith(pattern)])
+                        [c for c in contacts
+                           if c.name.lower().startswith(pattern.lower())])
         return d
 
 
