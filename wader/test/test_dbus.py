@@ -563,60 +563,60 @@ class DBusTestCase(unittest.TestCase):
                         error_handler=d.errback)
         return d
 
+
     def test_ContactsFindByName(self):
         """Test for Contacts.FindByName"""
-        TestData={
+        TestData = {
                 'JuanFoo': [0,'666066660'],
                 'JuanBar': [0,'666066661'],
                 'JuanBaz': [0,'666166662']
                 }
-        TestSearches=[
+        TestSearches = [
                 ['JuanB',2], ['Jua',3], ['JuanFoo',1], ['Stuff',0]
         ]
 
-        for name,datat in TestData.iteritems():
-            TestData[name][0]=self.device.Add(name, datat[1],
+        for name, datat in TestData.iteritems():
+            TestData[name][0] = self.device.Add(name, datat[1],
                                     dbus_interface=CTS_INTFACE)
         for current_search in TestSearches:
-            ResultList=self.device.FindByName(current_search[0],
+            ResultList = self.device.FindByName(current_search[0],
                                                 dbus_interface=CTS_INTFACE)
 
             self.assertEqual(len(ResultList), current_search[1])
-            if current_search[1] != 0: 
+            if current_search[1] != 0:
                 for Result in ResultList:
-                    self.assertEqual(Result[2],TestData[Result[1]][1])
+                    self.assertEqual(Result[2], TestData[Result[1]][1])
 
-        for name,datat in TestData.iteritems():
-            self.device.Delete(datat[0],dbus_interface=CTS_INTFACE)
+        for name, datat in TestData.iteritems():
+            self.device.Delete(datat[0], dbus_interface=CTS_INTFACE)
 
 
     def test_ContactsFindByNumber(self):
         """Test for Contacts.FindByNumber"""
-        TestData={
+        TestData = {
                 '666066660': [0,'JuanFoo'],
                 '666066661': [0,'JuanBar'],
                 '666166662': [0,'JuanBaz']
                 }
-        TestSearches=[
+        TestSearches = [
                 ['6660',2], ['666',3], ['666066660',1], ['1234',0]
         ]
 
-        for number,datat in TestData.iteritems():
-            TestData[number][0]=self.device.Add(datat[1],number,
+        for number, datat in TestData.iteritems():
+            TestData[number][0] = self.device.Add(datat[1], number,
                                     dbus_interface=CTS_INTFACE)
 
         for current_search in TestSearches:
-            ResultList=self.device.FindByNumber(current_search[0],
+            ResultList = self.device.FindByNumber(current_search[0],
                                                 dbus_interface=CTS_INTFACE)
             self.assertEqual(len(ResultList), current_search[1])
 
             if current_search[1] != 0:
                 for Result in ResultList:
-                    self.assertEqual(Result[1],TestData[Result[2]][1])
+                    self.assertEqual(Result[1], TestData[Result[2]][1])
 
-        for number,datat in TestData.iteritems():
-            self.device.Delete(datat[0],dbus_interface=CTS_INTFACE)
-
+        for number, datat in TestData.iteritems():
+            self.device.Delete(datat[0], dbus_interface=CTS_INTFACE)
 
     def test_ContactsGet(self):
         """Test Contacts.Get"""
@@ -723,6 +723,26 @@ class DBusTestCase(unittest.TestCase):
                         reply_handler=add_contact_cb,
                         error_handler=d.errback)
         return d
+
+    def test_ContactsList_2(self):
+        """Test for Contacts.List"""
+        contacts = [
+                { 'name' : "FooAnt" , 'number' : "+34666666666" , 'index' : 0 },
+                { 'name' : "BarAnt" , 'number' : "+34666666665" , 'index' : 0 },
+                { 'name' : "BazAnt" , 'number' : "+34666666664" , 'index' : 0 }
+                ]
+
+        for contact in contacts:
+            contact['index'] = self.device.Add(contact['name'],
+                    contact['number'])
+
+        for contact in contacts:
+            self.assertEqual(self.device.FindByNumber(contact['number'])[0][1],
+                    contact['name'] )
+
+        for contact in contacts:
+            self.device.Delete(contact['index'])
+
 
     # org.freedesktop.ModemManager.Modem.Gsm.Network tests
 
