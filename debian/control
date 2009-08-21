@@ -11,7 +11,7 @@ XS-Python-Version: current
 Package: wader-core
 Architecture: all
 Replaces: wader-core, vmc-core
-Depends: ${python:Depends}, python-twisted-core, python-serial, python-dbus, python-tz, python-messaging, python-epsilon, wvdial, usb-modeswitch, ozerocdoff, resolvconf, eject
+Depends: ${python:Depends}, python-twisted-core, python-serial, python-dbus, python-tz, python-messaging, python-epsilon, wvdial, usb-modeswitch, ozerocdoff, eject
 Recommends: python-twisted-conch
 Conflicts: modem-manager
 XB-Python-Version: ${python:Versions}
