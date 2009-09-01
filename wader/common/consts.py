@@ -150,12 +150,13 @@ WVTEMPLATE = join(TEMPLATES_DIR, 'wvdial.conf.tpl')
 
 # plugins consts
 PLUGINS_DIR = join(DATA_DIR, 'plugins')
-PLUGINS_DIR = [PLUGINS_DIR, join(PLUGINS_DIR, 'oses'),
+PLUGINS_DIR = [PLUGINS_DIR,
+               join(PLUGINS_DIR, 'oses'),
+               join(PLUGINS_DIR, 'contacts'),
                join(PLUGINS_DIR, 'devices')]
 
 # static dns stuff
 WADER_DNS_LOCK = join('/tmp', 'wader-conn.lock')
 
-# wader-core-ctl stuff
 PID_PATH = '/var/run/wader.pid'
 LOG_PATH = '/var/log/wader.log'

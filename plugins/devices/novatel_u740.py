@@ -32,10 +32,9 @@ class NovatelU740Wrapper(NovatelWrapper):
         # getting all contacts and returning those whose name match pattern
         # this will be slower than AT+CPBF with many contacts but at least
         # works
-        d = self.get_contacts()
-        d.addCallback(lambda contacts:
-                        [c for c in contacts
-                            if c.name.lower().startswith(pattern.lower())])
+        d = self.list_contacts()
+        d.addCallback(lambda contacts: [c for c in contacts
+                         if c.name.lower().startswith(pattern.lower())])
         return d
 
 

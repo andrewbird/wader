@@ -99,7 +99,7 @@ class DevicePlugin(object):
         except LookupError, e:
             log.err(e)
 
-    def initialize(self, arg=None):
+    def initialize(self, init_obj=None):
         """Initializes the SIM"""
         def on_init(size):
             if not self.daemons:

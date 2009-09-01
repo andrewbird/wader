@@ -31,7 +31,7 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
         d.addErrback(lambda failure: defer.succeed(200))
         return d
 
-    def get_contacts(self):
+    def list_contacts(self):
         # Return a list of all the contacts without knowing the phonebook size
         #
         # 1. We first find the highest index of what's there already
@@ -61,11 +61,11 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
             def results_cb(matches):
                 return [self._hw_process_contact_match(m) for m in matches]
 
-            return self.send_at('AT^CPBR=1,%d' % max, name='get_contacts',
-                             callback=results_cb)
+            return self.send_at('AT^CPBR=1,%d' % max, name='list_contacts',
+                                callback=results_cb)
 
         d = self.send_at('AT+CPBF=""', name='find_contacts',
-                           callback=get_max_index_cb)
+                         callback=get_max_index_cb)
         d.addErrback(no_contacts_eb)
         d.addCallback(get_valid_contacts)
         return d

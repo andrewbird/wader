@@ -24,6 +24,7 @@ from twisted.internet import protocol, defer, reactor
 from twisted.python.failure import Failure
 from twisted.python import log
 
+from messaging import PDU
 import wader.common.aterrors as E
 from wader.common.command import ATCmd
 import wader.common.signals as S
@@ -214,9 +215,16 @@ class BufferingStateMachine(object, protocol.Protocol):
         # new SMS arrived
         match = NEW_SMS.match(self.idlebuf)
         if match:
-            index = int(match.group('id'))
+            def get_sms_cb(sms):
+                iscomplete = False
+                if sms.cnt == sms.seq:
+                    iscomplete = True
+                    self.emit_signal(S.SIG_SMS_COMP, index, iscomplete)
+                self.emit_signal(S.SIG_SMS, index, iscomplete)
 
-            self.emit_signal(S.SIG_SMS, index)
+            index = int(match.group('id'))
+            d = self.get_sms(index)
+            d.addCallback(get_sms_cb)
 
             self.idlebuf = self.idlebuf.replace(match.group(), '', 1)
             if not self.idlebuf:
@@ -417,13 +425,6 @@ class WCDMAProtocol(SerialProtocol):
         cmd = ATCmd('AT+CPBW=%d,"%s",%d,"%s"' % args, name='add_contact')
         return self.queue_at_cmd(cmd)
 
-    def add_sms(self, pdu_len, pdu):
-        """Returns the index where ``pdu`` was stored"""
-        atstr = 'AT+CMGW=%d' % pdu_len
-        cmd = ATCmd(atstr, name='add_sms', eol='\r')
-        cmd.splitcmd = '%s\x1a' % pdu
-        return self.queue_at_cmd(cmd)
-
     def change_pin(self, oldpin, newpin):
         """
         Changes ``oldpin`` to ``newpin`` in the SIM card
@@ -455,13 +456,13 @@ class WCDMAProtocol(SerialProtocol):
     def delete_all_contacts(self):
         """Deletes all the contacts in SIM card, function useful for tests"""
         d = self.get_used_contact_ids()
-        def get_contacts_ids_cb(used):
+        def list_contacts_ids_cb(used):
             if not used:
                 return True
 
             return defer.gatherResults(map(self.delete_contact, used))
 
-        d.addCallback(get_contacts_ids_cb)
+        d.addCallback(list_contacts_ids_cb)
         return d
 
     def delete_all_sms(self):
@@ -549,12 +550,12 @@ class WCDMAProtocol(SerialProtocol):
         cmd = ATCmd('AT+CSCS=?', name='get_charsets')
         return self.queue_at_cmd(cmd)
 
-    def get_contact_by_index(self, index):
+    def get_contact(self, index):
         """Returns the contact at ``index``"""
-        cmd = ATCmd('AT+CPBR=%d' % index, name='get_contact_by_index')
+        cmd = ATCmd('AT+CPBR=%d' % index, name='get_contact')
         return self.queue_at_cmd(cmd)
 
-    def get_contacts(self):
+    def list_contacts(self):
         """
         Returns all the contacts stored in the SIM card
 
@@ -566,7 +567,7 @@ class WCDMAProtocol(SerialProtocol):
         :rtype: list
         """
         cmd = ATCmd('AT+CPBR=1,%d' % self.device.sim.size,
-                    name='get_contacts')
+                    name='list_contacts')
         return self.queue_at_cmd(cmd)
 
     def get_imei(self):
@@ -632,7 +633,7 @@ class WCDMAProtocol(SerialProtocol):
         cmd = ATCmd('AT+CSQ', name='get_signal_quality')
         return self.queue_at_cmd(cmd)
 
-    def get_sms(self):
+    def list_sms(self):
         """
         Returns all the messages stored in the SIM card
 
@@ -641,12 +642,12 @@ class WCDMAProtocol(SerialProtocol):
 
         :rtype: list
         """
-        cmd = ATCmd('AT+CMGL=4', name='get_sms')
+        cmd = ATCmd('AT+CMGL=4', name='list_sms')
         return self.queue_at_cmd(cmd)
 
-    def get_sms_by_index(self, index):
+    def get_sms(self, index):
         """Returns the message stored at ``index``"""
-        cmd = ATCmd('AT+CMGR=%d' % index, name='get_sms_by_index')
+        cmd = ATCmd('AT+CMGR=%d' % index, name='get_sms')
         return self.queue_at_cmd(cmd)
 
     def get_sms_format(self):
@@ -665,14 +666,14 @@ class WCDMAProtocol(SerialProtocol):
             failure.trap(E.NotFound, E.GenericError)
             return []
 
-        d = self.get_contacts()
+        d = self.list_contacts()
         d.addCallback(lambda contacts: [int(c.group('id')) for c in contacts])
         d.addErrback(errback)
         return d
 
     def get_used_sms_ids(self):
         """Returns a list with used SMS ids in the SIM card"""
-        d = self.get_sms()
+        d = self.list_sms()
         def errback(failure):
             failure.trap(E.NotFound, E.GenericError)
             return []

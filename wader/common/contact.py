@@ -33,10 +33,6 @@ class Contact(object):
         self.index = index
 
     def __repr__(self):
-        if self.index:
-            args = (self.index, self.name, self.number)
-            return '<Contact index="%d" name="%s" number="%s">' % args
-
         return '<Contact name="%s" number="%s">' % (self.name, self.number)
 
     __str__ = __repr__
@@ -55,4 +51,52 @@ class Contact(object):
         name = '"%s"' % self.name
         number = '"%s"' % self.number
         return [name, number]
+
+
+class ContactStore(object):
+    """
+    I am a contact store
+
+    A central point to perform operations on the different contact
+    backends (see :class:`~wader.common.interfaces.IContactProvider`)
+    """
+    def __init__(self):
+        super(ContactStore, self).__init__()
+        self._providers = []
+
+    def add_provider(self, provider):
+        """Adds ``provider`` to the list of registered providers"""
+        self._providers.append(provider)
+
+    def remove_provider(self, provider):
+        """Removes ``provider`` to the list of registered providers"""
+        self._providers.remove(provider)
+
+    def _call_method(self, name, *args):
+        """
+        Executes method ``name`` using ``args`` in all the registered providers
+        """
+        return (getattr(prov, name)(*args) for prov in self._providers)
+
+    def add_contact(self, data):
+        """See :meth:`~wader.common.interfaces.IContactProvider.add_contact`"""
+        self._call_method('add_contact', data)
+
+    def list_contacts(self):
+        """
+        See :meth:`~wader.common.interfaces.IContactProvider.list_contacts`
+        """
+        self._call_method('list_contacts')
+
+    def find_contacts(self, pattern):
+        """
+        See :meth:`~wader.common.interfaces.IContactProvider.find_contacts`
+        """
+        self._call_method('find_contacts', pattern)
+
+    def remove_contact(self, contact):
+        """
+        See :meth:`~wader.common.interfaces.IContactProvider.remove_contact`
+        """
+        self._call_method('remove_contact', contact)
 

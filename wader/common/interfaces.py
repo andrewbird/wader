@@ -103,8 +103,12 @@ class IWaderPlugin(Interface):
     version = Attribute("""Plugin's version""")
     author = Attribute("""Plugin's author""")
 
-    def initialize():
-        """Initializes the plugin"""
+    def initialize(init_obj):
+        """
+        Initializes the plugin using ``init_obj``
+
+        :type init_obj: dict
+        """
 
     def close():
         """Closes the plugin"""
@@ -187,4 +191,27 @@ class IHardwareManager(Interface):
         This reference will be used to emit Device{Add,Remov}ed signals
         upon hotplugging events.
         """
+
+
+class IContactProvider(IWaderPlugin):
+
+    def add_contact(data):
+        """
+        Returns a subclass of :class:`~wader.common.contact.Contact`
+
+        ``data`` has two required keys, `name` and `number`
+
+        :type data: dict
+        """
+
+    def find_contacts(pattern):
+        """
+        Returns a generator with all the contacts that match ``pattern``
+        """
+
+    def list_contacts():
+        """Returns a generator with all the contacts in the backend"""
+
+    def remove_contact(contact):
+        """Removes ``contact``"""
 

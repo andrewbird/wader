@@ -50,8 +50,6 @@ CMD_DICT = {
 
     'add_contact' : build_cmd_dict(),
 
-    'add_sms' : build_cmd_dict(re.compile('\r\n\+CMGW:\s(?P<id>\d+)\r\n')),
-
     'change_pin' : build_cmd_dict(),
 
     'check_pin' : build_cmd_dict(re.compile(r"""
@@ -96,7 +94,7 @@ CMD_DICT = {
 
     'get_charsets': build_cmd_dict(re.compile('"(?P<lang>.*?)",?')),
 
-    'get_contact_by_index' : build_cmd_dict(re.compile(r"""
+    'get_contact' : build_cmd_dict(re.compile(r"""
                             \r\n
                             \+CPBR:\s(?P<id>\d+),
                             "(?P<number>[+0-9a-fA-F]+)",
@@ -104,7 +102,7 @@ CMD_DICT = {
                             "(?P<name>.*)"
                             \r\n""", re.X)),
 
-    'get_contacts' : build_cmd_dict(
+    'list_contacts' : build_cmd_dict(
                         end=re.compile('(\r\n)?\r\n(OK)\r\n'),
                         extract=re.compile(r"""
                             \r\n
@@ -186,14 +184,14 @@ CMD_DICT = {
                               "(?P<netid>\d+)"
                               """, re.X)),
 
-    'get_sms' : build_cmd_dict(re.compile(r"""
+    'list_sms' : build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CMGL:\s
                               (?P<id>\d+),
                               (?P<where>\d),,\d+
                               \r\n(?P<pdu>\w+)""", re.X)),
 
-    'get_sms_by_index' : build_cmd_dict(re.compile(r"""
+    'get_sms' : build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CMGR:\s
                               (?P<where>\d),,
@@ -223,13 +221,12 @@ CMD_DICT = {
 
     'reset_settings' : build_cmd_dict(),
 
-    'save_sms' : build_cmd_dict(re.compile(
-                              '(\r\n)?\r\n\+CMGW:\s(?P<index>\d+)\r\n')),
+    'save_sms' : build_cmd_dict(re.compile('\r\n\+CMGW:\s(?P<index>\d+)\r\n')),
 
     'send_at' : build_cmd_dict(),
 
     'send_sms' : build_cmd_dict(re.compile(
-                              '\r\n\r\n\+CMGS:\s(?P<index>\d+)\r\n')),
+                              '\r\n\+CMGS:\s(?P<index>\d+)\r\n')),
 
     'send_sms_from_storage' : build_cmd_dict(re.compile(
                               '\r\n\+CMSS:\s(?P<index>\d+)\r\n')),

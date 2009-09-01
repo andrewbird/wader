@@ -19,13 +19,150 @@
 
 from datetime import datetime
 from time import mktime
+from operator import attrgetter
 
 from zope.interface import implements
+from twisted.internet.defer import  succeed, gatherResults
 from messaging import PDU
-
+from wader.common.consts import WADER_SERVICE
 from wader.common.interfaces import IMessage
+from wader.common.signals import SIG_SMS, SIG_SMS_COMP
+from dbus.service import Object, BusName, method, signal
+import dbus
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
+
+
+class CacheIncoherenceError(Exception):
+    """Raised when a cache incoherence error happens"""
+
+
+class MessageAssemblyLayer(object):
+    """
+    I am a transparent layer to perform operations on concatenated SMS
+    """
+
+    def __init__(self, wrappee):
+        self.wrappee = wrappee
+        self.last_index = 0
+        self.sms_map = {}
+        self.cached = False
+        self.list_sms()
+
+    def _do_add_sms(self, sms, indexes=None):
+        """
+        Adds ``sms`` to the cache using ``indexes`` if defined
+
+        It returns the logical index where it was stored
+        """
+        if indexes is None:
+            # save the real index
+            sms.real_indexes = [sms.index]
+        else:
+            sms.real_indexes = indexes
+
+        # assign a new logical index
+        self.last_index += 1
+        sms.index = self.last_index
+        # reference the sms by this logical index
+        self.sms_map[self.last_index] = sms
+        return self.last_index
+
+    def _add_sms(self, sms):
+        """
+        Adds ``sms`` to the cache
+
+        It returns the logical index where it was stored
+        """
+        if sms.cnt == 0: 
+            return self._do_add_sms(sms)
+        else:
+            for index, value in self.sms_map.iteritems():
+                if value.ref == sms.ref:
+                    self.sms_map[index].append_sms(sms)
+                    return index
+
+            return self._do_add_sms(sms)
+
+    def delete_sms(self, index):
+        """Deletes sms identified by ``index``"""
+
+        if index in self.sms_map:
+            sms = self.sms_map[index]
+            ret = [self.wrappee.delete_sms(i) for i in sms.real_indexes]
+            del self.sms_map[index]
+            return gatherResults(ret)
+
+        error = "SMS with logical index %d does not exist"
+        raise CacheIncoherenceError(error % index)
+
+    def get_sms(self, index):
+        """Returns the sms identified by ``index``"""
+        if index in self.sms_map:
+            return succeed(self.sms_map[index])
+
+        error = "SMS with logical index %d does not exist"
+        raise CacheIncoherenceError(error % index)
+
+    def make_fake_sms(self, sms): 
+        # Ok but I still think this shouldn't be like this.
+        return {
+            'number' : sms.number,
+            'text' : sms.text,
+            'index' : sms.index,
+        }
+
+    def list_sms(self):
+        """Returns all the sms"""
+        res = []
+
+        def gen_cache(messages):
+            self.cached = True
+            for sms in messages:
+                self._add_sms(sms)
+            for sms in self.sms_map.values(): 
+                res.append(self.make_fake_sms(sms))
+            return res
+
+        if self.cached:
+            for sms in self.sms_map.values(): 
+                res.append(self.make_fake_sms(sms))
+            return succeed(res)
+
+        d = self.wrappee.list_sms()
+        d.addCallback(gen_cache)
+        return d
+
+    def on_sms_notification(self, index):
+
+        """Executed when a SMS notification is received"""
+
+        def _do_add_my_sms(sms):
+            self._add_sms(sms)
+            return sms
+
+        def send_signal(sms):
+            Complete = False
+            if sms.cnt == sms.seq:
+                Complete = True
+                self.wrappee.emit_signal(SIG_SMS_COMP, index, True)
+
+            self.wrappee.emit_signal(SIG_SMS, index, Complete)
+
+        d = self.wrappee.get_sms(index)
+        d.addCallback(_do_add_my_sms)
+        d.addCallback(send_signal)
+
+    def save_sms(self, sms):
+        """Saves ``sms`` in the cache memoizing the resulting indexes"""
+
+        def do_save_sms(indexes):
+            result = [self._do_add_sms(sms, indexes), ]
+            return result
+
+        d = self.wrappee.save_sms(sms)
+        d.addCallback(do_save_sms)
+        return d
 
 class Message(object):
     """I am a Message in the system"""
@@ -36,15 +173,16 @@ class Message(object):
         self.number = number
         self.text = text
         self.index = index
+        self.real_indexes = []
         self.where = where
         self.csca = csca
         self.datetime = _datetime
-        self.ref = None
-        self.cnt = None
-        self.seq = None
+        self.ref = None  # Multipart SMS reference number
+        self.cnt = None  # Total number of parts
+        self.seq = None  # Part #
 
     def __repr__(self):
-        return "<Message  number: %s, text: %s>" % (self.number, self.text)
+        return "<Message number: %s, text: %s>" % (self.number, self.text)
 
     def __eq__(self, m):
         if IMessage.providedBy(m):
@@ -97,6 +235,19 @@ class Message(object):
 
         return ret
 
+    def append_sms(self, sms):
+        """Appends ``sms`` text internally"""
+        if self.ref == sms.ref:
+            if sms.seq < self.seq:
+                self.text = sms.text + self.text
+            else:
+                self.text += sms.text
+
+            self.real_indexes.extend(sms.real_indexes)
+        else:
+            raise ValueError("Cannot assembly SMS fragment with \
+                    ref %d" % sms.ref)
+
 
 def extract_datetime(datestr):
     """
@@ -147,4 +298,5 @@ def message_to_pdu(sms, store=False):
         csca = sms.csca
 
     return p.encode_pdu(sms.number, sms.text, csca=csca, store=store)
+
 

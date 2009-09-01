@@ -108,7 +108,7 @@ HUAWEI_CMD_DICT['get_radio_status'] = build_cmd_dict(
                        end=re.compile('\r\n\+CFUN:\s?\d\r\n'),
                        extract=re.compile('\r\n\+CFUN:\s?(?P<status>\d)\r\n'))
 
-HUAWEI_CMD_DICT['get_contact_by_index'] = build_cmd_dict(re.compile(r"""
+HUAWEI_CMD_DICT['get_contact'] = build_cmd_dict(re.compile(r"""
                        \r\n
                        \^CPBR:\s(?P<id>\d+),
                        "(?P<number>\+?\d+)",
@@ -118,7 +118,7 @@ HUAWEI_CMD_DICT['get_contact_by_index'] = build_cmd_dict(re.compile(r"""
                        \r\n
                        """, re.VERBOSE))
 
-HUAWEI_CMD_DICT['get_contacts'] = build_cmd_dict(
+HUAWEI_CMD_DICT['list_contacts'] = build_cmd_dict(
                        end=re.compile('(\r\n)?\r\n(OK)\r\n'),
                        extract=re.compile(r"""
                          \r\n
@@ -231,7 +231,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         return d
 
     def find_contacts(self, pattern):
-        d = self.get_contacts()
+        d = self.list_contacts()
         d.addCallback(lambda contacts:
                 [c for c in contacts
                        if c.name.lower().startswith(pattern.lower())])
@@ -244,9 +244,9 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         d.addErrback(log.err)
         return d
 
-    def get_contacts(self):
+    def list_contacts(self):
         """Returns a list with all the contacts in the SIM"""
-        cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size, name='get_contacts')
+        cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size, name='list_contacts')
         d = self.queue_at_cmd(cmd)
 
         def not_found_eb(failure):
@@ -282,8 +282,8 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
         return Contact(name, number, index=index)
 
-    def get_contact_by_index(self, index):
-        cmd = ATCmd('AT^CPBR=%d' % index, name='get_contact_by_index')
+    def get_contact(self, index):
+        cmd = ATCmd('AT^CPBR=%d' % index, name='get_contact')
         d = self.queue_at_cmd(cmd)
         d.addCallback(lambda match: self._hw_process_contact_match(match[0]))
         return d

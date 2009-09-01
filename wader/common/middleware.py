@@ -33,7 +33,7 @@ import wader.common.aterrors as E
 from wader.common.consts import MM_IP_METHOD_STATIC, CRD_INTFACE
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
-                                pack_ucs2_bytes, check_if_ucs2)
+        pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
@@ -102,13 +102,6 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(get_next_id_cb)
         return d
 
-    def add_sms(self, sms):
-        """Adds ``sms`` to the SIM archive"""
-        pdu_len = sms.get_pdu_len()
-        d = super(WCDMAWrapper, self).add_sms(pdu_len, sms.get_pdu())
-        d.addCallback(lambda resp: int(resp[0].group('id')))
-        return d
-
     def change_pin(self, oldpin, newpin):
         """Changes PIN from ``oldpin`` to ``newpin``"""
         d = super(WCDMAWrapper, self).change_pin(oldpin, newpin)
@@ -150,6 +143,10 @@ class WCDMAWrapper(WCDMAProtocol):
         """Deletes SMS at ``index``"""
         d = super(WCDMAWrapper, self).delete_sms(index)
         d.addCallback(lambda result: result[0].group('resp'))
+        return d
+
+    def delete_all_sms(self,result):
+        d = super(WCDMAWrapper, self).delete_all_sms()
         return d
 
     def disable_echo(self):
@@ -197,7 +194,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         d = super(WCDMAWrapper, self).get_apns()
         d.addCallback(lambda resp:
-                  [(int(r.group('index')), r.group('apn')) for r in resp])
+                [(int(r.group('index')), r.group('apn')) for r in resp])
         return d
 
     def get_band(self):
@@ -240,40 +237,17 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda resp: [match.group('lang') for match in resp])
         return d
 
-    def get_contact_by_index(self, index):
+    def get_contact(self, index):
         """Returns the contact at ``index``"""
-        d = super(WCDMAWrapper, self).get_contact_by_index(index)
+        d = super(WCDMAWrapper, self).get_contact(index)
         d.addCallback(lambda match: regexp_to_contact(match[0]))
         return d
-
-    def get_contacts(self):
-        """
-        Returns all the contacts in the SIM
-
-        :rtype: list
-        """
-        def not_found_eb(failure):
-            failure.trap(E.NotFound, E.InvalidIndex, E.GenericError)
-            return []
-
-        def get_them(ignored=None):
-            d = super(WCDMAWrapper, self).get_contacts()
-            d.addCallback(lambda matches: map(regexp_to_contact, matches))
-            d.addErrback(not_found_eb)
-            return d
-
-        if self.device.sim.size:
-            return get_them()
-        else:
-            d = self._get_next_contact_id()
-            d.addCallback(get_them)
-            return d
 
     def get_hardware_info(self):
         """Returns the manufacturer name, card model and firmware version"""
         dlist = [self.get_manufacturer_name(),
-                 self.get_card_model(),
-                 self.get_card_version()]
+                self.get_card_model(),
+                self.get_card_version()]
 
         return defer.gatherResults(dlist)
 
@@ -368,7 +342,7 @@ class WCDMAWrapper(WCDMAProtocol):
             netname = netinfo.group('netname')
 
             if netname in ['Limited Service',
-                           pack_ucs2_bytes('Limited Service')]:
+                    pack_ucs2_bytes('Limited Service')]:
                 raise ex.LimitedServiceNetworkError
 
             # netname can be in UCS2, as a string, or as a network id (int)
@@ -405,12 +379,12 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         d = super(WCDMAWrapper, self).get_network_names()
         d.addCallback(lambda resp:
-                   [NetworkOperator(*match.groups()) for match in resp])
+                [NetworkOperator(*match.groups()) for match in resp])
         return d
 
     def _get_free_contact_ids(self):
         """Returns a deque with the not used contact ids"""
-        def get_contacts_cb(contacts):
+        def list_contacts_cb(contacts):
             if not contacts:
                 return deque(range(1, self.device.sim.size))
 
@@ -418,12 +392,12 @@ class WCDMAWrapper(WCDMAProtocol):
             free = set(range(1, self.device.sim.size)) ^ set(busy_ids)
             return deque(list(free))
 
-        def get_contacts_eb(failure):
+        def list_contacts_eb(failure):
             failure.trap(E.NotFound, E.GenericError)
             return deque(range(1, self.device.sim.size))
 
-        d = self.get_contacts()
-        d.addCallbacks(get_contacts_cb, get_contacts_eb)
+        d = self.list_contacts()
+        d.addCallbacks(list_contacts_cb, list_contacts_eb)
         return d
 
     def _get_next_contact_id(self):
@@ -497,7 +471,7 @@ class WCDMAWrapper(WCDMAProtocol):
         # a.k.a. AT+CPOL?
         d = super(WCDMAWrapper, self).get_roaming_ids()
         d.addCallback(lambda raw:
-                    [BasicNetworkOperator(obj.group('netid')) for obj in raw])
+                [BasicNetworkOperator(obj.group('netid')) for obj in raw])
         return d
 
     def get_signal_quality(self):
@@ -506,35 +480,11 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda response: int(response[0].group('rssi')))
         return d
 
-    def get_sms(self):
-        """
-        Returns all the SMS in the SIM card
-
-        :rtype: list
-        """
-        d = super(WCDMAWrapper, self).get_sms()
-        def get_all_sms_cb(messages):
-            sms_list = []
-            for rawsms in messages:
-                # Message obj
-                try:
-                    sms = pdu_to_message(rawsms.group('pdu'))
-                    sms.index = int(rawsms.group('id'))
-                    sms.where = int(rawsms.group('where'))
-                    sms_list.append(sms)
-                except ValueError:
-                    log.err(ex.MalformedSMSError,
-                            "Malformed PDU: %s" % rawsms.group('pdu'))
-            return sms_list
-
-        d.addCallback(get_all_sms_cb)
-        return d
-
-    def get_sms_by_index(self, index):
+    def get_sms(self, index):
         """
         Returns a ``Message`` object representing the SMS at ``index``
         """
-        d = super(WCDMAWrapper, self).get_sms_by_index(index)
+        d = super(WCDMAWrapper, self).get_sms(index)
         def get_sms_cb(rawsms):
             try:
                 sms = pdu_to_message(rawsms[0].group('pdu'))
@@ -611,10 +561,10 @@ class WCDMAWrapper(WCDMAProtocol):
                     return failure
 
                 self.state_dict['retry_call'] = reactor.callLater(
-                                                    HSO_RETRY_TIMEOUT,
-                                                    get_ip4_config, deferred)
+                        HSO_RETRY_TIMEOUT,
+                        get_ip4_config, deferred)
 
-            d = self._hso_get_ip4_config()
+                d = self._hso_get_ip4_config()
             d.addCallback(deferred.callback)
             d.addErrback(get_ip4_eb)
             return deferred
@@ -622,16 +572,66 @@ class WCDMAWrapper(WCDMAProtocol):
         auxdef = defer.Deferred()
         return get_ip4_config(auxdef)
 
+    def list_contacts(self):
+        """
+        Returns all the contacts in the SIM
+
+        :rtype: list
+        """
+        def not_found_eb(failure):
+            failure.trap(E.NotFound, E.InvalidIndex, E.GenericError)
+            return []
+
+        def get_them(ignored=None):
+            d = super(WCDMAWrapper, self).list_contacts()
+            d.addCallback(lambda matches: map(regexp_to_contact, matches))
+            d.addErrback(not_found_eb)
+            return d
+
+        if self.device.sim.size:
+            return get_them()
+        else:
+            d = self._get_next_contact_id()
+            d.addCallback(get_them)
+            return d
+
+    def list_sms(self):
+        """
+        Returns all the SMS in the SIM card
+
+        :rtype: list
+        """
+        d = super(WCDMAWrapper, self).list_sms()
+        def get_all_sms_cb(messages):
+            sms_list = []
+            for rawsms in messages:
+                try:
+                    sms = pdu_to_message(rawsms.group('pdu'))
+                    sms.index = int(rawsms.group('id'))
+                    sms.where = int(rawsms.group('where'))
+                    sms_list.append(sms)
+                except ValueError:
+                    log.err(ex.MalformedSMSError,
+                            "Malformed PDU: %s" % rawsms.group('pdu'))
+            return sms_list
+
+        d.addCallback(get_all_sms_cb)
+        return d
+
     def save_sms(self, sms):
         """
         Stores ``sms`` and returns a list of indexes
 
         ``sms`` might span several messages if it is a multipart SMS
         """
-        ret = []
+
+        def save_sms_cb(response):
+            return int(response[0].group('index'))
+
         for pdu_len, pdu in message_to_pdu(sms, store=True):
+            ret = []
             d = super(WCDMAWrapper, self).save_sms(pdu, pdu_len)
-            d.addCallback(lambda response: response[0].group('index'))
+            d.addCallback(save_sms_cb)
             ret.append(d)
 
         return defer.gatherResults(ret)
@@ -676,10 +676,14 @@ class WCDMAWrapper(WCDMAProtocol):
 
         ``sms`` might span several messages if it is a multipart SMS
         """
+
+        def send_sms_cb(response):
+            return int(response[0].group('index'))
+
         ret = []
         for pdu_len, pdu in message_to_pdu(sms):
             d = super(WCDMAWrapper, self).send_sms(pdu, pdu_len)
-            d.addCallback(lambda response: int(response[0].group('index')))
+            d.addCallback(send_sms_cb)
             ret.append(d)
 
         return defer.gatherResults(ret)

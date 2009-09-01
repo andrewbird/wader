@@ -63,7 +63,7 @@ ZTEK2525_CMD_DICT['get_network_names'] = build_cmd_dict(re.compile(r"""
                                                           """, re.VERBOSE),
                                                           end=re.compile('\r\n\r\nOK\r\n'))
 
-ZTEK2525_CMD_DICT['get_sms_by_index'] = build_cmd_dict(re.compile(r"""
+ZTEK2525_CMD_DICT['get_sms'] = build_cmd_dict(re.compile(r"""
                                                          \r\n
                                                          \+CMGR:\s
                                                          (?P<where>\d),
@@ -73,7 +73,7 @@ ZTEK2525_CMD_DICT['get_sms_by_index'] = build_cmd_dict(re.compile(r"""
                                                          \r\n
                                                          """, re.VERBOSE))
 
-ZTEK2525_CMD_DICT['get_sms'] = build_cmd_dict(re.compile(r"""
+ZTEK2525_CMD_DICT['list_sms'] = build_cmd_dict(re.compile(r"""
                                                          \r\n
                                                          \+CMGL:\s
                                                          (?P<id>\d+),

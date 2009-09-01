@@ -117,10 +117,10 @@ class TestCommandsRegexps(unittest.TestCase):
         self.failIf(match is None)
         self.assertEqual(match.group('version'), '11.110.01.03.00')
 
-    def test_get_contacts_regexp(self):
+    def test_list_contacts_regexp(self):
         # [-] SENDING ATCMD 'AT+CPBR=1,250\r\n'
         # [-] WAITING: DATA_RCV = '\r\n+CPBR: 1,"+23434432",145,"0050006100620065006C0073"\r\n\r\nOK\r\n'
-        extract = cmd_dict['get_contacts']['extract']
+        extract = cmd_dict['list_contacts']['extract']
         text = '\r\n+CPBR: 1,"+23434432",145,"0050006100620065006C0073"\r\n\r\nOK\r\n'
         match = extract.match(text)
         self.failIf(match is None)

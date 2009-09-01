@@ -33,6 +33,8 @@ from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
+from twisted.python import log
+from wader.common.sms import pdu_to_message, message_to_pdu
 
 MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
@@ -66,7 +68,6 @@ ERICSSON_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
                 )                  # end of group
                 \s*\r\n
                 """, re.VERBOSE))
-
 
 class EricssonSIMClass(SIMBaseClass):
     """
@@ -293,7 +294,6 @@ class EricssonWrapper(WCDMAWrapper):
         cmd = ATCmd('AT&F', name='reset_settings')
         return self.queue_at_cmd(cmd)
 
-
 class EricssonCustomizer(WCDMACustomizer):
     """
     Base Customizer class for Ericsson cards
@@ -304,6 +304,7 @@ class EricssonCustomizer(WCDMACustomizer):
     # Multiline so we catch and remove the ESTKSMENU
     async_regexp = re.compile("\r\n(?P<signal>[*+][A-Z]{3,}):(?P<args>.*)\r\n",
                               re.MULTILINE)
+
 
     band_dict = ERICSSON_BAND_DICT
     cmd_dict = ERICSSON_CMD_DICT

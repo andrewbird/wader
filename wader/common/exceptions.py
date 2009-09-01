@@ -34,6 +34,9 @@ class NetworkRegistrationError(Exception):
     Exception raised when an error occurred while registering with the network
     """
 
+class PluginInitialisationError(Exception):
+    """Exception raised when an error occurred while initialisating a plugin"""
+
 class ProfileNotFoundError(Exception):
     """Exception raised when a profile hasn't been found"""
 

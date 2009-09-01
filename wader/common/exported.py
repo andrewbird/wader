@@ -21,15 +21,20 @@ I export :class:`~wader.common.middleware.WCDMAWrapper` methods over DBus
 import dbus
 from dbus.service import Object, BusName, method, signal
 
+from twisted.internet.defer import succeed, gatherResults
 from twisted.python import log
 
 from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
                                  HSO_INTFACE, SPL_INTFACE)
+
+
 from wader.common.sms import Message
+from wader.common.sms import MessageAssemblyLayer as MAL
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import convert_ip_to_int
+from twisted.python import log
 
 # welcome to the multiple inheritance madness!
 # python-dbus currently lacks an "export_as" keyword for use cases like
@@ -60,6 +65,7 @@ class ModemExporter(Object, DBusExporterHelper):
                                             object_path=device.udi)
         self.device = device
         self.sconn = device.sconn
+
 
     @method(MDM_INTFACE, in_signature='s', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
@@ -139,7 +145,7 @@ class ModemExporter(Object, DBusExporterHelper):
     @signal(dbus_interface=MDM_INTFACE, signature='o')
     def DeviceEnabled(self, opath):
         log.msg("emitting DeviceEnabled('%s')" % opath)
-
+        self.mal = MAL(self.sconn)
 
 class SimpleExporter(ModemExporter):
     """I export the org.freedesktop.ModemManager.Modem.Simple interface"""
@@ -519,7 +525,7 @@ class SMSExporter(NetworkExporter):
 
         :param index: The SMS index
         """
-        d = self.sconn.delete_sms(index)
+        d = self.mal.delete_sms(index)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='u', out_signature='a{sv}',
@@ -530,7 +536,7 @@ class SMSExporter(NetworkExporter):
 
         :param index: The SMS index
         """
-        d = self.sconn.get_sms_by_index(index)
+        d = self.mal.get_sms(index)
         d.addCallback(lambda sms: sms.to_dict())
         return self.add_callbacks(d, async_cb, async_eb)
 
@@ -552,8 +558,8 @@ class SMSExporter(NetworkExporter):
             async_callbacks=('async_cb', 'async_eb'))
     def List(self, async_cb, async_eb):
         """Returns all the SMS stored in SIM"""
-        d = self.sconn.get_sms()
-        d.addCallback(lambda messages: [sms.to_dict() for sms in messages])
+
+        d = self.mal.list_sms()
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='a{sv}', out_signature='au',
@@ -565,7 +571,7 @@ class SMSExporter(NetworkExporter):
         :param sms: dictionary with the settings to use
         :rtype: int
         """
-        d = self.sconn.save_sms(Message.from_dict(sms))
+        d = self.mal.save_sms(Message.from_dict(sms))
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='a{sv}', out_signature='au',
@@ -620,10 +626,15 @@ class SMSExporter(NetworkExporter):
         d = self.sconn.set_smsc(smsc)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
-    @signal(dbus_interface=SMS_INTFACE, signature='u')
-    def SMSReceived(self, index):
-        log.msg('emitting SMSReceived(%d)' % index)
+    @signal(dbus_interface=SMS_INTFACE, signature='ub')
+    def SMSReceived(self, index, iscomplete):
+        log.msg('Emitting SMSReceived(%d,%s)' % (index,iscomplete))
+        if iscomplete:
+            log.msg('SMS is complete')
 
+    @signal(dbus_interface=SMS_INTFACE, signature='ub')
+    def Completed(self, index, iscomplete):
+        log.msg('emitting Complete(%d)' % index)
 
 class ContactsExporter(SMSExporter):
     """
@@ -663,7 +674,7 @@ class ContactsExporter(SMSExporter):
         :param number: The new number of the contact to be edited
         :param index: The index of the contact to be edited
         """
-        d = self.sconn.add_contact(Contact(name, number, index))
+        d = self.sconn.add_contact(Contact(name, number, index=index))
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(CTS_INTFACE, in_signature='s', out_signature='a(uss)',
@@ -689,7 +700,7 @@ class ContactsExporter(SMSExporter):
         :param number: The number to match contacts against
         :rtype: list
         """
-        d = self.sconn.get_contacts()
+        d = self.sconn.list_contacts()
         d.addCallback(lambda contacts:
                       [(c.index, c.name, c.number) for c in contacts
                             if c.number.startswith(number)])
@@ -704,7 +715,7 @@ class ContactsExporter(SMSExporter):
         :param index: The index of the contact to get
         :rtype: tuple
         """
-        d = self.sconn.get_contact_by_index(index)
+        d = self.sconn.get_contact(index)
         d.addCallback(lambda c: (c.index, c.name, c.number))
         return self.add_callbacks(d, async_cb, async_eb)
 
@@ -712,7 +723,7 @@ class ContactsExporter(SMSExporter):
             async_callbacks=('async_cb', 'async_eb'))
     def GetCount(self, async_cb, async_eb):
         """Returns the number of contacts in the SIM"""
-        d = self.sconn.get_contacts()
+        d = self.sconn.list_contacts()
         d.addCallback(lambda contacts: len(contacts))
         return self.add_callbacks(d, async_cb, async_eb)
 
@@ -731,7 +742,7 @@ class ContactsExporter(SMSExporter):
 
         :rtype: list of tuples
         """
-        d = self.sconn.get_contacts()
+        d = self.sconn.list_contacts()
         d.addCallback(lambda contacts:
                       [(c.index, c.name, c.number) for c in contacts])
         return self.add_callbacks(d, async_cb, async_eb)

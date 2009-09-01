@@ -24,15 +24,21 @@ from wader.common.hardware.base import build_band_dict
 from wader.common import consts
 
 class HuaweiK3520Wrapper(HuaweiWCDMAWrapper):
-    def get_contacts(self):
-        def get_contacts_cb(contacts):
+    def list_contacts(self):
+        def list_contacts_cb(contacts):
             d = self.set_charset("UCS2")
             d.addCallback(lambda _: contacts)
             return d
 
         d = self.set_charset("IRA")
         d.addCallback(lambda ign:
-                super(HuaweiK3520Wrapper, self).get_contacts())
+                super(HuaweiK3520Wrapper, self).list_contacts())
+        return d
+
+    def find_contacts(self, pattern):
+        d = self.list_contacts()
+        d.addCallback(lambda contacts:
+                        [c for c in contacts if c.name.lower().startswith(pattern.lower())])
         return d
 
 
