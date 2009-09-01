@@ -60,7 +60,7 @@ class ModemExporter(Object, DBusExporterHelper):
                                             object_path=device.udi)
         self.device = device
         self.sconn = device.sconn
-
+        self.mal = None
 
     @method(MDM_INTFACE, in_signature='s', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
@@ -623,13 +623,14 @@ class SMSExporter(NetworkExporter):
 
     @signal(dbus_interface=SMS_INTFACE, signature='ub')
     def SMSReceived(self, index, iscomplete):
-        log.msg('Emitting SMSReceived(%d,%s)' % (index,iscomplete))
+        log.msg('Emitting SMSReceived(%d, %s)' % (index, iscomplete))
         if iscomplete:
             log.msg('SMS is complete')
 
     @signal(dbus_interface=SMS_INTFACE, signature='ub')
     def Completed(self, index, iscomplete):
         log.msg('emitting Complete(%d)' % index)
+
 
 class ContactsExporter(SMSExporter):
     """
