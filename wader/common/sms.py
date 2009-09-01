@@ -25,10 +25,8 @@ from twisted.internet.defer import  succeed, gatherResults
 from messaging import PDU
 
 from wader.common.interfaces import IMessage
-from wader.common.signals import SIG_SMS, SIG_SMS_COMP
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
-
 
 class CacheIncoherenceError(Exception):
     """Raised when a cache incoherence error happens"""
