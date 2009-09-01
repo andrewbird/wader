@@ -37,7 +37,7 @@ from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
 import wader.common.exceptions as ex
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
-from wader.common.sms import pdu_to_message, message_to_pdu
+from wader.common.sms import Message
 
 HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
@@ -483,7 +483,7 @@ class WCDMAWrapper(WCDMAProtocol):
         d = super(WCDMAWrapper, self).get_sms(index)
         def get_sms_cb(rawsms):
             try:
-                sms = pdu_to_message(rawsms[0].group('pdu'))
+                sms = Message.from_pdu(rawsms[0].group('pdu'))
                 sms.where = int(rawsms[0].group('where'))
                 sms.index = index
             except IndexError:
@@ -602,7 +602,7 @@ class WCDMAWrapper(WCDMAProtocol):
             sms_list = []
             for rawsms in messages:
                 try:
-                    sms = pdu_to_message(rawsms.group('pdu'))
+                    sms = Message.from_pdu(rawsms.group('pdu'))
                     sms.index = int(rawsms.group('id'))
                     sms.where = int(rawsms.group('where'))
                     sms_list.append(sms)
@@ -620,7 +620,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         ``sms`` might span several messages if it is a multipart SMS
         """
-        for pdu_len, pdu in message_to_pdu(sms, store=True):
+        for pdu_len, pdu in sms.to_pdu(store=True):
             ret = []
             d = super(WCDMAWrapper, self).save_sms(pdu, pdu_len)
             d.addCallback(lambda response: int(response[0].group('index')))
@@ -673,7 +673,7 @@ class WCDMAWrapper(WCDMAProtocol):
             return int(response[0].group('index'))
 
         ret = []
-        for pdu_len, pdu in message_to_pdu(sms):
+        for pdu_len, pdu in sms.to_pdu():
             d = super(WCDMAWrapper, self).send_sms(pdu, pdu_len)
             d.addCallback(send_sms_cb)
             ret.append(d)

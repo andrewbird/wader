@@ -183,6 +183,29 @@ class Message(object):
 
         return m
 
+    @classmethod
+    def from_pdu(cls, pdu):
+        """
+        Converts ``pdu`` to a :class:`Message` object
+
+        :param pdu: The PDU to convert
+        :rtype: ``Message``
+        """
+        p = PDU()
+        sender, datestr, text, csca, ref, cnt, seq = p.decode_pdu(pdu)[:7]
+
+        _datetime = None
+        if datestr:
+            try:
+                _datetime = extract_datetime(datestr)
+            except ValueError:
+                _datetime = datetime.now()
+
+        m = cls(sender, text, _datetime=_datetime, csca=csca)
+        m.ref, m.cnt, m.seq = ref, cnt, seq
+
+        return m
+
     def to_dict(self):
         """
         Returns a dict ready to be sent via DBus
@@ -204,6 +227,15 @@ class Message(object):
 
         return ret
 
+    def to_pdu(self, store=False):
+        """Returns the PDU representation of this message"""
+        p = PDU()
+        csca = ""
+        if self.csca:
+            csca = self.csca
+
+        return p.encode_pdu(self.number, self.text, csca=csca, store=store)
+
     def append_sms(self, sms):
         """Appends ``sms`` text internally"""
         if self.ref == sms.ref:
@@ -214,8 +246,8 @@ class Message(object):
 
             self.real_indexes.extend(sms.real_indexes)
         else:
-            raise ValueError("Cannot assembly SMS fragment with \
-                    ref %d" % sms.ref)
+            error = "Cannot assembly SMS fragment with ref %d"
+            raise ValueError(error % sms.ref)
 
 
 def extract_datetime(datestr):
@@ -236,36 +268,4 @@ def extract_datetime(datestr):
     tz = osobj.get_tzinfo()
 
     return datetime(year, month, day, hour, mins, seconds, tzinfo=tz)
-
-def pdu_to_message(pdu):
-    """
-    Converts ``pdu`` to a :class:`~wader.common.sms.Message` object
-
-    :param pdu: The PDU to convert
-    :rtype: ``Message``
-    """
-    p = PDU()
-    sender, datestr, text, csca, ref, cnt, seq = p.decode_pdu(pdu)[:7]
-    if datestr:
-        try:
-            _datetime = extract_datetime(datestr)
-        except ValueError:
-            _datetime = datetime.now()
-    else:
-        _datetime = None
-
-    m = Message(sender, text, _datetime=_datetime, csca=csca)
-    m.ref, m.cnt, m.seq = ref, cnt, seq
-
-    return m
-
-def message_to_pdu(sms, store=False):
-    """Converts ``sms`` to its PDU representation"""
-    p = PDU()
-    csca = ""
-    if sms.csca:
-        csca = sms.csca
-
-    return p.encode_pdu(sms.number, sms.text, csca=csca, store=store)
-
 

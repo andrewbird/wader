@@ -33,7 +33,6 @@ from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
-from wader.common.sms import pdu_to_message, message_to_pdu
 
 MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
