@@ -141,6 +141,7 @@ fi
 %config %{_datadir}/dbus-1/system-services/org.freedesktop.ModemManager.service
 %config %{_sysconfdir}/dbus-1/system.d/org.freedesktop.ModemManager.conf
 %config %{_sysconfdir}/udev/rules.d/99-huawei-e169.rules
+%config %{_sysconfdir}/udev/rules.d/99-ericsson.rules
 %config %{_sysconfdir}/udev/rules.d/99-novatel-eu870d.rules
 %config %{_sysconfdir}/udev/rules.d/99-novatel-mc950d.rules
 %config %{_sysconfdir}/udev/rules.d/99-novatel-mc990d.rules
