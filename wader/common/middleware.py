@@ -145,10 +145,6 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda result: result[0].group('resp'))
         return d
 
-    def delete_all_sms(self,result):
-        d = super(WCDMAWrapper, self).delete_all_sms()
-        return d
-
     def disable_echo(self):
         """Disables echo"""
         d = super(WCDMAWrapper, self).disable_echo()
@@ -564,7 +560,7 @@ class WCDMAWrapper(WCDMAProtocol):
                         HSO_RETRY_TIMEOUT,
                         get_ip4_config, deferred)
 
-                d = self._hso_get_ip4_config()
+            d = self._hso_get_ip4_config()
             d.addCallback(deferred.callback)
             d.addErrback(get_ip4_eb)
             return deferred
@@ -624,14 +620,10 @@ class WCDMAWrapper(WCDMAProtocol):
 
         ``sms`` might span several messages if it is a multipart SMS
         """
-
-        def save_sms_cb(response):
-            return int(response[0].group('index'))
-
         for pdu_len, pdu in message_to_pdu(sms, store=True):
             ret = []
             d = super(WCDMAWrapper, self).save_sms(pdu, pdu_len)
-            d.addCallback(save_sms_cb)
+            d.addCallback(lambda response: int(response[0].group('index')))
             ret.append(d)
 
         return defer.gatherResults(ret)

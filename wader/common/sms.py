@@ -19,16 +19,13 @@
 
 from datetime import datetime
 from time import mktime
-from operator import attrgetter
 
 from zope.interface import implements
 from twisted.internet.defer import  succeed, gatherResults
 from messaging import PDU
-from wader.common.consts import WADER_SERVICE
+
 from wader.common.interfaces import IMessage
 from wader.common.signals import SIG_SMS, SIG_SMS_COMP
-from dbus.service import Object, BusName, method, signal
-import dbus
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 
@@ -74,7 +71,7 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
-        if sms.cnt == 0: 
+        if sms.cnt == 0:
             return self._do_add_sms(sms)
         else:
             for index, value in self.sms_map.iteritems():
@@ -104,14 +101,6 @@ class MessageAssemblyLayer(object):
         error = "SMS with logical index %d does not exist"
         raise CacheIncoherenceError(error % index)
 
-    def make_fake_sms(self, sms): 
-        # Ok but I still think this shouldn't be like this.
-        return {
-            'number' : sms.number,
-            'text' : sms.text,
-            'index' : sms.index,
-        }
-
     def list_sms(self):
         """Returns all the sms"""
         res = []
@@ -120,49 +109,29 @@ class MessageAssemblyLayer(object):
             self.cached = True
             for sms in messages:
                 self._add_sms(sms)
-            for sms in self.sms_map.values(): 
-                res.append(self.make_fake_sms(sms))
+            for sms in self.sms_map.values():
+                res.append(sms.to_dict())
             return res
 
         if self.cached:
-            for sms in self.sms_map.values(): 
-                res.append(self.make_fake_sms(sms))
+            for sms in self.sms_map.values():
+                res.append(sms.to_dict())
             return succeed(res)
 
         d = self.wrappee.list_sms()
         d.addCallback(gen_cache)
         return d
 
-    def on_sms_notification(self, index):
-
-        """Executed when a SMS notification is received"""
-
-        def _do_add_my_sms(sms):
-            self._add_sms(sms)
-            return sms
-
-        def send_signal(sms):
-            Complete = False
-            if sms.cnt == sms.seq:
-                Complete = True
-                self.wrappee.emit_signal(SIG_SMS_COMP, index, True)
-
-            self.wrappee.emit_signal(SIG_SMS, index, Complete)
-
-        d = self.wrappee.get_sms(index)
-        d.addCallback(_do_add_my_sms)
-        d.addCallback(send_signal)
-
     def save_sms(self, sms):
         """Saves ``sms`` in the cache memoizing the resulting indexes"""
-
         def do_save_sms(indexes):
-            result = [self._do_add_sms(sms, indexes), ]
+            result = (self._do_add_sms(sms, indexes),)
             return result
 
         d = self.wrappee.save_sms(sms)
         d.addCallback(do_save_sms)
         return d
+
 
 class Message(object):
     """I am a Message in the system"""

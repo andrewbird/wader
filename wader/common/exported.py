@@ -20,21 +20,16 @@ I export :class:`~wader.common.middleware.WCDMAWrapper` methods over DBus
 """
 import dbus
 from dbus.service import Object, BusName, method, signal
-
-from twisted.internet.defer import succeed, gatherResults
 from twisted.python import log
 
 from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
                                  HSO_INTFACE, SPL_INTFACE)
-
-
 from wader.common.sms import Message
 from wader.common.sms import MessageAssemblyLayer as MAL
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import convert_ip_to_int
-from twisted.python import log
 
 # welcome to the multiple inheritance madness!
 # python-dbus currently lacks an "export_as" keyword for use cases like

@@ -975,8 +975,6 @@ class DBusTestCase(unittest.TestCase):
                                reply_handler=on_sms_delete_cb,
                                error_handler=d.errback)
 
-
-
         # save a sms, delete it and check is no longer present
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
                          reply_handler=sms_saved_cb,

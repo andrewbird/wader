@@ -24,7 +24,6 @@ from twisted.internet import protocol, defer, reactor
 from twisted.python.failure import Failure
 from twisted.python import log
 
-from messaging import PDU
 import wader.common.aterrors as E
 from wader.common.command import ATCmd
 import wader.common.signals as S
