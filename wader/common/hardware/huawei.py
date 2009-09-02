@@ -457,7 +457,8 @@ class HuaweiEMXXWrapper(HuaweiWCDMAWrapper):         # Modules have RFSWITCH
 
         cmd = ATCmd('AT^RFSWITCH?', name='get_radio')
         d = self.queue_at_cmd(cmd)
-        d.addCallback(lambda _: super(HuaweiEMXXWrapper, self).get_signal_level())
+        d.addCallback(lambda _:
+                        super(HuaweiEMXXWrapper, self).get_signal_level())
         return d
 
 

@@ -155,7 +155,8 @@ class NovatelSIMClass(SIMBaseClass):
 class NovatelWrapper(WCDMAWrapper):
     """Wrapper for all Novatel cards"""
 
-# XXX: Needs updating for use of bands in second chunk of bit settings (U900 etc)
+    # XXX: Needs updating for use of bands in second chunk
+    #      of bit settings (U900 etc)
     def get_band(self):
         """Returns the current used band"""
         if not len(self.custom.band_dict):
@@ -184,7 +185,8 @@ class NovatelWrapper(WCDMAWrapper):
         return self.send_at("AT$NWRAT?", name='get_network_mode',
                             callback=get_network_mode_cb)
 
-# XXX: Needs updating for use of bands in second chunk of bit settings (U900 etc)
+    # XXX: Needs updating for use of bands in second chunk
+    #      of bit settings (U900 etc)
     def set_band(self, band):
         """Sets the band to ``band``"""
         if not len(self.custom.band_dict):

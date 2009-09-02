@@ -81,7 +81,6 @@ class MessageAssemblyLayer(object):
 
     def delete_sms(self, index):
         """Deletes sms identified by ``index``"""
-
         if index in self.sms_map:
             sms = self.sms_map[index]
             ret = [self.wrappee.delete_sms(i) for i in sms.real_indexes]

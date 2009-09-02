@@ -215,11 +215,12 @@ class BufferingStateMachine(object, protocol.Protocol):
         match = NEW_SMS.match(self.idlebuf)
         if match:
             def get_sms_cb(sms):
-                iscomplete = False
+                completed = False
                 if sms.cnt == sms.seq:
-                    iscomplete = True
-                    self.emit_signal(S.SIG_SMS_COMP, index, iscomplete)
-                self.emit_signal(S.SIG_SMS, index, iscomplete)
+                    completed = True
+                    self.emit_signal(S.SIG_SMS_COMP, index, completed)
+
+                self.emit_signal(S.SIG_SMS, index, completed)
 
             index = int(match.group('id'))
             d = self.get_sms(index)

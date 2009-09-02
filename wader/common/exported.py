@@ -26,7 +26,7 @@ from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
                                  HSO_INTFACE, SPL_INTFACE)
 from wader.common.sms import Message
-from wader.common.sms import MessageAssemblyLayer as MAL
+from wader.common.sms import MessageAssemblyLayer
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import convert_ip_to_int
@@ -140,7 +140,9 @@ class ModemExporter(Object, DBusExporterHelper):
     @signal(dbus_interface=MDM_INTFACE, signature='o')
     def DeviceEnabled(self, opath):
         log.msg("emitting DeviceEnabled('%s')" % opath)
-        self.mal = MAL(self.sconn)
+        # instantiate message assembly layer
+        self.mal = MessageAssemblyLayer(self.sconn)
+
 
 class SimpleExporter(ModemExporter):
     """I export the org.freedesktop.ModemManager.Modem.Simple interface"""
@@ -553,7 +555,6 @@ class SMSExporter(NetworkExporter):
             async_callbacks=('async_cb', 'async_eb'))
     def List(self, async_cb, async_eb):
         """Returns all the SMS stored in SIM"""
-
         d = self.mal.list_sms()
         return self.add_callbacks(d, async_cb, async_eb)
 
@@ -622,13 +623,11 @@ class SMSExporter(NetworkExporter):
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @signal(dbus_interface=SMS_INTFACE, signature='ub')
-    def SMSReceived(self, index, iscomplete):
-        log.msg('Emitting SMSReceived(%d, %s)' % (index, iscomplete))
-        if iscomplete:
-            log.msg('SMS is complete')
+    def SMSReceived(self, index, completed):
+        log.msg('Emitting SMSReceived(%d, %s)' % (index, completed))
 
     @signal(dbus_interface=SMS_INTFACE, signature='ub')
-    def Completed(self, index, iscomplete):
+    def Completed(self, index, completed):
         log.msg('emitting Complete(%d)' % index)
 
 
