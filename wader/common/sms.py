@@ -24,6 +24,7 @@ from zope.interface import implements
 from twisted.internet.defer import  succeed, gatherResults
 from messaging import PDU
 
+from wader.common.signals import SIG_SMS
 from wader.common.interfaces import IMessage
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
@@ -129,6 +130,11 @@ class MessageAssemblyLayer(object):
         d.addCallback(do_save_sms)
         return d
 
+    def on_sms_notification(self, index):
+        """Executed when a SMS notification is received"""
+        d = self.wrappee.get_sms(index)
+        d.addCallback(lambda sms: self._add_sms(sms))
+        return d
 
 class Message(object):
     """I am a Message in the system"""
