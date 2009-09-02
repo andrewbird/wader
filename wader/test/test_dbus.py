@@ -216,7 +216,8 @@ class DBusTestCase(unittest.TestCase):
         driver = self.device.Get(MDM_INTFACE, 'Driver',
                                  dbus_interface=dbus.PROPERTIES_IFACE)
         # XXX: Am I missing any driver ?
-        self.failUnlessIn(driver, ['hso', 'option', 'mbm', 'sierra', 'cdc_ether'])
+        self.failUnlessIn(driver, ['hso', 'option', 'mbm', 'sierra',
+                                    'cdc_ether'])
 
     def test_ModemTypeProperty(self):
         _type = self.device.Get(MDM_INTFACE, 'Type',
@@ -269,8 +270,9 @@ class DBusTestCase(unittest.TestCase):
 
         return d
 
-    test_CardChangePin.timeout = 30 # if we unlocked the PIN at enable we must allow
-                                    # for the requisite settling that's applied in core
+    test_CardChangePin.timeout = 30
+                            # if we unlocked the PIN at enable we must allow
+                            # for the requisite settling that's applied in core
 
     def test_CardCheck(self):
         """Test for Card.Check"""
@@ -953,27 +955,25 @@ class DBusTestCase(unittest.TestCase):
         sms = {'number' : '+33622754135', 'text' : 'delete test'}
 
         def sms_saved_cb(indexes):
-            def on_sms_delete_cb():
-                def on_sms_list_cb(messages):
-                    sms_found = False
-                    for msg in messages:
-                        if msg['index'] in indexes:
-                            sms_found = True
+            def on_sms_list_cb(messages):
+                sms_found = False
+                for msg in messages:
+                    if msg['index'] == indexes[0]:
+                        sms_found = True
 
-                    # the index should not be present
-                    self.assertEqual(sms_found, False)
-                    d.callback(True)
+                # the index should not be present
+                self.assertEqual(sms_found, False)
+                d.callback(True)
 
-                self.device.List(
-                    dbus_interface=SMS_INTFACE,
-                    reply_handler=on_sms_list_cb,
-                    error_handler=d.errback)
-
-                self.assertEqual(len(indexes), 1)
-
+            self.assertEqual(len(indexes), 1)
             self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE,
-                               reply_handler=on_sms_delete_cb,
-                               error_handler=d.errback)
+                               error_handler=d.errback,
+                               reply_handler=lambda:
+                                   self.device.List(
+                                       dbus_interface=SMS_INTFACE,
+                                       reply_handler=on_sms_list_cb,
+                                       error_handler=d.errback))
+
 
         # save a sms, delete it and check is no longer present
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
@@ -992,34 +992,31 @@ class DBusTestCase(unittest.TestCase):
                 }
 
         def sms_saved_cb(indexes):
-            def on_sms_delete_cb():
-                def on_sms_list_cb(messages):
-                    sms_found = False
-                    for msg in messages:
-                        if msg['index'] in indexes:
-                            sms_found = True
+            def on_sms_list_cb(messages):
+                sms_found = False
+                for msg in messages:
+                    if msg['index'] == indexes[0]:
+                        sms_found = True
 
-                    # the index should not be present
-                    self.assertEqual(sms_found, False)
-                    d.callback(True)
+                # the index should not be present
+                self.assertEqual(sms_found, False)
+                d.callback(True)
 
-                self.device.List(
-                    dbus_interface=SMS_INTFACE,
-                    reply_handler=on_sms_list_cb,
-                    error_handler=d.errback)
-
-                self.assertEqual(len(indexes), 1)
-
+            self.assertEqual(len(indexes), 1)
             self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE,
-                               reply_handler=on_sms_delete_cb,
-                               error_handler=d.errback)
+                               error_handler=d.errback,
+                               reply_handler=lambda:
+                                   self.device.List(
+                                       dbus_interface=SMS_INTFACE,
+                                       reply_handler=on_sms_list_cb,
+                                       error_handler=d.errback))
+
 
         # save a sms, delete it and check is no longer present
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
                          reply_handler=sms_saved_cb,
                          error_handler=d.errback)
         return d
-
 
     def test_SmsGet(self):
         """Test for SMS.Get"""
@@ -1046,8 +1043,6 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsGetMultiparted(self):
         """Test for SMS.Get"""
-        # test_SmsGet and test_SmsSave are the same test as you
-        # pretty much test the same stuff
         d = defer.Deferred()
 
         sms = {'number' : '+34622754135', 'text' : """This is a multiparted
@@ -1108,8 +1103,9 @@ class DBusTestCase(unittest.TestCase):
             # now check that the indexes are present in a List
             def sms_list_cb(messages):
                 sms_found = False
+
                 for msg in messages:
-                    if msg['index'] in indexes:
+                    if msg['index'] == indexes[0]:
                         sms_found = True
                         break
 
@@ -1118,7 +1114,6 @@ class DBusTestCase(unittest.TestCase):
                 # leave everything as found
                 self.device.Delete(indexes[0],
                                    dbus_interface=SMS_INTFACE,
-                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
                                    error_handler=d.errback)
 
@@ -1153,17 +1148,18 @@ class DBusTestCase(unittest.TestCase):
     def test_SmsListMultiparted(self):
         """Test for SMS.List"""
         d = defer.Deferred()
-        sms = {'number' : '+34622754135', 'text' : """This is a multiparted
-                sms, composed mainly by stuffs and foobars
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuufffffffffffffffffffffffffffffff"""}
+        sms = {'number' : '+34622754135',
+                'text' : """This is a multiparted big.......................
+                sms, composed mainly by stuffs and foobars, Im going to make
+                it have at least 141 characters, thats it, two parts...great"""}
 
         def sms_saved_cb(indexes):
             # now check that the indexes are present in a List
             def sms_list_cb(messages):
                 sms_found = False
+
                 for msg in messages:
-                    if msg['index'] in indexes:
+                    if msg['index'] == indexes[0]:
                         sms_found = True
                         break
 
@@ -1172,7 +1168,6 @@ class DBusTestCase(unittest.TestCase):
                 # leave everything as found
                 self.device.Delete(indexes[0],
                                    dbus_interface=SMS_INTFACE,
-                                   # test finishes with lambda
                                    reply_handler=lambda: d.callback(True),
                                    error_handler=d.errback)
 
@@ -1185,22 +1180,24 @@ class DBusTestCase(unittest.TestCase):
                          error_handler=d.errback)
         return d
 
+
+
     def test_SmsListMultiparted_2(self):
         # get the current number of Sms
         size_before = len(self.device.List(dbus_interface=SMS_INTFACE))
-
         # add three new ones
         indexes = []
         what = [{'number':'+324342322', 'text': 'hey there'},
                 {'number' : '+34622754135', 'text' : """This is a multiparted
-                sms, composed mainly by stuffs and foobars
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuufffffffffffffffffffffffffffffff"""},
+                sms, composed mainly by stuffs and foobars.................
+                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+                and stuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffff"""},
                 {'number' : '+34622754135', 'text' : """This is a multiparted
                 sms, composed mainly by stuffs and foobars
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuufffffffffffffffffffffffffffffff"""},
+                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+                and stuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffff"""},
                 {'number':'+324323232', 'text': 'hows it going?'}]
+
         for sms in what:
             indexes.extend(self.device.Save(sms, dbus_interface=SMS_INTFACE))
         size_after = len(self.device.List(dbus_interface=SMS_INTFACE))
@@ -1217,25 +1214,23 @@ class DBusTestCase(unittest.TestCase):
         d = defer.Deferred()
         sms = {'number' : '+34645454445', 'text' : 'save test'}
 
-        def sms_save_cb(indexes):
-            def sms_get_cb(_sms):
-                self.assertEqual(sms['number'], _sms['number'])
-                self.assertEqual(sms['text'], _sms['text'])
-                # leave everything as found
-                self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            self.device.Get(indexes[0],
-                        dbus_interface=SMS_INTFACE,
-                        reply_handler=sms_get_cb,
-                        error_handler=d.errback)
+        def sms_get_cb(_sms):
+            self.assertEqual(sms['number'], _sms['number'])
+            self.assertEqual(sms['text'], _sms['text'])
+            # leave everything as found
+            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
+                               # test finishes with lambda
+                               reply_handler=lambda: d.callback(True),
+                               error_handler=d.errback)
 
         # save the message, get it by index, and check its values match
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
                          error_handler=d.errback,
-                         reply_handler=sms_save_cb)
+                         reply_handler=lambda indexes:
+                            self.device.Get(indexes[0],
+                                dbus_interface=SMS_INTFACE,
+                                reply_handler=sms_get_cb,
+                                error_handler=d.errback))
 
         return d
 
@@ -1245,29 +1240,28 @@ class DBusTestCase(unittest.TestCase):
         sms = {'number' : '+34622754135', 'text' : """This is a multiparted
                 sms, composed mainly by stuffs and foobars
                 foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuufffffffffffffffffffffffffffffff"""}
+                and stuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffff"""}
 
-        def sms_save_cb(indexes):
-            def sms_get_cb(_sms):
-                self.assertEqual(sms['number'], _sms['number'])
-                self.assertEqual(sms['text'], _sms['text'])
-                # leave everything as found
-                self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            self.device.Get(indexes[0],
-                        dbus_interface=SMS_INTFACE,
-                        reply_handler=sms_get_cb,
-                        error_handler=d.errback)
+        def sms_get_cb(_sms):
+            self.assertEqual(sms['number'], _sms['number'])
+            self.assertEqual(sms['text'], _sms['text'])
+            # leave everything as found
+            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
+                               # test finishes with lambda
+                               reply_handler=lambda: d.callback(True),
+                               error_handler=d.errback)
 
         # save the message, get it by index, and check its values match
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
                          error_handler=d.errback,
-                         reply_handler=sms_save_cb)
+                         reply_handler=lambda indexes:
+                            self.device.Get(indexes[0],
+                                dbus_interface=SMS_INTFACE,
+                                reply_handler=sms_get_cb,
+                                error_handler=d.errback))
 
         return d
+
     def test_SmsSend(self):
         """Test for SMS.Send"""
         raise unittest.SkipTest("Not ready")
