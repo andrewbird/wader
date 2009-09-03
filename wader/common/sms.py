@@ -24,26 +24,70 @@ from zope.interface import implements
 from twisted.internet.defer import  succeed, gatherResults
 from messaging import PDU
 
-from wader.common.signals import SIG_SMS
 from wader.common.interfaces import IMessage
+from wader.common.signals import SIG_SMS, SIG_SMS_COMP
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
+# XXX: What should this threshold be?
+SMS_DATE_THRESHOLD = 5
+
+def should_fragment_be_assembled(sms, fragment):
+    """
+    Returns True if ``fragment`` can be assembled to ``sms``
+    """
+    if sms.completed:
+        # SMS is completed, no way to assemble it
+        return False
+
+    if sms.ref != fragment.ref:
+        # different sms id
+        return False
+
+    if sms.datetime is not None and fragment.datetime is not None:
+        # if datetime is present convert it to unix time
+        time1 = mktime(sms.datetime.timetuple())
+        time2 = mktime(fragment.datetime.timetuple())
+        if abs(time1 - time2) > SMS_DATE_THRESHOLD:
+            return False
+
+    if sms.cnt != fragment.cnt:
+        # number of parts
+        return False
+
+    if sms.number != fragment.number:
+        # different sender
+        return False
+
+    if sms.csca != fragment.csca:
+        # different SMSC
+        return False
+
+    return True
 
 class CacheIncoherenceError(Exception):
-    """Raised when a cache incoherence error happens"""
+    """Raised upon a cache incoherence error"""
 
 
 class MessageAssemblyLayer(object):
     """
-    I am a transparent layer to perform operations on concatenated SMS
+    I am a transparent layer to perform operations on concatenated SMS'
     """
-
     def __init__(self, wrappee):
         self.wrappee = wrappee
         self.last_index = 0
         self.sms_map = {}
         self.cached = False
-        self.list_sms()
+
+    def initialize(self, obj=None, force=False):
+        if obj is not None:
+            self.wrappee = obj
+
+        if force or not self.cached:
+            # revert to initial state
+            self.last_index = 0
+            self.sms_map = {}
+            # populate sms cache
+            self.list_sms()
 
     def _do_add_sms(self, sms, indexes=None):
         """
@@ -51,12 +95,8 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
-        if indexes is None:
-            # save the real index
-            sms.real_indexes = [sms.index]
-        else:
-            sms.real_indexes = indexes
-
+        # save the real index if indexes is None
+        sms.real_indexes = [sms.index] if indexes is None else indexes
         # assign a new logical index
         self.last_index += 1
         sms.index = self.last_index
@@ -64,28 +104,42 @@ class MessageAssemblyLayer(object):
         self.sms_map[self.last_index] = sms
         return self.last_index
 
-    def _add_sms(self, sms):
+    def _add_sms(self, sms, emit=False):
         """
         Adds ``sms`` to the cache
 
         It returns the logical index where it was stored
         """
-        if sms.cnt == 0:
-            return self._do_add_sms(sms)
+        if not sms.cnt:
+            index = self._do_add_sms(sms)
+            # being a single part sms, completed == True
+            self.wrappee.emit_signal(SIG_SMS, index, True)
         else:
             for index, value in self.sms_map.iteritems():
-                if value.ref == sms.ref:
-                    self.sms_map[index].append_sms(sms)
+                if should_fragment_be_assembled(value, sms):
+                    # append the sms and emit the different signals
+                    completed = self.sms_map[index].append_sms(sms)
+
+                    if emit:
+                        # only emit signals in runtime, not startup
+                        emit_signal = self.wrappee.emit_signal
+                        emit_signal(SIG_SMS, index, completed)
+                        if completed:
+                            emit_signal(SIG_SMS_COMP, index, completed)
+
+                    # return sms logical index
                     return index
 
+            # this is the first fragment of this multipart sms, add it
+            # to cache and wait for the rest of fragments to arrive
+            # this returns the logical index where was stored
             return self._do_add_sms(sms)
 
     def delete_sms(self, index):
         """Deletes sms identified by ``index``"""
         if index in self.sms_map:
-            sms = self.sms_map[index]
-            ret = [self.wrappee.delete_sms(i) for i in sms.real_indexes]
-            del self.sms_map[index]
+            sms = self.sms_map.pop(index)
+            ret = map(self.wrappee.do_delete_sms, sms.real_indexes)
             return gatherResults(ret)
 
         error = "SMS with logical index %d does not exist"
@@ -101,57 +155,63 @@ class MessageAssemblyLayer(object):
 
     def list_sms(self):
         """Returns all the sms"""
-        res = []
-
         def gen_cache(messages):
             self.cached = True
             for sms in messages:
                 self._add_sms(sms)
+
             for sms in self.sms_map.values():
-                res.append(sms.to_dict())
-            return res
+                return [sms.to_dict() for sms in self.sms_map.values()]
 
         if self.cached:
-            for sms in self.sms_map.values():
-                res.append(sms.to_dict())
-            return succeed(res)
+            return succeed([sms.to_dict() for sms in self.sms_map.values()])
 
-        d = self.wrappee.list_sms()
+        d = self.wrappee.do_list_sms()
         d.addCallback(gen_cache)
         return d
 
     def save_sms(self, sms):
         """Saves ``sms`` in the cache memoizing the resulting indexes"""
-        def do_save_sms(indexes):
-            result = (self._do_add_sms(sms, indexes),)
-            return result
-
-        d = self.wrappee.save_sms(sms)
-        d.addCallback(do_save_sms)
+        d = self.wrappee.do_save_sms(sms)
+        d.addCallback(lambda indexes: self._do_add_sms(sms, indexes))
         return d
 
     def on_sms_notification(self, index):
         """Executed when a SMS notification is received"""
-        d = self.wrappee.get_sms(index)
-        d.addCallback(lambda sms: self._add_sms(sms))
+        d = self.wrappee.do_get_sms(index)
+        d.addCallback(self._add_sms, emit=True)
         return d
+
 
 class Message(object):
     """I am a Message in the system"""
     implements(IMessage)
 
-    def __init__(self, number, text, index=None, where=None,
-                 csca=None, _datetime=None):
+    def __init__(self, number=None, text=None, index=None, where=None,
+                 csca=None, _datetime=None, ref=None, cnt=None, seq=None):
         self.number = number
-        self.text = text
         self.index = index
         self.real_indexes = []
         self.where = where
         self.csca = csca
         self.datetime = _datetime
-        self.ref = None  # Multipart SMS reference number
-        self.cnt = None  # Total number of parts
-        self.seq = None  # Part #
+        self.ref = ref  # Multipart SMS reference number
+        self.cnt = cnt  # Total number of fragments
+        self.seq = seq  # fragment number
+        self.completed = False
+        self._fragments = []
+
+        if self.cnt is not None:
+            self._fragments = [''] * self.cnt
+
+        if text is not None:
+            # SmsSubmit
+            self.add_text_fragment(text)
+            self.completed = True
+
+    @property
+    def text(self):
+        return u''.join(self._fragments)
 
     def __repr__(self):
         return "<Message number: %s, text: %s>" % (self.number, self.text)
@@ -204,9 +264,8 @@ class Message(object):
             except ValueError:
                 _datetime = datetime.now()
 
-        m = cls(sender, text, _datetime=_datetime, csca=csca)
-        m.ref, m.cnt, m.seq = ref, cnt, seq
-
+        m = cls(sender, _datetime=_datetime, csca=csca, ref=ref, cnt=cnt, seq=seq)
+        m.add_text_fragment(text, seq)
         return m
 
     def to_dict(self):
@@ -215,10 +274,8 @@ class Message(object):
 
         :rtype: dict
         """
-        ret = {}
+        ret = dict(number=self.number, text=self.text)
 
-        ret['number'] = self.number
-        ret['text'] = self.text
         if self.where is not None:
             ret['where'] = self.where
         if self.index is not None:
@@ -233,21 +290,38 @@ class Message(object):
     def to_pdu(self, store=False):
         """Returns the PDU representation of this message"""
         p = PDU()
-        csca = ""
-        if self.csca:
-            csca = self.csca
+        csca = self.csca if self.csca is not None else ""
 
         return p.encode_pdu(self.number, self.text, csca=csca, store=store)
 
+    def add_fragment(self, sms):
+        self.add_text_fragment(sms.text, sms.seq)
+
+    def add_text_fragment(self, text, pos=0):
+        if pos > len(self._fragments):
+            msg = "Can not append %s in position %d, fragments length = %d"
+            raise RuntimeError(msg % (text, pos, len(self._fragments)))
+
+        self._fragments.insert(pos, text)
+
     def append_sms(self, sms):
-        """Appends ``sms`` text internally"""
-        if self.ref == sms.ref:
-            if sms.seq < self.seq:
-                self.text = sms.text + self.text
-            else:
-                self.text += sms.text
+        """
+        Appends ``sms`` text internally
+
+        :rtype bool
+        :return Whether the sms was successfully assembled or not
+        """
+        # quick filtering to rule out unwanted fragments
+        if self.ref == sms.ref and self.cnt == sms.cnt:
+            self.add_fragment(sms)
+            # make sure we have n fragments != ""
+            fragments = filter(lambda x: x != "", self._fragments)
+            self.completed = len(fragments) == sms.cnt
 
             self.real_indexes.extend(sms.real_indexes)
+            self.real_indexes.sort()
+
+            return self.completed
         else:
             error = "Cannot assembly SMS fragment with ref %d"
             raise ValueError(error % sms.ref)

@@ -37,7 +37,7 @@ from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
 import wader.common.exceptions as ex
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
-from wader.common.sms import Message
+from wader.common.sms import Message, MessageAssemblyLayer
 
 HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
@@ -67,6 +67,8 @@ class WCDMAWrapper(WCDMAProtocol):
         # unfortunately some methods require me to save some state
         # between runs. This dict contains 'em.
         self.state_dict = {}
+        # message assembly layer (initted on do_enable_device)
+        self.mal = MessageAssemblyLayer(self)
 
     def __str__(self):
         return self.device.__remote_name__
@@ -140,6 +142,9 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     def delete_sms(self, index):
+        return self.mal.delete_sms(index)
+
+    def do_delete_sms(self, index):
         """Deletes SMS at ``index``"""
         d = super(WCDMAWrapper, self).delete_sms(index)
         d.addCallback(lambda result: result[0].group('resp'))
@@ -477,6 +482,9 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     def get_sms(self, index):
+        return self.mal.get_sms(index)
+
+    def do_get_sms(self, index):
         """
         Returns a ``Message`` object representing the SMS at ``index``
         """
@@ -592,6 +600,9 @@ class WCDMAWrapper(WCDMAProtocol):
             return d
 
     def list_sms(self):
+        return self.mal.list_sms()
+
+    def do_list_sms(self):
         """
         Returns all the SMS in the SIM card
 
@@ -615,6 +626,9 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     def save_sms(self, sms):
+        return self.mal.save_sms(sms)
+
+    def do_save_sms(self, sms):
         """
         Stores ``sms`` and returns a list of indexes
 
@@ -876,9 +890,8 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _initialize_cb(self, size=None):
         d = self.device.sconn.enable_radio(True)
-        d.addCallback(lambda _:
-                      self.device.exporter.DeviceEnabled(self.device.udi))
-        d.addCallback(lambda _: setattr(self.device, 'enabled', True))
+        d.addCallback(lambda _: self.device.set_enabled(True))
+        d.addCallback(lambda _: self.mal.initialize(obj=self, force=True))
         d.addCallback(lambda _: size)
         return d
 

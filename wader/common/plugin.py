@@ -75,6 +75,11 @@ class DevicePlugin(object):
         args = (self.__class__.__name__, self.ports)
         return "<%s %s>" % args
 
+    def set_enabled(self, enabled):
+        self.enabled = enabled
+        if enabled:
+            self.exporter.DeviceEnabled(self.udi)
+
     def close(self, remove_from_conn=False):
         """Closes the plugin and frees all the associated resources"""
         log.msg("Closing plugin %s" % self)

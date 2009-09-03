@@ -214,17 +214,10 @@ class BufferingStateMachine(object, protocol.Protocol):
         # new SMS arrived
         match = NEW_SMS.match(self.idlebuf)
         if match:
-            def get_sms_cb(sms):
-                completed = False
-                if sms.cnt == sms.seq:
-                    completed = True
-                    self.emit_signal(S.SIG_SMS_COMP, index, completed)
-
-                self.emit_signal(S.SIG_SMS, index, completed)
-
-            index = int(match.group('id'))
-            d = self.get_sms(index)
-            d.addCallback(get_sms_cb)
+            mal = getattr(self, 'mal', None)
+            if mal:
+                index = int(match.group('id'))
+                mal.on_sms_notification(index)
 
             self.idlebuf = self.idlebuf.replace(match.group(), '', 1)
             if not self.idlebuf:

@@ -26,7 +26,6 @@ from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
                                  HSO_INTFACE, SPL_INTFACE)
 from wader.common.sms import Message
-from wader.common.sms import MessageAssemblyLayer
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import convert_ip_to_int
@@ -60,7 +59,6 @@ class ModemExporter(Object, DBusExporterHelper):
                                             object_path=device.udi)
         self.device = device
         self.sconn = device.sconn
-        self.mal = None
 
     @method(MDM_INTFACE, in_signature='s', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
@@ -140,8 +138,6 @@ class ModemExporter(Object, DBusExporterHelper):
     @signal(dbus_interface=MDM_INTFACE, signature='o')
     def DeviceEnabled(self, opath):
         log.msg("emitting DeviceEnabled('%s')" % opath)
-        # instantiate message assembly layer
-        self.mal = MessageAssemblyLayer(self.sconn)
 
 
 class SimpleExporter(ModemExporter):
@@ -522,7 +518,7 @@ class SMSExporter(NetworkExporter):
 
         :param index: The SMS index
         """
-        d = self.mal.delete_sms(index)
+        d = self.sconn.delete_sms(index)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='u', out_signature='a{sv}',
@@ -533,7 +529,7 @@ class SMSExporter(NetworkExporter):
 
         :param index: The SMS index
         """
-        d = self.mal.get_sms(index)
+        d = self.sconn.get_sms(index)
         d.addCallback(lambda sms: sms.to_dict())
         return self.add_callbacks(d, async_cb, async_eb)
 
@@ -555,7 +551,7 @@ class SMSExporter(NetworkExporter):
             async_callbacks=('async_cb', 'async_eb'))
     def List(self, async_cb, async_eb):
         """Returns all the SMS stored in SIM"""
-        d = self.mal.list_sms()
+        d = self.sconn.list_sms()
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='a{sv}', out_signature='au',
@@ -567,7 +563,7 @@ class SMSExporter(NetworkExporter):
         :param sms: dictionary with the settings to use
         :rtype: int
         """
-        d = self.mal.save_sms(Message.from_dict(sms))
+        d = self.sconn.save_sms(Message.from_dict(sms))
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(SMS_INTFACE, in_signature='a{sv}', out_signature='au',
