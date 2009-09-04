@@ -160,8 +160,12 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         Enables or disables PIN auth with ``pin`` according to ``enable``
         """
+        def cache_and_return_response(response):
+            self.device.props[CRD_INTFACE]['PinEnabled'] = enable
+            return response[0].group('resp')
+
         d = super(WCDMAWrapper, self).enable_pin(pin, enable)
-        d.addCallback(lambda result: result[0].group('resp'))
+        d.addCallback(cache_and_return_response)
         return d
 
     def enable_echo(self):
@@ -766,13 +770,15 @@ class WCDMAWrapper(WCDMAProtocol):
 
     # some high-level methods exported over DBus
     def init_properties(self):
-        def set_property(name, what):
-            self.device.props[CRD_INTFACE][name] = what
+        def set_property(name, what, iface=CRD_INTFACE):
+            self.device.props[iface][name] = what
 
         d = self.get_bands()
         d.addCallback(lambda bands: set_property('SupportedBands', bands))
         d.addCallback(lambda _: self.get_network_modes())
         d.addCallback(lambda modes: set_property('SupportedModes', modes))
+        d.addCallback(lambda _: self.get_pin_status())
+        d.addCallback(lambda active: set_property('PinEnabled', bool(active)))
         return d
 
     def get_simple_status(self):
