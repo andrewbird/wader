@@ -343,8 +343,5 @@ def extract_datetime(datestr):
         year += 2000
     hour, mins, seconds = map(int, time.split(':'))
 
-    from wader.common.oal import osobj
-    tz = osobj.get_tzinfo()
-
-    return datetime(year, month, day, hour, mins, seconds, tzinfo=tz)
+    return datetime(year, month, day, hour, mins, seconds, tzinfo=None)
 
