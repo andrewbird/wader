@@ -113,7 +113,9 @@ class MessageAssemblyLayer(object):
         if not sms.cnt:
             index = self._do_add_sms(sms)
             # being a single part sms, completed == True
-            self.wrappee.emit_signal(SIG_SMS, index, True)
+            if emit:
+                self.wrappee.emit_signal(SIG_SMS, index, True)
+                self.wrappee.emit_signal(SIG_SMS_COMP, index, True)
         else:
             for index, value in self.sms_map.iteritems():
                 if should_fragment_be_assembled(value, sms):
