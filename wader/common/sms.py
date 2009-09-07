@@ -63,6 +63,7 @@ def should_fragment_be_assembled(sms, fragment):
         # different SMSC
         return False
 
+    print "MAL: Assembling fragment %s with sms %s" % (fragment, sms)
     return True
 
 class CacheIncoherenceError(Exception):
@@ -80,6 +81,7 @@ class MessageAssemblyLayer(object):
         self.cached = False
 
     def initialize(self, obj=None, force=False):
+        print "MAL::initialize  obj: %s  force: %s" % (obj, force)
         if obj is not None:
             self.wrappee = obj
 
@@ -96,6 +98,7 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
+        print "MAL::_do_add_sms", sms, indexes
         # save the real index if indexes is None
         sms.real_indexes = [sms.index] if indexes is None else indexes
         # assign a new logical index
@@ -111,8 +114,10 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
+        print "MAL::_add_sms", sms
         if not sms.cnt:
             index = self._do_add_sms(sms)
+            print "MAL::_add_sms  single part SMS added with logical index", index
             # being a single part sms, completed == True
             if emit:
                 self.wrappee.emit_signal(SIG_SMS, index, True)
@@ -123,6 +128,7 @@ class MessageAssemblyLayer(object):
                 if should_fragment_be_assembled(value, sms):
                     # append the sms and emit the different signals
                     completed = self.sms_map[index].append_sms(sms)
+                    print "MAL::_add_sms  multi part SMS with logical index %d, completed %s" % (index, completed)
 
                     if emit:
                         # only emit signals in runtime, not startup
@@ -137,13 +143,17 @@ class MessageAssemblyLayer(object):
             # this is the first fragment of this multipart sms, add it
             # to cache and wait for the rest of fragments to arrive
             # this returns the logical index where was stored
-            return self._do_add_sms(sms)
+            index = self._do_add_sms(sms)
+            print "MAL::_add_sms first part of a multi part SMS added with logical index %d" % index
+            return index
 
     def delete_sms(self, index):
         """Deletes sms identified by ``index``"""
+        print "MAL::delete_sms", index
         if index in self.sms_map:
             sms = self.sms_map.pop(index)
             ret = map(self.wrappee.do_delete_sms, sms.real_indexes)
+            print "MAL::delete_sms deleting %s" % sms.real_indexes
             return gatherResults(ret)
 
         error = "SMS with logical index %d does not exist"
@@ -159,15 +169,17 @@ class MessageAssemblyLayer(object):
 
     def list_sms(self):
         """Returns all the sms"""
+        print "MAL::list_sms"
         def gen_cache(messages):
-            self.cached = True
+            print "MAL::list_sms::gen_cache"
             for sms in messages:
                 self._add_sms(sms)
 
-            for sms in self.sms_map.values():
-                return [sms.to_dict() for sms in self.sms_map.values()]
+            self.cached = True
+            return [sms.to_dict() for sms in self.sms_map.values()]
 
         if self.cached:
+            print "MAL::list_sms::cached path"
             return succeed([sms.to_dict() for sms in self.sms_map.values()])
 
         d = self.wrappee.do_list_sms()
@@ -176,6 +188,7 @@ class MessageAssemblyLayer(object):
 
     def save_sms(self, sms):
         """Saves ``sms`` in the cache memoizing the resulting indexes"""
+        print "MAL::save_sms", sms
         d = self.wrappee.do_save_sms(sms)
         d.addCallback(lambda indexes: self._do_add_sms(sms, indexes))
         d.addCallback(lambda ret: [ret])
@@ -183,6 +196,7 @@ class MessageAssemblyLayer(object):
 
     def on_sms_notification(self, index):
         """Executed when a SMS notification is received"""
+        print "MAL::on_sms_notification", index
         d = self.wrappee.do_get_sms(index)
         d.addCallback(self._add_sms, emit=True)
         return d
@@ -217,7 +231,22 @@ class Message(object):
                             in sorted(self._fragments, key=itemgetter(0)))
 
     def __repr__(self):
-        return "<Message number: %s, text: %s>" % (self.number, self.text)
+        import pprint, StringIO
+        out = StringIO.StringIO()
+        props = {'number' : self.number,
+                 'index' : self.index,
+                 'real_indexes' : self.real_indexes,
+                 'csca' : self.csca,
+                 'datetime' : self.datetime,
+                 'reference' : self.ref,
+                 'count' : self.cnt,
+                 'sequence' : self.seq,
+                 'completed' : self.completed,
+                 'fragments' : self._fragments}
+
+        pp = pprint.PrettyPrinter(indent=4, stream=out)
+        pp.pprint(props)
+        return out.getvalue()
 
     def __eq__(self, m):
         if IMessage.providedBy(m):
@@ -257,6 +286,7 @@ class Message(object):
         :param pdu: The PDU to convert
         :rtype: ``Message``
         """
+        print "Message::from_pdu", pdu
         p = PDU()
         sender, datestr, text, csca, ref, cnt, seq = p.decode_pdu(pdu)[:7]
 
@@ -268,7 +298,9 @@ class Message(object):
                 _datetime = datetime.now()
 
         m = cls(sender, _datetime=_datetime, csca=csca, ref=ref, cnt=cnt, seq=seq)
+        print "Message::from_pdu inserting fragment '%s' in pos %d" % (text, seq)
         m.add_text_fragment(text, seq)
+        print "Message::from_pdu returning", m
         return m
 
     def to_dict(self):
