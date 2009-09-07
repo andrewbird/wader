@@ -18,6 +18,7 @@
 """SMS module for Wader"""
 
 from datetime import datetime
+from operator import itemgetter
 from time import mktime
 
 from zope.interface import implements
@@ -116,6 +117,7 @@ class MessageAssemblyLayer(object):
             if emit:
                 self.wrappee.emit_signal(SIG_SMS, index, True)
                 self.wrappee.emit_signal(SIG_SMS_COMP, index, True)
+            return index
         else:
             for index, value in self.sms_map.iteritems():
                 if should_fragment_be_assembled(value, sms):
@@ -176,6 +178,7 @@ class MessageAssemblyLayer(object):
         """Saves ``sms`` in the cache memoizing the resulting indexes"""
         d = self.wrappee.do_save_sms(sms)
         d.addCallback(lambda indexes: self._do_add_sms(sms, indexes))
+        d.addCallback(lambda ret: [ret])
         return d
 
     def on_sms_notification(self, index):
@@ -203,9 +206,6 @@ class Message(object):
         self.completed = False
         self._fragments = []
 
-        if self.cnt is not None:
-            self._fragments = [''] * self.cnt
-
         if text is not None:
             # SmsSubmit
             self.add_text_fragment(text)
@@ -213,7 +213,8 @@ class Message(object):
 
     @property
     def text(self):
-        return u''.join(self._fragments)
+        return "".join(text for index, text
+                            in sorted(self._fragments, key=itemgetter(0)))
 
     def __repr__(self):
         return "<Message number: %s, text: %s>" % (self.number, self.text)
@@ -300,11 +301,7 @@ class Message(object):
         self.add_text_fragment(sms.text, sms.seq)
 
     def add_text_fragment(self, text, pos=0):
-        if pos > len(self._fragments):
-            msg = "Can not append %s in position %d, fragments length = %d"
-            raise RuntimeError(msg % (text, pos, len(self._fragments)))
-
-        self._fragments.insert(pos, text)
+        self._fragments.append((pos, text))
 
     def append_sms(self, sms):
         """
@@ -316,13 +313,10 @@ class Message(object):
         # quick filtering to rule out unwanted fragments
         if self.ref == sms.ref and self.cnt == sms.cnt:
             self.add_fragment(sms)
-            # make sure we have n fragments != ""
-            fragments = filter(lambda x: x != "", self._fragments)
-            self.completed = len(fragments) == sms.cnt
-
             self.real_indexes.extend(sms.real_indexes)
             self.real_indexes.sort()
 
+            self.completed = len(self._fragments) == sms.cnt
             return self.completed
         else:
             error = "Cannot assembly SMS fragment with ref %d"
