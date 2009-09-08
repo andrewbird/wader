@@ -1,0 +1,18 @@
+Introduction
+============
+This plugin is part of wader project, a cross-platform assistant for 3G
+connections.
+
+What's this
+===============
+wader-plugins-contacts-mm provides wader with a backend for operating
+with contacts stored in a device sim with modemmanager.
+
+Tecnical Info
+=============
+See html documentation for more tecnical info auto-generated with sphinx.
+Also, there is a sample of usage in samples directory.
+
+License
+========
+This package has the same license as the wader project itself.

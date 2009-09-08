@@ -1,0 +1,17 @@
+Source: wader-plugins-contacts-mm
+Priority: extra
+Maintainer: David Francos Cuartero <yo.orco@gmail.com>
+Build-Depends: debhelper (>= 7)
+Build-Depends-Indep: python-central (>= 0.5), python-setuptools, python-dbus, python-twisted-core
+Standards-Version: 3.8.1
+Section: libs
+Homepage: http://wader-project.org
+XS-Python-Version: current
+
+Package: wader-plugins-contacts-mm
+Section: libs
+Architecture: any
+Depends: wader-core
+Description: Wader contact backend to momemmanager
+ Povides wader with a backend for operating
+ with modemmanager contacts.
