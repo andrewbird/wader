@@ -102,7 +102,7 @@ GCONF_BASE = '/apps/wader-core'
 
 if dbus.version >= (0, 83, 0):
     def get_dbus_error(e):
-        return e.get_dbus_message()
+        return e.get_dbus_name()
 else:
     def get_dbus_error(e):
         return e.message
@@ -270,9 +270,9 @@ class DBusTestCase(unittest.TestCase):
 
         return d
 
+    # if we unlocked the PIN at Enable we must increase the timeout
+    # as the core gives the device 15 seconds to settle.
     test_CardChangePin.timeout = 30
-                            # if we unlocked the PIN at enable we must allow
-                            # for the requisite settling that's applied in core
 
     def test_CardCheck(self):
         """Test for Card.Check"""
@@ -568,56 +568,55 @@ class DBusTestCase(unittest.TestCase):
 
     def test_ContactsFindByName(self):
         """Test for Contacts.FindByName"""
-        TestData = {
-                'JuanFoo': [0,'666066660'],
-                'JuanBar': [0,'666066661'],
-                'JuanBaz': [0,'666166662']
-                }
-        TestSearches = [
-                ['JuanB',2], ['Jua',3], ['JuanFoo',1], ['Stuff',0]
+        test_data = {
+            'JuanFoo' : [0, '666066660'],
+            'JuanBar' : [0, '666066661'],
+            'JuanBaz' : [0, '666166662'],
+        }
+        test_searches = [
+            ('JuanB', 2), ('Jua', 3), ('JuanFoo', 1), ('Stuff', 0)
         ]
 
-        for name, datat in TestData.iteritems():
-            TestData[name][0] = self.device.Add(name, datat[1],
-                                    dbus_interface=CTS_INTFACE)
-        for current_search in TestSearches:
-            ResultList = self.device.FindByName(current_search[0],
+        for name, datat in test_data.iteritems():
+            test_data[name][0] = self.device.Add(name, datat[1],
                                                 dbus_interface=CTS_INTFACE)
+        for current_search in test_searches:
+            result_list = self.device.FindByName(current_search[0],
+                                                 dbus_interface=CTS_INTFACE)
 
-            self.assertEqual(len(ResultList), current_search[1])
+            self.assertEqual(len(result_list), current_search[1])
             if current_search[1] != 0:
-                for Result in ResultList:
-                    self.assertEqual(Result[2], TestData[Result[1]][1])
+                for result in result_list:
+                    self.assertEqual(result[2], test_data[result[1]][1])
 
-        for name, datat in TestData.iteritems():
+        for name, datat in test_data.iteritems():
             self.device.Delete(datat[0], dbus_interface=CTS_INTFACE)
-
 
     def test_ContactsFindByNumber(self):
         """Test for Contacts.FindByNumber"""
-        TestData = {
-                '666066660': [0,'JuanFoo'],
-                '666066661': [0,'JuanBar'],
-                '666166662': [0,'JuanBaz']
-                }
-        TestSearches = [
-                ['6660',2], ['666',3], ['666066660',1], ['1234',0]
+        test_data = {
+            '666066660' : [0, 'JuanFoo'],
+            '666066661' : [0, 'JuanBar'],
+            '666166662' : [0, 'JuanBaz'],
+        }
+        test_searches = [
+            ('6660', 2), ('666', 3), ('666066660', 1), ('1234', 0),
         ]
 
-        for number, datat in TestData.iteritems():
-            TestData[number][0] = self.device.Add(datat[1], number,
-                                    dbus_interface=CTS_INTFACE)
+        for number, datat in test_data.iteritems():
+            test_data[number][0] = self.device.Add(datat[1], number,
+                                                   dbus_interface=CTS_INTFACE)
 
-        for current_search in TestSearches:
-            ResultList = self.device.FindByNumber(current_search[0],
-                                                dbus_interface=CTS_INTFACE)
-            self.assertEqual(len(ResultList), current_search[1])
+        for current_search in test_searches:
+            result_list = self.device.FindByNumber(current_search[0],
+                                                   dbus_interface=CTS_INTFACE)
+            self.assertEqual(len(result_list), current_search[1])
 
             if current_search[1] != 0:
-                for Result in ResultList:
-                    self.assertEqual(Result[1], TestData[Result[2]][1])
+                for result in result_list:
+                    self.assertEqual(result[1], test_data[result[2]][1])
 
-        for number, datat in TestData.iteritems():
+        for number, datat in test_data.iteritems():
             self.device.Delete(datat[0], dbus_interface=CTS_INTFACE)
 
     def test_ContactsGet(self):
@@ -729,22 +728,21 @@ class DBusTestCase(unittest.TestCase):
     def test_ContactsList_2(self):
         """Test for Contacts.List"""
         contacts = [
-                { 'name' : "FooAnt" , 'number' : "+34666666666" , 'index' : 0 },
-                { 'name' : "BarAnt" , 'number' : "+34666666665" , 'index' : 0 },
-                { 'name' : "BazAnt" , 'number' : "+34666666664" , 'index' : 0 }
+                {'name' : "FooAnt" , 'number' : "+34666666666" , 'index' : 0},
+                {'name' : "BarAnt" , 'number' : "+34666666665" , 'index' : 0},
+                {'name' : "BazAnt" , 'number' : "+34666666664" , 'index' : 0}
                 ]
 
         for contact in contacts:
             contact['index'] = self.device.Add(contact['name'],
-                    contact['number'])
+                                               contact['number'])
 
         for contact in contacts:
             self.assertEqual(self.device.FindByNumber(contact['number'])[0][1],
-                    contact['name'] )
+                                                      contact['name'] )
 
         for contact in contacts:
             self.device.Delete(contact['index'])
-
 
     # org.freedesktop.ModemManager.Modem.Gsm.Network tests
 
@@ -1132,11 +1130,15 @@ class DBusTestCase(unittest.TestCase):
 
         # add three new ones
         indexes = []
-        what = [{'number':'+324342322', 'text': 'hey there'},
-                {'number':'+334223312', 'text': 'where you at?'},
-                {'number':'+324323232', 'text': 'hows it going?'}]
+        what = [
+            {'number':'+324342322', 'text': 'hey there'},
+            {'number':'+334223312', 'text': 'where you at?'},
+            {'number':'+324323232', 'text': 'hows it going?'}
+        ]
+
         for sms in what:
             indexes.extend(self.device.Save(sms, dbus_interface=SMS_INTFACE))
+
         size_after = len(self.device.List(dbus_interface=SMS_INTFACE))
         # and check that the size has increased just three
         self.assertEqual(size_before + 3, size_after)
@@ -1353,7 +1355,7 @@ class DBusTestCase(unittest.TestCase):
                                   error_handler=d.errback)
 
         def set_format_eb(e):
-            if '+CMS ERROR: 303' in get_dbus_error(e):
+            if 'CMSError303' in get_dbus_error(e):
                 # it does not support setting +CMFG=1 (Ericsson)
                 d.callback(True)
             else:
