@@ -638,13 +638,14 @@ class WCDMAWrapper(WCDMAProtocol):
 
         ``sms`` might span several messages if it is a multipart SMS
         """
-        for pdu_len, pdu in sms.to_pdu(store=True):
-            ret = []
-            d = super(WCDMAWrapper, self).save_sms(pdu, pdu_len)
-            d.addCallback(lambda response: int(response[0].group('index')))
-            ret.append(d)
-
-        return defer.gatherResults(ret)
+        save_sms = super(WCDMAWrapper, self).save_sms
+        ret = [save_sms(pdu, p_len) for p_len, pdu in sms.to_pdu(store=True)]
+        d = defer.gatherResults(ret)
+        # the order is important! You need to run gatherResults and add
+        # the callback to its result, not the other way around!
+        d.addCallback(lambda response:
+                         [int(resp[0].group('index')) for resp in response])
+        return d
 
     def send_at(self, atstr, name='send_at', callback=None):
         """Sends an arbitrary AT string ``atstr``"""
@@ -699,6 +700,9 @@ class WCDMAWrapper(WCDMAProtocol):
         return defer.gatherResults(ret)
 
     def send_sms_from_storage(self, index):
+        return self.mal.send_sms_from_storage(index)
+
+    def do_send_sms_from_storage(self, index):
         """Sends the SMS stored at ``index`` and returns the new index"""
         d = super(WCDMAWrapper, self).send_sms_from_storage(index)
         d.addCallback(lambda response: int(response[0].group('index')))

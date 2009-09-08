@@ -98,9 +98,10 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
-        print "MAL::_do_add_sms", sms, indexes
+        print "MAL::_do_add_sms  sms: %s  indexes: %s" % (sms, indexes)
         # save the real index if indexes is None
         sms.real_indexes = [sms.index] if indexes is None else indexes
+        print "MAL::_do_add_sms sms.real_indexes", sms.real_indexes
         # assign a new logical index
         self.last_index += 1
         sms.index = self.last_index
@@ -144,7 +145,8 @@ class MessageAssemblyLayer(object):
             # to cache, emit signal and wait for the rest of fragments
             # to arrive. It returns the logical index where was stored
             index = self._do_add_sms(sms)
-            self.wrappee.emit_signal(SIG_SMS, index, False)
+            if emit:
+                self.wrappee.emit_signal(SIG_SMS, index, False)
             print "MAL::_add_sms first part of a multi part SMS added with logical index %d" % index
             return index
 
@@ -187,12 +189,24 @@ class MessageAssemblyLayer(object):
         d.addCallback(gen_cache)
         return d
 
+    def send_sms_from_storage(self, index):
+        print "MAL::send_sms_from_storage", index
+        if index in self.sms_map:
+            sms = self.sms_map.pop(index)
+            indexes = sorted(sms.real_indexes)
+            print "MAL::send_sms_from_storage sending %s" % indexes
+            ret = map(self.wrappee.do_send_sms_from_storage, indexes)
+            return gatherResults(ret)
+
+        error = "SMS with logical index %d does not exist"
+        raise CacheIncoherenceError(error % index)
+
     def save_sms(self, sms):
         """Saves ``sms`` in the cache memoizing the resulting indexes"""
         print "MAL::save_sms", sms
         d = self.wrappee.do_save_sms(sms)
         d.addCallback(lambda indexes: self._do_add_sms(sms, indexes))
-        d.addCallback(lambda ret: [ret])
+        d.addCallback(lambda logical_index: [logical_index])
         return d
 
     def on_sms_notification(self, index):

@@ -578,7 +578,7 @@ class SMSExporter(NetworkExporter):
         d = self.sconn.send_sms(Message.from_dict(sms))
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(SMS_INTFACE, in_signature='u', out_signature='u',
+    @method(SMS_INTFACE, in_signature='u', out_signature='au',
             async_callbacks=('async_cb', 'async_eb'))
     def SendFromStorage(self, index, async_cb, async_eb):
         """
