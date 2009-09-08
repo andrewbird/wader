@@ -24,7 +24,7 @@ def pack_ucs2_bytes(s):
 
     :rtype: str
     """
-    return s.encode('utf_16_be').encode('hex').upper()
+    return to_u(s).encode('utf_16_be').encode('hex').upper()
 
 def unpack_ucs2_bytes(s):
     """
@@ -40,7 +40,6 @@ def unpack_ucs2_bytes_in_ts31101_80(s):
 
     Check out the function comments
     """
-
     # Below is the detail from there, but we expect the first two hex
     # chars(80) to have been removed already.
 
@@ -113,7 +112,6 @@ def unpack_ucs2_bytes_in_ts31101_82(s):
 
     Check out the function comments
     """
-
     # Below is the detail from there, but we expect the first two hex
     # chars(82) to have been removed already.
     # If the first byte of the alpha string is set to '82', then the

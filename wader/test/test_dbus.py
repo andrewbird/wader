@@ -217,7 +217,7 @@ class DBusTestCase(unittest.TestCase):
                                  dbus_interface=dbus.PROPERTIES_IFACE)
         # XXX: Am I missing any driver ?
         self.failUnlessIn(driver, ['hso', 'option', 'mbm', 'sierra',
-                                    'cdc_ether'])
+                                   'cdc_ether', 'cdc_wdm'])
 
     def test_ModemTypeProperty(self):
         _type = self.device.Get(MDM_INTFACE, 'Type',
