@@ -983,11 +983,12 @@ class DBusTestCase(unittest.TestCase):
         """Test for SMS.Delete"""
         d = defer.Deferred()
         sms = {'number' : '+34622754135',
-                'text' : """This is a multiparted
-                sms, composed mainly by stuffs and foobars
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuufffffffffffffffffffffffffffffff"""
-                }
+               'text' : """test_SmsDeleteMultiparted test_SmsDeleteMultiparted
+                           test_SmsDeleteMultiparted test_SmsDeleteMultiparted
+                           test_SmsDeleteMultiparted test_SmsDeleteMultiparted
+                           test_SmsDeleteMultiparted test_SmsDeleteMultiparted
+                           """
+        }
 
         def sms_saved_cb(indexes):
             def on_sms_list_cb(messages):
@@ -1043,10 +1044,13 @@ class DBusTestCase(unittest.TestCase):
         """Test for SMS.Get"""
         d = defer.Deferred()
 
-        sms = {'number' : '+34622754135', 'text' : """This is a multiparted
-                sms, composed mainly by stuffs and foobars
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuufffffffffffffffffffffffffffffff"""}
+        sms = {'number' : '+34622754135',
+               'text' : """test_SmsGetMultiparted test_SmsGetMultiparted
+                           test_SmsGetMultiparted test_SmsGetMultiparted
+                           test_SmsGetMultiparted test_SmsGetMultiparted
+                           test_SmsGetMultiparted test_SmsGetMultiparted
+                           """
+        }
 
         def sms_get_cb(_sms):
             self.assertEqual(sms['number'], _sms['number'])
@@ -1151,9 +1155,12 @@ class DBusTestCase(unittest.TestCase):
         """Test for SMS.List"""
         d = defer.Deferred()
         sms = {'number' : '+34622754135',
-                'text' : """This is a multiparted big.......................
-                sms, composed mainly by stuffs and foobars, Im going to make
-                it have at least 141 characters, thats it, two parts...great"""}
+                'text' : """test_SmsListMultiparted test_SmsListMultiparted
+                            test_SmsListMultiparted test_SmsListMultiparted
+                            test_SmsListMultiparted test_SmsListMultiparted
+                            test_SmsListMultiparted test_SmsListMultiparted
+                            """
+        }
 
         def sms_saved_cb(indexes):
             # now check that the indexes are present in a List
@@ -1188,20 +1195,27 @@ class DBusTestCase(unittest.TestCase):
         # get the current number of Sms
         size_before = len(self.device.List(dbus_interface=SMS_INTFACE))
         # add three new ones
-        indexes = []
-        what = [{'number':'+324342322', 'text': 'hey there'},
-                {'number' : '+34622754135', 'text' : """This is a multiparted
-                sms, composed mainly by stuffs and foobars.................
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffff"""},
-                {'number' : '+34622754135', 'text' : """This is a multiparted
-                sms, composed mainly by stuffs and foobars
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffff"""},
-                {'number':'+324323232', 'text': 'hows it going?'}]
+        what = [
+            {'number' : '+324342322', 'text': 'hey there'},
+            {'number' : '+34622754135',
+             'text' : """test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                         test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                         test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                         test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                         """},
+            {'number' : '+34622754135',
+             'text' : """test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                         test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                         test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                         test_SmsListMultiparted_2 test_SmsListMultiparted_2
+                          """},
+            {'number':'+324323232', 'text': 'hows it going?'},
+        ]
 
+        indexes = []
         for sms in what:
             indexes.extend(self.device.Save(sms, dbus_interface=SMS_INTFACE))
+
         size_after = len(self.device.List(dbus_interface=SMS_INTFACE))
         # and check that the size has increased just three
         self.assertEqual(size_before + 4, size_after)
@@ -1209,7 +1223,6 @@ class DBusTestCase(unittest.TestCase):
         # leave everything as found
         for index in indexes:
             self.device.Delete(index, dbus_interface=SMS_INTFACE)
-
 
     def test_SmsSave(self):
         """Test for SMS.Save"""
@@ -1239,10 +1252,13 @@ class DBusTestCase(unittest.TestCase):
     def test_SmsSaveMultiparted(self):
         """Test for SMS.Save"""
         d = defer.Deferred()
-        sms = {'number' : '+34622754135', 'text' : """This is a multiparted
-                sms, composed mainly by stuffs and foobars
-                foooooooobarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-                and stuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffff"""}
+        sms = {'number' : '+34622754135',
+               'text' : """test_SmsSaveMultiparted test_SmsSaveMultiparted
+                           test_SmsSaveMultiparted test_SmsSaveMultiparted
+                           test_SmsSaveMultiparted test_SmsSaveMultiparted
+                           test_SmsSaveMultiparted test_SmsSaveMultiparted
+                           """
+        }
 
         def sms_get_cb(_sms):
             self.assertEqual(sms['number'], _sms['number'])
