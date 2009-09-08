@@ -141,9 +141,10 @@ class MessageAssemblyLayer(object):
                     return index
 
             # this is the first fragment of this multipart sms, add it
-            # to cache and wait for the rest of fragments to arrive
-            # this returns the logical index where was stored
+            # to cache, emit signal and wait for the rest of fragments
+            # to arrive. It returns the logical index where was stored
             index = self._do_add_sms(sms)
+            self.wrappee.emit_signal(SIG_SMS, index, False)
             print "MAL::_add_sms first part of a multi part SMS added with logical index %d" % index
             return index
 
