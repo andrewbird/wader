@@ -30,4 +30,6 @@ class EricssonMD300(EricssonDevicePlugin):
         'usb_device.vendor_id': [0x0fce],
         'usb_device.product_id': [0xd0cf],
     }
+
 ericssonMD300 = EricssonMD300()
+

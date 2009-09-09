@@ -32,7 +32,7 @@ import wader.common.signals as S
 CALL_RECV = re.compile('\r\nRING\r\n')
 STK_DEBUG = re.compile('\r\n\+STC:\s\d+\r\n')
 # Standard solicited notifications
-NEW_SMS = re.compile('\r\n\+CMTI:\s"(?P<where>\w{2})",(?P<id>\d+)\r\n')
+NEW_SMS = re.compile('\r\n\+CMTI:\s"(?P<where>\w{2,})",(?P<id>\d+)\r\n')
 SPLIT_PROMPT = re.compile('^\r\n>\s$')
 CREG_REGEXP = re.compile('\r\n\+CREG:\s*(?P<status>\d)\r\n')
 
