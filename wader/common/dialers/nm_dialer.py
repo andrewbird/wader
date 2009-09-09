@@ -88,7 +88,7 @@ class NMDialer(Dialer):
         self.nm_opath = profiles.GetNMObjectPath(str(config.uuid),
                                        dbus_interface=WADER_PROFILES_INTFACE)
         # Disable +CREG notifications, otherwise NMDialer won't work
-        self.device.sconn.set_netreg_notification(0)
+        return self.device.sconn.set_netreg_notification(0)
 
     def connect(self):
         self.connect_deferred = Deferred()

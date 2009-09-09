@@ -139,6 +139,11 @@ class ModemExporter(Object, DBusExporterHelper):
     def DeviceEnabled(self, opath):
         log.msg("emitting DeviceEnabled('%s')" % opath)
 
+    @signal(dbus_interface=MDM_INTFACE, signature='(uu)')
+    def DialStats(self, (in_bytes, out_bytes)):
+        # log.msg("emitting DialStats(%d, %d)" % (in_bytes, out_bytes)
+        pass
+
 
 class SimpleExporter(ModemExporter):
     """I export the org.freedesktop.ModemManager.Modem.Simple interface"""
@@ -501,10 +506,6 @@ class NetworkExporter(CardExporter):
     @signal(dbus_interface=NET_INTFACE, signature='u')
     def SignalQuality(self, rssi):
         log.msg("emitting SignalQuality(%d)" % rssi)
-
-    @signal(dbus_interface=NET_INTFACE, signature='(ss)')
-    def SpeedChanged(self, (up, down)):
-        log.msg("emitting SpeedChanged('%s', '%s')" % (up, down))
 
 
 class SMSExporter(NetworkExporter):

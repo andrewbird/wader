@@ -18,6 +18,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Dialer module abstracts the differences between dialers on different OSes"""
 
+try:
+    from glib import timeout_add_seconds, source_remove
+except ImportError:
+    from gobject import timeout_add_seconds, source_remove
+
 import dbus
 from dbus.service import Object, BusName, method, signal
 from zope.interface import implements
@@ -132,9 +137,20 @@ class Dialer(Object):
         self.bus = dbus.SystemBus()
         name = BusName(consts.WADER_DIALUP_SERVICE, bus=self.bus)
         super(Dialer, self).__init__(bus_name=name, object_path=opath)
-        self.opath = opath
         self.device = device
+        self.opath = opath
         self.ctrl = ctrl
+        # iface name
+        self.iface = None
+        # timeout_add_seconds task ID
+        self.stats_id = None
+
+    def _emit_dial_stats(self):
+        stats = self.get_stats()
+        if stats is not None:
+            self.device.exporter.DialStats(stats)
+
+        return True
 
     def configure(self, config):
         """
@@ -149,6 +165,15 @@ class Dialer(Object):
 
     def connect(self):
         """Connects to Internet"""
+
+    def get_stats(self):
+        """
+        Returns a tuple with the connection statistics for this dialer
+
+        :return: (in_bytes, out_bytes)
+        """
+        if self.iface is not None:
+            return osobj.get_iface_stats(self.iface)
 
     def stop(self):
         """Stops a hung connection attempt"""
@@ -256,11 +281,15 @@ class DialerManager(Object, DBusExporterHelper):
         opath = self.get_next_opath()
         dialer = self.get_dialer(device_opath, opath)
 
+        def start_traffic_monitoring(opath):
+            dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
+            return opath
+
         def after_configuring_device_connect():
             self.dialers[opath] = dialer
-
-            d = defer.maybeDeferred(dialer.configure, conf)
+            d = dialer.configure(conf)
             d.addCallback(lambda ign: dialer.connect())
+            d.addCallback(start_traffic_monitoring)
             d.addErrback(log.err)
             d.chainDeferred(deferred)
 
@@ -277,7 +306,9 @@ class DialerManager(Object, DBusExporterHelper):
         if device_path in self.dialers:
             dialer = self.dialers[device_path]
             d = dialer.disconnect()
-            def unexport_dialer(path):
+            def free_dialer_resources(path):
+                source_remove(dialer.stats_id)
+                dialer.stats_id = None
                 try:
                     dialer.remove_from_connection()
                 except LookupError, e:
@@ -285,7 +316,7 @@ class DialerManager(Object, DBusExporterHelper):
 
                 return path
 
-            d.addCallback(unexport_dialer)
+            d.addCallback(free_dialer_resources)
             return d
 
         raise KeyError("Dialup %s not handled" % device_path)
@@ -297,11 +328,6 @@ class DialerManager(Object, DBusExporterHelper):
 
         dialer = self.dialers[device_path]
         return dialer.stop()
-
-    def get_stats(self, device_path):
-        """Get the traffic statistics for device ``device_path``"""
-        dialer = self.dialers[device_path]
-        return osobj.get_iface_stats(dialer.iface)
 
     @method(consts.WADER_DIALUP_INTFACE, in_signature='oo', out_signature='o',
             async_callbacks=('async_cb', 'async_eb'))
@@ -332,6 +358,7 @@ class DialerManager(Object, DBusExporterHelper):
     @method(consts.WADER_DIALUP_INTFACE,
             in_signature='o', out_signature='(uu)')
     def GetStats(self, device_path):
-        """See :meth:`DialerManager.get_stats`"""
-        return self.get_stats(device_path)
+        """Get the traffic statistics for device ``device_path``"""
+        dialer = self.dialers[device_path]
+        return dialer.get_stats()
 

@@ -21,7 +21,6 @@
 from twisted.internet.task import LoopingCall
 from twisted.python import log
 
-from wader.common.netspeed import NetworkSpeed
 from wader.common.utils import rssi_to_percentage
 import wader.common.signals as S
 
@@ -72,29 +71,6 @@ class SignalQualityDaemon(WaderDaemon):
         d = self.device.sconn.get_signal_quality()
         d.addCallback(rssi_to_percentage)
         d.addCallback(lambda rssi: self.device.exporter.SignalQuality(rssi))
-
-
-class NetworkSpeedDaemon(WaderDaemon):
-    """I emit SIG_SPEED UnsolicitedNotifications"""
-    def __init__(self, frequency, device):
-        super(NetworkSpeedDaemon, self).__init__(frequency, device)
-        self.netspeed = NetworkSpeed()
-
-    def start(self):
-        """Starts the network speed measurement process"""
-        self.netspeed.start()
-        self.loop = LoopingCall(self.function)
-        self.loop.start(self.frequency)
-
-    def stop(self):
-        """Stops the network speed measurement process"""
-        self.loop.stop()
-        self.netspeed.stop()
-
-    def function(self):
-        """Emits `SpeedChanged` signals every `self.frequency`"""
-        up, down = self.netspeed['up'], self.netspeed['down']
-        self.device.exporter.SpeedChanged(up, down)
 
 
 class NetworkRegistrationDaemon(WaderDaemon):

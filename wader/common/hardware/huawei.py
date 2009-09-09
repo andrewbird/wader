@@ -33,7 +33,6 @@ from wader.common.encoding import (from_ucs2, from_u,
                                    pack_ucs2_bytes)
 
 from wader.common.hardware.base import WCDMACustomizer
-from wader.common.netspeed import bps_to_human
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
 from wader.common.utils import rssi_to_percentage
@@ -86,11 +85,6 @@ def huawei_new_conn_mode(args):
         '5,9' : S.HSPA_SIGNAL, # doc says HSPA+
     }
     return mode_args_dict[args]
-
-def huawei_new_speed_link(args):
-    converted_args = map(lambda hexstr: int(hexstr, 16), args.split(','))
-    time, tx, rx, tx_flow, rx_flow, tx_rate, rx_rate = converted_args
-    return bps_to_human(tx * 8, rx * 8)
 
 HUAWEI_CMD_DICT = get_cmd_dict_copy()
 HUAWEI_CMD_DICT['get_syscfg'] = build_cmd_dict(re.compile(r"""
@@ -395,13 +389,13 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
     conn_dict = HUAWEI_CONN_DICT
     cmd_dict = HUAWEI_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE,
-                           S.SIG_RSSI,
-                           S.SIG_SPEED]
+                           S.SIG_RSSI]
 
     signal_translations = {
         '^MODE' : (S.SIG_NETWORK_MODE, huawei_new_conn_mode),
         '^RSSI' : (S.SIG_RSSI, lambda rssi: rssi_to_percentage(int(rssi))),
-        '^DSFLOWRPT' : (S.SIG_SPEED, huawei_new_speed_link),
+        #'^DSFLOWRPT' : (S.SIG_SPEED, huawei_new_speed_link),
+        '^DSFLOWRPT' : (None, None),
         # Notification disabled as there is no match in ModemManager API
         # '^RFSWITCH' : (notifications.SIG_RFSWITCH, huawei_radio_switch),
 
