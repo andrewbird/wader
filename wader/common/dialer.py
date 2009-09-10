@@ -152,30 +152,9 @@ class Dialer(Object):
         self.stats_id = None
 
     def _emit_dial_stats(self):
-        now = time()
-        rx_bytes, tx_bytes = self.get_stats()
+        stats = self.get_stats()
+        self.device.exporter.DialStats(stats)
 
-        # if any of these three are not 0, it means that this is at
-        # least the second time this method is executed, thus we
-        # should have cached meaningful data
-        if self.__rx_bytes or self.__tx_bytes or self.__time:
-            rx_delta = rx_bytes - self.__rx_bytes
-            tx_delta = tx_bytes - self.__tx_bytes
-            interval = now - self.__time
-            raw_rx_rate = int(floor(rx_delta / interval))
-            raw_tx_rate = int(floor(tx_delta / interval))
-            rx_rate = raw_rx_rate if raw_rx_rate >= 0 else 0
-            tx_rate = raw_tx_rate if raw_tx_rate >= 0 else 0
-        else:
-            # first time this is executed, we cannot reliably compute
-            # the rate. It is better to lie just once
-            rx_rate = tx_rate = 0
-
-        # emit the signal and cache values for next execution
-        self.device.exporter.DialStats((rx_bytes, tx_bytes, rx_rate, tx_rate))
-
-        self.__rx_bytes, self.__tx_bytes = rx_bytes, tx_bytes
-        self.__time = now
         # make sure this is repeatedly called
         return True
 
@@ -200,7 +179,28 @@ class Dialer(Object):
         :return: (in_bytes, out_bytes)
         """
         if self.iface is not None:
-            return osobj.get_iface_stats(self.iface)
+            now = time()
+            rx_bytes, tx_bytes = osobj.get_iface_stats(self.iface)
+            # if any of these three are not 0, it means that this is at
+            # least the second time this method is executed, thus we
+            # should have cached meaningful data
+            if self.__rx_bytes or self.__tx_bytes or self.__time:
+                rx_delta = rx_bytes - self.__rx_bytes
+                tx_delta = tx_bytes - self.__tx_bytes
+                interval = now - self.__time
+                raw_rx_rate = int(floor(rx_delta / interval))
+                raw_tx_rate = int(floor(tx_delta / interval))
+                rx_rate = raw_rx_rate if raw_rx_rate >= 0 else 0
+                tx_rate = raw_tx_rate if raw_tx_rate >= 0 else 0
+            else:
+                # first time this is executed, we cannot reliably compute
+                # the rate. It is better to lie just once
+                rx_rate = tx_rate = 0
+
+            self.__rx_bytes, self.__tx_bytes = rx_bytes, tx_bytes
+            self.__time = now
+
+            return rx_bytes, tx_bytes, rx_rate, tx_rate
 
     def stop(self):
         """Stops a hung connection attempt"""
@@ -387,5 +387,5 @@ class DialerManager(Object, DBusExporterHelper):
     def GetStats(self, device_path):
         """Get the traffic statistics for device ``device_path``"""
         dialer = self.dialers[device_path]
-        return dialer.get_stats()
+        return dialer.get_stats()[:2]
 
