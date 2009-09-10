@@ -19,6 +19,7 @@
 """Plugin system for Wader"""
 
 from zope.interface import implements
+from twisted.internet import defer
 from twisted.python import log
 from twisted.plugin import IPlugin, getPlugins
 
@@ -28,6 +29,8 @@ import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
 from wader.common.utils import flatten_list
 from wader.common.sim import SIMBaseClass
+
+DISABLED, AUTH_OK, ENABLED = 0, 1, 2
 
 class DevicePlugin(object):
     """Base class for all plugins"""
@@ -53,8 +56,8 @@ class DevicePlugin(object):
         self.sim = None
         # serial connection reference
         self.sconn = None
-        # is this device enabled?
-        self.enabled = False
+        # device internal state
+        self.status = DISABLED
         # properties for org.freedesktop.DBus.Properties interface
         self.props = {}
         # collection of daemons
@@ -75,34 +78,42 @@ class DevicePlugin(object):
         args = (self.__class__.__name__, self.ports)
         return "<%s %s>" % args
 
-    def set_enabled(self, enabled):
-        self.enabled = enabled
-        if enabled:
+    def set_status(self, status):
+        self.status = status
+        if self.status == ENABLED:
             self.exporter.DeviceEnabled(self.udi)
 
-    def close(self, remove_from_conn=False):
+    def close(self, remove_from_conn=False, removed=False):
         """Closes the plugin and frees all the associated resources"""
         log.msg("Closing plugin %s" % self)
 
-        if self.sconn and self.sconn.transport:
-            self.sconn.transport.unregisterProducer()
+        if remove_from_conn or removed:
+            try:
+                self.exporter.remove_from_connection()
+            except LookupError, e:
+                log.err(e)
 
-        try:
-            if self.ports.cport.obj:
+        def free_resources(ign=None):
+            """Frees the resources held by :meth:`initialize`"""
+            if self.daemons is not None and self.daemons.running:
+                self.daemons.stop_daemons()
+
+            if self.sconn is not None and self.sconn.transport:
+                self.sconn.transport.unregisterProducer()
+
+            if self.ports.cport.obj is not None:
                 self.ports.cport.obj.connectionLost("Closing connection")
                 self.ports.cport.obj.loseConnection("Bye!")
                 self.ports.cport.obj = None
-        except:
-            log.err()
 
-        if self.daemons is not None and self.daemons.running:
-            self.daemons.stop_daemons()
+        d = defer.succeed(True)
 
-        try:
-            if self.exporter and remove_from_conn:
-                self.exporter.remove_from_connection()
-        except LookupError, e:
-            log.err(e)
+        if self.status == ENABLED and not removed:
+            d.addCallback(lambda _: self.sconn.enable_radio(False))
+            d.addCallback(lambda _: self.set_status(AUTH_OK))
+
+        d.addCallback(free_resources)
+        return d
 
     def initialize(self, init_obj=None):
         """Initializes the SIM"""
@@ -112,12 +123,35 @@ class DevicePlugin(object):
 
             self.daemons.start_daemons()
             d = self.sconn.init_properties()
+            d.addCallback(lambda _: self.set_status(ENABLED))
+            d.addCallback(lambda ign: self.sconn.mal.initialize(obj=self.sconn,
+                                                                force=True))
             d.addCallback(lambda _: size)
             return d
 
-        self.sim = self.sim_klass(self.sconn)
-        d = self.sim.initialize()
-        d.addCallback(on_init)
+        def initialize_sim(ign):
+            if self.sim is None or self.sim.size is None:
+                self.sim = self.sim_klass(self.sconn)
+                d = self.sim.initialize()
+            else:
+                d = defer.succeed(self.sim.size)
+
+            d.addCallback(on_init)
+            return d
+
+        # initialize method is always called right after authentication
+        # is OK, be it right after a successfull SendP{in,uk,uk2} or
+        # because the device was already authenticated
+        self.set_status(AUTH_OK)
+        # sometimes, right after a combination of Modem.Enable operations
+        # and hotpluggins, the core will not reply to the first AT command
+        # sent, but it will to the second. This addCallbacks call handles
+        # both the callback and errback (if the command times out)
+        d = self.sconn.get_signal_quality()
+        d.addCallbacks(lambda _: self.sconn.enable_radio(True),
+                       lambda _: self.sconn.enable_radio(True))
+        d.addCallback(initialize_sim)
+        d.addErrback(log.err)
         return d
 
     def patch(self, other):

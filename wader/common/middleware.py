@@ -35,6 +35,7 @@ from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
         pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
+from wader.common.plugin import AUTH_OK
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
@@ -861,22 +862,16 @@ class WCDMAWrapper(WCDMAProtocol):
             return self._do_disable_device()
 
     def _do_disable_device(self):
-        if not self.device.enabled:
-            msg = "Can not disable a not enabled device"
-            return defer.fail(Exception(msg))
-
-        d = self.device.sconn.enable_radio(False)
-        d.addCallback(lambda _: self.device.close(remove_from_conn=False))
-        return d
+        return self.device.close()
 
     def _do_enable_device(self):
         from wader.common.startup import attach_to_serial_port
-        if self.device.enabled:
+        if self.device.status >= AUTH_OK:
             # if a device was enabled and then disabled, there's no
             # need to check the authentication again
             if self.device.ports.cport.obj is None:
                 d = attach_to_serial_port(self.device)
-                d.addCallback(self._initialize_cb)
+                d.addCallback(self.device.initialize)
             else:
                 d = defer.succeed(self.device)
 
@@ -891,25 +886,17 @@ class WCDMAWrapper(WCDMAProtocol):
             # if auth aint ready the callback chain wont be executed and
             # will just return the given exception
             d.addCallback(self.device.initialize)
-            d.addCallback(self._initialize_cb)
             return d
 
         d = attach_to_serial_port(self.device)
         d.addCallback(process_device_and_initialize)
         return d
 
-    def _initialize_cb(self, size=None):
-        d = self.device.sconn.enable_radio(True)
-        d.addCallback(lambda _: self.device.set_enabled(True))
-        d.addCallback(lambda _: self.mal.initialize(obj=self, force=True))
-        d.addCallback(lambda _: size)
-        return d
-
     def _check_initted_device(self, result):
         """
         Upon successful auth over DBus I'll check if the device was initted
         """
-        if self.device.sim and self.device.sim.initted:
+        if self.device.status == AUTH_OK:
             log.msg("device was already initted, just returning orig result")
             return result
 
@@ -919,7 +906,6 @@ class WCDMAWrapper(WCDMAProtocol):
         deferred = defer.Deferred()
         def do_init():
             d = self.device.initialize()
-            d.addCallback(self._initialize_cb)
             d.addCallback(lambda size: deferred.callback(size))
 
         reactor.callLater(DELAY, do_init)

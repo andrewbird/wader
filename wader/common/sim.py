@@ -39,7 +39,6 @@ class SIMBaseClass(object):
         self.size = None
         self.charset = 'IRA'
         self.num_of_failures = 0
-        self.initted = False
 
     def set_size(self, size):
         log.msg("Setting size to %d" % size)
@@ -76,7 +75,6 @@ class SIMBaseClass(object):
             d = self.sconn.get_phonebook_size()
             def phonebook_size_cb(resp):
                 self.set_size(resp)
-                self.initted = True
                 auxdef.callback(self.size)
 
             def phonebook_size_eb(failure):

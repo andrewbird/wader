@@ -347,8 +347,8 @@ class HardwareManager(DBusComponent):
 
     def _unregister_client(self, udi):
         """Removes client identified by ``udi``"""
-        self.clients[udi].close(remove_from_conn=True)
-        del self.clients[udi]
+        plugin = self.clients.pop(udi)
+        plugin.close(removed=True)
 
     def _dev_added_cb(self, udi):
         self.mode = BUSY
