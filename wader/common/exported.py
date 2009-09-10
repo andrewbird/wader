@@ -139,9 +139,8 @@ class ModemExporter(Object, DBusExporterHelper):
     def DeviceEnabled(self, opath):
         log.msg("emitting DeviceEnabled('%s')" % opath)
 
-    @signal(dbus_interface=MDM_INTFACE, signature='(uu)')
-    def DialStats(self, (in_bytes, out_bytes)):
-        # log.msg("emitting DialStats(%d, %d)" % (in_bytes, out_bytes)
+    @signal(dbus_interface=MDM_INTFACE, signature='(uuuu)')
+    def DialStats(self, (rx_bytes, tx_bytes, rx_rate, tx_rate)):
         pass
 
 

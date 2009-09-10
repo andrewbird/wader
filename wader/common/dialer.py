@@ -18,6 +18,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Dialer module abstracts the differences between dialers on different OSes"""
 
+from math import floor
+from time import time
+
 try:
     from glib import timeout_add_seconds, source_remove
 except ImportError:
@@ -119,7 +122,7 @@ class DialerConf(object):
                 if self.username != '*':
                     log.err("No password in profile, yet username is defined")
                 else:
-                    log.err("no password in profile, asumming '*' can be used")
+                    log.err("no password in profile, assuming '*' can be used")
                     self.password = '*'
 
 
@@ -143,13 +146,37 @@ class Dialer(Object):
         # iface name
         self.iface = None
         # timeout_add_seconds task ID
+        self.__time = 0
+        self.__rx_bytes = 0
+        self.__tx_bytes = 0
         self.stats_id = None
 
     def _emit_dial_stats(self):
-        stats = self.get_stats()
-        if stats is not None:
-            self.device.exporter.DialStats(stats)
+        now = time()
+        rx_bytes, tx_bytes = self.get_stats()
 
+        # if any of these three are not 0, it means that this is at
+        # least the second time this method is executed, thus we
+        # should have cached meaningful data
+        if self.__rx_bytes or self.__tx_bytes or self.__time:
+            rx_delta = rx_bytes - self.__rx_bytes
+            tx_delta = tx_bytes - self.__tx_bytes
+            interval = now - self.__time
+            raw_rx_rate = int(floor(rx_delta / interval))
+            raw_tx_rate = int(floor(tx_delta / interval))
+            rx_rate = raw_rx_rate if raw_rx_rate >= 0 else 0
+            tx_rate = raw_tx_rate if raw_tx_rate >= 0 else 0
+        else:
+            # first time this is executed, we cannot reliably compute
+            # the rate. It is better to lie just once
+            rx_rate = tx_rate = 0
+
+        # emit the signal and cache values for next execution
+        self.device.exporter.DialStats((rx_bytes, tx_bytes, rx_rate, tx_rate))
+
+        self.__rx_bytes, self.__tx_bytes = rx_bytes, tx_bytes
+        self.__time = now
+        # make sure this is repeatedly called
         return True
 
     def configure(self, config):
