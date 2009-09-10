@@ -1,3 +1,9 @@
+wader-core (0.5.0) karmic; urgency=low
+
+  * New upstream version
+
+ -- David Francos Cuartero <dfrancos@warp.es>  Thu, 10 Sep 2009 17:12:40 +0100
+
 wader-core (0.3.6-1) jaunty; urgency=low
 
   * New upstream version
