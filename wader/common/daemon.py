@@ -18,11 +18,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Daemons for Wader"""
 
-from twisted.internet.task import LoopingCall
+try:
+    from glib import timeout_add_seconds, source_remove
+except ImportError:
+    from gobject import timeout_add_seconds, source_remove
+
 from twisted.python import log
 
 from wader.common.utils import rssi_to_percentage
 import wader.common.signals as S
+
+SIG_REG_INFO_FREQ = 120
+SIG_RSSI_FREQ = 15
 
 class WaderDaemon(object):
     """
@@ -36,30 +43,36 @@ class WaderDaemon(object):
         super(WaderDaemon, self).__init__()
         self.frequency = frequency
         self.device = device
-        self.loop = None
+        self.task_id = None
 
     def __repr__(self):
         return self.__class__.__name__
 
     def start(self):
         """Starts the Daemon"""
-        log.msg("daemon %s started..." % self.__class__.__name__)
-        if not self.loop or not self.loop.running:
-            self.loop = LoopingCall(self.function)
-            self.loop.start(self.frequency)
+        log.msg("daemon %s started..." % self)
+        if self.task_id is None:
+            self.task_id = timeout_add_seconds(self.frequency, self.function)
 
-            args = (self.__class__.__name__, 'function', self.frequency)
+            args = (self, 'function', self.frequency)
             log.msg("executing %s.%s every %d seconds" % args)
+
 
     def stop(self):
         """Stops the Daemon"""
-        if self.loop.running:
-            cname = self.__class__.__name__
-            log.msg("daemon %s stopped..." % cname)
-            self.loop.stop()
+        if self.task_id is not None:
+            source_remove(self.task_id)
+
+            self.task_id = None
+            log.msg("daemon %s stopped..." % self)
 
     def function(self):
-        """Function that will be called periodically"""
+        """
+        Function that will be called periodically
+
+        It *always* needs to return True, otherwise it will be
+        executed just once
+        """
         raise NotImplementedError()
 
 
@@ -71,6 +84,8 @@ class SignalQualityDaemon(WaderDaemon):
         d = self.device.sconn.get_signal_quality()
         d.addCallback(rssi_to_percentage)
         d.addCallback(lambda rssi: self.device.exporter.SignalQuality(rssi))
+
+        return True
 
 
 class NetworkRegistrationDaemon(WaderDaemon):
@@ -87,6 +102,8 @@ class NetworkRegistrationDaemon(WaderDaemon):
     def function(self):
         d = self.device.sconn.get_netreg_info()
         d.addCallback(self.compare_and_emit_if_different)
+
+        return True
 
     def compare_and_emit_if_different(self, info):
         """
@@ -157,20 +174,18 @@ def build_daemon_collection(device):
         if S.SIG_RSSI not in device.custom.device_capabilities:
             # device doesn't sends unsolicited notifications about RSSI
             # changes, we will have to monitor it ourselves every 15s
-            freq = 15
-
-            daemon = SignalQualityDaemon(freq, device)
-            collection.append_daemon('signal', daemon)
+            daemon = SignalQualityDaemon(SIG_RSSI_FREQ, device)
+            collection.append_daemon(S.SIG_RSSI, daemon)
 
     else:
         # device with just one port will never be able to send us
         # unsolicited notifications, we'll have to fake 'em
-        daemon = SignalQualityDaemon(15, device)
-        collection.append_daemon('signal', daemon)
+        daemon = SignalQualityDaemon(SIG_RSSI_FREQ, device)
+        collection.append_daemon(S.SIG_RSSI, daemon)
 
     # daemons to be used regardless of ports or capabilities
-    daemon = NetworkRegistrationDaemon(120, device)
-    collection.append_daemon('netreg', daemon)
+    daemon = NetworkRegistrationDaemon(SIG_REG_INFO_FREQ, device)
+    collection.append_daemon(S.SIG_REG_INFO, daemon)
 
     return collection
 

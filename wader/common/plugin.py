@@ -95,9 +95,6 @@ class DevicePlugin(object):
 
         def free_resources(ign=None):
             """Frees the resources held by :meth:`initialize`"""
-            if self.daemons is not None and self.daemons.running:
-                self.daemons.stop_daemons()
-
             if self.sconn is not None and self.sconn.transport:
                 self.sconn.transport.unregisterProducer()
 
@@ -105,6 +102,9 @@ class DevicePlugin(object):
                 self.ports.cport.obj.connectionLost("Closing connection")
                 self.ports.cport.obj.loseConnection("Bye!")
                 self.ports.cport.obj = None
+
+        if self.daemons is not None and self.daemons.running:
+            self.daemons.stop_daemons()
 
         d = defer.succeed(True)
 
