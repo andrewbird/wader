@@ -124,8 +124,7 @@ class DevicePlugin(object):
             self.daemons.start_daemons()
             d = self.sconn.init_properties()
             d.addCallback(lambda _: self.set_status(ENABLED))
-            d.addCallback(lambda ign: self.sconn.mal.initialize(obj=self.sconn,
-                                                                force=True))
+            d.addCallback(lambda ign: self.sconn.mal.initialize(obj=self.sconn))
             d.addCallback(lambda _: size)
             return d
 

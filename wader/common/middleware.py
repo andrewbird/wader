@@ -871,10 +871,10 @@ class WCDMAWrapper(WCDMAProtocol):
             # need to check the authentication again
             if self.device.ports.cport.obj is None:
                 d = attach_to_serial_port(self.device)
-                d.addCallback(self.device.initialize)
             else:
                 d = defer.succeed(self.device)
 
+            d.addCallback(self.device.initialize)
             return d
 
         def process_device_and_initialize(device):

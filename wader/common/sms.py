@@ -80,17 +80,17 @@ class MessageAssemblyLayer(object):
         self.sms_map = {}
         self.cached = False
 
-    def initialize(self, obj=None, force=False):
-        print "MAL::initialize  obj: %s  force: %s" % (obj, force)
+    def initialize(self, obj=None):
+        print "MAL::initialize  obj: %s" % obj
         if obj is not None:
             self.wrappee = obj
 
-        if force or not self.cached:
-            # revert to initial state
-            self.last_index = 0
-            self.sms_map = {}
-            # populate sms cache
-            self.list_sms()
+        # revert to initial state
+        self.last_index = 0
+        self.sms_map = {}
+        self.cached = False
+        # populate sms cache
+        self.list_sms()
 
     def _do_add_sms(self, sms, indexes=None):
         """
