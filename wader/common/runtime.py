@@ -25,9 +25,13 @@ import wader.common.consts as consts
 try:
     obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
     interface = dbus.Interface(obj, consts.NM_INTFACE)
-    interface.GetDevices()
-    nm07_present = True
+    devices = interface.GetDevices()
+    nm07_present, nm08_present = True, False
+    if len(devices):
+        nm08_present = 'NetworkManager' in devices[0]
+
 except dbus.DBusException:
     nm07_present = False
+    nm08_present = False
 
 resolvconf_present = exists('/sbin/resolvconf')

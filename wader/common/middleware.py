@@ -821,7 +821,7 @@ class WCDMAWrapper(WCDMAProtocol):
         port.obj = serial.Serial(port.path)
         port.obj.flush()
 
-        d = defer.maybeDeferred(port.obj.write, "ATDT%s\r\n" % number)
+        d = defer.maybeDeferred(port.obj.write, "ATDT%s\r\n" % str(number))
         return d
 
     def disconnect_from_internet(self):

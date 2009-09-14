@@ -25,9 +25,10 @@ from wader.common.dialer import Dialer
 from wader.common.consts import (NM_SERVICE, NM_INTFACE, NM_OBJPATH,
                                  NM_GSM_INTFACE, NM_USER_SETTINGS,
                                  NM_CONNECTED, NM_DISCONNECTED,
-                                 WADER_PROFILES_SERVICE,
+                                 NM_DEVICE, WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH)
+from wader.common.runtime import nm08_present
 
 CONNECTED, DISCONNECTED = 1, 2
 
@@ -51,6 +52,22 @@ class NMDialer(Dialer):
         self.device.sconn.set_netreg_notification(1)
         self.sm.remove()
         self.sm = None
+
+    def _get_device_opath(self):
+        """
+        Returns the object path to use in the connection / signal
+        """
+        if not nm08_present:
+            return self.device.udi
+        else:
+            obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)
+            interface = dbus.Interface(obj, NM_INTFACE)
+            for opath in interface.GetDevices():
+                device = self.bus.get_object(NM_SERVICE, opath)
+                udi = device.Get(NM_DEVICE, 'Udi',
+                                 dbus_interface=dbus.PROPERTIES_IFACE)
+                if self.device.udi == udi:
+                    return opath
 
     def _on_properties_changed(self, changed):
         if 'State' not in changed:
@@ -76,7 +93,7 @@ class NMDialer(Dialer):
     def _setup_signals(self):
         self.sm = self.bus.add_signal_receiver(self._on_properties_changed,
                                                "PropertiesChanged",
-                                               path=self.device.udi,
+                                               path=self._get_device_opath(),
                                                dbus_interface=NM_GSM_INTFACE)
 
     def configure(self, config):
@@ -94,7 +111,7 @@ class NMDialer(Dialer):
         self.connect_deferred = Deferred()
         obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)
         self.int = dbus.Interface(obj, NM_INTFACE)
-        args = (NM_USER_SETTINGS, self.nm_opath, self.device.udi, '/')
+        args = (NM_USER_SETTINGS, self.nm_opath, self._get_device_opath(), '/')
         log.msg("Connecting with:\n%s\n%s\n%s\n%s" % args)
         try:
             self.conn_obj = self.int.ActivateConnection(*args)

@@ -333,9 +333,12 @@ class DialerManager(Object, DBusExporterHelper):
         if device_path in self.dialers:
             dialer = self.dialers[device_path]
             d = dialer.disconnect()
+
             def free_dialer_resources(path):
+                # remove the emit stats task
                 source_remove(dialer.stats_id)
                 dialer.stats_id = None
+                # remove from DBus bus
                 try:
                     dialer.remove_from_connection()
                 except LookupError, e:
