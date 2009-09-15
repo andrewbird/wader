@@ -35,7 +35,7 @@ from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
         pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
-from wader.common.plugin import AUTH_OK
+from wader.common.plugin import AUTH_OK, ENABLED
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
@@ -862,7 +862,8 @@ class WCDMAWrapper(WCDMAProtocol):
             return self._do_disable_device()
 
     def _do_disable_device(self):
-        return self.device.close()
+        if self.device.status == ENABLED:
+            return self.device.close()
 
     def _do_enable_device(self):
         from wader.common.startup import attach_to_serial_port
