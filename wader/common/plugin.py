@@ -139,11 +139,11 @@ class DevicePlugin(object):
             return d
 
         # initialize method is always called right after authentication
-        # is OK, be it right after a successfull SendP{in,uk,uk2} or
+        # is OK, be it right after a successful SendP{in,uk,uk2} or
         # because the device was already authenticated
         self.set_status(AUTH_OK)
         # sometimes, right after a combination of Modem.Enable operations
-        # and hotpluggins, the core will not reply to the first AT command
+        # and hot pluggings, the core will not reply to the first AT command
         # sent, but it will to the second. This addCallbacks call handles
         # both the callback and errback (if the command times out)
         d = self.sconn.get_signal_quality()
@@ -222,7 +222,7 @@ class OSPlugin(object):
 
 import wader.plugins
 class PluginManager(object):
-    """I manage WaderCdfL's plugins"""
+    """I manage Wader's plugins"""
 
     @classmethod
     def get_plugins(cls, interface=IPlugin, package=wader.plugins):

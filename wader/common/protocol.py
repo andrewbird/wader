@@ -75,7 +75,7 @@ class BufferingStateMachine(object, protocol.Protocol):
 
     def cancel_current_delayed_call(self):
         """
-        Cancels current :class:`~wader.common.command.ATCmd` dellayed call
+        Cancels current :class:`~wader.common.command.ATCmd` delayed call
         """
         if self.cmd.call_id and self.cmd.call_id.active():
             self.cmd.call_id.cancel()
@@ -337,7 +337,7 @@ class SerialProtocol(BufferingStateMachine):
       have an associated regexp to extract information as we are not
       interested in the "all went ok" response, only if an exception
       occurred -e.g. when deleting a contact we are only interested if
-      something went wront, not if all went ok.
+      something went wrong, not if all went ok.
 
     The transition to each state is driven by regular expressions, each
     command has associated a set of regular expressions that make the FSM

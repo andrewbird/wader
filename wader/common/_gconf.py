@@ -52,6 +52,6 @@ class GConfHelper(object):
             _list = value.get_list()
             return [self.get_value(v) for v in _list]
         else:
-            msg = "Unhandleable type %s for %s"
+            msg = "Unsupported type %s for %s"
             raise TypeError(msg % (type(value), value))
 

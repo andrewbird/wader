@@ -271,7 +271,7 @@ class AESKeyring(GConfHelper):
     """
     GConf powered keyring
 
-    I will store the secretss encrypted with TripleDES
+    I will store the secrets encrypted with TripleDES
     """
 
     def __init__(self, base_gpath):

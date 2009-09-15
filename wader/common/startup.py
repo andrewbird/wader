@@ -30,7 +30,6 @@ from twisted.application.service import Application, Service
 from twisted.internet import reactor, defer
 from twisted.python import log
 
-#from wader.common.config import config
 import wader.common.consts as consts
 from wader.common._dbus import DBusExporterHelper
 from wader.common.persistent import populate_networks

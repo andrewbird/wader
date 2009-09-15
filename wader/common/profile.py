@@ -281,7 +281,7 @@ class ProfileManager(Object, GConfHelper):
             try:
                 profile = self._get_profile_from_nm_connection(uuid)
             except ex.ProfileNotFoundError:
-                log.msg("Removing unexisting NM profile %s" % uuid)
+                log.msg("Removing non existing NM profile %s" % uuid)
                 del self.nm_profiles[uuid]
             else:
                 self.profiles[uuid] = profile
@@ -462,7 +462,7 @@ class ProfileManager(Object, GConfHelper):
     @method(dbus_interface=WADER_PROFILES_INTFACE,
             in_signature='s', out_signature='o')
     def GetNMObjectPath(self, uuid):
-        """Returns the object path of the connection refered by ``uuid``"""
+        """Returns the object path of the connection referred by ``uuid``"""
         if uuid not in self.nm_profiles:
             raise KeyError("Unknown uuid: %s" % uuid)
 

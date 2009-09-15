@@ -202,7 +202,7 @@ class MessageAssemblyLayer(object):
         raise CacheIncoherenceError(error % index)
 
     def save_sms(self, sms):
-        """Saves ``sms`` in the cache memoizing the resulting indexes"""
+        """Saves ``sms`` in the cache memorizing the resulting indexes"""
         print "MAL::save_sms", sms
         d = self.wrappee.do_save_sms(sms)
         d.addCallback(lambda indexes: self._do_add_sms(sms, indexes))

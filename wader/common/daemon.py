@@ -36,8 +36,8 @@ class WaderDaemon(object):
     I represent a Daemon in Wader
 
     A Daemon is an entity that performs a repetitive action, like polling
-    signal quality from the datacard. A Daemon will emit DBus signals as if
-    the device itself had emitted them.
+    signal quality from the data card. A Daemon will emit DBus signals as
+    if the device itself had emitted them.
     """
     def __init__(self, frequency, device):
         super(WaderDaemon, self).__init__()
