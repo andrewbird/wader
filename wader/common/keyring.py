@@ -49,7 +49,6 @@ else:
     except gnomekeyring.NoKeyringDaemonError:
         KEYRING_AVAILABLE = False
 
-
 class KeyringNoMatchError(Exception):
     """Exception raised when there is no match for a keyring request"""
 
@@ -200,7 +199,7 @@ class GnomeKeyring(object):
         self.is_new = False
         self.name = gnomekeyring.get_default_keyring_sync()
 
-        if self.name is None or self.name == '':
+        if not self.name:
             self.is_new = True
             self.name = 'login'
 
