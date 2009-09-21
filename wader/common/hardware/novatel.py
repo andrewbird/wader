@@ -139,7 +139,6 @@ class NovatelSIMClass(SIMBaseClass):
         super(NovatelSIMClass, self).__init__(sconn)
 
     def initialize(self, set_encoding=True):
-
         def init_callback(size):
             # make sure we are in most promiscuous mode before registration
             self.sconn.set_network_mode(consts.MM_NETWORK_MODE_ANY)

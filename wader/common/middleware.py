@@ -30,7 +30,8 @@ from twisted.python import log
 from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
-from wader.common.consts import MM_IP_METHOD_STATIC, CRD_INTFACE
+from wader.common.consts import (MM_IP_METHOD_STATIC, CRD_INTFACE,
+                                 MM_NETWORK_BAND_ANY)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
         pack_ucs2_bytes, check_if_ucs2)
@@ -213,7 +214,11 @@ class WCDMAWrapper(WCDMAProtocol):
 
         :rtype: list
         """
-        return defer.succeed(sum(self.custom.band_dict.keys()))
+        bands = self.custom.band_dict.keys()
+        if MM_NETWORK_BAND_ANY in bands:
+            bands.pop(MM_NETWORK_BAND_ANY)
+
+        return defer.succeed(sum(bands))
 
     def get_card_model(self):
         """Returns the card model"""

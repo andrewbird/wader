@@ -201,6 +201,10 @@ class OptionWrapper(WCDMAWrapper):
         def get_band_dict_cb(bands):
             ret = 0
             for key in bands.keys():
+                if key == consts.MM_NETWORK_BAND_ANY:
+                    # skip ANY
+                    continue
+
                 if key in OPTION_BAND_MAP_DICT:
                     ret |= OPTION_BAND_MAP_DICT[key]
 
@@ -237,7 +241,7 @@ class OptionWrapper(WCDMAWrapper):
                     # if ANY is already enabled, do nothing
                     return defer.succeed(True)
 
-                # enabling ANY will suffice
+                # enabling ANY should suffice
                 responses.append(self.send_at(at_str % ('ANY', 1)))
             else:
                 # ANY is not sought, if ANY is enabled we should remove it first

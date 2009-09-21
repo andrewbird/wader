@@ -38,6 +38,7 @@ MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
 
 ERICSSON_BAND_DICT = {
+    consts.MM_NETWORK_BAND_UNKNOWN : None,
     consts.MM_NETWORK_BAND_ANY : None,
 }
 
@@ -165,7 +166,6 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_band(self):
-        # XXX: Fix this ASAP
         return defer.succeed(consts.MM_NETWORK_BAND_ANY)
 
     def get_charset(self):
@@ -267,8 +267,7 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def set_band(self, band):
-        if band in self.custom.band_dict.keys():
-            # XXX: only ANY is present
+        if band == consts.MM_NETWORK_BAND_ANY:
             return defer.succeed('OK')
 
         raise KeyError("Unsupported band %d" % band)
@@ -292,17 +291,16 @@ class EricssonWrapper(WCDMAWrapper):
         cmd = ATCmd('AT&F', name='reset_settings')
         return self.queue_at_cmd(cmd)
 
+
 class EricssonCustomizer(WCDMACustomizer):
     """
     Base Customizer class for Ericsson cards
     """
-
     wrapper_klass = EricssonWrapper
 
     # Multiline so we catch and remove the ESTKSMENU
     async_regexp = re.compile("\r\n(?P<signal>[*+][A-Z]{3,}):(?P<args>.*)\r\n",
                               re.MULTILINE)
-
 
     band_dict = ERICSSON_BAND_DICT
     cmd_dict = ERICSSON_CMD_DICT
@@ -314,6 +312,7 @@ class EricssonCustomizer(WCDMACustomizer):
         '*EMWI' : (None, None),
         '+PACSP0' : (None, None),
     }
+
 
 class EricssonDevicePlugin(DevicePlugin):
     """DevicePlugin for Ericsson"""
