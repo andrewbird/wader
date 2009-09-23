@@ -151,9 +151,9 @@ def new_conn_mode_cb(args):
     Translates Option's unsolicited notifications to Wader's representation
     """
     ossysi_args_dict = {
-        '0' : S.GPRS_SIGNAL,
-        '2' : S.UMTS_SIGNAL,
-        '3' : S.NO_SIGNAL,
+        '0' : consts.MM_NETWORK_MODE_GPRS,
+        '2' : consts.MM_NETWORK_MODE_UMTS,
+        '3' : consts.MM_NETWORK_MODE_UNKNOWN,
     }
     return ossysi_args_dict[args]
 

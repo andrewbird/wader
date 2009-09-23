@@ -71,18 +71,18 @@ HUAWEI_BAND_DICT = {
 def huawei_new_conn_mode(args):
     """Translates `args` to Wader's internal representation"""
     mode_args_dict = {
-        '0,0' : S.NO_SIGNAL,
-        '0,2' : S.NO_SIGNAL,
-        '3,0' : S.GPRS_SIGNAL,
-        '3,1' : S.GPRS_SIGNAL,
-        '3,2' : S.GPRS_SIGNAL,
-        '3,3' : S.GPRS_SIGNAL,
-        '5,0' : S.NO_SIGNAL,
-        '5,4' : S.UMTS_SIGNAL,
-        '5,5' : S.HSDPA_SIGNAL,
-        '5,6' : S.HSUPA_SIGNAL,
-        '5,7' : S.HSPA_SIGNAL,
-        '5,9' : S.HSPA_SIGNAL, # doc says HSPA+
+        '0,0' : consts.MM_NETWORK_MODE_UNKNOWN,
+        '0,2' : consts.MM_NETWORK_MODE_UNKNOWN,
+        '3,0' : consts.MM_NETWORK_MODE_GPRS,
+        '3,1' : consts.MM_NETWORK_MODE_GPRS,
+        '3,2' : consts.MM_NETWORK_MODE_GPRS,
+        '3,3' : consts.MM_NETWORK_MODE_GPRS,
+        '5,0' : consts.MM_NETWORK_MODE_UNKNOWN,
+        '5,4' : consts.MM_NETWORK_MODE_UMTS,
+        '5,5' : consts.MM_NETWORK_MODE_HSDPA,
+        '5,6' : consts.MM_NETWORK_MODE_HSUPA,
+        '5,7' : consts.MM_NETWORK_MODE_HSPA,
+        '5,9' : consts.MM_NETWORK_MODE_HSPA, # doc says HSPA+
     }
     return mode_args_dict[args]
 

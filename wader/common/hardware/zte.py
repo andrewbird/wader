@@ -100,17 +100,17 @@ ZTE_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
 
 def zte_new_conn_mode(what):
     if what in "UMTS":
-        return S.UMTS_SIGNAL
+        return consts.MM_NETWORK_MODE_UMTS
     elif what in ["GPRS", "GSM"]:
-        return S.GPRS_SIGNAL
+        return consts.MM_NETWORK_MODE_GPRS
     elif what in "HSDPA":
-        return S.HSDPA_SIGNAL
+        return consts.MM_NETWORK_MODE_HSDPA
     elif what in "HSUPA":
-        return S.HSDPA_SIGNAL
+        return consts.MM_NETWORK_MODE_HSUPA
     elif what in "EDGE":
-        return S.EDGE_SIGNAL
+        return consts.MM_NETWORK_MODE_EDGE
     elif what in ["No Service", "Limited Service"]:
-        return S.NO_SIGNAL
+        return consts.MM_NETWORK_MODE_UNKNOWN
 
 
 class ZTEWrapper(WCDMAWrapper):
