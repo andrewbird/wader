@@ -813,31 +813,30 @@ class WCDMAWrapper(WCDMAProtocol):
     def connect_simple(self, settings):
         """Connects with the given ``settings``"""
         simplesm = self.device.custom.simp_klass(self.device, settings)
-        d = simplesm.start_simple()
-        return d
+        return simplesm.start_simple()
 
     def connect_to_internet(self, number):
         """Opens data port and dials ``number`` in"""
-        port = self.device.ports.dport
-        if port.obj is not None:
-            raise AttributeError("Data serial port is not None")
-
         # open the data port
+        port = self.device.ports.dport
+        # this will raise a SerialException if port is busy
         port.obj = serial.Serial(port.path)
         port.obj.flush()
-
-        d = defer.maybeDeferred(port.obj.write, "ATDT%s\r\n" % str(number))
-        return d
+        # send ATDT and convert number to string as pyserial does
+        # not like to write unicode to serial ports
+        return defer.maybeDeferred(port.obj.write,
+                                   "ATDT%s\r\n" % str(number))
 
     def disconnect_from_internet(self):
         """Disconnects the modem temporally lowering the DTR"""
         port = self.device.ports.dport
-        if port.obj is None:
-            raise AttributeError("Data serial port is None")
+        if not port.obj.isOpen():
+            raise AttributeError("Data serial port is not open")
 
         d = defer.Deferred()
         def restore_speed(orig_speed):
             port.obj.setBaudrate(orig_speed)
+            port.obj.close()
             d.callback(True)
 
         speed = port.obj.getBaudrate()

@@ -23,7 +23,6 @@ from epsilon.modal import mode, Modal
 
 import wader.common.aterrors as E
 
-
 class SimpleStateMachine(Modal):
     """I am a state machine for o.fd.ModemManager.Modem.Simple"""
 
@@ -83,7 +82,7 @@ class SimpleStateMachine(Modal):
                     self.transition_to('register')
                 else:
                     DELAY = self.device.custom.auth_klass.DELAY
-                    reactor.callLater(DELAY, self.transition_to('register'))
+                    reactor.callLater(DELAY, self.transition_to, 'register')
 
             def check_pin_eb_pin_needed(failure):
                 failure.trap(E.SimPinRequired)
@@ -125,7 +124,38 @@ class SimpleStateMachine(Modal):
         def do_next(self):
             if 'apn' in self.settings:
                 d = self.sconn.set_apn(self.settings['apn'])
-                d.addCallback(lambda _: self.transition_to('connect'))
+                d.addCallback(lambda _: self.transition_to('set_band'))
+            else:
+                self.transition_to('set_band')
+
+    class set_band(mode):
+        def __enter__(self):
+            log.msg("Simple SM: set_band entered")
+
+        def __exit__(self):
+            log.msg("Simple SM: set_apn exited")
+
+        def do_next(self):
+            if 'band' in self.settings:
+                d = self.sconn.set_band(self.settings['band'])
+                d.addCallback(lambda _:
+                        reactor.callLater(1,
+                                       self.transition_to, 'set_network_mode'))
+            else:
+                self.transition_to('set_network_mode')
+
+    class set_network_mode(mode):
+        def __enter__(self):
+            log.msg("Simple SM: set_network_mode entered")
+
+        def __exit__(self):
+            log.msg("Simple SM: set_network_mode exited")
+
+        def do_next(self):
+            if 'network_mode' in self.settings:
+                d = self.sconn.set_network_mode(self.settings['network_mode'])
+                d.addCallback(lambda _:
+                        reactor.callLater(1, self.transition_to, 'connect'))
             else:
                 self.transition_to('connect')
 
