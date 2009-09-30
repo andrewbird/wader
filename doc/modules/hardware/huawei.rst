@@ -10,7 +10,7 @@ Classes
    :members:
    :undoc-members:
 
-.. autoclass:: HuaweiWrapper
+.. autoclass:: HuaweiWCDMAWrapper
    :members:
    :undoc-members:
 
@@ -18,7 +18,7 @@ Classes
    :members:
    :undoc-members:
 
-.. autoclass:: HuaweiCustomizer
+.. autoclass:: HuaweiWCDMACustomizer
    :members:
    :undoc-members:
 

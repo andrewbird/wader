@@ -13,10 +13,6 @@ Classes
    :show-inheritance:
    :members:
 
-.. autoclass:: NetworkSpeedDaemon
-   :show-inheritance:
-   :members:
-
 .. autoclass:: NetworkRegistrationDaemon
    :show-inheritance:
    :members:
