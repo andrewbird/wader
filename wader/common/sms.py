@@ -264,10 +264,10 @@ class Message(object):
         return out.getvalue()
 
     def __eq__(self, m):
-        if IMessage.providedBy(m):
-            return self.number == m.number and self.text == m.text
+        if all([self.index, m.index]):
+            return self.index == m.index
 
-        return False
+        return self.number == m.number and self.text == m.text
 
     def __ne__(self, m):
         return not self.__eq__(m)

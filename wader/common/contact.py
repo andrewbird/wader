@@ -38,7 +38,7 @@ class Contact(object):
     __str__ = __repr__
 
     def __eq__(self, c):
-        if self.index is not None and c.index is not None:
+        if all([self.index, c.index]):
             return self.index == c.index
 
         return self.name == c.name and self.number == c.number
