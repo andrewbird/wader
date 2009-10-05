@@ -28,7 +28,7 @@ class EricssonF3507G(EricssonDevicePlugin):
 
     __properties__ = {
         'usb_device.vendor_id': [0x0bdb],
-        'usb_device.product_id': [0x1902],
+        'usb_device.product_id': [0x1900, 0x1902],
     }
 
 ericssonF3507G = EricssonF3507G()
