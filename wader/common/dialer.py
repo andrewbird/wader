@@ -103,14 +103,17 @@ class DialerConf(object):
         if 'network-type' in props['gsm']:
             self.network_type = props['gsm']['network-type']
 
-        self.staticdns = props['ipv4']['ignore-auto-dns']
-        if self.staticdns:
-            if len(props['ipv4']['dns']):
-                dns1 = props['ipv4']['dns'][0]
-                self.dns1 = convert_int_to_ip(dns1)
-            if len(props['ipv4']['dns']) > 1:
-                dns2 = props['ipv4']['dns'][1]
-                self.dns2 = convert_int_to_ip(dns2)
+        if 'ipv4' in props:
+            self.staticdns = props['ipv4']['ignore-auto-dns']
+            if self.staticdns:
+                if len(props['ipv4']['dns']):
+                    dns1 = props['ipv4']['dns'][0]
+                    self.dns1 = convert_int_to_ip(dns1)
+                if len(props['ipv4']['dns']) > 1:
+                    dns2 = props['ipv4']['dns'][1]
+                    self.dns2 = convert_int_to_ip(dns2)
+        else:
+            self.staticdns = False
 
         # finally, get the secrets
         try:
