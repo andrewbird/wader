@@ -32,9 +32,10 @@ from wader.common.interfaces import IHardwareManager
 from wader.common.plugin import PluginManager
 from wader.common import consts
 from wader.common.oses.unix import UnixPlugin
-from wader.common.utils import get_file_data, natsort, flatten_list
+from wader.common.runtime import nm08_present
 from wader.common.startup import setup_and_export_device
 from wader.common.serialport import Ports
+from wader.common.utils import get_file_data, natsort, flatten_list
 
 IDLE, BUSY = range(2)
 ADD_THRESHOLD = 10.
@@ -216,9 +217,20 @@ class HardwareManager(DBusComponent):
 
         while devices:
             udi = devices.pop()
-            if 'serial.device' in self.get_properties_from_udi(udi):
-                if udi in child_udis:
-                    return udi
+            if nm08_present:
+                device = dbus.SystemBus().get_object(consts.NM_SERVICE, udi)
+                try:
+                    mdm_udi = device.Get(consts.NM_DEVICE, 'Udi',
+                                         dbus_interface=dbus.PROPERTIES_IFACE)
+                    if mdm_udi and mdm_udi in child_udis:
+                        return mdm_udi
+                except:
+                    log.err()
+            else:
+                # NM <= 0.7.1
+                if 'serial.device' in self.get_properties_from_udi(udi):
+                    if udi in child_udis:
+                        return udi
 
     def _get_driver_name(self, udi, context=None):
         """Returns the info.linux.driver of `udi`"""
