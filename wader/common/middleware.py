@@ -31,7 +31,7 @@ from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
 from wader.common.consts import (MM_IP_METHOD_STATIC, CRD_INTFACE,
-                                 MM_NETWORK_BAND_ANY)
+                                 MDM_INTFACE, MM_NETWORK_BAND_ANY)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
         pack_ucs2_bytes, check_if_ucs2)
@@ -276,7 +276,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_ip4_config(self):
         """Returns the IP4Config info related to IpMethod"""
-        if self.device.sconn.props['IpMethod'] == MM_IP_METHOD_STATIC:
+        if self.device.props[MDM_INTFACE]['IpMethod'] == MM_IP_METHOD_STATIC:
             return self.hso_get_ip4_config()
 
         # XXX: implement DHCP too once we get a new sonyericsson
