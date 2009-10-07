@@ -549,10 +549,9 @@ class WCDMAWrapper(WCDMAProtocol):
         """Returns the ip4 config on a HSO device"""
         d = super(WCDMAWrapper, self).hso_get_ip4_config()
         def hso_get_ip4_config_cb(resp):
-            ip = resp[0].group('ip')
-            dns1, dns2 = resp[0].group('dns1'), resp[0].group('dns2')
-            # dns3 is a dummy value for now
-            dns3 = '0.0.0.0'
+            ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
+            # XXX: Fix dns3
+            dns2, dns3 = resp[0].group('dns2'), '195.235.113.3'
             return [ip, dns1, dns2, dns3]
 
         d.addCallback(hso_get_ip4_config_cb)

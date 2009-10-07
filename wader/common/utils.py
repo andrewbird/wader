@@ -52,7 +52,10 @@ def convert_ip_to_int(ip):
     :type ip: str
     :rtype: int
     """
-    return struct.unpack('i', socket.inet_pton(socket.AF_INET, ip))[0]
+    i = struct.unpack('i', socket.inet_pton(socket.AF_INET, ip))[0]
+    if i < 0:
+        i += 0xffffffff + 1
+    return i
 
 def convert_int_to_ip(i):
     """
@@ -71,6 +74,7 @@ def convert_int_to_uint(i):
 
     Python lacks the unsigned int type, but NetworkManager uses it
     all over the place, so we need to support it.
+
     :rtype: unsigned int
     """
     if i < 0:

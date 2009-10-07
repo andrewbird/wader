@@ -516,6 +516,8 @@ class HardwareManager(DBusComponent):
                 net_device = self._get_network_device(root_udi, context)
                 hso_props['NetworkDevice'] = net_device
                 props['IpMethod'] = consts.MM_IP_METHOD_STATIC
+                # XXX: Fix HSO Device
+                props['Device'] = 'hso0'
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
                 # Fix modem udi path
@@ -539,7 +541,10 @@ class HardwareManager(DBusComponent):
                 msg = 'No data port and no control port with ports: %s'
                 raise RuntimeError(msg % ports)
 
-            props['Device'] = dport
+            if 'Device' not in props:
+                # do not set it again
+                props['Device'] = dport.split('/')[-1]
+
             props['Control'] = cport
 
             plugin.ports = Ports(dport, cport)

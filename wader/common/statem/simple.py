@@ -17,9 +17,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """org.freedesktop.ModemManager.Modem.Simple state machine"""
 
+from epsilon.modal import mode, Modal
 from twisted.python import log
 from twisted.internet import defer, reactor
-from epsilon.modal import mode, Modal
 
 import wader.common.aterrors as E
 

@@ -20,7 +20,9 @@
 
 import re
 
+from epsilon.modal import mode
 from twisted.internet import defer, reactor
+from twisted.python import log
 
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict
 from wader.common import consts
@@ -29,6 +31,7 @@ from wader.common.exported import HSOExporter
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.aterrors import GenericError
 from wader.common.sim import SIMBaseClass
+from wader.common.statem.simple import SimpleStateMachine
 from wader.common.plugin import DevicePlugin
 from wader.common.utils import rssi_to_percentage, revert_dict
 import wader.common.signals as S
@@ -282,6 +285,48 @@ class OptionWrapper(WCDMAWrapper):
         return self.send_at("AT_OPSYS=%d,2" % value)
 
 
+class OptionHSOWrapper(OptionWrapper):
+    """Wrapper for all Option HSO cards"""
+
+    def disconnect_from_internet(self):
+        """
+        meth:`~wader.common.middleware.WCDMAWrapper.disconnect_from_internet`
+        """
+        conn_id = self.device.sconn.state_dict['conn_id']
+        return self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
+
+
+
+class HSOSimpleStateMachine(SimpleStateMachine):
+    begin = SimpleStateMachine.begin
+    check_pin = SimpleStateMachine.check_pin
+    register = SimpleStateMachine.register
+    set_apn = SimpleStateMachine.set_apn
+    set_band = SimpleStateMachine.set_band
+    set_network_mode = SimpleStateMachine.set_network_mode
+    done = SimpleStateMachine.done
+
+    class connect(mode):
+        def __enter__(self):
+            log.msg("HSO Simple SM: connect entered")
+
+        def __exit__(self):
+            log.msg("HSO Simple SM: connect exited")
+
+        def do_next(self):
+            def on_hso_authenticated(_):
+                conn_id = self.device.sconn.state_dict['conn_id']
+                d = self.sconn.send_at('AT_OWANCALL=%d,1,0' % conn_id)
+                return d
+
+            username = self.settings['username']
+            password = self.settings['password']
+
+            d = self.sconn.hso_authenticate(username, password)
+            d.addCallback(on_hso_authenticated)
+            d.addCallback(lambda _: self.transition_to('done'))
+
+
 class OptionWCDMACustomizer(WCDMACustomizer):
     """Customizer for Option's cards"""
     async_regexp = re.compile(r"""
@@ -305,6 +350,8 @@ class OptionWCDMACustomizer(WCDMACustomizer):
 class OptionHSOWCDMACustomizer(OptionWCDMACustomizer):
     """Customizer for HSO WCDMA devices"""
     exporter_klass = HSOExporter
+    wrapper_klass = OptionHSOWrapper
+    simp_klass = HSOSimpleStateMachine
 
 
 class OptionWCDMADevicePlugin(DevicePlugin):

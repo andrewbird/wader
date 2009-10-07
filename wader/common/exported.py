@@ -164,13 +164,6 @@ class SimpleExporter(ModemExporter):
         d = self.sconn.connect_simple(settings)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
-    @method(SPL_INTFACE, in_signature='', out_signature='',
-            async_callbacks=('async_cb', 'async_eb'))
-    def Disconnect(self, async_cb, async_eb):
-        """Disconnects modem"""
-        d = self.sconn.disconnect_from_internet()
-        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
-
     @method(SPL_INTFACE, in_signature='', out_signature='a{sv}',
             async_callbacks=('async_cb', 'async_eb'))
     def GetStatus(self, async_cb, async_eb):
