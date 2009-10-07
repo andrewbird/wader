@@ -18,9 +18,9 @@
 
 from wader.common.hardware.option import (OptionHSOWCDMADevicePlugin,
                                           OptionHSOWCDMACustomizer,
-                                          OptionWrapper)
+                                          OptionHSOWrapper)
 
-class OptionK3760Wrapper(OptionWrapper):
+class OptionK3760Wrapper(OptionHSOWrapper):
 
     def find_contacts(self, pattern):
         d = self.list_contacts()

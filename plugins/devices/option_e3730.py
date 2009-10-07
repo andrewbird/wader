@@ -16,14 +16,14 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionWCDMADevicePlugin
+from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
 
 # Note: For this device to be identified by the OS the following two prerequisties
 # must be statisfied:
 # Kernel module 'hso' must be installed
 # Option storage flipping and HAL configuration package 'ozerocdoff' must be installed
 
-class OptionE3730(OptionWCDMADevicePlugin):
+class OptionE3730(OptionHSOWCDMADevicePlugin):
     """
     :class:`~wader.common.plugin.DevicePlugin` for Option's E3730
     """
