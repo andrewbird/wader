@@ -32,7 +32,6 @@ from wader.common.interfaces import IHardwareManager
 from wader.common.plugin import PluginManager
 from wader.common import consts
 from wader.common.oses.unix import UnixPlugin
-from wader.common.runtime import nm08_present
 from wader.common.startup import setup_and_export_device
 from wader.common.serialport import Ports
 from wader.common.utils import get_file_data, natsort, flatten_list
@@ -217,7 +216,10 @@ class HardwareManager(DBusComponent):
 
         while devices:
             udi = devices.pop()
-            if nm08_present:
+            # if nm08_present
+            # this will break BMC, beware!
+            if 'NetworkManager' in udi:
+                # NM 0.8
                 device = dbus.SystemBus().get_object(consts.NM_SERVICE, udi)
                 try:
                     mdm_udi = device.Get(consts.NM_DEVICE, 'Udi',
