@@ -398,6 +398,11 @@ class NetworkExporter(CardExporter):
                         'operator-long' : n.long_name,
                         'operator-short' : n.short_name,
                         'operator-num' : n.netid }
+
+                if n.rat:
+                    # some devices won't provide this info
+                    net['access-tech'] = n.rat
+
                 response.append(net)
 
             return response
