@@ -831,13 +831,11 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def disconnect_from_internet(self):
         """Disconnects the modem temporally lowering the DTR"""
-        log.msg("WCDMAWrapper::disconnect_from_internet")
         port = self.device.ports.dport
         if not port.obj.isOpen():
             raise AttributeError("Data serial port is not open")
 
         def really_disconnect():
-            log.msg("really_disconnect::DISCONNECTING FROM INET")
             port.obj.write('+++ATH\r\n')
             port.obj.flush()
             port.obj.close()
@@ -870,7 +868,6 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _do_disable_device(self):
         if self.device.status == DEV_CONNECTED:
-            log.msg("DEVICE IS CONNECTED, DISCONNECTING")
             def on_disconnect_from_internet(_):
                 self.device.set_status(DEV_ENABLED)
                 self.device.close()
@@ -881,7 +878,6 @@ class WCDMAWrapper(WCDMAProtocol):
             return d
 
         if self.device.status == DEV_ENABLED:
-            log.msg("DEVICE IS ENABLED, CLOSING")
             return self.device.close()
 
     def _do_enable_device(self):
