@@ -220,12 +220,12 @@ class OptionWrapper(WCDMAWrapper):
     def get_network_mode(self):
         """Returns the current network mode"""
         def callback(resp):
-            mode = int(resp[0].group('mode'))
+            _mode = int(resp[0].group('mode'))
             OPTION_BAND_DICT_REV = revert_dict(OPTION_CONN_DICT)
-            if mode in OPTION_BAND_DICT_REV:
-                return OPTION_BAND_DICT_REV[mode]
+            if _mode in OPTION_BAND_DICT_REV:
+                return OPTION_BAND_DICT_REV[_mode]
 
-            raise KeyError("Unknown network mode %d" % mode)
+            raise KeyError("Unknown network mode %d" % _mode)
 
         d = self.send_at('AT_OPSYS?', name='get_network_mode',
                          callback=callback)
@@ -276,13 +276,12 @@ class OptionWrapper(WCDMAWrapper):
         d.addCallback(get_band_dict_cb)
         return d
 
-    def set_network_mode(self, mode):
-        """Sets the network mode to ``mode``"""
-        if mode not in OPTION_CONN_DICT:
-            raise KeyError("Unknown mode %d for set_network_mode" % mode)
+    def set_network_mode(self, _mode):
+        """Sets the network mode to ``_mode``"""
+        if _mode not in OPTION_CONN_DICT:
+            raise KeyError("Unknown mode %d for set_network_mode" % _mode)
 
-        value = OPTION_CONN_DICT[mode]
-        return self.send_at("AT_OPSYS=%d,2" % value)
+        return self.send_at("AT_OPSYS=%d,2" % OPTION_CONN_DICT[_mode])
 
 
 class OptionHSOWrapper(OptionWrapper):

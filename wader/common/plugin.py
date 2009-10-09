@@ -18,10 +18,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Plugin system for Wader"""
 
-from zope.interface import implements
+from pytz import timezone
 from twisted.internet import defer
 from twisted.python import log
 from twisted.plugin import IPlugin, getPlugins
+from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
                                  DEV_DISABLED, DEV_AUTH_OK, DEV_ENABLED)
@@ -30,6 +31,7 @@ import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
 from wader.common.utils import flatten_list
 from wader.common.sim import SIMBaseClass
+import wader.plugins
 
 
 class DevicePlugin(object):
@@ -58,8 +60,6 @@ class DevicePlugin(object):
         self.sconn = None
         # device internal state
         self._status = DEV_DISABLED
-        # properties for org.freedesktop.DBus.Properties interface
-        self.props = {}
         # collection of daemons
         self.daemons = None
         # DBus UDI
@@ -130,7 +130,7 @@ class DevicePlugin(object):
             self.daemons.start_daemons()
             d = self.sconn.init_properties()
             d.addCallback(lambda _: self.set_status(DEV_ENABLED))
-            d.addCallback(lambda ign: self.sconn.mal.initialize(obj=self.sconn))
+            d.addCallback(lambda _: self.sconn.mal.initialize(obj=self.sconn))
             d.addCallback(lambda _: size)
             return d
 
@@ -178,8 +178,6 @@ class RemoteDevicePlugin(DevicePlugin):
     implements(IPlugin, interfaces.IRemoteDevicePlugin)
 
 
-BASE_PATH_DICT = {}
-
 class OSPlugin(object):
     """Base class from which all the OSPlugins should inherit from"""
     implements(IPlugin, interfaces.IOSPlugin)
@@ -199,7 +197,6 @@ class OSPlugin(object):
 
     def get_tzinfo(self):
         """Returns a :class:`pytz.timezone` out the timezone"""
-        from pytz import timezone
         zone = self.get_timezone()
         try:
             return timezone(zone)
@@ -226,7 +223,6 @@ class OSPlugin(object):
         pass
 
 
-import wader.plugins
 class PluginManager(object):
     """I manage Wader's plugins"""
 

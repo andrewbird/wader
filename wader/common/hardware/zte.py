@@ -169,7 +169,7 @@ class ZTEWrapper(WCDMAWrapper):
             else:
                 raise KeyError("Unsupported band %d" % band)
 
-        for key, value in self.custom.band_dict.items():
+        for key in self.custom.band_dict:
             if band & key:
                 return self.send_at("AT+ZBANDI=%d" % self.custom.band_dict[key])
 

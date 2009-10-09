@@ -552,17 +552,14 @@ class TestSmsProvider(unittest.TestCase):
         number = '+3243242323'
         t = self.provider.add_thread(
             Thread(datetime.now(), number, folder=inbox_folder))
-        # add two sms to t1
+        # add one sms to t1
         sms1 = self.provider.add_sms(
             Message(number=number, text='test_update_sms_flags',
                     _datetime=datetime.now(), thread=t))
-        sms2 = self.provider.add_sms(
-            Message(number=number, text='test_update_sms_flags 2',
-                    _datetime=datetime.now(), thread=t))
-        self.assertEqual(sms2.flags, READ)
-        # now mark sms2 as unread
-        sms2 = self.provider.update_sms_flags(sms2, UNREAD)
-        self.assertEqual(sms2.flags, UNREAD)
+        self.assertEqual(sms1.flags, READ)
+        # now mark sms1 as unread
+        sms1 = self.provider.update_sms_flags(sms1, UNREAD)
+        self.assertEqual(sms1.flags, UNREAD)
         # leave it as we found it
         self.provider.delete_thread(t)
 
