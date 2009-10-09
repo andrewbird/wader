@@ -15,18 +15,15 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""
-Common stuff for all Ericsson's cards
-"""
+"""Common stuff for all Ericsson's cards"""
 
 import re
 
 from twisted.internet import defer, reactor
 
-from wader.common.command import (get_cmd_dict_copy, build_cmd_dict,
-                                  ATCmd)
-from wader.common import consts
 import wader.common.aterrors as E
+from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
+from wader.common import consts
 from wader.common.encoding import (pack_ucs2_bytes, from_u, check_if_ucs2,
                                    from_ucs2)
 from wader.common.hardware.base import WCDMACustomizer
@@ -48,6 +45,9 @@ ERICSSON_CONN_DICT = {
     consts.MM_NETWORK_MODE_3G_ONLY : 6,
 }
 
+ERINFO_2G_GPRS, ERINFO_2G_EGPRS = 1, 2
+ERINFO_3G_UMTS, ERINFO_3G_HSDPA = 1, 2
+
 ERICSSON_CMD_DICT = get_cmd_dict_copy()
 
 ERICSSON_CMD_DICT['get_card_model'] = build_cmd_dict('\s*(?P<model>\S*)\r\n')
@@ -67,11 +67,14 @@ ERICSSON_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
                 )                  # end of group
                 \s*\r\n
                 """, re.VERBOSE))
+# *ERINFO: 0,0,2
+ERICSSON_CMD_DICT['get_network_mode'] = build_cmd_dict(
+                '\r\n\*ERINFO:\s(?P<mode>\d),(?P<gsm>\d),(?P<umts>\d)\r\n')
+
 
 class EricssonSIMClass(SIMBaseClass):
-    """
-    Ericsson SIM Class
-    """
+    """Ericsson SIM Class"""
+
     def __init__(self, sconn):
         super(EricssonSIMClass, self).__init__(sconn)
 
@@ -84,17 +87,18 @@ class EricssonSIMClass(SIMBaseClass):
         d = super(EricssonSIMClass, self).initialize(set_encoding=set_encoding)
         def init_callback(size):
             # setup SIM storage defaults
-            self.sconn.send_at('AT+CPMS="SM","SM","SM"')
-            return size
+            d = self.sconn.send_at('AT+CPMS="SM","SM","SM"')
+            d.addCallback(lambda _: self.sconn.send_at('AT+CMER=3,0,0,1'))
+            d.addCallback(lambda _: size)
+            return d
 
         d.addCallback(init_callback)
         return d
 
 
 class EricssonWrapper(WCDMAWrapper):
-    """
-    Wrapper for all Ericsson cards
-    """
+    """Wrapper for all Ericsson cards"""
+
     def __init__(self, device):
         super(EricssonWrapper, self).__init__(device)
 
@@ -193,19 +197,24 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_network_mode(self):
-        ERICSSON_CONN_DICT_REV = {
-            1 : consts.MM_NETWORK_MODE_ANY,
-            5 : consts.MM_NETWORK_MODE_2G_ONLY,
-            6 : consts.MM_NETWORK_MODE_3G_ONLY,
-        }
-        def get_radio_status_cb(mode):
-            if mode in ERICSSON_CONN_DICT_REV:
-                return ERICSSON_CONN_DICT_REV[mode]
+        def get_network_mode_cb(resp):
+            gsm = int(resp[0].group('gsm'))
+            umts = int(resp[0].group('umts'))
 
-            raise KeyError("Unknown network mode %d" % mode)
+            if gsm == ERINFO_2G_GPRS:
+                return consts.MM_NETWORK_MODE_GPRS
+            elif gsm == ERINFO_2G_EGPRS:
+                return consts.MM_NETWORK_MODE_EDGE
+            elif umts == ERINFO_3G_UMTS:
+                return consts.MM_NETWORK_MODE_UMTS
+            elif umts == ERINFO_3G_HSDPA:
+                return consts.MM_NETWORK_MODE_HSDPA
 
-        d = self.get_radio_status()
-        d.addCallback(get_radio_status_cb)
+            raise E.GenericError("unknown network mode: %d, %d" % (gsm, umts))
+
+        cmd = ATCmd('AT*ERINFO?', name='get_network_mode')
+        d = self.queue_at_cmd(cmd)
+        d.addCallback(get_network_mode_cb)
         return d
 
     def get_netreg_status(self):
@@ -293,11 +302,7 @@ class EricssonWrapper(WCDMAWrapper):
 
 
 class EricssonCustomizer(WCDMACustomizer):
-    """
-    Base Customizer class for Ericsson cards
-    """
-    wrapper_klass = EricssonWrapper
-
+    """Base customizer class for Ericsson cards"""
     # Multiline so we catch and remove the ESTKSMENU
     async_regexp = re.compile("\r\n(?P<signal>[*+][A-Z]{3,}):(?P<args>.*)\r\n",
                               re.MULTILINE)
@@ -312,6 +317,8 @@ class EricssonCustomizer(WCDMACustomizer):
         '*EMWI' : (None, None),
         '+PACSP0' : (None, None),
     }
+
+    wrapper_klass = EricssonWrapper
 
 
 class EricssonDevicePlugin(DevicePlugin):
