@@ -24,7 +24,8 @@ from epsilon.modal import mode
 from twisted.internet import defer, reactor
 from twisted.python import log
 
-from wader.common.command import get_cmd_dict_copy, build_cmd_dict
+import wader.common.aterrors as E
+from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common import consts
 from wader.common.middleware import WCDMAWrapper
 from wader.common.exported import HSOExporter
@@ -38,6 +39,9 @@ import wader.common.signals as S
 
 NUM_RETRIES = 30
 RETRY_TIMEOUT = 4
+
+HSO_MAX_RETRIES = 10
+HSO_RETRY_TIMEOUT = 3
 
 OPTION_BAND_MAP_DICT = {
     'ANY'   : consts.MM_NETWORK_BAND_ANY,
@@ -86,6 +90,22 @@ OPTION_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
                                              (?P<mode>\d),
                                              (?P<domain>\d)
                                              """, re.VERBOSE))
+
+OPTION_CMD_DICT['hso_authenticate'] = build_cmd_dict()
+
+OPTION_CMD_DICT['get_ip4_config'] = build_cmd_dict(re.compile(r"""
+                                             \r\n
+                                             _OWANDATA:\s
+                                             (?P<cid>\d),\s
+                                             (?P<ip>.*),\s
+                                             (?P<ign1>.*),\s
+                                             (?P<dns1>.*),\s
+                                             (?P<dns2>.*),\s
+                                             (?P<ign2>.*),\s
+                                             (?P<ign3>.*),\s
+                                             (?P<baud>\d+)
+                                             \r\r\n""", re.X))
+
 
 class OptionSIMClass(SIMBaseClass):
     """
@@ -296,6 +316,62 @@ class OptionHSOWrapper(OptionWrapper):
         d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
         return d
 
+    def get_ip4_config(self):
+        """
+        Returns the ip4 config on a HSO device
+
+        Wrapper around _get_ip4_config that provides some error control
+        """
+        ip_method = self.device.props[consts.MDM_INTFACE]['IpMethod']
+        if ip_method != consts.MM_IP_METHOD_STATIC:
+            msg = "Cannot get IP4 config from a non static ip method"
+            raise E.OperationNotSupported(msg)
+
+        self.state_dict['retry_call'] = None
+        self.state_dict['num_of_retries'] = 0
+
+        def real_get_ip4_config(deferred):
+            def get_ip4_eb(failure):
+                failure.trap(E.GenericError)
+                self.state_dict['num_of_retries'] += 1
+                if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
+                    return failure
+
+                self.state_dict['retry_call'] = reactor.callLater(
+                        HSO_RETRY_TIMEOUT,
+                        real_get_ip4_config, deferred)
+
+            d = self._get_ip4_config()
+            d.addCallback(deferred.callback)
+            d.addErrback(get_ip4_eb)
+            return deferred
+
+        auxdef = defer.Deferred()
+        return real_get_ip4_config(auxdef)
+
+    def _get_ip4_config(self):
+        """Returns the ip4 config on a HSO device"""
+        cmd = ATCmd('AT_OWANDATA=1', name='get_ip4_config')
+        d = self.queue_at_cmd(cmd)
+
+        def _get_ip4_config_cb(resp):
+            ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
+            # XXX: Fix dns3
+            dns2, dns3 = resp[0].group('dns2'), '195.235.113.3'
+            self.device.set_status(consts.DEV_CONNECTED)
+            return [ip, dns1, dns2, dns3]
+
+        d.addCallback(_get_ip4_config_cb)
+        return d
+
+    def hso_authenticate(self, user, passwd):
+        """Authenticates using ``user`` and ``passwd`` on HSO devices"""
+        conn_id = self.state_dict['conn_id']
+        cmd = ATCmd('AT$QCPDPP=%d,1,"%s","%s"' % (conn_id, user, passwd),
+                    name='hso_authenticate')
+        d = self.queue_at_cmd(cmd)
+        d.addCallback(lambda resp: resp[0].group('resp'))
+        return d
 
 
 class HSOSimpleStateMachine(SimpleStateMachine):

@@ -43,7 +43,7 @@ class HSODialer(Dialer):
         conn_id = self.device.sconn.state_dict['conn_id']
         self.device.sconn.send_at('AT_OWANCALL=%d,1,0' % conn_id)
         # now get the IP4Config and set up device and routes
-        d = self.device.sconn.hso_get_ip4_config()
+        d = self.device.sconn.get_ip4_config()
         d.addCallback(self._get_ip4_config_cb)
         d.addCallback(lambda _: self.Connected())
         d.addCallback(lambda _: self.opath)

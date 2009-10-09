@@ -202,21 +202,6 @@ CMD_DICT = {
     'get_smsc' : build_cmd_dict(re.compile(
                               '\r\n\+CSCA:\s"(?P<smsc>.*)",\d+\r\n')),
 
-    'hso_authenticate' : build_cmd_dict(),
-
-    'hso_get_ip4_config': build_cmd_dict(re.compile(r"""
-                              \r\n
-                              _OWANDATA:\s
-                              (?P<cid>\d),\s
-                              (?P<ip>.*),\s
-                              (?P<ign1>.*),\s
-                              (?P<dns1>.*),\s
-                              (?P<dns2>.*),\s
-                              (?P<ign2>.*),\s
-                              (?P<ign3>.*),\s
-                              (?P<baud>\d+)
-                              \r\r\n""", re.X)),
-
     'register_with_netid' : build_cmd_dict(),
 
     'reset_settings' : build_cmd_dict(),

@@ -675,17 +675,6 @@ class WCDMAProtocol(SerialProtocol):
         d.addErrback(errback)
         return d
 
-    def hso_authenticate(self, context, user, passwd):
-        """Authenticate using ``user`` and ``passwd``"""
-        cmd = ATCmd('AT$QCPDPP=%d,1,"%s","%s"' % (context, user, passwd),
-                    name='hso_authenticate')
-        return self.queue_at_cmd(cmd)
-
-    def hso_get_ip4_config(self):
-        """Request the IP4 configuration from the device"""
-        cmd = ATCmd('AT_OWANDATA=1', name='hso_get_ip4_config')
-        return self.queue_at_cmd(cmd)
-
     def register_with_netid(self, netid, mode=1, _format=2):
         """Registers with ``netid``"""
         atstr = 'AT+COPS=%d,%d,"%s"' % (mode, _format, netid)

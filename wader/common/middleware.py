@@ -30,8 +30,7 @@ from twisted.python import log
 from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
-from wader.common.consts import (MM_IP_METHOD_STATIC, CRD_INTFACE,
-                                 MDM_INTFACE, MM_NETWORK_BAND_ANY,
+from wader.common.consts import (CRD_INTFACE, MM_NETWORK_BAND_ANY,
                                  DEV_AUTH_OK, DEV_ENABLED, DEV_CONNECTED)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
@@ -40,9 +39,6 @@ import wader.common.exceptions as ex
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
-
-HSO_MAX_RETRIES = 10
-HSO_RETRY_TIMEOUT = 3
 
 def regexp_to_contact(match):
     """
@@ -276,11 +272,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_ip4_config(self):
         """Returns the IP4Config info related to IpMethod"""
-        if self.device.props[MDM_INTFACE]['IpMethod'] == MM_IP_METHOD_STATIC:
-            return self.hso_get_ip4_config()
-
-        # XXX: implement DHCP too once we get a new sonyericsson
-        return defer.succeed(['0.0.0.0'] * 4)
+        raise NotImplementedError()
 
     def get_manufacturer_name(self):
         """Returns the manufacturer name"""
@@ -537,54 +529,6 @@ class WCDMAWrapper(WCDMAProtocol):
 
         d.addCallback(get_smsc_cb)
         return d
-
-    def hso_authenticate(self, user, passwd):
-        """Authenticates using ``user`` and ``passwd`` on HSO devices"""
-        conn_id = self.state_dict['conn_id']
-        d = super(WCDMAWrapper, self).hso_authenticate(conn_id, user, passwd)
-        d.addCallback(lambda resp: resp[0].group('resp'))
-        return d
-
-    def _hso_get_ip4_config(self):
-        """Returns the ip4 config on a HSO device"""
-        d = super(WCDMAWrapper, self).hso_get_ip4_config()
-        def hso_get_ip4_config_cb(resp):
-            ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
-            # XXX: Fix dns3
-            dns2, dns3 = resp[0].group('dns2'), '195.235.113.3'
-            self.device.set_status(DEV_CONNECTED)
-            return [ip, dns1, dns2, dns3]
-
-        d.addCallback(hso_get_ip4_config_cb)
-        return d
-
-    def hso_get_ip4_config(self):
-        """
-        Returns the ip4 config on a HSO device
-
-        Wrapper around _hso_get_ip4_config that provides some error control
-        """
-        self.state_dict['retry_call'] = None
-        self.state_dict['num_of_retries'] = 0
-
-        def get_ip4_config(deferred):
-            def get_ip4_eb(failure):
-                failure.trap(E.GenericError)
-                self.state_dict['num_of_retries'] += 1
-                if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
-                    return failure
-
-                self.state_dict['retry_call'] = reactor.callLater(
-                        HSO_RETRY_TIMEOUT,
-                        get_ip4_config, deferred)
-
-            d = self._hso_get_ip4_config()
-            d.addCallback(deferred.callback)
-            d.addErrback(get_ip4_eb)
-            return deferred
-
-        auxdef = defer.Deferred()
-        return get_ip4_config(auxdef)
 
     def list_contacts(self):
         """
