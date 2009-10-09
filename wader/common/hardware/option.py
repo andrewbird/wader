@@ -293,7 +293,9 @@ class OptionHSOWrapper(OptionWrapper):
         meth:`~wader.common.middleware.WCDMAWrapper.disconnect_from_internet`
         """
         conn_id = self.device.sconn.state_dict['conn_id']
-        return self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
+        d = self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
+        d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
+        return d
 
 
 

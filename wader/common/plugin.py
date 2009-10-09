@@ -23,14 +23,14 @@ from twisted.internet import defer
 from twisted.python import log
 from twisted.plugin import IPlugin, getPlugins
 
-from wader.common.consts import MDM_INTFACE, HSO_INTFACE, CRD_INTFACE
+from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
+                                 DEV_DISABLED, DEV_AUTH_OK, DEV_ENABLED)
 from wader.common.daemon import build_daemon_collection
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
 from wader.common.utils import flatten_list
 from wader.common.sim import SIMBaseClass
 
-DISABLED, AUTH_OK, ENABLED = 0, 1, 2
 
 class DevicePlugin(object):
     """Base class for all plugins"""
@@ -57,7 +57,7 @@ class DevicePlugin(object):
         # serial connection reference
         self.sconn = None
         # device internal state
-        self.status = DISABLED
+        self._status = DEV_DISABLED
         # properties for org.freedesktop.DBus.Properties interface
         self.props = {}
         # collection of daemons
@@ -79,9 +79,17 @@ class DevicePlugin(object):
         return "<%s %s>" % args
 
     def set_status(self, status):
-        self.status = status
-        if self.status == ENABLED:
+        """Sets internal device status to ``status``"""
+        self._status = status
+        if status == DEV_ENABLED and self._status < status:
             self.exporter.DeviceEnabled(self.udi)
+
+        self._status = status
+
+    @property
+    def status(self):
+        """Returns the internal device status"""
+        return self._status
 
     def close(self, remove_from_conn=False, removed=False):
         """Closes the plugin and frees all the associated resources"""
@@ -99,18 +107,16 @@ class DevicePlugin(object):
                 self.sconn.transport.unregisterProducer()
 
             if self.ports.cport.obj is not None:
-                self.ports.cport.obj.connectionLost("Closing connection")
                 self.ports.cport.obj.loseConnection("Bye!")
-                self.ports.cport.obj = None
 
         if self.daemons is not None and self.daemons.running:
             self.daemons.stop_daemons()
 
         d = defer.succeed(True)
 
-        if self.status == ENABLED and not removed:
+        if self.status == DEV_ENABLED and not removed:
             d.addCallback(lambda _: self.sconn.enable_radio(False))
-            d.addCallback(lambda _: self.set_status(AUTH_OK))
+            d.addCallback(lambda _: self.set_status(DEV_AUTH_OK))
 
         d.addCallback(free_resources)
         return d
@@ -123,7 +129,7 @@ class DevicePlugin(object):
 
             self.daemons.start_daemons()
             d = self.sconn.init_properties()
-            d.addCallback(lambda _: self.set_status(ENABLED))
+            d.addCallback(lambda _: self.set_status(DEV_ENABLED))
             d.addCallback(lambda ign: self.sconn.mal.initialize(obj=self.sconn))
             d.addCallback(lambda _: size)
             return d
@@ -141,7 +147,7 @@ class DevicePlugin(object):
         # initialize method is always called right after authentication
         # is OK, be it right after a successful SendP{in,uk,uk2} or
         # because the device was already authenticated
-        self.set_status(AUTH_OK)
+        self.set_status(DEV_AUTH_OK)
         # sometimes, right after a combination of Modem.Enable operations
         # and hot pluggings, the core will not reply to the first AT command
         # sent, but it will to the second. This addCallbacks call handles

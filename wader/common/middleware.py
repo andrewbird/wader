@@ -31,12 +31,12 @@ from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
 from wader.common.consts import (MM_IP_METHOD_STATIC, CRD_INTFACE,
-                                 MDM_INTFACE, MM_NETWORK_BAND_ANY)
+                                 MDM_INTFACE, MM_NETWORK_BAND_ANY,
+                                 DEV_AUTH_OK, DEV_ENABLED, DEV_CONNECTED)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
-        pack_ucs2_bytes, check_if_ucs2)
+                                   pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
-from wader.common.plugin import AUTH_OK, ENABLED
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
@@ -552,6 +552,7 @@ class WCDMAWrapper(WCDMAProtocol):
             ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
             # XXX: Fix dns3
             dns2, dns3 = resp[0].group('dns2'), '195.235.113.3'
+            self.device.set_status(DEV_CONNECTED)
             return [ip, dns1, dns2, dns3]
 
         d.addCallback(hso_get_ip4_config_cb)
@@ -823,23 +824,26 @@ class WCDMAWrapper(WCDMAProtocol):
         port.obj.flush()
         # send ATDT and convert number to string as pyserial does
         # not like to write unicode to serial ports
-        return defer.maybeDeferred(port.obj.write,
-                                   "ATDT%s\r\n" % str(number))
+        d = defer.maybeDeferred(port.obj.write,
+                                "ATDT%s\r\n" % str(number))
+        d.addCallback(lambda _: self.device.set_status(DEV_CONNECTED))
+        return d
 
     def disconnect_from_internet(self):
         """Disconnects the modem temporally lowering the DTR"""
+        log.msg("WCDMAWrapper::disconnect_from_internet")
         port = self.device.ports.dport
         if not port.obj.isOpen():
             raise AttributeError("Data serial port is not open")
 
-        d = defer.Deferred()
-        def restore_speed(orig_speed):
-            port.obj.setBaudrate(orig_speed)
+        def really_disconnect():
+            log.msg("really_disconnect::DISCONNECTING FROM INET")
+            port.obj.write('+++ATH\r\n')
+            port.obj.flush()
             port.obj.close()
-            d.callback(True)
 
-        speed = port.obj.getBaudrate()
-        reactor.callLater(.1, restore_speed, speed)
+        d = defer.maybeDeferred(really_disconnect)
+        d.addCallback(lambda _: self.device.set_status(DEV_ENABLED))
         return d
 
     def register_with_netid(self, netid):
@@ -865,19 +869,27 @@ class WCDMAWrapper(WCDMAProtocol):
             return self._do_disable_device()
 
     def _do_disable_device(self):
-        if self.device.status == ENABLED:
+        if self.device.status == DEV_CONNECTED:
+            log.msg("DEVICE IS CONNECTED, DISCONNECTING")
+            def on_disconnect_from_internet(_):
+                self.device.set_status(DEV_ENABLED)
+                self.device.close()
+
+            d = self.disconnect_from_internet()
+            d.addCallback(on_disconnect_from_internet)
+            d.addErrback(log.err)
+            return d
+
+        if self.device.status == DEV_ENABLED:
+            log.msg("DEVICE IS ENABLED, CLOSING")
             return self.device.close()
 
     def _do_enable_device(self):
         from wader.common.startup import attach_to_serial_port
-        if self.device.status >= AUTH_OK:
+        if self.device.status >= DEV_AUTH_OK:
             # if a device was enabled and then disabled, there's no
             # need to check the authentication again
-            if self.device.ports.cport.obj is None:
-                d = attach_to_serial_port(self.device)
-            else:
-                d = defer.succeed(self.device)
-
+            d = attach_to_serial_port(self.device)
             d.addCallback(self.device.initialize)
             return d
 
@@ -900,7 +912,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         Upon successful auth over DBus I'll check if the device was initted
         """
-        if self.device.status == AUTH_OK:
+        if self.device.status == DEV_AUTH_OK:
             log.msg("device was already initted, just returning orig result")
             return result
 
