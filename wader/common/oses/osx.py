@@ -87,7 +87,6 @@ class HardwareManager(object):
         if plugin:
             props = plugin.props[consts.MDM_INTFACE]
             props['Device'] = dev_info['callout'].split('/')[-1]
-            props['Control'] = dev_info['dialin'].split('/')[-1]
             # XXX: Fix MasterDevice
             props['MasterDevice'] = 'iokit:com.vodafone.BMC.NotImplemented'
             # XXX: Fix CDMA

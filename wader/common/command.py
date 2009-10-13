@@ -87,7 +87,7 @@ CMD_DICT = {
                             \r\n
                             \+CGDCONT:\s
                             (?P<index>\d),
-                            "IP",
+                            "[A-Za-z0-9]*",
                             "(?P<apn>.*)",
                             "(?P<ip>.*)",
                             \d,\d""", re.X)),

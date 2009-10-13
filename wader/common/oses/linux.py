@@ -527,6 +527,12 @@ class HardwareManager(DBusComponent):
                 if modem_udi:
                     plugin.udi = modem_udi
 
+            elif 'cdc' in props['Driver']:
+                # MBM device
+                props['IpMethod'] = consts.MM_IP_METHOD_DHCP
+                # XXX: Fix MBM Device
+                props['Device'] = 'usb0'
+
             if hasattr(plugin, 'hardcoded_ports'):
                 # if the device has the hardcoded_ports attribute that means
                 # that it allocates the data and control port in a funky way
@@ -546,8 +552,6 @@ class HardwareManager(DBusComponent):
             if 'Device' not in props:
                 # do not set it again
                 props['Device'] = dport.split('/')[-1]
-
-            props['Control'] = cport
 
             plugin.ports = Ports(dport, cport)
             return plugin

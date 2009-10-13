@@ -19,7 +19,9 @@
 
 import re
 
+from epsilon.modal import mode
 from twisted.internet import defer, reactor
+from twisted.python import log
 
 import wader.common.aterrors as E
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
@@ -30,6 +32,7 @@ from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
+from wader.common.statem.simple import SimpleStateMachine
 
 MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
@@ -47,6 +50,8 @@ ERICSSON_CONN_DICT = {
 
 ERINFO_2G_GPRS, ERINFO_2G_EGPRS = 1, 2
 ERINFO_3G_UMTS, ERINFO_3G_HSDPA = 1, 2
+
+E2NAP_DISCONNECTED, E2NAP_CONNECTED, E2NAP_CONNECTING = 0, 1, 2
 
 ERICSSON_CMD_DICT = get_cmd_dict_copy()
 
@@ -81,8 +86,6 @@ class EricssonSIMClass(SIMBaseClass):
     def initialize(self, set_encoding=True):
         self.sconn.reset_settings()
         self.sconn.disable_echo()
-        # self.sconn.enable_radio(True)
-        # self.sconn.set_network_mode(consts.MM_NETWORK_MODE_3G_PREFERRED)
 
         d = super(EricssonSIMClass, self).initialize(set_encoding=set_encoding)
         def init_callback(size):
@@ -146,6 +149,11 @@ class EricssonWrapper(WCDMAWrapper):
         d.addCallback(lambda result: result[0].group('resp'))
         return d
 
+    def disconnect_from_internet(self):
+        d = self.send_at('AT*ENAP=0')
+        d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
+        return d
+
     def enable_pin(self, pin, enable):
         where = "SC"
         if 'UCS2' in self.device.sim.charset:
@@ -167,6 +175,16 @@ class EricssonWrapper(WCDMAWrapper):
                 return self.send_at('AT+CFUN=4')
 
         d.addCallback(get_radio_status_cb)
+        return d
+
+    def get_apns(self):
+        if self.device.sim.charset != 'UCS2':
+            return super(EricssonWrapper, self).get_apns()
+
+        cmd = ATCmd("AT+CGDCONT?", name='get_apns')
+        d = self.queue_at_cmd(cmd)
+        d.addCallback(lambda resp:
+            [(int(r.group('index')), from_ucs2(r.group('apn'))) for r in resp])
         return d
 
     def get_band(self):
@@ -275,6 +293,40 @@ class EricssonWrapper(WCDMAWrapper):
         d.addErrback(aterror_eb)
         return d
 
+    def mbm_authenticate(self, user, passwd):
+        conn_id = self.state_dict['conn_id']
+        #if self.device.sim.charset != 'UCS2':
+        #    args = (conn_id, user, passwd)
+        #else:
+        #    args = (conn_id, pack_ucs2_bytes(user), pack_ucs2_bytes(passwd))
+
+        args = (conn_id, user, passwd)
+        return self.send_at('AT*EIAAUW=%d,1,"%s","%s"' % args)
+
+    def set_apn(self, apn):
+        if self.device.sim.charset != 'UCS2':
+            # no need to encode params in UCS2
+            return super(EricssonWrapper, self).set_apn(apn)
+
+        def process_apns(apns):
+            state = self.state_dict
+            for _index, _apn in apns:
+                if apn == _apn:
+                    state['conn_id'] = _index
+                    return
+
+            conn_id = state['conn_id'] = len(apns) + 1
+            args = tuple([conn_id] + map(pack_ucs2_bytes, ["IP", apn]))
+            cmd = ATCmd('AT+CGDCONT=%d,"%s","%s"' % args, name='set_apn')
+            d = self.queue_at_cmd(cmd)
+            d.addCallback(lambda response: response[0].group('resp'))
+            return d
+
+        d = self.get_apns()
+        d.addCallback(process_apns)
+        d.addErrback(log.err)
+        return d
+
     def set_band(self, band):
         if band == consts.MM_NETWORK_BAND_ANY:
             return defer.succeed('OK')
@@ -301,6 +353,67 @@ class EricssonWrapper(WCDMAWrapper):
         return self.queue_at_cmd(cmd)
 
 
+class EricssonSimpleStateMachine(SimpleStateMachine):
+    begin = SimpleStateMachine.begin
+    check_pin = SimpleStateMachine.check_pin
+    register = SimpleStateMachine.register
+    done = SimpleStateMachine.done
+
+    class set_apn(mode):
+        def __enter__(self):
+            log.msg("EricssonSimpleStateMachine: set_apn entered")
+            d = self.sconn.set_charset("GSM")
+
+        def __exit__(self):
+            log.msg("EricssonSimpleStateMachine: set_apn exited")
+
+        def do_next(self):
+            if 'apn' in self.settings:
+                d = self.sconn.set_apn(self.settings['apn'])
+                d.addCallback(lambda _: self.transition_to('connect'))
+            else:
+                self.transition_to('connect')
+
+    class connect(mode):
+        def __enter__(self):
+            log.msg("EricssonSimpleStateMachine: connect entered")
+
+        def __exit__(self):
+            log.msg("EricssonSimpleStateMachine: connect exited")
+            # restore charset after being connected
+            return self.sconn.set_charset("UCS2")
+
+        def do_next(self):
+            def on_e2nap_done(_):
+                conn_id = self.sconn.state_dict['conn_id']
+                return self.sconn.send_at("AT*ENAP=1,%d" % conn_id)
+
+            def on_mbm_authenticated(_):
+                return self.sconn.send_at("AT*E2NAP=1")
+
+            username = str(self.settings['username'])
+            password = str(self.settings['password'])
+
+            d = self.sconn.mbm_authenticate(username, password)
+            d.addErrback(log.err)
+            d.addCallback(on_mbm_authenticated)
+            d.addCallback(on_e2nap_done)
+            d.addCallback(lambda _:
+                    self.device.set_status(consts.DEV_CONNECTED))
+            d.addCallback(lambda _: self.transition_to('done'))
+
+    class done(mode):
+        def __enter__(self):
+            log.msg("EricssonSimpleStateMachine: done entered")
+
+        def __exit__(self):
+            log.msg("EricssonSimpleStateMachine: done exited")
+
+        def do_next(self):
+            # give it some time to connect
+            reactor.callLater(5, self.notify_success)
+
+
 class EricssonCustomizer(WCDMACustomizer):
     """Base customizer class for Ericsson cards"""
     # Multiline so we catch and remove the ESTKSMENU
@@ -315,10 +428,13 @@ class EricssonCustomizer(WCDMACustomizer):
         '*ESTKDISP' : (None, None),
         '*ESTKSMENU': (None, None),
         '*EMWI' : (None, None),
+        '*E2NAP' : (None, None),
+        '+CIEV' : (None, None),
         '+PACSP0' : (None, None),
     }
 
     wrapper_klass = EricssonWrapper
+    simp_klass = EricssonSimpleStateMachine
 
 
 class EricssonDevicePlugin(DevicePlugin):
