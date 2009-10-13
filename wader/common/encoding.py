@@ -153,7 +153,7 @@ def check_if_ucs2(text):
     :rtype: bool
     """
     # XXX: Returns false positives
-    if isinstance(text, basestring) and (len(text) % 4 == 0):
+    if text and isinstance(text, basestring) and (len(text) % 4 == 0):
         try:
             unpack_ucs2_bytes(text)
         except (UnicodeDecodeError, TypeError):
