@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2008-2009  Warp Networks, S.L.
-# Author:  Pablo Mart??
+# Author:  Pablo Martí
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ class SQLiteContactProvider(object):
     implements(IPlugin, IContactProvider)
 
     name = "SQLite contact backend"
-    author = u"Pablo Mart??"
+    author = u"Pablo Martí"
     version = "0.1"
 
     def __init__(self):
