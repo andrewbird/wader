@@ -293,6 +293,10 @@ class ServiceNotInUse(dbus.DBusException):
     """Exception raised when service not in use"""
     _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'ServiceNotInUse')
 
+class ServiceNotAvailable(dbus.DBusException):
+    """Exception raised when service not available"""
+    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'ServiceNotAvailable')
+
 class UnknownNetworkMessage(dbus.DBusException):
     """Exception raised upon unknown network message"""
     _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'UnknownNetworkMessage')
@@ -431,6 +435,7 @@ ERROR_DICT = {
     '+CME ERROR: 134' : ServiceTemporarilyOutOfOrder,
     '+CME ERROR: 261' : UnknownSubscriber,
     '+CME ERROR: 262' : ServiceNotInUse,
+    '+CME ERROR: 263' : ServiceNotAvailable,
     '+CME ERROR: 264' : UnknownNetworkMessage,
     '+CME ERROR: 65281' : CallStateError,
 
