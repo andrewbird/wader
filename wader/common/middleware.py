@@ -757,7 +757,9 @@ class WCDMAWrapper(WCDMAProtocol):
     def connect_simple(self, settings):
         """Connects with the given ``settings``"""
         simplesm = self.device.custom.simp_klass(self.device, settings)
-        return simplesm.start_simple()
+        d = simplesm.start_simple()
+        d.addCallback(lambda _: self.device.set_status(DEV_CONNECTED))
+        return d
 
     def connect_to_internet(self, number):
         """Opens data port and dials ``number`` in"""
@@ -779,16 +781,17 @@ class WCDMAWrapper(WCDMAProtocol):
         if not port.obj.isOpen():
             raise AttributeError("Data serial port is not open")
 
-        def restore_dtr(d):
-            port.obj.setDTR(1)
+        def restore_speed(d, speed):
+            port.obj.setBaudrate(speed)
             port.obj.close()
             self.device.set_status(DEV_ENABLED)
             d.callback(True)
 
         d = defer.Deferred()
-        # lower and raise DTR
-        port.obj.setDTR(0)
-        reactor.callLater(.1, restore_dtr, d)
+        # lower and raise baud speed
+        speed = port.obj.getBaudrate()
+        port.obj.setBaudrate(0)
+        reactor.callLater(.1, restore_speed, d, speed)
         return d
 
     def register_with_netid(self, netid):
