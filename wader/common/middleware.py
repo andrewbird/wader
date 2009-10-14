@@ -779,13 +779,16 @@ class WCDMAWrapper(WCDMAProtocol):
         if not port.obj.isOpen():
             raise AttributeError("Data serial port is not open")
 
-        def really_disconnect():
-            port.obj.write('+++ATH\r\n')
-            port.obj.flush()
+        def restore_dtr(d):
+            port.obj.setDTR(1)
             port.obj.close()
+            self.device.set_status(DEV_ENABLED)
+            d.callback(True)
 
-        d = defer.maybeDeferred(really_disconnect)
-        d.addCallback(lambda _: self.device.set_status(DEV_ENABLED))
+        d = defer.Deferred()
+        # lower and raise DTR
+        port.obj.setDTR(0)
+        reactor.callLater(.1, restore_dtr, d)
         return d
 
     def register_with_netid(self, netid):
