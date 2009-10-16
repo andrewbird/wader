@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2006-2008  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
-# Author:  Pablo Martí
+# Author:  Nicholas Herriot & XanHQ
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,6 @@ db_curs.execute("""CREATE TABLE messages (
     networkID              INTEGER NOT NULL,
     FOREIGN KEY(networkID) REFERENCES network(nedworkID))""")
   
-  #thread_id integer not null constraint fk_thread_id references thread(id) on delete cascade);
 
 db_curs.execute("""CREATE TABLE accessPointName (
     id                          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,6 +60,8 @@ db_curs.execute("INSERT INTO people (first_name, last_name, date_of_birth) VALUE
 db_curs.execute("INSERT INTO network (networkID, networkName, country) VALUES ('23415', 'Vodafone UK', 'United Kingdom')")
 
 db_curs.execute("INSERT INTO messages (smsc , mmsc, type, networkID ) VALUES ('+44778501600523415', 'www.vodafone.com', 'contract', '23415')")
+
+db_curs.execute("INSERT INTO messages (smsc , mmsc, type, networkID ) VALUES ('+44778501600523415', 'www.vodafone.com', 'prepaid', '23415')")
 
 db_curs.execute("INSERT INTO accessPointName (apn , userName, passWord, dns1, dns2, type, networkID  ) VALUES ('internet', 'web', 'web', 'none', 'none', 'contract', '23415')")
 
