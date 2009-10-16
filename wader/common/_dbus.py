@@ -22,6 +22,7 @@ import dbus
 import dbus.service
 from twisted.python import log
 
+
 class DBusComponent(object):
     """I provide a couple of useful methods to deal with DBus"""
 
@@ -47,6 +48,7 @@ class DBusComponent(object):
 
 class DBusExporterHelper(object):
     """I am a helper for classes that export methods over DBus"""
+
     def __init__(self):
         super(DBusExporterHelper, self).__init__()
 
@@ -80,6 +82,7 @@ class DBusExporterHelper(object):
 
 class DelayableDBusObject(dbus.service.Object):
     """Use me in classes that need to make asynchronous a synchronous method"""
+
     def __init__(self, *args):
         super(DelayableDBusObject, self).__init__(*args)
 
@@ -102,6 +105,7 @@ class DelayableDBusObject(dbus.service.Object):
                                                   member,
                                                   signature,
                                                   *result)
+
             def errback(e):
                 dbus.service._method_reply_error(connection, message, e)
 
@@ -148,4 +152,3 @@ def delayable(func):
     func.reply = reply
     func._finished = finished
     return func
-

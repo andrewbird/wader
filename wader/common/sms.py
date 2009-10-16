@@ -32,6 +32,7 @@ STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 # XXX: What should this threshold be?
 SMS_DATE_THRESHOLD = 5
 
+
 def should_fragment_be_assembled(sms, fragment):
     """
     Returns True if ``fragment`` can be assembled to ``sms``
@@ -66,6 +67,7 @@ def should_fragment_be_assembled(sms, fragment):
     print "MAL: Assembling fragment %s with sms %s" % (fragment, sms)
     return True
 
+
 class CacheIncoherenceError(Exception):
     """Raised upon a cache incoherence error"""
 
@@ -74,6 +76,7 @@ class MessageAssemblyLayer(object):
     """
     I am a transparent layer to perform operations on concatenated SMS'
     """
+
     def __init__(self, wrappee):
         self.wrappee = wrappee
         self.last_index = 0
@@ -173,6 +176,7 @@ class MessageAssemblyLayer(object):
     def list_sms(self):
         """Returns all the sms"""
         print "MAL::list_sms"
+
         def gen_cache(messages):
             print "MAL::list_sms::gen_cache"
             for sms in messages:
@@ -219,6 +223,7 @@ class MessageAssemblyLayer(object):
 
 class Message(object):
     """I am a Message in the system"""
+
     implements(IMessage)
 
     def __init__(self, number=None, text=None, index=None, where=None,
@@ -246,7 +251,8 @@ class Message(object):
                             in sorted(self._fragments, key=itemgetter(0)))
 
     def __repr__(self):
-        import pprint, StringIO
+        import pprint
+        import StringIO
         out = StringIO.StringIO()
         props = {'number' : self.number,
                  'index' : self.index,
@@ -385,4 +391,3 @@ def extract_datetime(datestr):
     hour, mins, seconds = map(int, time.split(':'))
 
     return datetime(year, month, day, hour, mins, seconds, tzinfo=None)
-

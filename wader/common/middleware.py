@@ -40,6 +40,7 @@ from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
 
+
 def regexp_to_contact(match):
     """
     Returns a :class:`wader.common.contact.Contact` out of ``match``
@@ -117,6 +118,7 @@ class WCDMAWrapper(WCDMAProtocol):
         :raise SimPuk2Required: Raised if SIM PUK2 is required
         """
         d = super(WCDMAWrapper, self).check_pin()
+
         def process_result(resp):
             result = resp[0].group('resp')
             if result == 'READY':
@@ -158,6 +160,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         Enables or disables PIN auth with ``pin`` according to ``enable``
         """
+
         def cache_and_return_response(response):
             self.device.props[CRD_INTFACE]['PinEnabled'] = enable
             return response[0].group('resp')
@@ -290,6 +293,7 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda _: self.set_network_info_format(3, 2))
         d.addCallback(lambda _: self.get_network_info())
         d.addCallback(lambda info: resp.append(info[0]))
+
         def get_netinfo_eb(failure):
             failure.trap(E.NoNetwork)
             resp.append("0")
@@ -305,6 +309,7 @@ class WCDMAWrapper(WCDMAProtocol):
     def get_netreg_status(self):
         """Returns a tuple with the network registration status"""
         d = super(WCDMAWrapper, self).get_netreg_status()
+
         def get_netreg_status(resp):
             # convert them to int
             return int(resp[0].group('mode')), int(resp[0].group('status'))
@@ -323,6 +328,7 @@ class WCDMAWrapper(WCDMAProtocol):
         numeric network IDs to alphanumeric.
         """
         d = super(WCDMAWrapper, self).get_network_info()
+
         def get_net_info_cb(netinfo):
             """
             Returns a (Networname, ConnType) tuple
@@ -387,6 +393,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _get_free_contact_ids(self):
         """Returns a deque with the not used contact ids"""
+
         def list_contacts_cb(contacts):
             if not contacts:
                 return deque(range(1, self.device.sim.size))
@@ -419,6 +426,7 @@ class WCDMAWrapper(WCDMAProtocol):
         self.state_dict['phonebook_retries'] = 0
 
         def get_it(auxdef=None):
+
             def get_phonebook_size_cb(size):
                 self.device.sim.size = size
                 d = do_get_it()
@@ -447,6 +455,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_pin_status(self):
         """Returns 1 if PIN auth is active and 0 if its not"""
+
         def pinreq_errback(failure):
             failure.trap(E.SimPinRequired)
             return 1
@@ -491,6 +500,7 @@ class WCDMAWrapper(WCDMAProtocol):
         Returns a ``Message`` object representing the SMS at ``index``
         """
         d = super(WCDMAWrapper, self).get_sms(index)
+
         def get_sms_cb(rawsms):
             try:
                 sms = Message.from_pdu(rawsms[0].group('pdu'))
@@ -516,6 +526,7 @@ class WCDMAWrapper(WCDMAProtocol):
     def get_smsc(self):
         """Returns the SMSC number stored in the SIM"""
         d = super(WCDMAWrapper, self).get_smsc()
+
         def get_smsc_cb(response):
             try:
                 smsc = response[0].group('smsc')
@@ -536,6 +547,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         :rtype: list
         """
+
         def not_found_eb(failure):
             failure.trap(E.NotFound, E.InvalidIndex, E.GenericError)
             return []
@@ -563,6 +575,7 @@ class WCDMAWrapper(WCDMAProtocol):
         :rtype: list
         """
         d = super(WCDMAWrapper, self).list_sms()
+
         def get_all_sms_cb(messages):
             sms_list = []
             for rawsms in messages:
@@ -660,6 +673,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def set_apn(self, apn):
         """Sets the APN to ``apn``"""
+
         def process_apns(apns):
             state = self.state_dict
             for _index, _apn in apns:
@@ -696,6 +710,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         It will not enable it if its already enabled and viceversa
         """
+
         def check_if_necessary(status):
             if (status and enable) or (not status and not enable):
                 return defer.succeed('OK')
@@ -724,6 +739,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     # some high-level methods exported over DBus
     def init_properties(self):
+
         def set_property(name, what, iface=CRD_INTFACE):
             self.device.props[iface][name] = what
 
@@ -737,6 +753,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_simple_status(self):
         """Returns the status for o.fd.MM.Modem.Simple.GetStatus"""
+
         def get_simple_status_cb((rssi, netinfo, band, net_mode)):
             return dict(signal_quality=rssi,
                         operator_code=netinfo[1],
@@ -818,6 +835,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _do_disable_device(self):
         if self.device.status == DEV_CONNECTED:
+
             def on_disconnect_from_internet(_):
                 self.device.set_status(DEV_ENABLED)
                 self.device.close()
@@ -866,6 +884,7 @@ class WCDMAWrapper(WCDMAProtocol):
         log.msg("giving the device %d seconds to settle, waiting..." % DELAY)
 
         deferred = defer.Deferred()
+
         def do_init():
             d = self.device.initialize()
             d.addCallback(lambda size: deferred.callback(size))
@@ -876,6 +895,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
 class BasicNetworkOperator(object):
     """A Network operator with a netid"""
+
     def __init__(self, netid):
         super(BasicNetworkOperator, self).__init__()
         if check_if_ucs2(netid):
@@ -895,6 +915,7 @@ class BasicNetworkOperator(object):
 
 class NetworkOperator(BasicNetworkOperator):
     """I represent a network operator on a mobile network"""
+
     def __init__(self, stat, long_name, short_name, netid, rat):
         super(NetworkOperator, self).__init__(netid)
         self.stat = int(stat)
@@ -905,4 +926,3 @@ class NetworkOperator(BasicNetworkOperator):
     def __repr__(self):
         args = (self.long_name, self.netid)
         return '<NetworkOperator "%s" netid: %s>' % args
-

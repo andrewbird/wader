@@ -26,11 +26,14 @@ This is not portable across different OSes
 # releasing it under the GPL
 # http://mail.python.org/pipermail/python-list/2007-March/429176.html
 
-import socket, fcntl, struct, platform
+import fcntl
+import platform
+import socket
+import struct
 
 def _ifinfo(sock, addr, ifname):
     iface = struct.pack('256s', ifname[:15])
-    info  = fcntl.ioctl(sock.fileno(), addr, iface)
+    info = fcntl.ioctl(sock.fileno(), addr, iface)
     if addr == 0x8927:
         hwaddr = []
         for char in info[18:24]:
@@ -42,21 +45,21 @@ def _ifinfo(sock, addr, ifname):
 def ifconfig(ifname):
     ifreq = {'ifname': ifname}
     infos = {}
-    osys  = platform.system()
-    sock  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    osys = platform.system()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     if osys == 'Linux':
         # offsets defined in /usr/include/linux/sockios.h on linux 2.6
-        infos['addr']    = 0x8915 # SIOCGIFADDR
+        infos['addr'] = 0x8915    # SIOCGIFADDR
         infos['brdaddr'] = 0x8919 # SIOCGIFBRDADDR
-        infos['hwaddr']  = 0x8927 # SIOCSIFHWADDR
+        infos['hwaddr'] = 0x8927  # SIOCSIFHWADDR
         infos['netmask'] = 0x891b # SIOCGIFNETMASK
-        infos['raddr']   = 0x8917 # SIOCGIFDSTADDR
+        infos['raddr'] = 0x8917   # SIOCGIFDSTADDR
     elif 'BSD' in osys: # ???
-        infos['addr']    = 0x8915
+        infos['addr'] = 0x8915
         infos['brdaddr'] = 0x8919
-        infos['hwaddr']  = 0x8927
+        infos['hwaddr'] = 0x8927
         infos['netmask'] = 0x891b
-        infos['raddr']   = 0x8917
+        infos['raddr'] = 0x8917
     try:
         for k, v in infos.items():
             ifreq[k] = _ifinfo(sock, v, ifname)

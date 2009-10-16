@@ -22,12 +22,14 @@ Classes that mediate access to the secrets. This is done through the
 
 from wader.common import keyring
 
+
 class ProfileSecrets(object):
     """
     I mediate access to the secrets associated with a profile
 
     I provide a uniform API to interact with the different keyrings.
     """
+
     def __init__(self, connection, base_gpath):
         self.connection = connection
         self.uuid = connection.get_settings()['connection']['uuid']
@@ -77,7 +79,6 @@ class ProfileSecrets(object):
 
             self.temporal_secrets.update(secrets)
 
-
     def open(self, password):
         """Opens the keyring backend using ``password``"""
         self.manager.open(password)
@@ -96,4 +97,3 @@ class ProfileSecrets(object):
     def register_open_callback(self, callback):
         """Registers ``callback`` to be executed when the keyring is open"""
         self.manager.register_open_callback(callback)
-

@@ -28,6 +28,7 @@ from dbus import Array, UInt32
 
 from wader.common import consts
 
+
 def get_bands(bitwised_band):
     """
     Returns all the bitwised bands in ``bitwised_band``
@@ -36,6 +37,7 @@ def get_bands(bitwised_band):
     """
     return [band for band in consts.MM_NETWORK_BANDS if band & bitwised_band]
 
+
 def rssi_to_percentage(rssi):
     """
     Converts ``rssi`` to a percentage value
@@ -43,6 +45,7 @@ def rssi_to_percentage(rssi):
     :rtype: int
     """
     return (rssi * 100) / 31 if rssi < 32 else 0
+
 
 def convert_ip_to_int(ip):
     """
@@ -57,6 +60,7 @@ def convert_ip_to_int(ip):
         i += 0xffffffff + 1
     return i
 
+
 def convert_int_to_ip(i):
     """
     Converts ``i`` to its IP representation
@@ -67,6 +71,7 @@ def convert_int_to_ip(i):
     if i > sys.maxint:
         i -= 0xffffffff + 1
     return socket.inet_ntop(socket.AF_INET, struct.pack('i', i))
+
 
 def convert_int_to_uint(i):
     """
@@ -80,6 +85,7 @@ def convert_int_to_uint(i):
     if i < 0:
         i += 0xffffffff + 1
     return i
+
 
 def patch_list_signature(props, signature='au'):
     """
@@ -100,6 +106,7 @@ def patch_list_signature(props, signature='au'):
 
     return props
 
+
 def flatten_list(x):
     """Flattens ``x`` into a single list"""
     result = []
@@ -109,6 +116,7 @@ def flatten_list(x):
         else:
             result.append(el)
     return result
+
 
 def revert_dict(d):
     """
@@ -122,11 +130,13 @@ def revert_dict(d):
 
     return ret
 
+
 def natsort(l):
     """Naturally sort list ``l`` in place"""
     # extracted from http://nedbatchelder.com/blog/200712.html#e20071211T054956
     convert = lambda text: int(text) if text.isdigit() else text
     l.sort(key=lambda key: map(convert, re.split('([0-9]+)', key)))
+
 
 def get_file_data(path):
     """
@@ -138,6 +148,7 @@ def get_file_data(path):
     with open(path) as f:
         return f.read()
 
+
 def save_file(path, data):
     """
     Saves ``data`` in ``path``
@@ -148,6 +159,7 @@ def save_file(path, data):
     with open(path, 'w') as f:
         f.write(data)
 
+
 def is_bogus_ip(ip):
     """
     Checks whether ``ip`` is a bogus IP
@@ -155,6 +167,7 @@ def is_bogus_ip(ip):
     :rtype: bool
     """
     return ip in ["10.11.12.13", "10.11.12.14"]
+
 
 def create_dns_lock(dns1, dns2, path):
     """
@@ -166,4 +179,3 @@ def create_dns_lock(dns1, dns2, path):
     """
     text = """DNS1 %s\nDNS2 %s\n""" % (dns1, dns2)
     save_file(path, text)
-

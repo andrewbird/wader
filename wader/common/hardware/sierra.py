@@ -28,21 +28,21 @@ from wader.common.plugin import DevicePlugin
 from wader.common.utils import revert_dict
 
 SIERRA_MODE_DICT = {
-    consts.MM_NETWORK_MODE_ANY          : '00',
-    consts.MM_NETWORK_MODE_3G_ONLY      : '01',
-    consts.MM_NETWORK_MODE_2G_ONLY      : '02',
+    consts.MM_NETWORK_MODE_ANY : '00',
+    consts.MM_NETWORK_MODE_3G_ONLY : '01',
+    consts.MM_NETWORK_MODE_2G_ONLY : '02',
     consts.MM_NETWORK_MODE_3G_PREFERRED : '03',
     consts.MM_NETWORK_MODE_2G_PREFERRED : '04',
 }
 
 SIERRA_BAND_DICT = {
-    consts.MM_NETWORK_BAND_EGSM  : '03',   # EGSM (900MHz)
-    consts.MM_NETWORK_BAND_DCS   : '03',   # DCS (1800MHz)
-    consts.MM_NETWORK_BAND_PCS   : '04',   # PCS (1900MHz)
-    consts.MM_NETWORK_BAND_G850  : '04',   # GSM (850 MHz)
+    consts.MM_NETWORK_BAND_EGSM : '03',   # EGSM (900MHz)
+    consts.MM_NETWORK_BAND_DCS : '03',   # DCS (1800MHz)
+    consts.MM_NETWORK_BAND_PCS : '04',   # PCS (1900MHz)
+    consts.MM_NETWORK_BAND_G850 : '04',   # GSM (850 MHz)
     consts.MM_NETWORK_BAND_U2100 : '02',   # WCDMA 2100Mhz         (Class I)
-    consts.MM_NETWORK_BAND_U800  : '02',   # WCDMA 3GPP UMTS800   (Class VI)
-    consts.MM_NETWORK_BAND_ANY   : '00',   # any band
+    consts.MM_NETWORK_BAND_U800 : '02',   # WCDMA 3GPP UMTS800   (Class VI)
+    consts.MM_NETWORK_BAND_ANY : '00',   # any band
 }
 
 SIERRA_CMD_DICT = get_cmd_dict_copy()
@@ -66,6 +66,7 @@ class SierraWrapper(WCDMAWrapper):
 
     def get_band(self):
         """Returns the current used band"""
+
         def get_band_cb(resp):
             band = resp[0].group('band')
             return revert_dict(SIERRA_BAND_DICT)[band]
@@ -75,6 +76,7 @@ class SierraWrapper(WCDMAWrapper):
 
     def get_network_mode(self):
         """Returns the current used network mode"""
+
         def get_network_mode_cb(resp):
             mode = resp[0].group('mode')
             return revert_dict(SIERRA_MODE_DICT)[mode]
@@ -99,6 +101,7 @@ class SierraWrapper(WCDMAWrapper):
 
 class SierraWirelessWCDMACustomizer(WCDMACustomizer):
     """WCDMA customizer for sierra wireless cards"""
+
     async_regexp = None
     band_dict = SIERRA_BAND_DICT
     conn_dict = SIERRA_MODE_DICT
@@ -108,5 +111,5 @@ class SierraWirelessWCDMACustomizer(WCDMACustomizer):
 
 class SierraWCDMADevicePlugin(DevicePlugin):
     """WCDMA device plugin for sierra wireless cards"""
-    custom = SierraWirelessWCDMACustomizer()
 
+    custom = SierraWirelessWCDMACustomizer()

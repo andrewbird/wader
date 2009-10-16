@@ -39,6 +39,7 @@ from wader.common.utils import get_file_data, natsort, flatten_list
 IDLE, BUSY = range(2)
 ADD_THRESHOLD = 10.
 
+
 def probe_port(port):
     """
     Check whether `port` exists and works
@@ -86,6 +87,7 @@ def probe_ports(ports):
 
     return dport, cport
 
+
 def extract_info(props):
     """
     Extracts the bus-related information from Hal's ``props``
@@ -119,6 +121,7 @@ class HardwareManager(DBusComponent):
     I am resilient to ports assigned in unusual locations
     and devices sharing ids.
     """
+
     implements(IHardwareManager)
 
     def __init__(self):
@@ -191,6 +194,7 @@ class HardwareManager(DBusComponent):
 
     def _get_modem_path(self, dev_udi):
         """Returns the object path of the modem device child of ``dev_udi``"""
+
         def is_child_of(parent_udi, child_udi):
             cur_udi = child_udi
             while 1:
@@ -236,6 +240,7 @@ class HardwareManager(DBusComponent):
 
     def _get_driver_name(self, udi, context=None):
         """Returns the info.linux.driver of `udi`"""
+
         def do_get_driver_name(key, _udi, props):
             if key in props[_udi]:
                 name = props[_udi][key]
@@ -279,6 +284,7 @@ class HardwareManager(DBusComponent):
     def _get_parent_udi(self, udi):
         """Returns the absolute parent udi of ``udi``"""
         OD = 'serial.originating_device'
+
         def get_parent(props):
             return (props[OD] if OD in props else props['info.parent'])
 
@@ -300,6 +306,7 @@ class HardwareManager(DBusComponent):
             As hal likes to swap between usb.vendor_id and usb_device.vendor_id
             I have got a special case where I will retry
             """
+
             def compare_dicts(d1, d2):
                 for key in d1:
                     try:
@@ -621,4 +628,3 @@ class LinuxPlugin(UnixPlugin):
             return map(int, [get_file_data(rx_b), get_file_data(tx_b)])
         except (IOError, OSError):
             return 0, 0
-

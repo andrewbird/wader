@@ -40,8 +40,10 @@ ATTACH_DELAY = 1
 
 OLDLOCK = os.path.join(consts.DATA_DIR, '.setup-done')
 
+
 class WaderService(Service):
     """I am a Twisted service that starts up Wader"""
+
     def __init__(self):
         self.ctrl = None
         self.prof = None
@@ -70,6 +72,7 @@ class StartupController(Object, DBusExporterHelper):
 
     :ivar clients: Dict with a reference to every configured device
     """
+
     def __init__(self):
         name = BusName(consts.WADER_SERVICE,
                        bus=dbus.SystemBus(mainloop=gloop))
@@ -127,6 +130,7 @@ def get_wader_application():
     service.setServiceParent(application)
     return application
 
+
 def attach_to_serial_port(device):
     """Attaches the serial port in ``device``"""
     d = defer.Deferred()
@@ -136,6 +140,7 @@ def attach_to_serial_port(device):
                           baudrate=device.baudrate)
     reactor.callLater(ATTACH_DELAY, lambda: d.callback(device))
     return d
+
 
 def setup_and_export_device(device):
     """Sets up ``device`` and exports its methods over DBus"""
@@ -160,6 +165,7 @@ def setup_and_export_device(device):
     device.__repr__ = device.__str__
     return device
 
+
 def create_skeleton_and_do_initial_setup():
     """I perform the operations needed for the initial user setup"""
     if os.path.exists(OLDLOCK):
@@ -176,6 +182,7 @@ def create_skeleton_and_do_initial_setup():
     list(getPlugins(IPlugin, package=wader.plugins))
 
     populate_dbs(populate_networks)
+
 
 def populate_dbs(f):
     """
@@ -201,4 +208,3 @@ def populate_dbs(f):
         return not item.startswith(("__", "Base", "NetworkOperator"))
 
     f([getattr(networks, item)() for item in dir(networks) if is_valid(item)])
-

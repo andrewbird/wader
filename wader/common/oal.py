@@ -23,6 +23,7 @@ OS provides an abstraction layer so path differences between OSes/distros
 won't affect Wader
 """
 
+
 def get_os_object():
     """
     Returns a ``OSPlugin`` instance corresponding to current OS used
@@ -40,4 +41,3 @@ def get_os_object():
     return None
 
 osobj = get_os_object()
-

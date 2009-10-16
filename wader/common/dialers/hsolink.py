@@ -22,6 +22,7 @@ from twisted.internet import defer
 from wader.common.dialer import Dialer
 from wader.common.oal import osobj
 
+
 class HSODialer(Dialer):
     """Dialer for HSO devices"""
 
@@ -71,4 +72,3 @@ class HSODialer(Dialer):
             self.retry_call = None
 
         return defer.succeed(True)
-

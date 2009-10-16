@@ -21,6 +21,7 @@
 from wader.common.plugin import OSPlugin
 from wader.common.utils import get_file_data
 
+
 class UnixPlugin(OSPlugin):
     """Plugin for Unix"""
 
@@ -35,4 +36,3 @@ class UnixPlugin(OSPlugin):
 
     def get_timezone(self):
         return get_file_data('/etc/timezone').replace('\n', '')
-

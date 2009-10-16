@@ -30,25 +30,25 @@ from wader.common.utils import revert_dict
 from wader.common.sim import SIMBaseClass
 
 NOVATEL_MODE_DICT = {
-    consts.MM_NETWORK_MODE_ANY          : '0,2',
-    consts.MM_NETWORK_MODE_2G_ONLY      : '1,2',
-    consts.MM_NETWORK_MODE_3G_ONLY      : '2,2',
+    consts.MM_NETWORK_MODE_ANY : '0,2',
+    consts.MM_NETWORK_MODE_2G_ONLY : '1,2',
+    consts.MM_NETWORK_MODE_3G_ONLY : '2,2',
 
     consts.MM_NETWORK_MODE_3G_PREFERRED : '0,2', # just a dup of automatic
 }
 
 NOVATEL_BAND_DICT = {
-    consts.MM_NETWORK_BAND_ANY   : 0x3FFFFFFF,
+    consts.MM_NETWORK_BAND_ANY : 0x3FFFFFFF,
 
-    consts.MM_NETWORK_BAND_EGSM  : 0x00000100,   #  900 MHz
-    consts.MM_NETWORK_BAND_DCS   : 0x00000080,   # 1800 MHz
-    consts.MM_NETWORK_BAND_PCS   : 0x00200000,   # 1900 MHz
-    consts.MM_NETWORK_BAND_G850  : 0x00080000,   #  850 MHz
+    consts.MM_NETWORK_BAND_EGSM : 0x00000100,   #  900 MHz
+    consts.MM_NETWORK_BAND_DCS : 0x00000080,   # 1800 MHz
+    consts.MM_NETWORK_BAND_PCS : 0x00200000,   # 1900 MHz
+    consts.MM_NETWORK_BAND_G850 : 0x00080000,   #  850 MHz
     consts.MM_NETWORK_BAND_U2100 : 0x00400000,   # WCDMA 2100 MHz
     consts.MM_NETWORK_BAND_U1700 : 0x01000000,   # WCDMA 3GPP UMTS1800 MHz
-    consts.MM_NETWORK_BAND_17IV  : 0x02000000,   # WCDMA 3GPP AWS 1700/2100 MHz
-    consts.MM_NETWORK_BAND_U800  : 0x08000000,   # WCDMA 3GPP UMTS800 MHz
-    consts.MM_NETWORK_BAND_U850  : 0x04000000,   # WCDMA 3GPP UMTS850 MHz
+    consts.MM_NETWORK_BAND_17IV : 0x02000000,   # WCDMA 3GPP AWS 1700/2100 MHz
+    consts.MM_NETWORK_BAND_U800 : 0x08000000,   # WCDMA 3GPP UMTS800 MHz
+    consts.MM_NETWORK_BAND_U850 : 0x04000000,   # WCDMA 3GPP UMTS850 MHz
     consts.MM_NETWORK_BAND_U1900 : 0x00800000,   # WCDMA 3GPP UMTS MHz
 }
 
@@ -132,6 +132,7 @@ NOVATEL_CMD_DICT['get_network_mode'] = build_cmd_dict(
 NOVATEL_CMD_DICT['get_band'] = build_cmd_dict(
                           re.compile("\r\n\$NWBAND:\s?(?P<band>[0-9A-Fa-f]+)"))
 
+
 class NovatelSIMClass(SIMBaseClass):
     """Novatel SIM Class"""
 
@@ -139,6 +140,7 @@ class NovatelSIMClass(SIMBaseClass):
         super(NovatelSIMClass, self).__init__(sconn)
 
     def initialize(self, set_encoding=True):
+
         def init_callback(size):
             # make sure we are in most promiscuous mode before registration
             self.sconn.set_network_mode(consts.MM_NETWORK_MODE_ANY)
@@ -177,6 +179,7 @@ class NovatelWrapper(WCDMAWrapper):
 
     def get_network_mode(self):
         """Returns the current network mode"""
+
         def get_network_mode_cb(resp):
             mode = resp[0].group('mode')
             return revert_dict(self.custom.conn_dict)[mode]
@@ -240,4 +243,3 @@ class NovatelWCDMADevicePlugin(DevicePlugin):
     """WCDMA device plugin for Novatel cards"""
     sim_klass = NovatelSIMClass
     custom = NovatelWCDMACustomizer()
-

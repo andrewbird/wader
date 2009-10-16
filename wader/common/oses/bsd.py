@@ -20,6 +20,7 @@
 
 from wader.common.oses.unix import UnixPlugin
 
+
 class FreeBSDPlugin(UnixPlugin):
     """Plugin for FreeBSD"""
 
@@ -46,5 +47,3 @@ class OpenBSDPlugin(UnixPlugin):
             return True
         except ImportError:
             return False
-
-

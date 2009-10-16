@@ -21,6 +21,7 @@
 from twisted.cred import portal, checkers
 from twisted.conch import manhole, manhole_ssh
 
+
 def get_manhole_factory(namespace, **passwords):
     """
     Returns a ``ConchFactory`` instance configured with given settings
@@ -30,12 +31,12 @@ def get_manhole_factory(namespace, **passwords):
     :rtype: `twisted.conch.manhole_ssh.ConchFactory`
     """
     realm = manhole_ssh.TerminalRealm()
+
     def getManhole(_):
         return manhole.Manhole(namespace)
+
     realm.chainedProtocolFactory.protocolFactory = getManhole
     p = portal.Portal(realm)
     checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(**passwords)
     p.registerChecker(checker)
-    f = manhole_ssh.ConchFactory(p)
-    return f
-
+    return manhole_ssh.ConchFactory(p)

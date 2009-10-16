@@ -20,6 +20,7 @@
 
 from zope.interface import Interface, Attribute
 
+
 class IContact(Interface):
     """Interface that all contact backends must implement"""
     name = Attribute("""Contact's name""")
@@ -116,6 +117,7 @@ class IWaderPlugin(Interface):
 
 class IDevicePlugin(IWaderPlugin):
     """Interface that all device plugins should implement"""
+
     baudrate = Attribute("""At which speed should we talk with this guy""")
     custom = Attribute("""Container with all the device's customizations""")
     sim = Attribute("""SIM object""")
@@ -131,6 +133,7 @@ class IRemoteDevicePlugin(IDevicePlugin):
 
 
 class IOSPlugin(IWaderPlugin):
+
     distrib_id = Attribute("""Name of the OS/Distro""")
     distrib_version = Attribute("""Version of the OS/Distro""")
 
@@ -214,4 +217,3 @@ class IContactProvider(IWaderPlugin):
 
     def remove_contact(contact):
         """Removes ``contact``"""
-

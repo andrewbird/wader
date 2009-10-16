@@ -22,6 +22,7 @@ from sqlite3 import dbapi2 as sqlite
 
 import wader.common.consts as consts
 
+
 class NetworkOperator(object):
 
     def __init__(self, netid, country, name, apn,
@@ -46,8 +47,10 @@ class NetworkOperator(object):
 def adapt_netoperator(oper):
     return "%s;%s;%s;%s;%s;%s;%s;%s" % oper.get_args()
 
+
 def convert_netoperator(s):
     return NetworkOperator(*s.split(';'))
+
 
 sqlite.register_adapter(NetworkOperator, adapt_netoperator)
 sqlite.register_converter("netoperator", convert_netoperator)
@@ -55,6 +58,7 @@ sqlite.register_converter("netoperator", convert_netoperator)
 
 def get_connection(path):
     return sqlite.connect(path, detect_types=sqlite.PARSE_DECLTYPES)
+
 
 def populate_networks(network_list, path=consts.NETWORKS_DB):
     conn = get_connection(path)
@@ -74,6 +78,7 @@ def populate_networks(network_list, path=consts.NETWORKS_DB):
     conn.commit()
     conn.close()
 
+
 def get_network_by_id(netid, path=consts.NETWORKS_DB):
     netid = str(netid)
     conn = get_connection(path)
@@ -89,4 +94,3 @@ def get_network_by_id(netid, path=consts.NETWORKS_DB):
 
     conn.close()
     return ret
-

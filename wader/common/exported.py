@@ -36,7 +36,6 @@ from wader.common.utils import convert_ip_to_int
 # export over several interfaces under repeated names, such as:
 #   org.freedesktop.ModemManager.Contacts.List
 #   org.freedesktop.ModemManager.SMS.List
-
 # currently python-dbus requires you to create a new class and it will find
 # the appropiated implementation through the MRO. But this leads to MH madness
 # What we can do thou is rely on composition instead of MH for this one
@@ -68,7 +67,7 @@ class ModemExporter(Object, DBusExporterHelper):
 
         :param number: number to dial
         """
-        assert 'conn_id' in self.sconn.state_dict, "Did you call SetApn at all?"
+        assert 'conn_id' in self.sconn.state_dict, "Did you call SetApn?"
         assert len(number) == 4, "bad number: %s" % number
         assert number[-1] == '#', "bad number: %s" % number
 
@@ -172,6 +171,7 @@ class SimpleExporter(ModemExporter):
 
         :rtype: dict
         """
+
         def get_simple_status_cb(status):
             # by default it is converted to Int32
             for name in ['signal_quality', 'band']:
@@ -386,6 +386,7 @@ class NetworkExporter(CardExporter):
     def Scan(self, async_cb, async_eb):
         """Returns the basic information of the networks around"""
         d = self.sconn.get_network_names()
+
         def process_netnames(netobjs):
             response = []
             for n in netobjs:
@@ -394,10 +395,10 @@ class NetworkExporter(CardExporter):
                 # to not break existing software (it seems that
                 # nm-applet in OpenSuSe uses it) we decided not to
                 # change it for now.
-                net = { 'status' : str(n.stat),
-                        'operator-long' : n.long_name,
-                        'operator-short' : n.short_name,
-                        'operator-num' : n.netid }
+                net = {'status' : str(n.stat),
+                       'operator-long' : n.long_name,
+                       'operator-short' : n.short_name,
+                       'operator-num' : n.netid}
 
                 if n.rat:
                     # some devices won't provide this info
@@ -629,6 +630,7 @@ class ContactsExporter(SMSExporter):
     """
     I export the org.freedesktop.ModemManager.Modem.Gsm.Contacts interface
     """
+
     @method(CTS_INTFACE, in_signature='ss', out_signature='u',
             async_callbacks=('async_cb', 'async_eb'))
     def Add(self, name, number, async_cb, async_eb):
@@ -760,4 +762,3 @@ class HSOExporter(WCDMAExporter):
         """
         d = self.sconn.hso_authenticate(user, passwd)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
-

@@ -41,6 +41,7 @@ from wader.common.utils import convert_int_to_ip
 
 CONFIG_DELAY = 3
 
+
 class DialerConf(object):
     """I contain all the necessary information to connect to Internet"""
     uuid = ""
@@ -135,6 +136,7 @@ class Dialer(Object):
 
     Override me for new OSes
     """
+
     implements(IDialer)
     config = None
     protocol = None
@@ -231,6 +233,7 @@ class DialerManager(Object, DBusExporterHelper):
     I provide a uniform API to make data calls using different
     dialers on heterogeneous operating systems.
     """
+
     def __init__(self, ctrl):
         self.bus = dbus.SystemBus()
         name = BusName(consts.WADER_DIALUP_SERVICE, bus=self.bus)
@@ -268,12 +271,12 @@ class DialerManager(Object, DBusExporterHelper):
 
         device = self.ctrl.hm.clients[dev_opath]
         if nm07_present:
-            dialer_klass = NMDialer
+            klass = NMDialer
         else:
             # NM 0.6.X
-            dialer_klass = HSODialer if device.dialer == 'hso' else WVDialDialer
+            klass = HSODialer if device.dialer == 'hso' else WVDialDialer
 
-        return dialer_klass(device, opath, ctrl=self.ctrl)
+        return klass(device, opath, ctrl=self.ctrl)
 
     def get_next_opath(self):
         """Returns the next free object path"""
@@ -394,4 +397,3 @@ class DialerManager(Object, DBusExporterHelper):
         """Get the traffic statistics for device ``device_path``"""
         dialer = self.dialers[device_path]
         return dialer.get_stats()[:2]
-

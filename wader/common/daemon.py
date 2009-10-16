@@ -31,6 +31,7 @@ import wader.common.signals as S
 SIG_REG_INFO_FREQ = 120
 SIG_RSSI_FREQ = 15
 
+
 class WaderDaemon(object):
     """
     I represent a Daemon in Wader
@@ -39,6 +40,7 @@ class WaderDaemon(object):
     signal quality from the data card. A Daemon will emit DBus signals as
     if the device itself had emitted them.
     """
+
     def __init__(self, frequency, device):
         super(WaderDaemon, self).__init__()
         self.frequency = frequency
@@ -56,7 +58,6 @@ class WaderDaemon(object):
 
             args = (self, 'function', self.frequency)
             log.msg("executing %s.%s every %d seconds" % args)
-
 
     def stop(self):
         """Stops the Daemon"""
@@ -127,6 +128,7 @@ class WaderDaemonCollection(object):
 
     I provide some methods to manage the collection.
     """
+
     def __init__(self):
         self.daemons = {}
         self.running = False
@@ -188,4 +190,3 @@ def build_daemon_collection(device):
     collection.append_daemon(S.SIG_REG_INFO, daemon)
 
     return collection
-

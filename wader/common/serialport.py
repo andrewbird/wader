@@ -21,6 +21,7 @@
 from twisted.internet.serialport import SerialPort as _SerialPort
 from twisted.python import log
 
+
 class Port(object):
     """I represent a serial port in Wader"""
 
@@ -46,6 +47,7 @@ class Port(object):
 
 class Ports(object):
     """I am a pair of :class:`~wader.common.serialport.Port` objects"""
+
     def __init__(self, dport, cport):
         self.dport = Port(dport)
         self.cport = Port(cport)
@@ -67,6 +69,7 @@ class Ports(object):
 
 class SerialPort(_SerialPort, log.Logger):
     """Small wrapper over Twisted's serial port to make it loggable"""
+
     def __init__(self, protocol, port, reactor, baudrate=115200, timeout=.1):
         super(SerialPort, self).__init__(protocol, port, reactor,
                                          baudrate=baudrate, timeout=timeout)
@@ -75,4 +78,3 @@ class SerialPort(_SerialPort, log.Logger):
     def logPrefix(self):
         """Returns the last part of the port being used"""
         return self._port.split('/')[-1]
-

@@ -52,19 +52,19 @@ SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.SMS'
 NET_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Network'
 
 MM_NETWORK_BAND_UNKNOWN = 0x0     # Unknown or invalid band
-MM_NETWORK_BAND_ANY     = 0x1     # ANY
-MM_NETWORK_BAND_EGSM    = 0x2     # 900 MHz
-MM_NETWORK_BAND_DCS     = 0x4     # 1800 MHz
-MM_NETWORK_BAND_PCS     = 0x8     # 1900 MHz
-MM_NETWORK_BAND_G850    = 0x10    #  850 MHz
-MM_NETWORK_BAND_U2100   = 0x20    # WCDMA 2100 MHz
-MM_NETWORK_BAND_U1700   = 0x40    # WCDMA 3GPP UMTS1800 MHz
-MM_NETWORK_BAND_17IV    = 0x80    # WCDMA 3GPP AWS 1700/2100 MHz
-MM_NETWORK_BAND_U800    = 0x100   # WCDMA 3GPP UMTS800 MHz
-MM_NETWORK_BAND_U850    = 0x200   # WCDMA 3GPP UMTS850 MHz
-MM_NETWORK_BAND_U900    = 0x400   # WCDMA 3GPP UMTS900 MHz
-MM_NETWORK_BAND_U17IX   = 0x800   # WCDMA 3GPP UMTS MHz
-MM_NETWORK_BAND_U1900   = 0x1000  # WCDMA 3GPP UMTS MHz
+MM_NETWORK_BAND_ANY = 0x1     # ANY
+MM_NETWORK_BAND_EGSM = 0x2     # 900 MHz
+MM_NETWORK_BAND_DCS = 0x4     # 1800 MHz
+MM_NETWORK_BAND_PCS = 0x8     # 1900 MHz
+MM_NETWORK_BAND_G850 = 0x10    #  850 MHz
+MM_NETWORK_BAND_U2100 = 0x20    # WCDMA 2100 MHz
+MM_NETWORK_BAND_U1700 = 0x40    # WCDMA 3GPP UMTS1800 MHz
+MM_NETWORK_BAND_17IV = 0x80    # WCDMA 3GPP AWS 1700/2100 MHz
+MM_NETWORK_BAND_U800 = 0x100   # WCDMA 3GPP UMTS800 MHz
+MM_NETWORK_BAND_U850 = 0x200   # WCDMA 3GPP UMTS850 MHz
+MM_NETWORK_BAND_U900 = 0x400   # WCDMA 3GPP UMTS900 MHz
+MM_NETWORK_BAND_U17IX = 0x800   # WCDMA 3GPP UMTS MHz
+MM_NETWORK_BAND_U1900 = 0x1000  # WCDMA 3GPP UMTS MHz
 
 MM_NETWORK_BANDS = [
     MM_NETWORK_BAND_UNKNOWN,
@@ -80,21 +80,20 @@ MM_NETWORK_BANDS = [
     MM_NETWORK_BAND_U850,
     MM_NETWORK_BAND_U900,
     MM_NETWORK_BAND_U17IX,
-    MM_NETWORK_BAND_U1900,
-]
+    MM_NETWORK_BAND_U1900]
 
-MM_NETWORK_MODE_UNKNOWN      = 0x00000000
-MM_NETWORK_MODE_ANY          = 0x00000001
-MM_NETWORK_MODE_GPRS         = 0x00000002
-MM_NETWORK_MODE_EDGE         = 0x00000004
-MM_NETWORK_MODE_UMTS         = 0x00000008
-MM_NETWORK_MODE_HSDPA        = 0x00000010
+MM_NETWORK_MODE_UNKNOWN = 0x00000000
+MM_NETWORK_MODE_ANY = 0x00000001
+MM_NETWORK_MODE_GPRS = 0x00000002
+MM_NETWORK_MODE_EDGE = 0x00000004
+MM_NETWORK_MODE_UMTS = 0x00000008
+MM_NETWORK_MODE_HSDPA = 0x00000010
 MM_NETWORK_MODE_2G_PREFERRED = 0x00000020
 MM_NETWORK_MODE_3G_PREFERRED = 0x00000040
-MM_NETWORK_MODE_2G_ONLY      = 0x00000080
-MM_NETWORK_MODE_3G_ONLY      = 0x00000100
-MM_NETWORK_MODE_HSUPA        = 0x00000200
-MM_NETWORK_MODE_HSPA         = 0x00000400
+MM_NETWORK_MODE_2G_ONLY = 0x00000080
+MM_NETWORK_MODE_3G_ONLY = 0x00000100
+MM_NETWORK_MODE_HSUPA = 0x00000200
+MM_NETWORK_MODE_HSPA = 0x00000400
 
 # should the extensions introduced by the Wader project be tested?
 TEST_WADER_EXTENSIONS = True
@@ -103,9 +102,11 @@ GENERIC_SKIP_MSG = "Wader extension to MM"
 GCONF_BASE = '/apps/wader-core'
 
 if dbus.version >= (0, 83, 0):
+
     def get_dbus_error(e):
         return e.get_dbus_name()
 else:
+
     def get_dbus_error(e):
         return e.message
 
@@ -115,6 +116,7 @@ def get_bands(bitwised_band):
 
 class Config(object):
     """Simple GConf wrapper for string-only gets"""
+
     def __init__(self, path):
         self.path = path
         self.client = gconf.client_get_default()
@@ -195,7 +197,6 @@ class DBusTestCase(unittest.TestCase):
         return d
 
     # org.freedesktop.ModemManager.Modem tests
-
     def test_ModemDeviceProperty(self):
         if sys.platform != 'linux2':
             raise unittest.SkipTest("Cannot be tested on OS != Linux")
@@ -251,7 +252,6 @@ class DBusTestCase(unittest.TestCase):
         return d
 
     # org.freedesktop.ModemManager.Modem.Gsm.Card tests
-
     def test_CardChangePin(self):
         """Test for Card.ChangePin"""
         d = defer.Deferred()
@@ -457,13 +457,13 @@ class DBusTestCase(unittest.TestCase):
         self.failUnlessIn(MM_NETWORK_MODE_ANY, modes)
 
     # org.freedesktop.ModemManager.Modem.Gsm.Contacts tests
-
     def test_ContactsAdd(self):
         """Test for Contacts.Add"""
         d = defer.Deferred()
         name, number = "John", "+435443434343"
 
         def add_contact_cb(index):
+
             def on_contact_fetched((_index, _name, _number)):
                 self.assertEqual(name, _name)
                 self.assertEqual(number, _number)
@@ -490,6 +490,7 @@ class DBusTestCase(unittest.TestCase):
         name, number = u"中华人民共和国", "+43544311113"
 
         def add_contact_cb(index):
+
             def on_contact_fetched((_index, _name, _number)):
                 self.assertEqual(name, _name)
                 self.assertEqual(number, _number)
@@ -516,6 +517,7 @@ class DBusTestCase(unittest.TestCase):
         name, number = "Juan", "+21544343434"
 
         def on_contact_added(index):
+
             def is_it_present(contacts):
                 self.assertNotIn(index, [c[0] for c in contacts])
                 d.callback(True)
@@ -542,6 +544,7 @@ class DBusTestCase(unittest.TestCase):
         new_name, new_number = "Eugenia", "+43542323122"
 
         def add_contact_cb(index):
+
             def get_contact_cb((_index, _name, _number)):
                 self.assertEqual(_name, new_name)
                 self.assertEqual(_number, new_number)
@@ -566,7 +569,6 @@ class DBusTestCase(unittest.TestCase):
                         reply_handler=add_contact_cb,
                         error_handler=d.errback)
         return d
-
 
     def test_ContactsFindByName(self):
         """Test for Contacts.FindByName"""
@@ -627,6 +629,7 @@ class DBusTestCase(unittest.TestCase):
         name, number = "Mario", "+312232332"
 
         def add_contact_cb(index):
+
             def get_contact_cb(reply):
                 self.assertIn(name, reply)
                 self.assertIn(number, reply)
@@ -656,6 +659,7 @@ class DBusTestCase(unittest.TestCase):
         d = defer.Deferred()
 
         def get_count_cb(count):
+
             def list_contacts_cb(contacts):
                 # this two should match
                 self.assertEqual(count, len(contacts))
@@ -700,6 +704,7 @@ class DBusTestCase(unittest.TestCase):
         name, number = "Jauma", "+356456445654"
 
         def add_contact_cb(index):
+
             def list_contacts_cb(reply):
                 found = False
                 for contact in reply:
@@ -747,7 +752,6 @@ class DBusTestCase(unittest.TestCase):
             self.device.Delete(contact['index'])
 
     # org.freedesktop.ModemManager.Modem.Gsm.Network tests
-
     def test_NetworkGetApns(self):
         """Test for Network.GetApns"""
         if not TEST_WADER_EXTENSIONS:
@@ -836,6 +840,7 @@ class DBusTestCase(unittest.TestCase):
         d = defer.Deferred()
 
         def get_imsi_cb(imsi):
+
             def network_scan_cb(networks):
                 home_network_found = False
                 for network in networks:
@@ -917,7 +922,6 @@ class DBusTestCase(unittest.TestCase):
         raise unittest.SkipTest("Untested")
 
     # org.freedesktop.ModemManager.Modem.Gsm.Simple tests
-
     def test_SimpleConnect(self):
         """Test for Simple.Connect"""
         raise unittest.SkipTest("Untested")
@@ -948,13 +952,13 @@ class DBusTestCase(unittest.TestCase):
         return d
 
     # org.freedesktop.ModemManager.Modem.Gsm.SMS tests
-
     def test_SmsDelete(self):
         """Test for SMS.Delete"""
         d = defer.Deferred()
         sms = {'number' : '+33622754135', 'text' : 'delete test'}
 
         def sms_saved_cb(indexes):
+
             def on_sms_list_cb(messages):
                 sms_found = False
                 for msg in messages:
@@ -973,7 +977,6 @@ class DBusTestCase(unittest.TestCase):
                                        dbus_interface=SMS_INTFACE,
                                        reply_handler=on_sms_list_cb,
                                        error_handler=d.errback))
-
 
         # save a sms, delete it and check is no longer present
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
@@ -993,6 +996,7 @@ class DBusTestCase(unittest.TestCase):
         }
 
         def sms_saved_cb(indexes):
+
             def on_sms_list_cb(messages):
                 sms_found = False
                 for msg in messages:
@@ -1011,7 +1015,6 @@ class DBusTestCase(unittest.TestCase):
                                        dbus_interface=SMS_INTFACE,
                                        reply_handler=on_sms_list_cb,
                                        error_handler=d.errback))
-
 
         # save a sms, delete it and check is no longer present
         self.device.Save(sms, dbus_interface=SMS_INTFACE,
@@ -1190,8 +1193,6 @@ class DBusTestCase(unittest.TestCase):
                          reply_handler=sms_saved_cb,
                          error_handler=d.errback)
         return d
-
-
 
     def test_SmsListMultiparted_2(self):
         # get the current number of Sms
@@ -1400,7 +1401,7 @@ class DBusTestCase(unittest.TestCase):
         bad_smsc = '+3453456343'
 
         def get_smsc_cb(smsc):
-            # smsc == "good" smsc
+
             def get_bad_smsc_cb(_bad_smsc):
                 # bad_smsc has been correctly set
                 self.assertEqual(bad_smsc, _bad_smsc)
@@ -1424,4 +1425,3 @@ class DBusTestCase(unittest.TestCase):
                             reply_handler=get_smsc_cb,
                             error_handler=d.errback)
         return d
-

@@ -23,9 +23,9 @@ from wader.common.hardware.base import WCDMACustomizer
 SONYERICSSON_CONN_DICT = {}
 SONYERICSSON_BAND_DICT = {}
 
+
 class SonyEricssonCustomizer(WCDMACustomizer):
     """WCDMA customizer for sonny ericsson devices"""
     async_regexp = None
     conn_dict = SONYERICSSON_CONN_DICT
     band_dict = SONYERICSSON_BAND_DICT
-

@@ -22,8 +22,10 @@ from zope.interface import implements
 from wader.common.encoding import to_u
 from wader.common.interfaces import IContact
 
+
 class Contact(object):
     """I am a Contact on Wader"""
+
     implements(IContact)
 
     def __init__(self, name, number, index=None):
@@ -60,6 +62,7 @@ class ContactStore(object):
     A central point to perform operations on the different contact
     backends (see :class:`~wader.common.interfaces.IContactProvider`)
     """
+
     def __init__(self):
         super(ContactStore, self).__init__()
         self._providers = []
@@ -99,4 +102,3 @@ class ContactStore(object):
         See :meth:`~wader.common.interfaces.IContactProvider.remove_contact`
         """
         self._call_method('remove_contact', contact)
-

@@ -26,6 +26,7 @@ import wader.common.aterrors as E
 RETRY_ATTEMPTS = 3
 RETRY_TIMEOUT = 3
 
+
 class SIMBaseClass(object):
     """
     I take care of initing the SIM
@@ -33,6 +34,7 @@ class SIMBaseClass(object):
     The actual details of initing the SIM vary from mobile to datacard, so
     I am the one to subclass in case your device needs a special startup
     """
+
     def __init__(self, sconn):
         super(SIMBaseClass, self).__init__()
         self.sconn = sconn
@@ -73,6 +75,7 @@ class SIMBaseClass(object):
 
         def get_size(auxdef):
             d = self.sconn.get_phonebook_size()
+
             def phonebook_size_cb(resp):
                 self.set_size(resp)
                 auxdef.callback(self.size)
@@ -99,6 +102,7 @@ class SIMBaseClass(object):
         """
         Checks whether is necessary the change and memorizes the used charset
         """
+
         def process_charset(reply):
             """
             Only set the new charset if is different from current encoding

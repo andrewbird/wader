@@ -151,8 +151,10 @@ class AuthStateMachine(Modal):
          - SIM is not inserted
          - SIM's firmware error
         """
+
         def __enter__(self):
             pass
+
         def __exit__(self):
             pass
 
@@ -173,8 +175,10 @@ class AuthStateMachine(Modal):
          - PIN is incorrect
          - After three failed PIN auths, PUK is needed
         """
+
         def __enter__(self):
             pass
+
         def __exit__(self):
             pass
 
@@ -194,8 +198,10 @@ class AuthStateMachine(Modal):
          - PUK/PIN is incorrect
          - After five failed attempts, PUK2 is needed
         """
+
         def __enter__(self):
             pass
+
         def __exit__(self):
             pass
 
@@ -209,11 +215,12 @@ class AuthStateMachine(Modal):
          - PUK2/PIN is incorrect
          - After ten failed attempts, device is locked
         """
+
         def __enter__(self):
             pass
+
         def __exit__(self):
             pass
 
         def do_next(self):
             pass
-

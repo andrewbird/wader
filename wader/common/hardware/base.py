@@ -30,6 +30,7 @@ from wader.common.statem.simple import SimpleStateMachine
 from wader.common.statem.networkreg import NetworkRegistrationStateMachine
 import wader.common.exceptions as ex
 
+
 class WCDMACustomizer(object):
     """
     I contain all the custom classes and metadata that a WCDMA device needs
@@ -47,6 +48,7 @@ class WCDMACustomizer(object):
     :cvar netr_klass: Class that will handle the network registration for this
           device
     """
+
     from wader.common.exported import WCDMAExporter
     wrapper_klass = WCDMAWrapper
     exporter_klass = WCDMAExporter
@@ -60,6 +62,7 @@ class WCDMACustomizer(object):
     simp_klass = SimpleStateMachine
     netr_klass = NetworkRegistrationStateMachine
 
+
 def build_band_dict(family_dict, supported_list):
     """Returns a new dict with just the supported bands of the family"""
     band_dict = {}
@@ -67,6 +70,7 @@ def build_band_dict(family_dict, supported_list):
         band_dict[band] = family_dict[band]
 
     return band_dict
+
 
 def _identify_device(port):
     """Returns the model of the device present at `port`"""
@@ -92,8 +96,10 @@ def _identify_device(port):
 
     return response[0]
 
+
 def identify_device(plugin):
     """Returns a :class:`~wader.common.plugin.DevicePlugin` out of `plugin`"""
+
     def identify_device_cb(model):
         # plugin to return
         _plugin = None
@@ -124,4 +130,3 @@ def identify_device(plugin):
     d = deferToThread(_identify_device, port.path)
     d.addCallback(identify_device_cb)
     return d
-

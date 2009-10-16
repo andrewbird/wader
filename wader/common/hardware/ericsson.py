@@ -88,6 +88,7 @@ class EricssonSIMClass(SIMBaseClass):
         self.sconn.disable_echo()
 
         d = super(EricssonSIMClass, self).initialize(set_encoding=set_encoding)
+
         def init_callback(size):
             # setup SIM storage defaults
             d = self.sconn.send_at('AT+CPMS="SM","SM","SM"')
@@ -107,7 +108,7 @@ class EricssonWrapper(WCDMAWrapper):
 
     def add_contact(self, contact):
         name = from_u(contact.name)
-        number =  from_u(contact.number)
+        number = from_u(contact.number)
 
         if 'UCS2' in self.device.sim.charset:
             name = pack_ucs2_bytes(name)
@@ -167,6 +168,7 @@ class EricssonWrapper(WCDMAWrapper):
 
     def enable_radio(self, enable):
         d = self.get_radio_status()
+
         def get_radio_status_cb(status):
             if status in [0, 4] and enable:
                 return self.send_at('AT+CFUN=1')
@@ -192,6 +194,7 @@ class EricssonWrapper(WCDMAWrapper):
 
     def get_charset(self):
         d = super(EricssonWrapper, self).get_charset()
+
         def get_charset_cb(charset):
             if check_if_ucs2(charset):
                 charset = from_ucs2(charset)
@@ -202,6 +205,7 @@ class EricssonWrapper(WCDMAWrapper):
 
     def get_charsets(self):
         d = super(EricssonWrapper, self).get_charsets()
+
         def get_charsets_cb(charsets):
             ret = []
             for charset in charsets:
@@ -215,6 +219,7 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_network_mode(self):
+
         def get_network_mode_cb(resp):
             gsm = int(resp[0].group('gsm'))
             umts = int(resp[0].group('umts'))
@@ -240,6 +245,7 @@ class EricssonWrapper(WCDMAWrapper):
         self.state_dict['creg_retries'] = 0
 
         def get_it(auxdef=None):
+
             def get_netreg_status_cb((mode, status)):
                 self.state_dict['creg_retries'] += 1
                 if self.state_dict['creg_retries'] > MAX_RETRIES:
@@ -267,6 +273,7 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_pin_status(self):
+
         def ericsson_get_pin_status(facility):
             """
             Checks whether the pin is enabled or disabled
@@ -360,6 +367,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
     done = SimpleStateMachine.done
 
     class set_apn(mode):
+
         def __enter__(self):
             log.msg("EricssonSimpleStateMachine: set_apn entered")
             d = self.sconn.set_charset("GSM")
@@ -375,6 +383,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
                 self.transition_to('connect')
 
     class connect(mode):
+
         def __enter__(self):
             log.msg("EricssonSimpleStateMachine: connect entered")
 
@@ -384,6 +393,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
             return self.sconn.set_charset("UCS2")
 
         def do_next(self):
+
             def on_e2nap_done(_):
                 conn_id = self.sconn.state_dict['conn_id']
                 return self.sconn.send_at("AT*ENAP=1,%d" % conn_id)
@@ -403,6 +413,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
             d.addCallback(lambda _: self.transition_to('done'))
 
     class done(mode):
+
         def __enter__(self):
             log.msg("EricssonSimpleStateMachine: done entered")
 
@@ -439,9 +450,9 @@ class EricssonCustomizer(WCDMACustomizer):
 
 class EricssonDevicePlugin(DevicePlugin):
     """DevicePlugin for Ericsson"""
+
     sim_klass = EricssonSIMClass
     custom = EricssonCustomizer()
 
     def __init__(self):
         super(EricssonDevicePlugin, self).__init__()
-

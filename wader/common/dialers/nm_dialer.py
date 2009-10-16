@@ -32,8 +32,10 @@ from wader.common.runtime import nm08_present
 
 CONNECTED, DISCONNECTED = 1, 2
 
+
 class NMDialer(Dialer):
     """I wrap NetworkManager's dialer"""
+
     def __init__(self, device, opath, **kwds):
         super(NMDialer, self).__init__(device, opath, **kwds)
 

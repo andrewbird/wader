@@ -172,6 +172,7 @@ begin
 end;
 """
 
+
 def message_read(flags):
     """
     Returns a bool indicating whether the message had been read or not
@@ -179,12 +180,15 @@ def message_read(flags):
     # second bit is the "was read" flag
     return (int(flags) & READ) >> 1
 
+
 def get_value_and_pop(kw, name, d=None):
     """kw.pop[name] if name in kw, else d. d defaults to None"""
     return (kw.pop(name) if name in kw else d)
 
+
 class Contact(_Contact):
     """I am a :class:`_Contact` with email and a picture"""
+
     def __init__(self, *args, **kw):
         self.email = to_u(get_value_and_pop(kw, 'email', ''))
         self.picture = get_value_and_pop(kw, 'picture', '')
@@ -202,6 +206,7 @@ class Contact(_Contact):
 
 class Folder(object):
     """I am a container for threads and messages"""
+
     def __init__(self, name, index=None):
         self.name = name
         self.index = index
@@ -232,6 +237,7 @@ drafts_folder = Folder("Drafts", 3)
 
 class Message(_Message):
     """I am a :class:`_Message` that belongs to a thread and has flags"""
+
     def __init__(self, *args, **kw):
         self.flags = get_value_and_pop(kw, 'flags', READ)
         self.thread = get_value_and_pop(kw, 'thread')
@@ -254,6 +260,7 @@ class Message(_Message):
 
 class Thread(object):
     """I represent an SMS thread in the DB"""
+
     def __init__(self, _datetime, number, index=None, message_count=1,
                  snippet='', read=1, folder=None):
         super(Thread, self).__init__()
@@ -293,6 +300,7 @@ class DBError(Exception):
 
 class DBProvider(object):
     """Base class for the DB providers"""
+
     def __init__(self, path, schema):
         self.conn = sqlite3.connect(path, isolation_level=None)
         c = self.conn.cursor()
@@ -309,6 +317,7 @@ class DBProvider(object):
 
 class ContactProvider(DBProvider):
     """DB contacts provider"""
+
     def __init__(self, path):
         super(ContactProvider, self).__init__(path, CONTACTS_SCHEMA)
 
@@ -349,6 +358,7 @@ class ContactProvider(DBProvider):
 
 class SmsProvider(DBProvider):
     """DB Sms provider"""
+
     def __init__(self, path):
         super(SmsProvider, self).__init__(path, SMS_SCHEMA)
         self.conn.create_function('msg_is_read', 1, message_read)
@@ -555,4 +565,3 @@ class SmsProvider(DBProvider):
                   (folder.index, thread.index))
         thread.folder = folder
         return thread
-

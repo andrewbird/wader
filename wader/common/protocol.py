@@ -310,7 +310,6 @@ class BufferingStateMachine(object, protocol.Protocol):
                     log.msg("waiting: unmatched data %r" % data)
 
 
-
 class SerialProtocol(BufferingStateMachine):
     """
     I define the protocol used to communicate with the SIM card
@@ -347,6 +346,7 @@ class SerialProtocol(BufferingStateMachine):
     :class:`~wader.common.hardware.base.Customizer` if a card uses a
     different AT string than the rest for that particular command.
     """
+
     def __init__(self, device):
         super(SerialProtocol, self).__init__(device)
         self.queue = defer.DeferredQueue()
@@ -367,6 +367,7 @@ class SerialProtocol(BufferingStateMachine):
         self.transport.write(self.cmd.splitcmd)
 
     def _process_at_cmd(self, cmd):
+
         def _transition_and_send(_):
             log.msg("%s: sending %r" % (self.state, cmd.cmd),
                     system=self._get_log_prefix())
@@ -449,6 +450,7 @@ class WCDMAProtocol(SerialProtocol):
     def delete_all_contacts(self):
         """Deletes all the contacts in SIM card, function useful for tests"""
         d = self.get_used_contact_ids()
+
         def list_contacts_ids_cb(used):
             if not used:
                 return True
@@ -461,6 +463,7 @@ class WCDMAProtocol(SerialProtocol):
     def delete_all_sms(self):
         """Deletes all the messages in SIM card, function useful for tests"""
         d = self.get_used_sms_ids()
+
         def delete_all_sms_cb(used):
             if not used:
                 return True
@@ -655,6 +658,7 @@ class WCDMAProtocol(SerialProtocol):
 
     def get_used_contact_ids(self):
         """Returns a list with the used contact ids"""
+
         def errback(failure):
             failure.trap(E.NotFound, E.GenericError)
             return []
@@ -667,6 +671,7 @@ class WCDMAProtocol(SerialProtocol):
     def get_used_sms_ids(self):
         """Returns a list with used SMS ids in the SIM card"""
         d = self.list_sms()
+
         def errback(failure):
             failure.trap(E.NotFound, E.GenericError)
             return []
@@ -766,4 +771,3 @@ class WCDMAProtocol(SerialProtocol):
         """Send an arbitrary AT string to the SIM card"""
         cmd = ATCmd(at_str, name=name)
         return self.queue_at_cmd(cmd)
-

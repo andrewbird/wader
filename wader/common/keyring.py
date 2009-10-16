@@ -49,18 +49,24 @@ else:
     except gnomekeyring.NoKeyringDaemonError:
         KEYRING_AVAILABLE = False
 
+
 class KeyringNoMatchError(Exception):
     """Exception raised when there is no match for a keyring request"""
 
+
 class KeyringInvalidPassword(Exception):
     """Exception raised when the supplied password is invalid"""
+
 
 class KeyringIsClosed(Exception):
     """
     Exception raised when an operation has been attempted on a closed keyring
     """
 
+
 _keyring_manager = None
+
+
 def get_keyring_manager(base_gpath):
     """
     Returns a reference to the :class:`KeyringManager` singleton
@@ -89,6 +95,7 @@ class KeyringManager(Object):
 
     I provide a uniform API over different keyrings
     """
+
     def __init__(self, keyring):
         name = BusName(WADER_KEYRING_SERVICE, bus=dbus.SystemBus())
         super(KeyringManager, self).__init__(bus_name=name,
@@ -194,6 +201,7 @@ class KeyringManager(Object):
 
 class GnomeKeyring(object):
     """I just wrap gnome-keyring"""
+
     def __init__(self):
         super(GnomeKeyring, self).__init__()
         self.is_new = False
@@ -235,7 +243,7 @@ class GnomeKeyring(object):
         try:
             secrets = gnomekeyring.find_items_sync(
                             gnomekeyring.ITEM_GENERIC_SECRET, attrs)
-            return {'gsm' : {NM_PASSWD: secrets[0].secret}}
+            return {'gsm' : {NM_PASSWD : secrets[0].secret}}
         except gnomekeyring.NoMatchError:
             msg = "No secrets for connection '%s'"
             raise KeyringNoMatchError(msg % str(uuid))
@@ -347,4 +355,3 @@ class AESKeyring(GConfHelper):
         self.set_value(os.path.join(self.path, 'data'), enc_data)
         self.set_value(os.path.join(self.path, 'orig_len'), orig_len)
         self.client.suggest_sync()
-

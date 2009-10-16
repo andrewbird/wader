@@ -33,8 +33,10 @@ from wader.common.consts import (WADER_SERVICE, STATUS_IDLE, STATUS_HOME,
 REGISTER_TIMEOUT = 15
 MAX_WAIT_TIMES = 6
 
+
 class NetworkRegistrationStateMachine(Modal):
     """I am a network registration state machine"""
+
     modeAttribute = 'mode'
     initialMode = 'check_registration'
 
@@ -214,9 +216,9 @@ class NetworkRegistrationStateMachine(Modal):
         d.addCallback(process_netnames)
 
     # states
-
     class check_registration(mode):
         """I check +CREG to see whats the initial status"""
+
         def __enter__(self):
             log.msg("%s: check_registration entered" % self)
 
@@ -227,13 +229,13 @@ class NetworkRegistrationStateMachine(Modal):
             d = self.sconn.get_netreg_status()
             d.addCallback(self.process_netreg_status)
 
-
     class check_constraints(mode):
         """
         We are registered with our home network or roaming
 
         We are going to check whether it satisfies our constraints or not
         """
+
         def __enter__(self):
             log.msg("%s: check_constraints entered" % self)
 
@@ -249,7 +251,6 @@ class NetworkRegistrationStateMachine(Modal):
 
             d = self.sconn.get_netreg_info()
             d.addCallback(self.process_netreg_info)
-
 
     class manual_registration(mode):
         """
@@ -267,6 +268,7 @@ class NetworkRegistrationStateMachine(Modal):
             log.msg("%s: manual_registration exited" % self)
 
         def do_next(self):
+
             def process_imsi_cb(imsi):
                 imsi = imsi[:5]
                 assert self.registering == False, "Registering again?"
@@ -283,4 +285,3 @@ class NetworkRegistrationStateMachine(Modal):
             log.msg("%s: obtaining the IMSI..." % self)
             d = self.sconn.get_imsi()
             d.addCallback(process_imsi_cb)
-

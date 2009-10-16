@@ -44,18 +44,18 @@ HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
 
 OPTION_BAND_MAP_DICT = {
-    'ANY'   : consts.MM_NETWORK_BAND_ANY,
-    'EGSM'  : consts.MM_NETWORK_BAND_EGSM,
-    'DCS'   : consts.MM_NETWORK_BAND_DCS,
-    'PCS'   : consts.MM_NETWORK_BAND_PCS,
-    'G850'  : consts.MM_NETWORK_BAND_G850,
+    'ANY' : consts.MM_NETWORK_BAND_ANY,
+    'EGSM' : consts.MM_NETWORK_BAND_EGSM,
+    'DCS' : consts.MM_NETWORK_BAND_DCS,
+    'PCS' : consts.MM_NETWORK_BAND_PCS,
+    'G850' : consts.MM_NETWORK_BAND_G850,
     'U2100' : consts.MM_NETWORK_BAND_U2100,
     'U1900' : consts.MM_NETWORK_BAND_U1900,
     'U1700' : consts.MM_NETWORK_BAND_U1700,
-    '17IV'  : consts.MM_NETWORK_BAND_17IV,
-    'U850'  : consts.MM_NETWORK_BAND_U850,
-    'U800'  : consts.MM_NETWORK_BAND_U850,
-    'U900'  : consts.MM_NETWORK_BAND_U900,
+    '17IV' : consts.MM_NETWORK_BAND_17IV,
+    'U850' : consts.MM_NETWORK_BAND_U850,
+    'U800' : consts.MM_NETWORK_BAND_U850,
+    'U900' : consts.MM_NETWORK_BAND_U900,
     'U17IX' : consts.MM_NETWORK_BAND_U17IX,
 }
 
@@ -64,7 +64,7 @@ OPTION_CONN_DICT = {
     consts.MM_NETWORK_MODE_3G_ONLY : 1,
     consts.MM_NETWORK_MODE_2G_PREFERRED : 2,
     consts.MM_NETWORK_MODE_3G_PREFERRED : 3,
-    consts.MM_NETWORK_MODE_ANY     : 5,
+    consts.MM_NETWORK_MODE_ANY : 5,
 }
 
 # The option band dictionary does not need to be specified as we
@@ -114,6 +114,7 @@ class OptionSIMClass(SIMBaseClass):
     I perform an initial setup in the device and will not
     return until the SIM is *really* ready
     """
+
     def __init__(self, sconn):
         super(OptionSIMClass, self).__init__(sconn)
         self.num_retries = 0
@@ -146,6 +147,7 @@ class OptionSIMClass(SIMBaseClass):
         deferred = defer.Deferred()
 
         def process_sim_state(auxdef):
+
             def parse_response(resp):
                 status = tuple(map(int, resp[0].groups()))
                 if status == (1, 1, 1):
@@ -186,6 +188,7 @@ class OptionWrapper(WCDMAWrapper):
 
     def _get_band_dict(self):
         """Returns a dict with the available bands and its status"""
+
         def callback(resp):
             bands = {}
 
@@ -200,6 +203,7 @@ class OptionWrapper(WCDMAWrapper):
 
     def get_band(self):
         """Returns the current used band"""
+
         def get_band_dict_cb(bands):
             if 'ANY' in bands and bands['ANY'] == 1:
                 # can't be combined by design
@@ -221,6 +225,7 @@ class OptionWrapper(WCDMAWrapper):
 
     def get_bands(self):
         """Returns the supported bands"""
+
         def get_band_dict_cb(bands):
             ret = 0
             for key in bands.keys():
@@ -239,6 +244,7 @@ class OptionWrapper(WCDMAWrapper):
 
     def get_network_mode(self):
         """Returns the current network mode"""
+
         def callback(resp):
             _mode = int(resp[0].group('mode'))
             OPTION_BAND_DICT_REV = revert_dict(OPTION_CONN_DICT)
@@ -267,8 +273,8 @@ class OptionWrapper(WCDMAWrapper):
                 # enabling ANY should suffice
                 responses.append(self.send_at(at_str % ('ANY', 1)))
             else:
-                # ANY is not sought, if ANY is enabled we should remove it first
-                # bitwise bands
+                # ANY is not sought, if ANY is enabled we should remove it
+                # before bitwising bands
                 if 'ANY' in bands and bands['ANY'] == 1:
                     responses.append(self.send_at(at_str % ('ANY', 0)))
 
@@ -331,6 +337,7 @@ class OptionHSOWrapper(OptionWrapper):
         self.state_dict['num_of_retries'] = 0
 
         def real_get_ip4_config(deferred):
+
             def get_ip4_eb(failure):
                 failure.trap(E.GenericError)
                 self.state_dict['num_of_retries'] += 1
@@ -384,6 +391,7 @@ class HSOSimpleStateMachine(SimpleStateMachine):
     done = SimpleStateMachine.done
 
     class connect(mode):
+
         def __enter__(self):
             log.msg("HSO Simple SM: connect entered")
 
@@ -391,6 +399,7 @@ class HSOSimpleStateMachine(SimpleStateMachine):
             log.msg("HSO Simple SM: connect exited")
 
         def do_next(self):
+
             def on_hso_authenticated(_):
                 conn_id = self.device.sconn.state_dict['conn_id']
                 d = self.sconn.send_at('AT_OWANCALL=%d,1,0' % conn_id)
@@ -406,6 +415,7 @@ class HSOSimpleStateMachine(SimpleStateMachine):
 
 class OptionWCDMACustomizer(WCDMACustomizer):
     """Customizer for Option's cards"""
+
     async_regexp = re.compile(r"""
                 \r\n
                 (?P<signal>_O[A-Z]{3,}):\s(?P<args>.*)
@@ -418,7 +428,7 @@ class OptionWCDMACustomizer(WCDMACustomizer):
     device_capabilities = [S.SIG_NETWORK_MODE, S.SIG_RSSI]
     signal_translations = {
         '_OSSYSI' : (S.SIG_NETWORK_MODE, new_conn_mode_cb),
-        '_OSIGQ'  : (S.SIG_RSSI, lambda args:
+        '_OSIGQ' : (S.SIG_RSSI, lambda args:
                         (rssi_to_percentage(int(args.split(',')[0]))))
     }
     wrapper_klass = OptionWrapper
@@ -426,6 +436,7 @@ class OptionWCDMACustomizer(WCDMACustomizer):
 
 class OptionHSOWCDMACustomizer(OptionWCDMACustomizer):
     """Customizer for HSO WCDMA devices"""
+
     exporter_klass = HSOExporter
     wrapper_klass = OptionHSOWrapper
     simp_klass = HSOSimpleStateMachine
@@ -433,6 +444,7 @@ class OptionHSOWCDMACustomizer(OptionWCDMACustomizer):
 
 class OptionWCDMADevicePlugin(DevicePlugin):
     """DevicePlugin for Option"""
+
     sim_klass = OptionSIMClass
     custom = OptionWCDMACustomizer()
 
@@ -442,9 +454,8 @@ class OptionWCDMADevicePlugin(DevicePlugin):
 
 class OptionHSOWCDMADevicePlugin(OptionWCDMADevicePlugin):
     """DevicePlugin for Option HSO devices"""
+
     custom = OptionHSOWCDMACustomizer()
 
     def __init__(self):
         super(OptionHSOWCDMADevicePlugin, self).__init__()
-
-

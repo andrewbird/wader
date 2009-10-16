@@ -23,6 +23,7 @@ from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
 
+
 class SimpleStateMachine(Modal):
     """I am a state machine for o.fd.ModemManager.Modem.Simple"""
 
@@ -54,7 +55,7 @@ class SimpleStateMachine(Modal):
         self.deferred.errback(failure)
 
     class begin(mode):
-        # start by enabling device
+
         def __enter__(self):
             log.msg("Simple SM: begin entered")
 
@@ -62,11 +63,13 @@ class SimpleStateMachine(Modal):
             log.msg("Simple SM: begin exited")
 
         def do_next(self):
+            # start by enabling device
             d = self.sconn.enable_device(True)
             d.addCallback(lambda _: self.transition_to('check_pin'))
 
     class check_pin(mode):
         """We are going to check whether auth is ready or not"""
+
         def __enter__(self):
             log.msg("Simple SM: check_pin entered")
 
@@ -100,6 +103,7 @@ class SimpleStateMachine(Modal):
 
     class register(mode):
         """Registers with the given network id"""
+
         def __enter__(self):
             log.msg("Simple SM: register entered")
 
@@ -115,6 +119,7 @@ class SimpleStateMachine(Modal):
                 self.transition_to('set_apn')
 
     class set_apn(mode):
+
         def __enter__(self):
             log.msg("Simple SM: set_apn entered")
 
@@ -129,6 +134,7 @@ class SimpleStateMachine(Modal):
                 self.transition_to('set_band')
 
     class set_band(mode):
+
         def __enter__(self):
             log.msg("Simple SM: set_band entered")
 
@@ -145,6 +151,7 @@ class SimpleStateMachine(Modal):
                 self.transition_to('set_network_mode')
 
     class set_network_mode(mode):
+
         def __enter__(self):
             log.msg("Simple SM: set_network_mode entered")
 
@@ -160,6 +167,7 @@ class SimpleStateMachine(Modal):
                 self.transition_to('connect')
 
     class connect(mode):
+
         def __enter__(self):
             log.msg("Simple SM: connect entered")
 
@@ -172,6 +180,7 @@ class SimpleStateMachine(Modal):
             d.addCallback(lambda _: self.transition_to('done'))
 
     class done(mode):
+
         def __enter__(self):
             log.msg("Simple SM: done entered")
 
@@ -180,4 +189,3 @@ class SimpleStateMachine(Modal):
 
         def do_next(self):
             self.notify_success()
-

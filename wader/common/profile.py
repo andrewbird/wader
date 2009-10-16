@@ -174,6 +174,7 @@ class Profile(GConfHelper, DelayableDBusObject):
     @method(dbus_interface=NM_SYSTEM_SETTINGS_SECRETS,
             in_signature='sasb', out_signature='a{sa{sv}}')
     def GetSecrets(self, tag, hints, ask):
+
         def ask_user():
             self.GetSecrets.delay_reply()
             self.KeyNeeded(self, tag)
@@ -192,7 +193,7 @@ class Profile(GConfHelper, DelayableDBusObject):
                 ask_user()
             else:
                 self.secrets.register_open_callback(
-                    lambda : self.on_open_keyring(tag))
+                    lambda: self.on_open_keyring(tag))
                 # will emit KeyNeeded if on_open_keyring does not return
                 # sound secrets
                 self.GetSecrets.delay_reply()
@@ -381,7 +382,7 @@ class ProfileManager(Object, GConfHelper):
         props = {}
 
         # gsm
-        props['gsm'] = { 'band' : 0,
+        props['gsm'] = {'band' : 0,
                         'username' : network.username,
                         'password' : network.password,
                         'network-type' : 0,
@@ -409,12 +410,12 @@ class ProfileManager(Object, GConfHelper):
             ignore_auto_dns = False
             dns = []
 
-        props['ipv4'] = { 'addresses' : [],
+        props['ipv4'] = {'addresses' : [],
                          'dns' : dns,
                          'ignore-auto-dns': ignore_auto_dns,
                          'method' : 'auto',
                          'name' : 'ipv4',
-                         'routes' : [] }
+                         'routes' : []}
         return props
 
     def get_profiles(self):
@@ -468,4 +469,3 @@ class ProfileManager(Object, GConfHelper):
 
         profile = self.nm_profiles[uuid]
         return profile.__dbus_object_path__
-

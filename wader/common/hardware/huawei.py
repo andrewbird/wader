@@ -49,22 +49,22 @@ HUAWEI_CONN_DICT = {
 
     consts.MM_NETWORK_MODE_3G_ONLY : (14, 2),
 
-    consts.MM_NETWORK_MODE_2G_PREFERRED: (2, 1),
+    consts.MM_NETWORK_MODE_2G_PREFERRED : (2, 1),
 
-    consts.MM_NETWORK_MODE_3G_PREFERRED: (2, 2),
+    consts.MM_NETWORK_MODE_3G_PREFERRED : (2, 2),
 }
 
 HUAWEI_BAND_DICT = {
-    consts.MM_NETWORK_BAND_ANY   : 0x3FFFFFFF,
+    consts.MM_NETWORK_BAND_ANY : 0x3FFFFFFF,
 
-    consts.MM_NETWORK_BAND_DCS   : 0x00000080,
-    consts.MM_NETWORK_BAND_EGSM  : 0x00000100,
-    consts.MM_NETWORK_BAND_PCS   : 0x00200000,
-    consts.MM_NETWORK_BAND_G850  : 0x00080000,
+    consts.MM_NETWORK_BAND_DCS : 0x00000080,
+    consts.MM_NETWORK_BAND_EGSM : 0x00000100,
+    consts.MM_NETWORK_BAND_PCS : 0x00200000,
+    consts.MM_NETWORK_BAND_G850 : 0x00080000,
 
     consts.MM_NETWORK_BAND_U2100 : 0x00400000,
     consts.MM_NETWORK_BAND_U1900 : 0x00800000,
-    consts.MM_NETWORK_BAND_U850  : 0x04000000,
+    consts.MM_NETWORK_BAND_U850 : 0x04000000,
 }
 
 
@@ -128,6 +128,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
     """Wrapper for all Huawei cards"""
 
     def _get_syscfg(self):
+
         def parse_syscfg(resp):
             ret = {}
             mode_a = int(resp[0].group('modea'))
@@ -195,7 +196,8 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
             category = 145 if number.startswith('+') else 129
             args = (index, number, category, name, raw)
-            cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
+            cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args,
+                        name='add_contact')
             return self.queue_at_cmd(cmd)
 
         name = from_u(contact.name)
@@ -240,7 +242,8 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
     def list_contacts(self):
         """Returns a list with all the contacts in the SIM"""
-        cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size, name='list_contacts')
+        cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size,
+                    name='list_contacts')
         d = self.queue_at_cmd(cmd)
 
         def not_found_eb(failure):
@@ -283,6 +286,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         return d
 
     def get_network_info(self):
+
         def process_netinfo_cb(info):
             operator, tech = info
             m = BADOPER_REGEXP.match(operator)
@@ -306,6 +310,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
     def set_band(self, band):
         """Sets the band to ``band``"""
+
         def get_syscfg_cb(info):
             mode_a, mode_b = info['modea'], info['modeb']
             roam, srv = info['roam'], info['srv']
@@ -353,6 +358,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
+
         def get_syscfg_cb(info):
             _mode, acqorder = info['modea'], info['modeb']
             band, roam, srv = info['theband'], info['roam'], info['srv']
@@ -411,14 +417,15 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
 
 class HuaweiSIMClass(SIMBaseClass):
     """Huawei SIM Class"""
+
     def __init__(self, sconn):
         super(HuaweiSIMClass, self).__init__(sconn)
 
     def initialize(self, set_encoding=True):
+
         def at_curc_eb(failure):
             failure.trap(E.GenericError)
 
-        d = super(HuaweiSIMClass, self).initialize(set_encoding=set_encoding)
         def init_cb(size):
             # enable unsolicited control commands
             d = self.sconn.send_at('AT^CURC=1')
@@ -429,6 +436,7 @@ class HuaweiSIMClass(SIMBaseClass):
             self.sconn.send_at('AT+CPMS="SM","SM","SM"')
             return size
 
+        d = super(HuaweiSIMClass, self).initialize(set_encoding=set_encoding)
         d.addCallback(init_cb)
         return d
 
@@ -437,6 +445,7 @@ class HuaweiEMXXWrapper(HuaweiWCDMAWrapper):         # Modules have RFSWITCH
     """
     Wrapper for all Huawei embedded modules
     """
+
     def __init__(self, device):
         super(HuaweiEMXXWrapper, self).__init__(device)
 
@@ -467,5 +476,3 @@ class HuaweiWCDMADevicePlugin(DevicePlugin):
     """DevicePlugin for Huawei"""
     sim_klass = HuaweiSIMClass
     custom = HuaweiWCDMACustomizer()
-
-

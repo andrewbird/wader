@@ -31,6 +31,7 @@ from wader.common.plugin import PluginManager
 from wader.common.serialport import Ports
 from wader.common.startup import setup_and_export_device
 
+
 class OSXPlugin(UnixPlugin):
     """OSPlugin for OSX"""
 
@@ -52,6 +53,7 @@ class OSXPlugin(UnixPlugin):
 
 class HardwareManager(object):
     """I find and configure devices"""
+
     implements(IHardwareManager)
 
     def __init__(self):
@@ -118,4 +120,3 @@ class HardwareManager(object):
         base = dev_info['base'].replace('-', '')
         udi = "/device/%s/%s" % (base, model.replace(' ', ''))
         return udi
-

@@ -26,6 +26,7 @@ from wader.common.aterrors import ERROR_REGEXP
 
 OK_REGEXP = re.compile("\r\n(?P<resp>OK)\r\n")
 
+
 def build_cmd_dict(extract=OK_REGEXP, end=OK_REGEXP, error=ERROR_REGEXP):
     """Returns a dictionary ready to be used in `CMD_DICT`"""
     for regexp in [extract, end, error]:
@@ -37,6 +38,7 @@ def build_cmd_dict(extract=OK_REGEXP, end=OK_REGEXP, error=ERROR_REGEXP):
             raise ValueError("Don't know what to do with %r" % regexp)
 
     return dict(extract=extract, end=end, error=error)
+
 
 def get_cmd_dict_copy():
     """
@@ -238,6 +240,7 @@ CMD_DICT = {
 
 class ATCmd(object):
     """I encapsulate all the data related to an AT command"""
+
     def __init__(self, cmd, name=None, eol='\r\n'):
         self.cmd = cmd
         self.name = name
@@ -259,4 +262,3 @@ class ATCmd(object):
         """Returns the raw AT command plus EOL"""
         cmd = self.cmd + self.eol
         return str(cmd)
-

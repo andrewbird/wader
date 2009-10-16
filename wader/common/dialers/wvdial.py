@@ -70,7 +70,7 @@ TEMPLATES_DICT = {
     'CHAP' : CHAP_TEMPLATE,
 }
 
-### wvdial.conf stuff
+
 def get_wvdial_conf_file(conf, serial_port):
     """
     Returns the path of the generated wvdial.conf
@@ -84,6 +84,7 @@ def get_wvdial_conf_file(conf, serial_port):
     path = tempfile.mkstemp('wvdial.conf', consts.APP_NAME, dirpath, True)[1]
     save_file(path, text)
     return path
+
 
 def _generate_wvdial_conf(conf, sport):
     """
@@ -108,6 +109,7 @@ def _generate_wvdial_conf(conf, sport):
 
 class WVDialDialer(Dialer):
     """Dialer for WvDial"""
+
     binary = 'wvdial'
 
     def __init__(self, device, opath, **kwds):
@@ -157,6 +159,7 @@ class WVDialDialer(Dialer):
 
             args = [kill_path, '-9', self.proto.pid]
             d = utils.getProcessValue(args[0], args, env=None)
+
             def disconnect_cb(error_code):
                 log.msg("wvdial: exit code %d" % error_code)
                 self._cleanup()
@@ -334,4 +337,3 @@ class WVDialProtocol(protocol.ProcessProtocol):
             self._extract_connected(data)
         else:
             self._extract_disconnected(data)
-

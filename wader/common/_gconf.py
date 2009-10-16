@@ -19,6 +19,7 @@
 
 import gconf
 
+
 class GConfHelper(object):
     """I am the base class for gconf-backed conf system"""
 
@@ -54,4 +55,3 @@ class GConfHelper(object):
         else:
             msg = "Unsupported type %s for %s"
             raise TypeError(msg % (type(value), value))
-

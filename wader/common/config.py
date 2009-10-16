@@ -32,6 +32,7 @@ CONF_PATH = '/apps/%s' % APP_SLUG_NAME
 
 DEFAULT_KEYS = ['plugins', 'test']
 
+
 class WaderConfig(GConfHelper):
     """I manage Wader config"""
 
@@ -62,4 +63,3 @@ class WaderConfig(GConfHelper):
 
 
 config = WaderConfig()
-

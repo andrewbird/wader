@@ -22,6 +22,7 @@ from twisted.trial import unittest
 from wader.common.aterrors import extract_error
 import wader.common.aterrors as E
 
+
 class TestATErrors(unittest.TestCase):
     """Tests for wader.common.aterrors"""
 
@@ -46,4 +47,3 @@ class TestATErrors(unittest.TestCase):
         self.assertEqual(extract_error(raw)[0], E.CMSError500)
         raw2 = '\r\n+CMS ERROR: 301\r\n'
         self.assertEqual(extract_error(raw2)[0], E.CMSError301)
-

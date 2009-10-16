@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Helper methods for dealing with encoded strings"""
 
+
 def pack_ucs2_bytes(s):
     """
     Converts string ``s`` to UCS2
@@ -26,6 +27,7 @@ def pack_ucs2_bytes(s):
     """
     return to_u(s).encode('utf_16_be').encode('hex').upper()
 
+
 def unpack_ucs2_bytes(s):
     """
     Unpacks string ``s`` from UCS2
@@ -33,6 +35,7 @@ def unpack_ucs2_bytes(s):
     :rtype: unicode
     """
     return s.decode('hex').decode('utf_16_be', 'ignore')
+
 
 def unpack_ucs2_bytes_in_ts31101_80(s):
     """
@@ -64,6 +67,7 @@ def unpack_ucs2_bytes_in_ts31101_80(s):
         t = vs # show the invalid unicode
 
     return t
+
 
 def unpack_ucs2_bytes_in_ts31101_81(s):
     """
@@ -106,6 +110,7 @@ def unpack_ucs2_bytes_in_ts31101_81(s):
             t += unichr(base + (c_ord & 0x7f))
     return t
 
+
 def unpack_ucs2_bytes_in_ts31101_82(s):
     """
     Returns a string from ``s`` which is encoded in TS 31.101 (Annex A) type 82
@@ -146,6 +151,7 @@ def unpack_ucs2_bytes_in_ts31101_82(s):
             t += unichr(base + (c_ord & 0x7f))
     return t
 
+
 def check_if_ucs2(text):
     """
     Test whether ``s`` is a UCS2 encoded string
@@ -163,6 +169,7 @@ def check_if_ucs2(text):
 
     return False
 
+
 def from_u(s):
     """
     Encodes ``s`` to utf-8 if its not already encoded
@@ -170,6 +177,7 @@ def from_u(s):
     :rtype: str
     """
     return (s.encode('utf8') if isinstance(s, unicode) else s)
+
 
 def from_ucs2(s):
     """
@@ -179,6 +187,7 @@ def from_ucs2(s):
     """
     return (unpack_ucs2_bytes(s) if check_if_ucs2(s) else s)
 
+
 def to_u(s):
     """
     Converts ``s`` to unicode if not already converted
@@ -186,4 +195,3 @@ def to_u(s):
     :rtype: unicode
     """
     return (s if isinstance(s, unicode) else unicode(s, 'utf8'))
-

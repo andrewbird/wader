@@ -18,30 +18,36 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """All the exceptions in Wader"""
 
+
 class DeviceLockedError(Exception):
     """
     Exception raised after an authentication mess ending up in a device locked
     """
 
+
 class LimitedServiceNetworkError(Exception):
     """Exception raised when AT+COPS? replied 'Limited Service'"""
 
+
 class MalformedSMSError(Exception):
     """Exception raised when an error is received decodifying a SMS"""
+
 
 class NetworkRegistrationError(Exception):
     """
     Exception raised when an error occurred while registering with the network
     """
 
+
 class PluginInitialisationError(Exception):
     """Exception raised when an error occurred while initialisating a plugin"""
 
+
 class ProfileNotFoundError(Exception):
     """Exception raised when a profile hasn't been found"""
+
 
 class UnknownPluginNameError(Exception):
     """
     Exception raised when we don't have a plugin with the given remote name
     """
-
