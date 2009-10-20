@@ -9,7 +9,5 @@ setup(name='wader-plugins-contacts-mm',
         author='Pablo Marti Gamboa',
         author_email='pmarti@warp.es',
         license='GPL',
-        packages=['wader.plugins'],
-        namespace_packages=['wader.plugins','wader'],
-        )
+        packages=['wader.plugins', 'wader.test'])
 
