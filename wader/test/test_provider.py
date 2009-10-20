@@ -24,10 +24,10 @@ from time import time
 
 from twisted.trial import unittest
 
-from wader.common.provider import (SMS_SCHEMA, ContactProvider, SmsProvider,
-                                   Message, Contact, Folder, Thread, DBError,
-                                   inbox_folder, outbox_folder, drafts_folder,
-                                   message_read, READ, UNREAD)
+from wader.common.provider import (SMS_SCHEMA, SmsProvider, Message, Folder,
+                                   Thread, DBError, inbox_folder,
+                                   outbox_folder, drafts_folder, READ, UNREAD,
+                                   message_read)
 
 class TestDBTriggers(unittest.TestCase):
     """Tests for the DB triggers"""
@@ -243,55 +243,6 @@ class TestDBTriggers(unittest.TestCase):
               "update thread set folder_id = (select max(id) from folder) + 1")
         # leave everything as we found it
         c.execute("delete from thread where id=1")
-
-
-class TestContactProvider(unittest.TestCase):
-    """Tests for ContactProvider"""
-    def setUp(self):
-        self.provider = ContactProvider(':memory:')
-
-    def tearDown(self):
-        self.provider.close()
-
-    def test_add_contact(self):
-        contact = Contact('Juan', '+2343232322', email='juan@mail.net')
-        contact = self.provider.add_contact(contact)
-        self.assertEqual(contact.index, 1)
-        # leave everything as we found it
-        self.provider.delete_contact(contact)
-
-    def test_delete_contact(self):
-        contact = Contact('Juan', '+2343232322', email='juan@mail.net')
-        contact = self.provider.add_contact(contact)
-        self.assertEqual(len(list(self.provider.list_contacts())), 1)
-        # leave everything as we found it
-        self.provider.delete_contact(contact)
-        self.assertEqual(len(list(self.provider.list_contacts())), 0)
-
-    def test_edit_contact(self):
-        contact = Contact('Manolo', '+34232322', email='manolo@example.com')
-        contact = self.provider.add_contact(contact)
-        # now edit it, get a list of the contacts and make sure is present
-        contact.name = 'Manny'
-        contact.number = '+12323424323'
-        contact = self.provider.edit_contact(contact)
-
-        found = False
-        for c in self.provider.list_contacts():
-            if contact.name == c.name and contact.number == c.number:
-                found = True
-                break
-
-        self.assertEqual(found, True)
-        # leave everything as we found it
-        self.provider.delete_contact(contact)
-
-    def test_list_contact(self):
-        contact = Contact('Juan', '+2343232322', email='juan@mail.net')
-        contact = self.provider.add_contact(contact)
-        self.assertEqual(len(list(self.provider.list_contacts())), 1)
-        # leave everything as we found it
-        self.provider.delete_contact(contact)
 
 
 class TestSmsProvider(unittest.TestCase):

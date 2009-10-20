@@ -16,8 +16,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Unittests for the SQLite IContactProvider"""
-import os
-
 from twisted.trial import unittest
 
 from wader.plugins.sqlite_provider import sqlite_provider, SQLContact
@@ -27,12 +25,11 @@ class TestSQLiteContactProvider(unittest.TestCase):
 
     def setUpClass(self):
         self.provider = sqlite_provider
-        self.provider.initialize(dict(path='/tmp/foo'))
+        self.provider.initialize(dict(path=':memory'))
 
     def tearDownClass(self):
         # leave everything as found
         self.provider.close()
-        os.unlink('/tmp/foo')
 
     def test_add_contact(self):
         name, number = 'John', '+4324343232'

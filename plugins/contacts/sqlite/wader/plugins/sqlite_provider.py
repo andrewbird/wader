@@ -21,17 +21,39 @@ import sqlite3
 from zope.interface import implements
 from twisted.plugin import IPlugin
 
-from wader.common.provider import Contact, ContactProvider
+from wader.common.contact import Contact
+from wader.common.encoding import to_u
 from wader.common.interfaces import IContactProvider
+from wader.common.utils import get_value_and_pop
+
+contact_SCHEMA = """
+create table contact (
+    id integer primary key autoincrement,
+    name text not null,
+    number text not null,
+    email text,
+    picture blob);
+
+create table version (
+    version integer default 1);
+"""
 
 class SQLContact(Contact):
-    """I represent a contact in the DB"""
+    """I am a :class:`Contact` with email and a picture"""
 
-    def __eq__(self, other):
-        return self.index == other.index
+    def __init__(self, *args, **kw):
+        self.email = to_u(get_value_and_pop(kw, 'email', ''))
+        self.picture = get_value_and_pop(kw, 'picture', '')
+        super(SQLContact, self).__init__(*args, **kw)
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    @classmethod
+    def from_row(cls, row):
+        """Returns a :class:`Contact` out of ``row``"""
+        return cls(row[1], row[2], index=row[0], email=row[3], picture=row[4])
+
+    def to_row(self):
+        """Returns a tuple object ready to be inserted in the DB"""
+        return (self.index, self.name, self.number, self.email, self.picture)
 
 
 class SQLiteContactProvider(object):
@@ -46,31 +68,44 @@ class SQLiteContactProvider(object):
         self.provider = None
 
     def initialize(self, init_obj):
-        self.provider = ContactProvider(init_obj['path'])
+        conn = sqlite3.connect(init_obj['path'], isolation_level=None)
+        self.cursor = conn.cursor()
+        try:
+            self.cursor.executescript(contact_SCHEMA)
+        except sqlite3.OperationalError:
+            # database was present
+            pass
 
     def close(self):
-        return self.provider.close()
+        return self.cursor.close()
 
     def add_contact(self, contact):
         """See :meth:`IContactProvider.add_contact`"""
         if not isinstance(contact, SQLContact):
             return
 
-        return self.provider.add_contact(contact)
+        self.cursor.execute("insert into contact values(?, ?, ?, ?, ?)",
+                            contact.to_row())
+        contact.index = self.cursor.lastrowid
+        return contact
 
     def find_contacts(self, pattern):
         """See :meth:`IContactProvider.find_contacts`"""
-        return self.provider.find_contacts(pattern)
+        sql = "select * from contact where name like ?"
+        self.cursor.execute(sql, ("%%%s%%" % pattern,))
+        return (SQLContact.from_row(r) for r in self.cursor.fetchall())
 
     def list_contacts(self):
         """See :meth:`IContactProvider.list_contacts`"""
-        return self.provider.list_contacts()
+        self.cursor.execute("select * from contact")
+        return (SQLContact.from_row(r) for r in self.cursor.fetchall())
 
     def remove_contact(self, contact):
         """See :meth:`IContactProvider.remove_contact`"""
         if isinstance(contact, SQLContact):
-            # filter out non SQLContacts
-            return self.provider.remove_contact(contact)
+            # filter out non SQLcontact
+            sql = "delete from contact where id=?"
+            self.cursor.execute(sql, (contact.index,))
 
 
 sqlite_provider = SQLiteContactProvider()

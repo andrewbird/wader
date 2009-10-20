@@ -21,9 +21,8 @@ from datetime import datetime
 import sqlite3
 from time import mktime
 
-from wader.common.contact import Contact as _Contact
-from wader.common.encoding import to_u
 from wader.common.sms import Message as _Message
+from wader.common.utils import get_value_and_pop
 
 INBOX, OUTBOX, DRAFTS = 1, 2, 3
 UNREAD, READ = 0x01, 0x02
@@ -33,18 +32,6 @@ UNREAD, READ = 0x01, 0x02
 # 2 - Unsent message that has been stored
 # 3 - Sent message that has been stored
 # 4 - Any message
-
-CONTACTS_SCHEMA = """
-create table contact (
-    id integer primary key autoincrement,
-    name text not null,
-    number text not null,
-    email text,
-    picture blob);
-
-create table version (
-    version integer default 1);
-"""
 
 SMS_SCHEMA = """
 create table message (
@@ -181,29 +168,6 @@ def message_read(flags):
     return (int(flags) & READ) >> 1
 
 
-def get_value_and_pop(kw, name, d=None):
-    """kw.pop[name] if name in kw, else d. d defaults to None"""
-    return (kw.pop(name) if name in kw else d)
-
-
-class Contact(_Contact):
-    """I am a :class:`_Contact` with email and a picture"""
-
-    def __init__(self, *args, **kw):
-        self.email = to_u(get_value_and_pop(kw, 'email', ''))
-        self.picture = get_value_and_pop(kw, 'picture', '')
-        super(Contact, self).__init__(*args, **kw)
-
-    @classmethod
-    def from_row(cls, row):
-        """Returns a :class:`Contact` out of ``row``"""
-        return cls(row[1], row[2], index=row[0], email=row[3], picture=row[4])
-
-    def to_row(self):
-        """Returns a tuple object ready to be inserted in the DB"""
-        return (self.index, self.name, self.number, self.email, self.picture)
-
-
 class Folder(object):
     """I am a container for threads and messages"""
 
@@ -313,53 +277,6 @@ class DBProvider(object):
     def close(self):
         """Closes the provider and frees resources"""
         self.conn.close()
-
-
-class ContactProvider(DBProvider):
-    """DB contacts provider"""
-
-    def __init__(self, path):
-        super(ContactProvider, self).__init__(path, CONTACTS_SCHEMA)
-
-    def add_contact(self, contact):
-        """
-        Adds ``contact`` to the DB returning the object updated with index
-        """
-        c = self.conn.cursor()
-        c.execute("insert into contact values (?, ?, ?, ?, ?)",
-                  contact.to_row())
-        contact.index = c.lastrowid
-        return contact
-
-    def delete_contact(self, contact):
-        """Deletes ``contact`` from the DB"""
-        c = self.conn.cursor()
-        c.execute("delete from contact where id=?", (contact.index,))
-
-    def edit_contact(self, contact):
-        """
-        Edits ``contact`` with the new attributes
-
-        The index can not change, so we'll update the rest
-        """
-        c = self.conn.cursor()
-        args = (contact.name, contact.number, contact.email, contact.picture,
-                contact.index)
-        c.execute("""update contact set name = ?, number = ?,
-                     email = ?, picture = ? where id = ?""", args)
-        return contact
-
-    def find_contacts(self, pattern):
-        c = self.conn.cursor()
-        sql = "select * from contacts where name like ?"
-        c.execute(sql, ("%%%s%%" % pattern,))
-        return (Contact.from_row(r) for r in self.cursor.fetchall())
-
-    def list_contacts(self):
-        """Returns an iterator with all the contacts in DB"""
-        c = self.conn.cursor()
-        c.execute("select * from contact")
-        return (Contact.from_row(row) for row in c.fetchall())
 
 
 class SmsProvider(DBProvider):

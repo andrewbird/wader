@@ -179,3 +179,8 @@ def create_dns_lock(dns1, dns2, path):
     """
     text = """DNS1 %s\nDNS2 %s\n""" % (dns1, dns2)
     save_file(path, text)
+
+
+def get_value_and_pop(kw, name, d=None):
+    """kw.pop[name] if name in kw, else d. d defaults to None"""
+    return (kw.pop(name) if name in kw else d)
