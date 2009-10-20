@@ -11,11 +11,6 @@ Exceptions
 Classes
 --------
 
-.. autoclass:: Contact
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 .. autoclass:: Message
    :members:
    :show-inheritance:
@@ -27,11 +22,6 @@ Classes
 
 .. autoclass:: DBProvider
    :members:
-   :undoc-members:
-
-.. autoclass:: ContactProvider
-   :members:
-   :show-inheritance:
    :undoc-members:
 
 .. autoclass:: SmsProvider

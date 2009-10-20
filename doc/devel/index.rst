@@ -9,8 +9,10 @@ Documentation for developers
 
 .. toctree::
    :maxdepth: 1
-   
+
    overview
    usage
+   contacts-backend
+   sms-persistence
    add-new-device
    add-new-os
