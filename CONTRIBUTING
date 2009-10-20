@@ -1,0 +1,55 @@
+===========================
+Guidelines for contributing
+===========================
+
+Coding guidelines
+=================
+
+Like any well behaved python project out there, we are `PEP-8`_ compliant.
+All the gory details are in the link, a quick way to find out whether your
+code is complaint or not is via lints, such as `pylint`_ or `pep8`_.
+
+.. _PEP-8: http://www.python.org/dev/peps/pep-0008/
+.. _pylint: http://pypi.python.org/pypi/pylint
+.. _pep8: http://pypi.python.org/pypi/pep8
+
+
+Documentation guidelines
+========================
+
+All the documentation must be written in `rst`_. From the API documentation
+to developer documentation, everything must be written in this lightweight
+format.
+
+.. _rst: http://docutils.sourceforge.net/rst.html
+
+
+Project guidelines
+==================
+
+ * Testing: We have strived for a good coverage in the core, and we want not
+   only to keep it this way, but we want even better coverage. So every
+   testable feature to be added to the core must be comprehensively tested.
+   The `twisted tool`_ that we use for testing has a `coverage`_ switch that
+   is very handy to back up this bold statements.
+
+ .. _twisted tool: http://twistedmatrix.com/trac/browser/trunk/twisted/trial
+ .. _coverage: http://twistedmatrix.com/trac/browser/trunk/twisted/scripts/trial.py#L140
+
+ * Databases: As we had some bad experiences with ORMs in the past, and our
+   models are not that complex, we chose to create our own ORM layer. No, we
+   are not suffering from NIH syndrome, it is a very simple piece of code.
+   Anyway all the DB related code is contained in `wader.common.provider` and
+   tested in `wader.test.test_provider`. The schema and all the ORM related
+   methods must be there. Client code should never deal with cursors,
+   connections, etc.
+
+ * Portability: A great deal of effort has been invested on making this
+   code base as portable as possible (runs on OSX and Linux). As such, you
+   can not add a coupling in the code to any OS. All the troublesome methods
+   are abstracted out via the `wader.common.oal` module. Similarly, some
+   modules were designed with portability in mind in order to add new supported
+   platforms in the future. I am talking about modules such as
+   `wader.common.config`, `wader.common.profiles`, `wader.common.keyring`, etc.
+
+
