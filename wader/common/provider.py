@@ -349,6 +349,12 @@ class ContactProvider(DBProvider):
                      email = ?, picture = ? where id = ?""", args)
         return contact
 
+    def find_contacts(self, pattern):
+        c = self.conn.cursor()
+        sql = "select * from contacts where name like ?"
+        c.execute(sql, ("%%%s%%" % pattern,))
+        return (Contact.from_row(r) for r in self.cursor.fetchall())
+
     def list_contacts(self):
         """Returns an iterator with all the contacts in DB"""
         c = self.conn.cursor()

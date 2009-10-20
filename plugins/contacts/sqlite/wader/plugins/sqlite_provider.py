@@ -21,21 +21,11 @@ import sqlite3
 from zope.interface import implements
 from twisted.plugin import IPlugin
 
-from wader.common.contact import Contact
+from wader.common.provider import Contact, ContactProvider
 from wader.common.interfaces import IContactProvider
 
-DATA_SCHEMA = """
-create table contacts (
-    id     integer primary key,
-    name   text,
-    number text,
-    email  text)
-"""
-
 class SQLContact(Contact):
-    def __init__(self, name, number, index=None, email=""):
-        super(SQLContact, self).__init__(name, number, index)
-        self.email = email
+    """I represent a contact in the DB"""
 
     def __eq__(self, other):
         return self.index == other.index
@@ -43,64 +33,44 @@ class SQLContact(Contact):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    @classmethod
-    def from_row(cls, r):
-        """Returns a `SQLContact` instance out of ``t``"""
-        # (1, u'pablo', u'+234342342', u'foo@foo.com')
-        return cls(r[1], r[2], index=r[0], email=r[3])
-
 
 class SQLiteContactProvider(object):
     """SQLite IContactProvider backend"""
-    implements(IPlugin, IContactProvider)
 
+    implements(IPlugin, IContactProvider)
     name = "SQLite contact backend"
     author = u"Pablo Martí"
     version = "0.1"
 
     def __init__(self):
-        self.cursor = None
+        self.provider = None
 
     def initialize(self, init_obj):
-        conn = sqlite3.connect(init_obj['path'], isolation_level=None)
-        self.cursor = conn.cursor()
-        try:
-            self.cursor.execute(DATA_SCHEMA)
-        except sqlite3.OperationalError:
-            # database was present
-            pass
+        self.provider = ContactProvider(init_obj['path'])
 
     def close(self):
-        self.cursor.close()
+        return self.provider.close()
 
     def add_contact(self, contact):
         """See :meth:`IContactProvider.add_contact`"""
         if not isinstance(contact, SQLContact):
             return
 
-        args = (None, contact.name, contact.number, contact.email)
-        self.cursor.execute("insert into contacts values(?, ?, ?, ?)", args)
-        return SQLContact(args[1], args[2], email=args[3],
-                          index=self.cursor.lastrowid)
+        return self.provider.add_contact(contact)
 
     def find_contacts(self, pattern):
         """See :meth:`IContactProvider.find_contacts`"""
-        sql = "select * from contacts where name like ?"
-        self.cursor.execute(sql, ("%%%s%%" % pattern,))
-        return (SQLContact.from_row(r) for r in self.cursor.fetchall())
+        return self.provider.find_contacts(pattern)
 
     def list_contacts(self):
         """See :meth:`IContactProvider.list_contacts`"""
-        self.cursor.execute("select * from contacts")
-        return (SQLContact.from_row(r) for r in self.cursor.fetchall())
+        return self.provider.list_contacts()
 
     def remove_contact(self, contact):
         """See :meth:`IContactProvider.remove_contact`"""
         if isinstance(contact, SQLContact):
             # filter out non SQLContacts
-            sql = "delete from contacts where id=?"
-            self.cursor.execute(sql, (contact.index,))
+            return self.provider.remove_contact(contact)
 
 
 sqlite_provider = SQLiteContactProvider()
-
