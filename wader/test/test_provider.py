@@ -27,10 +27,195 @@ from twisted.trial import unittest
 from wader.common.provider import (SMS_SCHEMA, SmsProvider, Message, Folder,
                                    Thread, DBError, inbox_folder,
                                    outbox_folder, drafts_folder, READ, UNREAD,
-                                   message_read)
+                                   message_read, NETWORKS_SCHEMA, TYPE_PREPAID,
+                                   TYPE_CONTRACT, NetworkProvider,
+                                   NetworkOperator)
 
-class TestDBTriggers(unittest.TestCase):
-    """Tests for the DB triggers"""
+class TestNetworkDBTriggers(unittest.TestCase):
+    """Tests for the network DB triggers"""
+
+    def setUp(self):
+        self.conn = sqlite3.connect(':memory:', isolation_level=None)
+        c = self.conn.cursor()
+        # create schema
+        c.executescript(NETWORKS_SCHEMA)
+
+    def tearDown(self):
+        self.conn.close()
+
+    def test_deleting_on_cascade_apn(self):
+        """test trigger fkd_network_info_apn"""
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        c.execute("insert into apn values (NULL, 'ac.vodafone.es', 'vodafone',"
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21401')")
+        # make sure we have 1 apn now
+        c.execute("select count(*) from apn")
+        self.assertEqual(c.fetchone()[0], 1)
+        # now delete the only network_info
+        c.execute("delete from network_info where id='21401'")
+        # make sure we have 0 apns now
+        c.execute("select count(*) from apn")
+        self.assertEqual(c.fetchone()[0], 0)
+
+    def test_deleting_on_cascade_message_information(self):
+        """test trigger fkd_network_info_message_information"""
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        c.execute("insert into message_information values "
+                  "(1, '+432323232', '+213232323', 1, '21401')")
+        # make sure we have 1 message_information now
+        c.execute("select count(*) from message_information")
+        self.assertEqual(c.fetchone()[0], 1)
+        # now delete the only network_info
+        c.execute("delete from network_info where id='21401'")
+        # make sure we have 0 message_information now
+        c.execute("select count(*) from message_information")
+        self.assertEqual(c.fetchone()[0], 0)
+
+    def test_insert_apn_with_unknown_network_id(self):
+        """test trigger fki_apns_with_unknown_network_id"""
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        self.assertRaises(sqlite3.IntegrityError, c.execute,
+                  "insert into apn values (1, 'ac.vodafone.es', 'vodafone',"
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21402')")
+        # leave it as we found it
+        c.execute("delete from network_info where id='21401'")
+
+    def test_update_network_info_id_with_apns_associated(self):
+        """test fku_prevent_apn_network_info_network_id_bad_update trigger"""
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        c.execute("insert into apn values (NULL, 'ac.vodafone.es', 'vodafone',"
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21401')")
+        # now update the netid
+        self.assertRaises(sqlite3.IntegrityError, c.execute,
+                          "update network_info set id='21402' "
+                          "where name='Vodafone'")
+        # leave it as we found it
+        c.execute("delete from network_info where id='21401'")
+
+    def test_update_apn_network_id_with_unknown_netid(self):
+        """test fku_prevent_apn_network_id_bad_update trigger"""
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        c.execute("insert into apn values (1, 'ac.vodafone.es', 'vodafone',"
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21401')")
+        # now update the netid
+        self.assertRaises(sqlite3.IntegrityError, c.execute,
+                          "update apn set network_id='21402' where id=1")
+        # leave it as we found it
+        c.execute("delete from network_info where id='21401'")
+
+    def test_insert_message_information_with_unknown_netid(self):
+        """test fki_prevent_unknown_message_information_network_id trigger"""
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        self.assertRaises(sqlite3.IntegrityError, c.execute,
+                  "insert into message_information values "
+                  "(1, '+32432432', '+211211221', 2, '21402')")
+        # leave it as we found it
+        c.execute("delete from network_info where id='21401'")
+
+    def test_updating_network_info_id_with_mi_attached(self):
+        """test fku_prevent_network_info_id_bad_update_mi_exists trigger"""
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        c.execute("insert into message_information values "
+                  "(1, '+32432432', '+211211221', 2, '21401')")
+        # now update the netid
+        self.assertRaises(sqlite3.IntegrityError, c.execute,
+                "update network_info set id='21402' where name='Vodafone'")
+        # leave it as we found it
+        c.execute("delete from network_info where id='21401'")
+
+    def test_updating_message_information_network_id_with_unknown_netid(self):
+        """
+        test fku_prevent_message_information_network_id_bad_update trigger
+        """
+        c = self.conn.cursor()
+        c.execute("insert into network_info values "
+                  "('21401', 'Vodafone', 'Spain')")
+        c.execute("insert into message_information values "
+                  "(1, '+32432432', '+211211221', 2, '21401')")
+        # now update the netid
+        self.assertRaises(sqlite3.IntegrityError, c.execute,
+                "update message_information set network_id='21402' where id=1")
+        # leave it as we found it
+        c.execute("delete from network_info where id='21401'")
+
+
+class TestNetworkProvider(unittest.TestCase):
+    """Tests for the network provider"""
+
+    def setUp(self):
+        self.provider = NetworkProvider(':memory:')
+
+    def tearDown(self):
+        self.provider.close()
+
+    def test_populate_dbs(self):
+        networks = [NetworkOperator(["21401"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
+                    NetworkOperator(["21401"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        self.provider.populate_networks(networks)
+        # we should get just two objects
+        response = self.provider.get_network_by_id("214013241213122")
+        self.assertEqual(len(response), 2)
+        # leave it as we found it
+        c = self.provider.conn.cursor()
+        c.execute("delete from network_info where id='21401'")
+        response = self.provider.get_network_by_id("214013241213122")
+        self.assertEqual(len(response), 0)
+
+    def test_assert_passing_netid_raises_exception(self):
+        self.assertRaises(ValueError, self.provider.get_network_by_id, "21401")
+
+    def test_get_network_by_id_five_digit_netid(self):
+        networks = [NetworkOperator(["21401"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
+                    NetworkOperator(["21401"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        self.provider.populate_networks(networks)
+        # we should get just two objects
+        response = self.provider.get_network_by_id("2140153241213122")
+        self.assertEqual(len(response), 2)
+        # leave it as we found it
+        c = self.provider.conn.cursor()
+        c.execute("delete from network_info where 1=1")
+
+    def test_get_network_by_id_six_digit_netid(self):
+        networks = [NetworkOperator(["214016"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
+                    NetworkOperator(["214015"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        self.provider.populate_networks(networks)
+        # we should get just two objects
+        response = self.provider.get_network_by_id("2140153241213122")
+        self.assertEqual(len(response), 1)
+        self.assertEqual(response[0].apn, "contract.vodafone.es")
+        # leave it as we found it
+        c = self.provider.conn.cursor()
+        c.execute("delete from network_info where 1=1")
+
+    def test_get_network_by_id_seven_digit_netid(self):
+        networks = [NetworkOperator(["2140161"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
+                    NetworkOperator(["2140162"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        self.provider.populate_networks(networks)
+        # we should get just two objects
+        response = self.provider.get_network_by_id("2140161213322323")
+        self.assertEqual(response[0].apn, "prepaid.vodafone.es")
+        self.assertEqual(len(response), 1)
+        # leave it as we found it
+        c = self.provider.conn.cursor()
+        c.execute("delete from network_info where 1=1")
+
+
+class TestSmsDBTriggers(unittest.TestCase):
+    """Tests for the SMS DB triggers"""
 
     def setUp(self):
         self.conn = sqlite3.connect(':memory:', isolation_level=None)
@@ -513,5 +698,3 @@ class TestSmsProvider(unittest.TestCase):
         self.assertEqual(sms1.flags, UNREAD)
         # leave it as we found it
         self.provider.delete_thread(t)
-
-

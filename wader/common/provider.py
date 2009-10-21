@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""SMS storage layer"""
+"""Data providers"""
 
 from datetime import datetime
 import sqlite3
@@ -24,14 +24,6 @@ from time import mktime
 from wader.common.sms import Message as _Message
 from wader.common.utils import get_value_and_pop
 
-INBOX, OUTBOX, DRAFTS = 1, 2, 3
-UNREAD, READ = 0x01, 0x02
-# GSM spec
-# 0 - Unread message that has been received
-# 1 - Read message that has been received
-# 2 - Unsent message that has been stored
-# 3 - Sent message that has been stored
-# 4 - Any message
 
 SMS_SCHEMA = """
 create table message (
@@ -159,7 +151,105 @@ begin
 end;
 """
 
+NETWORKS_SCHEMA = """
+create table network_info(
+    id text primary key,
+    name text,
+    country text);
 
+create table apn(
+    id integer primary key autoincrement,
+    apn text not null,
+    username text,
+    password text,
+    dns1 text,
+    dns2 text,
+    type integer,
+    network_id integer not null
+        constraint fk_apn_network_id references network_info(id) on delete cascade);
+
+create table message_information(
+    id integer primary key autoincrement,
+    smsc text,
+    mmsc text,
+    type integer,
+    network_id integer not null
+        constraint fk_mi_network_id references network_info(id) on delete cascade);
+
+create table version (
+    version integer default 1);
+
+-- delete on cascade network_info -> apn
+create trigger fkd_network_info_apn before delete on "network_info"
+    when exists (select 1 from "apn" where old."id" == "network_id")
+begin
+  delete from "apn" where "network_id" = old."id";
+end;
+
+-- delete on cascade network_info -> nessage_information
+create trigger fkd_network_info_message_information before delete on "network_info"
+    when exists (select 1 from "message_information" where old."id" == "network_id")
+begin
+  delete from "message_information" where "network_id" = old."id";
+end;
+
+-- prevent insert on apn with unknown network_id
+create trigger fki_apns_with_unknown_network_id before insert on "apn"
+    when new."network_id" is not null and not exists (select 1 from "network_info" where new."network_id" == "id")
+begin
+  select raise(abort, 'constraint failed');
+end;
+
+-- prevent update of network_info_id if there are APNs associated to old id
+create trigger fku_prevent_apn_network_info_network_id_bad_update after update of id on "network_info"
+    when exists (select 1 from "apn" where old."id" == "network_id")
+begin
+  select raise(abort, 'constraint failed');
+end;
+
+-- prevent update of apn.network_id if it does not exists
+create trigger fku_prevent_apn_network_id_bad_update before update of network_id on "apn"
+    when new."network_id" is not null and not exists (select 1 from "network_info" where new."network_id" == "id")
+begin
+  select raise(abort, 'constraint failed');
+end;
+
+-- prevent insert in message_information if network_id does not exist
+create trigger fki_prevent_unknown_message_information_network_id before insert on "message_information"
+    when new."network_id" is not null and not exists (select 1 from "network_info" where new."network_id" == "id")
+begin
+  select raise(abort, 'constraint failed');
+end;
+
+-- prevent update of network_info_id if there are message_information attached to old id
+create trigger fku_prevent_network_info_id_bad_update_mi_exists after update of id on "network_info"
+    when exists (select 1 from "message_information" where old."id" == "network_id")
+begin
+  select raise(abort, 'constraint failed');
+end;
+
+-- prevent update of message_information_network_id with unknown network_id
+create trigger fku_prevent_message_information_network_id_bad_update before update of network_id on "message_information"
+    when new."network_id" is not null and not exists (select 1 from "network_info" where new."network_id" == "id")
+begin
+  select raise(abort, 'constraint failed');
+end;
+"""
+
+# constants
+INBOX, OUTBOX, DRAFTS = 1, 2, 3
+UNREAD, READ = 0x01, 0x02
+# GSM spec
+# 0 - Unread message that has been received
+# 1 - Read message that has been received
+# 2 - Unsent message that has been stored
+# 3 - Sent message that has been stored
+# 4 - Any message
+
+TYPE_CONTRACT, TYPE_PREPAID = 1, 2
+
+
+# functions
 def message_read(flags):
     """
     Returns a bool indicating whether the message had been read or not
@@ -167,6 +257,147 @@ def message_read(flags):
     # second bit is the "was read" flag
     return (int(flags) & READ) >> 1
 
+
+# common classes
+class DBError(Exception):
+    """Base class for DB related errors"""
+
+
+class DBProvider(object):
+    """Base class for the DB providers"""
+
+    def __init__(self, path, schema):
+        self.conn = sqlite3.connect(path, isolation_level=None)
+        c = self.conn.cursor()
+        try:
+            c.executescript(schema)
+        except sqlite3.OperationalError:
+            # ignore error, the database already exists
+            pass
+
+    def close(self):
+        """Closes the provider and frees resources"""
+        self.conn.close()
+
+
+# networks
+class NetworkOperator(object):
+    """I represent a network operator in the DB"""
+
+    def __init__(self, netid=None, apn=None, username=None, password=None,
+                 dns1=None, dns2=None, type=None, smsc=None, mmsc=None,
+                 country=None, name=None):
+        self.netid = netid
+        self.apn = apn
+        self.username = username
+        self.password = password
+        self.dns1 = dns1
+        self.dns2 = dns2
+        self.type = type
+        self.smsc = smsc
+        self.mmsc = mmsc
+        self.country = country
+        self.name = name
+
+    def __repr__(self):
+        args = (self.name.capitalize(), self.country.capitalize(),
+                self.netid, self.type)
+        return "<NetworkOperator %s%s, %s %d>" % args
+
+
+class NetworkProvider(DBProvider):
+    """DB network provider"""
+
+    def __init__(self, path):
+        super(NetworkProvider, self).__init__(path, NETWORKS_SCHEMA)
+
+    def get_network_by_id(self, imsi):
+        """
+        Returns all the :class:`NetworkOperator` registered for ``imsi``
+
+        :rtype: list
+        """
+        if not isinstance(imsi, basestring):
+            raise TypeError("argument must be a string subclass")
+
+        if len(imsi) < 14:
+            raise ValueError("Pass the whole imsi")
+
+        for n in [7, 6, 5]:
+            result = self._get_network_by_id(imsi[:n])
+            if result:
+                return result
+
+        return []
+
+    def _get_network_by_id(self, netid):
+        c = self.conn.cursor()
+        c.execute("select n.name, n.country, a.apn, a.username,"
+                  "a.password, a.dns1, a.dns2, a.type from network_info n "
+                  "inner join apn a on n.id = a.network_id "
+                  "inner join message_information m "
+                  "on n.id = m.network_id and a.type = m.type "
+                  "where n.id=?", (netid,))
+
+        ret = []
+        for row in c.fetchall():
+            attrs = dict(netid=[netid], name=row[0], country=row[1], apn=row[2],
+                         username=row[3], password=row[4], dns1=row[5],
+                         dns2=row[6], type=row[7])
+            ret.append(NetworkOperator(**attrs))
+
+        return ret
+
+    def populate_networks(self, networks):
+        """
+        Populate the network database with ``networks``
+
+        :param networks: NetworkOperator instances
+        :type networks: iter
+        """
+        c = self.conn.cursor()
+        for network in networks:
+            for netid in network.netid:
+
+                # check if this network object exists in the database
+                c.execute("select 1 from network_info where id=?", (netid,))
+                try:
+                    c.fetchone()[0]
+                except TypeError:
+                    # it does not exist
+                    args = (netid, network.name, network.country.capitalize())
+                    c.execute("insert into network_info values (?,?,?)", args)
+
+                # check if the APN info exists in the database
+                args = (network.apn, network.username, network.password,
+                        network.dns1, network.dns2, network.type)
+                c.execute("select id from apn where apn=? and username=? "
+                          "and password=? and dns1=? and dns2=? "
+                          "and type=?", args)
+                try:
+                    c.fetchone()[0]
+                except TypeError:
+                    # it does not exist
+                    args = (None, network.apn, network.username,
+                            network.password, network.dns1, network.dns2,
+                            network.type, netid)
+                    c.execute("insert into apn values (?,?,?,?,?,?,?,?)", args)
+
+                # check if the message information exists in the database
+                args = (network.smsc, network.mmsc, netid, network.type)
+                c.execute("select id from message_information where smsc=? "
+                          "and mmsc=? and network_id=? and type=?", args)
+                try:
+                    c.fetchone()[0]
+                except TypeError:
+                    # it does not exist
+                    args = (None, network.smsc, network.mmsc, network.type,
+                            netid)
+                    c.execute("insert into message_information values "
+                              "(?,?,?,?,?)", args)
+
+
+# SMS
 
 class Folder(object):
     """I am a container for threads and messages"""
@@ -256,27 +487,6 @@ class Thread(object):
         """Returns a tuple ready to be inserted in the DB"""
         return (self.index, mktime(self.datetime.timetuple()), self.number,
                 self.message_count, self.snippet, self.read, self.folder.index)
-
-
-class DBError(Exception):
-    """Base class for DB related errors"""
-
-
-class DBProvider(object):
-    """Base class for the DB providers"""
-
-    def __init__(self, path, schema):
-        self.conn = sqlite3.connect(path, isolation_level=None)
-        c = self.conn.cursor()
-        try:
-            c.executescript(schema)
-        except sqlite3.OperationalError:
-            # ignore error, the database already exists
-            pass
-
-    def close(self):
-        """Closes the provider and frees resources"""
-        self.conn.close()
 
 
 class SmsProvider(DBProvider):
