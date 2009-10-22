@@ -61,14 +61,27 @@ class ModemManagerContactProvider(object):
         index = self.iface.Add(contact.name, contact.number)
         return MMContact(contact.name, contact.number, index=index)
 
-    def find_contacts(self, pattern):
-        """See :meth:`IContactProvider.find_contacts`"""
-        return (MMContact.from_tuple(t)
-                    for t in self.iface.FindByName(pattern))
+    def edit_contact(self, contact):
+        """See :meth:`IContactProvider.add_contact`"""
+        if not isinstance(contact, MMContact):
+            return
+
+        index = self.iface.Edit(contact.index, contact.name, contact.number)
+        return MMContact(contact.name, contact.number, index=index)
+
+    def find_contacts_by_name(self, name):
+        """See :meth:`IContactProvider.find_contacts_by_name`"""
+        return [MMContact.from_tuple(t)
+                    for t in self.iface.FindByName(name)]
+
+    def find_contacts_by_number(self, number):
+        """See :meth:`IContactProvider.find_contacts_by_number`"""
+        return [MMContact.from_tuple(t)
+                    for t in self.iface.FindByNumber(number)]
 
     def list_contacts(self):
         """See :meth:`IContactProvider.list_contacts`"""
-        return (MMContact.from_tuple(t) for t in self.iface.List())
+        return [MMContact.from_tuple(t) for t in self.iface.List()]
 
     def remove_contact(self, contact):
         """See :meth:`IContactProvider.remove_contact`"""

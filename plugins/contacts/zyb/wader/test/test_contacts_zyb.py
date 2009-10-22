@@ -43,11 +43,20 @@ class TestZYBContactProvider(unittest.TestCase):
         # leave everything as found
         self.provider.remove_contact(contact)
 
-    def test_find_contacts(self):
+    def test_find_contacts_by_name(self):
         name, number = 'James', '+322323222'
 
         contact = self.provider.add_contact(ZYBContact(name, number))
-        contacts = list(self.provider.find_contacts("Jam"))
+        contacts = list(self.provider.find_contacts_by_name("Jam"))
+
+        self.failUnlessIn(contact, contacts)
+        self.provider.remove_contact(contact)
+
+    def test_find_contacts_by_number(self):
+        name, number = 'James', '+322323222'
+
+        contact = self.provider.add_contact(ZYBContact(name, number))
+        contacts = list(self.provider.find_contacts_by_number("+3223"))
 
         self.failUnlessIn(contact, contacts)
         self.provider.remove_contact(contact)

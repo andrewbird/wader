@@ -74,6 +74,7 @@ class TestModemManagerContactProvider(unittest.TestCase):
 
     def tearDownClass(self):
         # leave everything as found
+        self.device.Enable(False, dbus_interface=MDM_INTFACE)
         self.provider.close()
 
     def test_add_contact(self):
@@ -86,11 +87,38 @@ class TestModemManagerContactProvider(unittest.TestCase):
         # leave everything as found
         self.provider.remove_contact(contact)
 
-    def test_find_contacts(self):
+    def test_edit_contact(self):
+        name, number = 'John', '+4324343232'
+        contact = self.provider.add_contact(MMContact(name, number))
+
+        contact.name = 'Daniel'
+        contact.number = '+1212121212'
+
+        self.provider.edit_contact(contact)
+        # now do a list and check the new values are there
+        found = False
+        for c in self.provider.list_contacts():
+            if c.name == 'Daniel' and c.number == '+1212121212':
+                found = True
+                break
+
+        self.assertEqual(found, True)
+        # leave everything as found
+        self.provider.remove_contact(contact)
+
+    def test_find_contacts_by_name(self):
         name, number = 'James', '+322323222'
 
         contact = self.provider.add_contact(MMContact(name, number))
-        contacts = list(self.provider.find_contacts("Jam"))
+        contacts = list(self.provider.find_contacts_by_name("Jam"))
+        self.failUnlessIn(contact, contacts)
+        self.provider.remove_contact(contact)
+
+    def test_find_contacts_by_number(self):
+        name, number = 'James', '+322323222'
+
+        contact = self.provider.add_contact(MMContact(name, number))
+        contacts = list(self.provider.find_contacts_by_number("+322323222"))
         self.failUnlessIn(contact, contacts)
         self.provider.remove_contact(contact)
 

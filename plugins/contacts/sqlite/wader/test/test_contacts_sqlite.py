@@ -41,10 +41,34 @@ class TestSQLiteContactProvider(unittest.TestCase):
         # leave everything as found
         self.provider.remove_contact(contact)
 
-    def test_find_contacts(self):
+    def test_edit_contact(self):
+        name, number = 'John', '+4324343232'
+        contact = self.provider.add_contact(SQLContact(name, number))
+
+        contact.name = 'Daniel'
+        contact.number = '+1212121212'
+
+        self.provider.edit_contact(contact)
+        # now do a list and check the new values are there
+        edited_contact = self.provider.list_contacts()[0]
+
+        self.failUnlessEqual(edited_contact.name, 'Daniel')
+        self.failUnlessEqual(edited_contact.number, '+1212121212')
+        # leave everything as found
+        self.provider.remove_contact(contact)
+
+    def test_find_contacts_by_name(self):
         name, number = 'James', '+322323222'
         contact = self.provider.add_contact(SQLContact(name, number))
-        contacts = list(self.provider.find_contacts("Jam"))
+        contacts = list(self.provider.find_contacts_by_name("Jam"))
+
+        self.failUnlessIn(contact, contacts)
+        self.provider.remove_contact(contact)
+
+    def test_find_contacts_by_number(self):
+        name, number = 'James', '+322323222'
+        contact = self.provider.add_contact(SQLContact(name, number))
+        contacts = list(self.provider.find_contacts_by_number("+322323"))
 
         self.failUnlessIn(contact, contacts)
         self.provider.remove_contact(contact)

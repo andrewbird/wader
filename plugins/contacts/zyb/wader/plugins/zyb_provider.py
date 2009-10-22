@@ -115,16 +115,25 @@ class ZYBProvider(object):
                                                      c.serialize())
         return ZYBContact.from_soap(_contact)
 
-    def find_contacts(self, pattern):
-        """See :meth:`IContactProvider.find_contacts`"""
+    def edit_contact(self, contact):
+        """See :meth:`IContactProvider.edit_contact`"""
+        # ZYB does not offer a way to edit contacts!
+        raise NotImplementedError
+
+    def find_contacts_by_name(self, name):
+        """See :meth:`IContactProvider.find_contacts_by_name`"""
         # ZYB does not offer a browse API, this emulates it O(N)
-        return (c for c in self.list_contacts()
-                if c.name.startswith(pattern))
+        return [c for c in self.list_contacts() if c.name.startswith(name)]
+
+    def find_contacts_by_number(self, number):
+        """See :meth:`IContactProvider.find_contacts_by_number`"""
+        # ZYB does not offer a browse API, this emulates it O(N)
+        return [c for c in self.list_contacts() if c.number.endswith(number)]
 
     def list_contacts(self):
         """See :meth:`IContactProvider.list_contacts`"""
         contacts = self.client.service.GetContactList(self.utoken, self.ptoken)
-        return (ZYBContact.from_soap(c) for c in contacts[0])
+        return [ZYBContact.from_soap(c) for c in contacts[0]]
 
     def remove_contact(self, contact):
         """See :meth:`IContactProvider.remove_contact`"""

@@ -694,7 +694,7 @@ class ContactsExporter(SMSExporter):
         d = self.sconn.list_contacts()
         d.addCallback(lambda contacts:
                       [(c.index, c.name, c.number) for c in contacts
-                            if c.number.startswith(number)])
+                            if c.number.endswith(number)])
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(CTS_INTFACE, in_signature='u', out_signature='(uss)',

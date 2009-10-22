@@ -207,9 +207,21 @@ class IContactProvider(IWaderPlugin):
         :type data: dict
         """
 
-    def find_contacts(pattern):
+    def edit_contact(contact):
         """
-        Returns a generator with all the contacts that match ``pattern``
+        Edits ``contact`` with the new values
+
+        :raises: NotImplementedError if the backend cannot edit contacts
+        """
+
+    def find_contacts_by_name(name):
+        """
+        Returns an iterator with all the contacts whose name match ``name``
+        """
+
+    def find_contacts_by_number(number):
+        """
+        Returns an iterator with all the contacts whose number match ``number``
         """
 
     def list_contacts():

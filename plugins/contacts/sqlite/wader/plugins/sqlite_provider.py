@@ -65,7 +65,7 @@ class SQLiteContactProvider(object):
     version = "0.1"
 
     def __init__(self):
-        self.provider = None
+        self.cursor = None
 
     def initialize(self, init_obj):
         conn = sqlite3.connect(init_obj['path'], isolation_level=None)
@@ -89,16 +89,33 @@ class SQLiteContactProvider(object):
         contact.index = self.cursor.lastrowid
         return contact
 
-    def find_contacts(self, pattern):
-        """See :meth:`IContactProvider.find_contacts`"""
+    def edit_contact(self, contact):
+        """See :meth:`IContactProvider.edit_contact`"""
+        if not isinstance(contact, SQLContact):
+            return
+
+        self.cursor.execute(
+            "update contact set name=?, number=?, email=?, picture=? "
+            "where id=?", (contact.name, contact.number, contact.email,
+                           contact.picture, contact.index))
+        return contact
+
+    def find_contacts_by_name(self, name):
+        """See :meth:`IContactProvider.find_contacts_by_name`"""
         sql = "select * from contact where name like ?"
-        self.cursor.execute(sql, ("%%%s%%" % pattern,))
-        return (SQLContact.from_row(r) for r in self.cursor.fetchall())
+        self.cursor.execute(sql, ("%%%s%%" % name,))
+        return [SQLContact.from_row(r) for r in self.cursor.fetchall()]
+
+    def find_contacts_by_number(self, number):
+        """See :meth:`IContactProvider.find_contacts_by_number`"""
+        sql = "select * from contact where number like ?"
+        self.cursor.execute(sql, ("%%%s%%" % number,))
+        return [SQLContact.from_row(r) for r in self.cursor.fetchall()]
 
     def list_contacts(self):
         """See :meth:`IContactProvider.list_contacts`"""
         self.cursor.execute("select * from contact")
-        return (SQLContact.from_row(r) for r in self.cursor.fetchall())
+        return [SQLContact.from_row(r) for r in self.cursor.fetchall()]
 
     def remove_contact(self, contact):
         """See :meth:`IContactProvider.remove_contact`"""
