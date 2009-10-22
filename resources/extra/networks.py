@@ -12,6 +12,9 @@ class NetworkOperator(object):
     password = None
     dns1 = None
     dns2 = None
+    smsc = None
+    mmsc = None
+    type = 1
 
     def __repr__(self):
         args = (self.name, self.country, self.netid[0])

@@ -32,7 +32,7 @@ from twisted.python import log
 
 import wader.common.consts as consts
 from wader.common._dbus import DBusExporterHelper
-from wader.common.persistent import populate_networks
+from wader.common.provider import NetworkProvider
 from wader.common.serialport import SerialPort
 
 DELAY = 10
@@ -181,7 +181,12 @@ def create_skeleton_and_do_initial_setup():
     import wader.plugins
     list(getPlugins(IPlugin, package=wader.plugins))
 
-    populate_dbs(populate_networks)
+    provider = NetworkProvider()
+    try:
+        populate_dbs(provider.populate_networks)
+    except:
+        log.err()
+    provider.close()
 
 
 def populate_dbs(f):

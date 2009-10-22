@@ -21,6 +21,7 @@ from datetime import datetime
 import sqlite3
 from time import mktime
 
+from wader.common.consts import NETWORKS_DB
 from wader.common.sms import Message as _Message
 from wader.common.utils import get_value_and_pop
 
@@ -308,7 +309,7 @@ class NetworkOperator(object):
 class NetworkProvider(DBProvider):
     """DB network provider"""
 
-    def __init__(self, path):
+    def __init__(self, path=NETWORKS_DB):
         super(NetworkProvider, self).__init__(path, NETWORKS_SCHEMA)
 
     def get_network_by_id(self, imsi):
@@ -355,6 +356,7 @@ class NetworkProvider(DBProvider):
         :param networks: NetworkOperator instances
         :type networks: iter
         """
+        print "NETWORKS", networks
         c = self.conn.cursor()
         for network in networks:
             for netid in network.netid:

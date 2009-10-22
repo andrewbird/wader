@@ -49,7 +49,7 @@ import wader.common.exceptions as ex
 from wader.common.secrets import ProfileSecrets
 from wader.common.utils import (convert_ip_to_int, patch_list_signature,
                                 convert_int_to_uint)
-from wader.common.persistent import get_network_by_id
+from wader.common.provider import NetworkProvider
 
 
 class Profile(GConfHelper, DelayableDBusObject):
@@ -375,9 +375,15 @@ class ProfileManager(Object, GConfHelper):
 
     def get_profile_options_from_imsi(self, imsi):
         """Generates a new :class:`Profile` from ``imsi``"""
-        network = get_network_by_id(imsi)
+        provider = NetworkProvider()
+        network = provider.get_network_by_id(imsi)
+        provider.close()
+
         if not network:
             raise ex.ProfileNotFoundError("No profile for IMSI %s" % imsi)
+
+        # XXX: use the first NetworkOperator object for now
+        network = network[0]
 
         props = {}
 
