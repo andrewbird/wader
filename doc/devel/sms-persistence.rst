@@ -27,6 +27,10 @@ only be one thread for a number in a given folder, if a `Message` is
 moved to a folder and no thread exists for that number it will be
 automatically created and the message will be associated to it.
 
+.. image:: images/sms-persistence/relationships.png
+   :alt: Relationships between classes
+   :align: center
+
 Similarly, if a `Message` is moved to a `Folder` and a `Thread` already
 exists for the message's number, it will be associated to it.
 
