@@ -356,7 +356,6 @@ class NetworkProvider(DBProvider):
         :param networks: NetworkOperator instances
         :type networks: iter
         """
-        print "NETWORKS", networks
         c = self.conn.cursor()
         for network in networks:
             for netid in network.netid:
