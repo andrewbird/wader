@@ -48,6 +48,8 @@ Wader features
 
 - Data call handling (Connect/Disconnect from Internet)
 - Manage your SMS and Contacts
+- Send and receive multiparted SMS
+- Handle your contacts from several sources with the contact backends
 - Profile management
 - Usage statistics with a configurable threshold
 - Preliminary multiplatform support (Linux, OSX...)
@@ -55,6 +57,7 @@ Wader features
 
   * Add support for a new device
   * Add support for a new OS/distro
+  * Add support for a new contact source (ModemManager, SQLite and `ZYB`_ implemented)
 
 - Dialup on heterogeneous environments:
 
@@ -62,6 +65,8 @@ Wader features
   * NetworkManager 0.7.X  (via NetworkManager itself)
 
 - Implements 100% of the ModemManager API
+
+.. _ZYB: http://zyb.com/
 
 How does Wader stack against its competitors
 --------------------------------------------
@@ -72,7 +77,7 @@ different. We hope that the following table will help you to make an informed
 choice whether you are a prospective user, developer or OEM representative.
 
 +---------------------+----------------+----------------+--------------------+
-| Feature             |   NM0.7+       |   VMC2beta3    |   Wader 0.3.1      |
+| Feature             |   NM0.7+       |   VMC2         |   Wader 0.3.6      |
 +---------------------+----------------+----------------+--------------------+
 | Multiplatform       |   No           |   No           |   Yes (Linux, OSX) |
 +---------------------+----------------+----------------+--------------------+
@@ -101,23 +106,27 @@ Supported devices
 
 Wader has been thoroughly tested on the following devices:
 
- * Huawei: E169, E170, E172, E220, E270, E272, E870, EM730V
- * Option: Nozomi, Etna, Icon 225, Icon 401
+ * Ericsson: MD300
+ * Huawei: E169, E170, E172, E220, E270, E272, E620, E870, EM730V, K3520
  * Novatel: MC950D
+ * Option: Nozomi, Etna, Icon 225, Icon 401, K3760
 
 In addition, the community contributed the following plugins:
 
- * Huawei: E660, E660a
+ * Dell: D5520, D5530
+ * Ericsson: F3507g
+ * Huawei: B970, E3735, E510, E660, E660aA, EM770, K2540, K3565, K3715
+ * Novatel: U630, U740, EU740, XU870, MC990D, MiFi2352, S720, XU870
+ * Onda: MSA405HS
  * Option: Colt [1]_ , GlobeSurfer Icon, GT Fusion, GT Fusion Quad Lite,
-   GT M 378, GT Max 3.6
- * Novatel: U630, U740, EU740, XU870
- * SierraWireless: 850, 875
- * ZTE: MF620, K3520, K3565
+   GT M 378, GT Max 3.6, E3730
+ * SierraWireless: 850, 875, MC8755
+ * ZTE: MF620, MF632, K2525, K3520, K3565, K3765, K4505
 
 Installing Wader
 ================
 
-Wader 0.3.1 includes support for Ubuntu, OpenSUSE and Fedora by default.
+Wader 0.3.6 includes support for Ubuntu, OpenSUSE and Fedora by default.
 
 Installing Wader on Ubuntu
 --------------------------
