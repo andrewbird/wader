@@ -87,6 +87,27 @@ class VIPCroatia(NetworkOperator):
     dns2 = "212.91.97.4"
 
 
+class Vodafone_20205_Contract(NetworkOperator):
+    netid = ["20205"]
+    name = "Vodafone Greece"
+    country = "Greece"
+    apn = "internet"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+class Vodafone_23415_Contract(NetworkOperator):
+    netid = ["23415"]
+    name = "Vodafone UK"
+    country = "United Kingdom"
+    apn = "internet"
+    username = "web"
+    password = "web"
+    dns1 = None
+    dns2 = None
+
+
 class VodacomSouthAfrica(NetworkOperator):
     netid = ["65501"]
     name = "Vodacom"
