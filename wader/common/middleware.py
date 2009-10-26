@@ -831,7 +831,6 @@ class WCDMAWrapper(WCDMAProtocol):
         If enable is True, I check the auth state of a device and will try to
         initialize it. Otherwise I will disable myself
         """
-        print "WCDMAWrapper::enable_device", enable
         if enable:
             return self._do_enable_device()
         else:
@@ -839,12 +838,10 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _do_disable_device(self):
         if self.device.status == DEV_CONNECTED:
-            print "DEVICE WAS CONNECTED, DISCONNECTING AND CLOSING PLUGIN"
             def on_disconnect_from_internet(_):
                 self.device.set_status(DEV_ENABLED)
                 if self.state_dict.get('nm08_workaround'):
                     self.state_dict.pop('nm08_workaround')
-                    print "WORKAROUND DETECTED, NOT CLOSING"
                     return
 
                 self.device.close()
@@ -857,21 +854,16 @@ class WCDMAWrapper(WCDMAProtocol):
         if self.device.status == DEV_ENABLED:
             if self.state_dict.get('nm08_workaround'):
                 self.state_dict.pop('nm08_workaround')
-                print "PREVENTING UNWANTED PLUGIN CLOSE"
                 return
 
-            print "DEVICE WAS JUST ENABLED, CLOSING PLUGIN"
             return self.device.close()
 
     def _do_enable_device(self):
         from wader.common.startup import attach_to_serial_port
         if self.device.status == DEV_ENABLED:
-            # wtf ?
-            print "RETURNING ENABLED DEVICE"
             return defer.succeed(self.device)
 
         if self.device.status == DEV_AUTHENTICATED:
-            print "DEVICE IS AUTHENTICATED"
             # if a device was enabled and then disabled, there's no
             # need to check the authentication again
             d = attach_to_serial_port(self.device)
@@ -889,7 +881,6 @@ class WCDMAWrapper(WCDMAProtocol):
             d.addCallback(self.device.initialize)
             return d
 
-        print "DEVICE WAS NOT ENABLED NOR AUTHENTICATED"
         d = attach_to_serial_port(self.device)
         d.addCallback(process_device_and_initialize)
         return d

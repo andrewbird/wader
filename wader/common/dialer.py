@@ -316,7 +316,6 @@ class DialerManager(Object, DBusExporterHelper):
 
         # Installing NM0.8 Connect workaround
         if nm08_present():
-            print "INSTALLING CONNECT WORKAROUND"
             dialer.device.sconn.state_dict['nm08_workaround'] = True
 
         def start_traffic_monitoring(opath):
@@ -346,7 +345,6 @@ class DialerManager(Object, DBusExporterHelper):
             # if NM0.8 is present we will need to prevent the Enable(False)
             # operation that we are about to receive
             if nm08_present():
-                print "INSTALLING NM0.8 WORKAROUND"
                 dialer.device.sconn.state_dict['nm08_workaround'] = True
 
             d = dialer.disconnect()
