@@ -23,7 +23,7 @@ import dbus
 import wader.common.consts as consts
 
 def nm07_present():
-    return True
+    return False
     obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
     try:
         devices = obj.GetDevices()
@@ -32,7 +32,7 @@ def nm07_present():
         return False
 
 def nm08_present():
-    return True
+    return False
     obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
     try:
         devices = obj.GetDevices()
