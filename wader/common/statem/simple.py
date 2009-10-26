@@ -63,9 +63,9 @@ class SimpleStateMachine(Modal):
             log.msg("Simple SM: begin exited")
 
         def do_next(self):
-            # start by enabling device
-            d = self.sconn.enable_device(True)
-            d.addCallback(lambda _: self.transition_to('check_pin'))
+            # XXX: make sure that Connect.Simple works with nm-applet
+            # NM might assume that the device is powered off?
+            self.transition_to('check_pin')
 
     class check_pin(mode):
         """We are going to check whether auth is ready or not"""

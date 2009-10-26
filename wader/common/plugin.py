@@ -25,7 +25,7 @@ from twisted.plugin import IPlugin, getPlugins
 from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
-                                 DEV_DISABLED, DEV_AUTH_OK, DEV_ENABLED)
+                                 DEV_DISABLED, DEV_ENABLED, DEV_AUTHENTICATED)
 from wader.common.daemon import build_daemon_collection
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
@@ -116,7 +116,7 @@ class DevicePlugin(object):
 
         if self.status == DEV_ENABLED and not removed:
             d.addCallback(lambda _: self.sconn.enable_radio(False))
-            d.addCallback(lambda _: self.set_status(DEV_AUTH_OK))
+            d.addCallback(lambda _: self.set_status(DEV_AUTHENTICATED))
 
         d.addCallback(free_resources)
         return d
@@ -135,7 +135,7 @@ class DevicePlugin(object):
             d.addCallback(lambda _: size)
             return d
 
-        def initialize_sim(ign):
+        def initialize_sim(_):
             if self.sim is None or self.sim.size is None:
                 self.sim = self.sim_klass(self.sconn)
                 d = self.sim.initialize()
@@ -148,14 +148,12 @@ class DevicePlugin(object):
         # initialize method is always called right after authentication
         # is OK, be it right after a successful SendP{in,uk,uk2} or
         # because the device was already authenticated
-        self.set_status(DEV_AUTH_OK)
+        self.set_status(DEV_AUTHENTICATED)
         # sometimes, right after a combination of Modem.Enable operations
         # and hot pluggings, the core will not reply to the first AT command
         # sent, but it will to the second. This addCallbacks call handles
         # both the callback and errback (if the command times out)
-        d = self.sconn.get_signal_quality()
-        d.addCallbacks(lambda _: self.sconn.enable_radio(True),
-                       lambda _: self.sconn.enable_radio(True))
+        d = self.sconn.enable_radio(True)
         d.addCallback(initialize_sim)
         d.addErrback(log.err)
         return d

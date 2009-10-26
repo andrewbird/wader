@@ -59,7 +59,7 @@ class NMDialer(Dialer):
         """
         Returns the object path to use in the connection / signal
         """
-        if not nm08_present:
+        if not nm08_present():
             return self.device.udi
         else:
             obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)

@@ -31,7 +31,7 @@ from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
 from wader.common.consts import (CRD_INTFACE, MM_NETWORK_BAND_ANY,
-                                 DEV_AUTH_OK, DEV_ENABLED, DEV_CONNECTED)
+                                 DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
@@ -710,6 +710,8 @@ class WCDMAWrapper(WCDMAProtocol):
 
         It will not enable it if its already enabled and viceversa
         """
+        if self.device.status >= DEV_ENABLED:
+            return defer.succeed("OK")
 
         def check_if_necessary(status):
             if (status and enable) or (not status and not enable):
@@ -733,6 +735,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """Sets the SIMS's SMSC number to ``smsc``"""
         if 'UCS2' in self.device.sim.charset:
             smsc = pack_ucs2_bytes(smsc)
+
         d = super(WCDMAWrapper, self).set_smsc(smsc)
         d.addCallback(lambda response: response[0].group('resp'))
         return d
@@ -828,6 +831,7 @@ class WCDMAWrapper(WCDMAProtocol):
         If enable is True, I check the auth state of a device and will try to
         initialize it. Otherwise I will disable myself
         """
+        print "WCDMAWrapper::enable_device", enable
         if enable:
             return self._do_enable_device()
         else:
@@ -835,9 +839,14 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _do_disable_device(self):
         if self.device.status == DEV_CONNECTED:
-
+            print "DEVICE WAS CONNECTED, DISCONNECTING AND CLOSING PLUGIN"
             def on_disconnect_from_internet(_):
                 self.device.set_status(DEV_ENABLED)
+                if self.state_dict.get('nm08_workaround'):
+                    self.state_dict.pop('nm08_workaround')
+                    print "WORKAROUND DETECTED, NOT CLOSING"
+                    return
+
                 self.device.close()
 
             d = self.disconnect_from_internet()
@@ -846,11 +855,23 @@ class WCDMAWrapper(WCDMAProtocol):
             return d
 
         if self.device.status == DEV_ENABLED:
+            if self.state_dict.get('nm08_workaround'):
+                self.state_dict.pop('nm08_workaround')
+                print "PREVENTING UNWANTED PLUGIN CLOSE"
+                return
+
+            print "DEVICE WAS JUST ENABLED, CLOSING PLUGIN"
             return self.device.close()
 
     def _do_enable_device(self):
         from wader.common.startup import attach_to_serial_port
-        if self.device.status >= DEV_AUTH_OK:
+        if self.device.status == DEV_ENABLED:
+            # wtf ?
+            print "RETURNING ENABLED DEVICE"
+            return defer.succeed(self.device)
+
+        if self.device.status == DEV_AUTHENTICATED:
+            print "DEVICE IS AUTHENTICATED"
             # if a device was enabled and then disabled, there's no
             # need to check the authentication again
             d = attach_to_serial_port(self.device)
@@ -868,6 +889,7 @@ class WCDMAWrapper(WCDMAProtocol):
             d.addCallback(self.device.initialize)
             return d
 
+        print "DEVICE WAS NOT ENABLED NOR AUTHENTICATED"
         d = attach_to_serial_port(self.device)
         d.addCallback(process_device_and_initialize)
         return d
@@ -876,7 +898,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         Upon successful auth over DBus I'll check if the device was initted
         """
-        if self.device.status == DEV_AUTH_OK:
+        if self.device.status == DEV_AUTHENTICATED:
             log.msg("device was already initted, just returning orig result")
             return result
 

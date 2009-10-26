@@ -36,7 +36,7 @@ from wader.common._dbus import DBusExporterHelper
 import wader.common.consts as consts
 from wader.common.interfaces import IDialer
 from wader.common.oal import osobj
-from wader.common.runtime import nm07_present
+from wader.common.runtime import nm07_present, nm08_present
 from wader.common.utils import convert_int_to_ip
 
 CONFIG_DELAY = 3
@@ -270,7 +270,7 @@ class DialerManager(Object, DBusExporterHelper):
         from wader.common.dialers.nm_dialer import NMDialer
 
         device = self.ctrl.hm.clients[dev_opath]
-        if nm07_present:
+        if nm07_present():
             klass = NMDialer
         else:
             # NM 0.6.X
@@ -314,6 +314,11 @@ class DialerManager(Object, DBusExporterHelper):
         opath = self.get_next_opath()
         dialer = self.get_dialer(device_opath, opath)
 
+        # Installing NM0.8 Connect workaround
+        print "INSTALLING CONNECT WORKAROUND"
+        if nm08_present():
+            dialer.device.sconn.state_dict['nm08_workaround'] = True
+
         def start_traffic_monitoring(opath):
             dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
             return opath
@@ -338,6 +343,12 @@ class DialerManager(Object, DBusExporterHelper):
         """Stops connection of device ``device_path``"""
         if device_path in self.dialers:
             dialer = self.dialers[device_path]
+            # if NM0.8 is present we will need to prevent the Enable(False)
+            # operation that we are about to receive
+            if nm08_present():
+                print "INSTALLING NM0.8 WORKAROUND"
+                dialer.device.sconn.state_dict['nm08_workaround'] = True
+
             d = dialer.disconnect()
 
             def free_dialer_resources(path):
