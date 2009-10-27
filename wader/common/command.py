@@ -48,6 +48,7 @@ def get_cmd_dict_copy():
     """
     return CMD_DICT.copy()
 
+
 CMD_DICT = {
 
     'add_contact' : build_cmd_dict(),

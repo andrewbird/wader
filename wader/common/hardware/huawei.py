@@ -287,6 +287,10 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
     def get_network_info(self):
 
+        # Some E220 firmwares will append an extra char to AT+COPS?
+        # (off-by-one) or reply as 'FFFFFFFFFF+'. The following callback
+        # will handle this errors.
+
         def process_netinfo_cb(info):
             operator, tech = info
             m = BADOPER_REGEXP.match(operator)
@@ -400,11 +404,7 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
     signal_translations = {
         '^MODE' : (S.SIG_NETWORK_MODE, huawei_new_conn_mode),
         '^RSSI' : (S.SIG_RSSI, lambda rssi: rssi_to_percentage(int(rssi))),
-        #'^DSFLOWRPT' : (S.SIG_SPEED, huawei_new_speed_link),
         '^DSFLOWRPT' : (None, None),
-        # Notification disabled as there is no match in ModemManager API
-        # '^RFSWITCH' : (notifications.SIG_RFSWITCH, huawei_radio_switch),
-
         '^BOOT' : (None, None),
         '^SRVST' : (None, None),
         '^SIMST' : (None, None),

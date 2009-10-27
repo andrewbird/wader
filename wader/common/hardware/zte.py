@@ -38,7 +38,7 @@ ZTE_MODE_DICT = {
 }
 
 ZTE_BAND_DICT = {
-    consts.MM_NETWORK_BAND_ANY : 0, # any band
+    consts.MM_NETWORK_BAND_ANY : 0,   # any band
 
     (consts.MM_NETWORK_BAND_U850 |
      consts.MM_NETWORK_BAND_EGSM |
@@ -133,28 +133,6 @@ class ZTEWrapper(WCDMAWrapper):
         return self.send_at("AT+ZSNT?", name='get_network_mode',
                             callback=get_network_mode_cb)
 
-#    def get_network_type(self):
-#        """Returns the current network type"""
-#        def get_network_type_cb(resp):
-#            mode = resp[0].group('mode')
-#
-#            if mode in "UMTS":
-#                return consts.MM_NETWORK_MODE_UMTS
-#            elif mode in ["GPRS", "GSM"]:
-#                return consts.MM_NETWORK_MODE_GPRS
-#            elif mode in ["EDGE"]:
-#                return consts.MM_NETWORK_MODE_EDGE
-#            elif mode in ["HSDPA"]:
-#                return consts.MM_NETWORK_MODE_HSDPA
-#            elif mode in ["HSUPA"]:
-#                return consts.MM_NETWORK_MODE_HSUPA
-#            elif mode in ["HSPA"]:
-#                return consts.MM_NETWORK_MODE_HSPA
-#
-#            raise ValueError("Can not translate mode %s" % mode)
-#
-#        return self.send_at("AT+ZPAS?", name='get_network_type',
-#                            callback=get_network_type_cb)
     def set_band(self, band):
         """Sets the band to ``band``"""
         if not len(self.custom.band_dict):

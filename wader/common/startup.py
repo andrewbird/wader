@@ -28,6 +28,7 @@ gloop = DBusGMainLoop(set_as_default=True)
 
 from twisted.application.service import Application, Service
 from twisted.internet import reactor, defer
+from twisted.plugin import IPlugin, getPlugins
 from twisted.python import log
 
 import wader.common.consts as consts
@@ -177,7 +178,6 @@ def create_skeleton_and_do_initial_setup():
         return
 
     # regenerate plugin cache
-    from twisted.plugin import IPlugin, getPlugins
     import wader.plugins
     list(getPlugins(IPlugin, package=wader.plugins))
 
