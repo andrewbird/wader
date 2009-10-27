@@ -17,8 +17,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """HSOLink Dialer"""
 
-from twisted.internet import defer
-
 from wader.common.dialer import Dialer
 from wader.common.oal import osobj
 
@@ -29,9 +27,6 @@ class HSODialer(Dialer):
     def __init__(self, device, opath, **kwds):
         super(HSODialer, self).__init__(device, opath, **kwds)
         self.iface = 'hso0'
-        self.retry_call = None
-        self.should_stop = False
-        self.num_of_retries = 0
 
     def configure(self, config):
         d = self.device.sconn.set_apn(config.apn)
@@ -66,9 +61,4 @@ class HSODialer(Dialer):
         return d
 
     def stop(self):
-        self.should_stop = True
-        if self.retry_call:
-            self.retry_call.cancel()
-            self.retry_call = None
-
-        return defer.succeed(True)
+        return self.disconnect()
