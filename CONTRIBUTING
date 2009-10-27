@@ -52,4 +52,8 @@ Project guidelines
    platforms in the future. I am talking about modules such as
    `wader.common.config`, `wader.common.profiles`, `wader.common.keyring`, etc.
 
+ * Translating: No strings should be marked for translation in the core, all
+   the translated strings must be UI ones. The core and the UI will communicate
+   via exceptions that the core will raise and the UI will catch. It is here
+   where a localized dialog can be shown to the user.
 
