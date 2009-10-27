@@ -302,12 +302,11 @@ class EricssonWrapper(WCDMAWrapper):
 
     def mbm_authenticate(self, user, passwd):
         conn_id = self.state_dict['conn_id']
-        #if self.device.sim.charset != 'UCS2':
-        #    args = (conn_id, user, passwd)
-        #else:
-        #    args = (conn_id, pack_ucs2_bytes(user), pack_ucs2_bytes(passwd))
+        if self.device.sim.charset == 'UCS2':
+            args = (conn_id, pack_ucs2_bytes(user), pack_ucs2_bytes(passwd))
+        else:
+            args = (conn_id, user, passwd)
 
-        args = (conn_id, user, passwd)
         return self.send_at('AT*EIAAUW=%d,1,"%s","%s"' % args)
 
     def set_apn(self, apn):
