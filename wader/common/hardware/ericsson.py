@@ -246,15 +246,15 @@ class EricssonWrapper(WCDMAWrapper):
 
         def get_it(auxdef=None):
 
-            def get_netreg_status_cb((mode, status)):
+            def get_netreg_status_cb((_mode, status)):
                 self.state_dict['creg_retries'] += 1
                 if self.state_dict['creg_retries'] > MAX_RETRIES:
-                    return auxdef.callback((mode, status))
+                    return auxdef.callback((_mode, status))
 
                 if status == 4:
                     reactor.callLater(RETRY_TIMEOUT, get_it, auxdef)
                 else:
-                    return auxdef.callback((mode, status))
+                    return auxdef.callback((_mode, status))
 
             d = super(EricssonWrapper, self).get_netreg_status()
             d.addCallback(get_netreg_status_cb)

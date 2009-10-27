@@ -321,7 +321,7 @@ class AES(object):
     # operations of the inverse aes, creating a round key for each round
     def aes_invMain(self, state, expandedKey, nbrRounds):
         state = self.addRoundKey(state,
-                                elf.createRoundKey(expandedKey, 16*nbrRounds))
+                                self.createRoundKey(expandedKey, 16*nbrRounds))
         i = nbrRounds - 1
         while i > 0:
             state = self.aes_invRound(state,

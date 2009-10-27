@@ -84,7 +84,7 @@ class SignalQualityDaemon(WaderDaemon):
         """Executes `get_signal_quality` periodically"""
         d = self.device.sconn.get_signal_quality()
         d.addCallback(rssi_to_percentage)
-        d.addCallback(lambda rssi: self.device.exporter.SignalQuality(rssi))
+        d.addCallback(self.device.exporter.SignalQuality)
 
         return True
 
