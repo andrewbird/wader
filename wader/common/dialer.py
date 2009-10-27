@@ -105,7 +105,7 @@ class DialerConf(object):
             self.network_type = props['gsm']['network-type']
 
         if 'ipv4' in props:
-            self.staticdns = props['ipv4']['ignore-auto-dns']
+            self.staticdns = props['ipv4'].get('ignore-auto-dns', False)
             if self.staticdns:
                 if len(props['ipv4']['dns']):
                     dns1 = props['ipv4']['dns'][0]
