@@ -250,8 +250,8 @@ class ProfileManager(Object, GConfHelper):
             obj = self.bus.get_object(NM_USER_SETTINGS, NM_SYSTEM_SETTINGS_OBJ)
             self.nm_manager = dbus.Interface(obj, NM_SYSTEM_SETTINGS)
         except dbus.DBusException, e:
-            log.err(e, "nm-applet seems to be not around")
             # XXX: handle the case where nm-applet is not around
+            log.err(e, "nm-applet seems to be not around")
         else:
             # connect to signals
             self._connect_to_signals()

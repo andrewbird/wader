@@ -209,7 +209,6 @@ class DBusTestCase(unittest.TestCase):
     def test_ModemMasterDeviceProperty(self):
         master_device = self.device.Get(MDM_INTFACE, 'MasterDevice',
                                         dbus_interface=dbus.PROPERTIES_IFACE)
-        # XXX: MasterDevice property not implemented in core
         self.failUnlessIsInstance(master_device, basestring)
 
     def test_ModemDriverProperty(self):
@@ -218,7 +217,6 @@ class DBusTestCase(unittest.TestCase):
 
         driver = self.device.Get(MDM_INTFACE, 'Driver',
                                  dbus_interface=dbus.PROPERTIES_IFACE)
-        # XXX: Am I missing any driver ?
         self.failUnlessIn(driver, ['hso', 'option', 'mbm', 'sierra',
                                    'cdc_ether', 'cdc_wdm'])
 
@@ -231,7 +229,6 @@ class DBusTestCase(unittest.TestCase):
     def test_ModemIpMethodProperty(self):
         method = self.device.Get(MDM_INTFACE, 'IpMethod',
                                  dbus_interface=dbus.PROPERTIES_IFACE)
-        # XXX: IpMethod property hardcoded to 1 (static)
         self.failUnlessIsInstance(method, (int, dbus.UInt32))
         self.failUnlessIn(method, [0, 1, 2])
 

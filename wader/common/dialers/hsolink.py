@@ -26,6 +26,7 @@ class HSODialer(Dialer):
 
     def __init__(self, device, opath, **kwds):
         super(HSODialer, self).__init__(device, opath, **kwds)
+        # XXX: hardcoding iface to hso0
         self.iface = 'hso0'
 
     def configure(self, config):
