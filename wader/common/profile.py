@@ -326,7 +326,7 @@ class ProfileManager(Object, GConfHelper):
                        self.gpath, dict(props))
 
     def _do_set_profile(self, path, props):
-        if not props['ipv4']['ignore-auto-dns']:
+        if not props['ipv4'].get('ignore-auto-dns'):
             props['ipv4']['dns'] = []
 
         for key in props:
