@@ -1,6 +1,6 @@
 # Flip the Sony Ericsson MD300 device again
 ACTION!="add", GOTO="3G_End"
-BUS=="usb", SYSFS{idProduct}=="d0cf", SYSFS{idVendor}=="0fce", NAME="modem", PROGRAM="/bin/sh -c 'echo 3 > /sys/%p/device/bConfigurationValue'"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0fce", ATTRS{idProduct}=="d0cf", RUN+="/bin/sh -c 'echo 3 > /sys/$env{DEVPATH}/bConfigurationValue'"
 LABEL="3G_End"
 
 
