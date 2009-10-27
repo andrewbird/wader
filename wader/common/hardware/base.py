@@ -86,7 +86,7 @@ def _identify_device(port):
     ser.write('AT+CGMM\r\n')
     # clean up unsolicited notifications and \r\n's
     response = [r.replace('\r\n', '') for r in ser.readlines()
-                    if not r.startswith(('^', '_')) and r.replace('\r\n','')]
+                    if not r.startswith(('^', '_')) and r.replace('\r\n', '')]
     if response and response[0].startswith('AT+CGMM'):
         response.pop(0)
 

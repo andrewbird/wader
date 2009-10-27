@@ -134,4 +134,3 @@ class NMDialer(Dialer):
         # the deferred will be callbacked as soon as we get a
         # connectivity status change
         return self.disconnect_deferred
-

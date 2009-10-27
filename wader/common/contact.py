@@ -38,8 +38,8 @@ class Contact(object):
         if not self.index:
             return '<Contact name=%s number=%s>' % (self.name, self.number)
 
-        return '<Contact name=%s number=%s index=%d>' % (self.name,
-                                                        self.number, self.index)
+        args = (self.name, self.number, self.index)
+        return '<Contact name=%s number=%s index=%d>' % args
 
     __str__ = __repr__
 
@@ -99,11 +99,11 @@ class ContactStore(object):
         return ret
 
     def add_contact(self, data):
-        """See :meth:`~wader.common.interfaces.IContactProvider.add_contact`"""
+        """:meth:`~wader.common.interfaces.IContactProvider.add_contact`"""
         return self._call_method('add_contact', data)[0]
 
     def edit_contact(self, data):
-        """See :meth:`~wader.common.interfaces.IContactProvider.edit_contact`"""
+        """:meth:`~wader.common.interfaces.IContactProvider.edit_contact`"""
         return self._call_method('edit_contact', data)[0]
 
     def find_contacts_by_name(self, name):
@@ -114,7 +114,7 @@ class ContactStore(object):
 
     def find_contacts_by_number(self, number):
         """
-        :meth:`~wader.common.interfaces.IContactProvider.find_contacts_by_number`
+        :meth:`wader.common.interfaces.IContactProvider.find_contacts_by_number`
         """
         # first try a full match, if succeeds return result
         # otherwise try to remove 3 chars and if succeeds return result
@@ -135,13 +135,9 @@ class ContactStore(object):
         return self._call_method('find_contacts_by_number', number)
 
     def list_contacts(self):
-        """
-        See :meth:`~wader.common.interfaces.IContactProvider.list_contacts`
-        """
+        """:meth:`~wader.common.interfaces.IContactProvider.list_contacts`"""
         return self._call_method('list_contacts')
 
     def remove_contact(self, contact):
-        """
-        See :meth:`~wader.common.interfaces.IContactProvider.remove_contact`
-        """
+        """:meth:`~wader.common.interfaces.IContactProvider.remove_contact`"""
         self._call_method('remove_contact', contact)

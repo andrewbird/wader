@@ -36,19 +36,11 @@ A callback is executed for every new line found in the file.
 
 import os
 
+
 class Tail(object):
     """I periodically poll a file and will execute a callback if changed"""
 
     def __init__(self, filename, callback, tailbytes=0):
-        """
-        Create a Tail object which periodically polls the specified file looking
-        for new data which was written. The callback routine is called for each
-        new line found in the file.
-
-        @param filename: File to read.
-        @param callback: Executed for every line read
-        @param tailbytes: Specifies bytes from end of file to start reading
-        """
         super(Tail, self).__init__()
         self.skip = tailbytes
         self.filename = filename
@@ -128,4 +120,3 @@ class Tail(object):
         self.last_inode = this_ino
 
         return True
-

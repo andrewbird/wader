@@ -275,4 +275,3 @@ class PluginManager(object):
                 return _plugin
 
         return None
-

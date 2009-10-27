@@ -18,30 +18,32 @@
 """Some routines to gather information at runtime"""
 from os.path import exists
 
-import dbus
+#import dbus
 
-import wader.common.consts as consts
+#import wader.common.consts as consts
+
 
 def nm07_present():
     return False
-    obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
-    try:
-        devices = obj.GetDevices()
-        return True
-    except dbus.DBusException:
-        return False
+    #obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
+    #try:
+    #    devices = obj.GetDevices()
+    #    return True
+    #except dbus.DBusException:
+    #    return False
+
 
 def nm08_present():
     return False
-    obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
-    try:
-        devices = obj.GetDevices()
-        if len(devices):
-            return 'NetworkManager' in devices[0]
-        else:
-            return False
-    except dbus.DBusException:
-        return False
+    #obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
+    #try:
+    #    devices = obj.GetDevices()
+    #    if len(devices):
+    #        return 'NetworkManager' in devices[0]
+    #    else:
+    #        return False
+    #except dbus.DBusException:
+    #    return False
 
 
 resolvconf_present = exists('/sbin/resolvconf')

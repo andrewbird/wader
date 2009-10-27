@@ -74,29 +74,23 @@ ZTE_CMD_DICT['get_band'] = build_cmd_dict(re.compile(r"""
                                             """, re.VERBOSE))
 
 ZTE_CMD_DICT['get_netreg_status'] = build_cmd_dict(re.compile(r"""
-                                                     \r\n
-                                                     \+CREG:\s
-                                                     (?P<mode>\d),
-                                                     (?P<status>\d+)(,[0-9a-fA-F]*,[0-9a-fA-F]*)?
-                                                     \r\n
-                                                     """, re.VERBOSE))
+                                            \r\n
+                                            \+CREG:\s
+                                            (?P<mode>\d),
+                                            (?P<status>\d+)
+                                            (,[0-9a-fA-F]*,[0-9a-fA-F]*)?
+                                            \r\n
+                                            """, re.VERBOSE))
 
 ZTE_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
-                                                    \r\n
-                                                    \+ZSNT:\s
-                                                    (?P<only>\d+),
-                                                    (?P<netsel>\d+),
-                                                    (?P<order>\d+)
-                                                    \r\n
-                                                    """, re.VERBOSE))
+                                            \r\n
+                                            \+ZSNT:\s
+                                            (?P<only>\d+),
+                                            (?P<netsel>\d+),
+                                            (?P<order>\d+)
+                                            \r\n
+                                            """, re.VERBOSE))
 
-#ZTE_CMD_DICT['get_network_type'] = build_cmd_dict(re.compile(r"""
-#                                                   \r\n
-#                                                   \+ZPAS:\s
-#                                                   "(?P<mode>.*?)"
-#                                                   (?:,\s*"(?P<srv>.*?)")?
-#                                                   \r\n
-#                                                   """, re.VERBOSE))
 
 def zte_new_conn_mode(what):
     if what in "UMTS":
@@ -169,9 +163,9 @@ class ZTEWrapper(WCDMAWrapper):
             else:
                 raise KeyError("Unsupported band %d" % band)
 
-        for key in self.custom.band_dict:
+        for key, value in self.custom.band_dict.items():
             if band & key:
-                return self.send_at("AT+ZBANDI=%d" % self.custom.band_dict[key])
+                return self.send_at("AT+ZBANDI=%d" % value)
 
         raise KeyError("Unsupported band %d" % band)
 

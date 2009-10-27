@@ -13,23 +13,27 @@
 #
 import math
 
+
 def append_PKCS7_padding(s):
     """return s padded to a multiple of 16-bytes by PKCS7 padding"""
-    numpads = 16 - (len(s)%16)
-    return s + numpads*chr(numpads)
+    numpads = 16 - (len(s) % 16)
+    return s + numpads * chr(numpads)
+
 
 def strip_PKCS7_padding(s):
     """return s stripped of PKCS7 padding"""
-    if len(s)%16 or not s:
+    if len(s) % 16 or not s:
         raise ValueError("String of len %d can't be PCKS7-padded" % len(s))
     numpads = ord(s[-1])
     if numpads > 16:
         raise ValueError("String ending with %r can't be PCKS7-padded" % s[-1])
     return s[:-numpads]
 
+
 # constants extracted for a cleaner API
 OFB, CFB, CBC = 0, 1, 2
 SIZE_128, SIZE_192, SIZE_256 = 16, 24, 32
+
 
 class AES(object):
     # valid key sizes
@@ -127,7 +131,7 @@ class AES(object):
             0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d,
             0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2,
             0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74,
-            0xe8, 0xcb ]
+            0xe8, 0xcb]
 
     def getRconValue(self, num):
         """Retrieves a given Rcon Value"""
@@ -219,10 +223,9 @@ class AES(object):
             b >>= 1
         return p
 
-    #
     # substitute all the values from the state with the value in the SBox
     # using the state value as index for the SBox
-    #
+
     def subBytes(self, state, isInv):
         if isInv:
             getter = self.getSBoxInvert
@@ -311,14 +314,14 @@ class AES(object):
         state = self.subBytes(state, False)
         state = self.shiftRows(state, False)
         state = self.addRoundKey(state,
-                                 self.createRoundKey(expandedKey, 16*nbrRounds))
+                               self.createRoundKey(expandedKey, 16*nbrRounds))
         return state
 
     # Perform the initial operations, the standard round, and the final
     # operations of the inverse aes, creating a round key for each round
     def aes_invMain(self, state, expandedKey, nbrRounds):
         state = self.addRoundKey(state,
-                                 self.createRoundKey(expandedKey, 16*nbrRounds))
+                                elf.createRoundKey(expandedKey, 16*nbrRounds))
         i = nbrRounds - 1
         while i > 0:
             state = self.aes_invRound(state,
@@ -433,7 +436,8 @@ class AESModeOfOperation(object):
             end = start + 16
         if mode == CBC:
             ar = [0] * 16
-        else: ar = []
+        else:
+            ar = []
 
         i = start
         j = 0
@@ -467,8 +471,8 @@ class AESModeOfOperation(object):
         firstRound = True
         if stringIn != None:
             for j in range(int(math.ceil(float(len(stringIn))/16))):
-                start = j*16
-                end = j*16+16
+                start = j * 16
+                end = j * 16 + 16
                 if  end > len(stringIn):
                     end = len(stringIn)
                 plaintext = self.convertString(stringIn, start, end, mode)
@@ -547,9 +551,9 @@ class AESModeOfOperation(object):
         firstRound = True
         if cipherIn != None:
             for j in range(int(math.ceil(float(len(cipherIn))/16))):
-                start = j*16
-                end = j*16+16
-                if j*16+16 > len(cipherIn):
+                start = j * 16
+                end = j * 16 + 16
+                if j * 16 + 16 > len(cipherIn):
                     end = len(cipherIn)
                 ciphertext = cipherIn[start:end]
                 if mode == CFB:
@@ -604,4 +608,3 @@ class AESModeOfOperation(object):
                             stringOut += chr(plaintext[k])
                     iput = ciphertext
         return stringOut
-

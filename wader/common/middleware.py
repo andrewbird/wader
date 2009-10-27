@@ -90,8 +90,6 @@ class WCDMAWrapper(WCDMAProtocol):
             d.addCallback(lambda _: contact.index)
             return d
 
-        # contact.index is not set, this means that we need to obtain the
-        # first free slot on the phonebook and then add the contact
         def get_next_id_cb(index):
             args.append(index)
             d2 = super(WCDMAWrapper, self).add_contact(*args)
@@ -99,6 +97,8 @@ class WCDMAWrapper(WCDMAProtocol):
             d2.addCallback(lambda _: index)
             return d2
 
+        # contact.index is not set, this means that we need to obtain the
+        # first free slot on the phonebook and then add the contact
         d = self._get_next_contact_id()
         d.addCallback(get_next_id_cb)
         return d
@@ -411,9 +411,13 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     def _get_next_contact_id(self):
-        """Returns the next unused contact id"""
-        # provide some error control and don't fail if sim.size
-        # is None, the card might be a bit difficult
+        """
+        Returns the next unused contact id
+
+        Provides some error control and won't fail if sim.size
+        is None as the card might be a bit difficult
+        """
+
         def do_get_it():
             d = self._get_free_contact_ids()
             d.addCallback(lambda free: free.popleft())
@@ -838,6 +842,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _do_disable_device(self):
         if self.device.status == DEV_CONNECTED:
+
             def on_disconnect_from_internet(_):
                 self.device.set_status(DEV_ENABLED)
                 if self.state_dict.get('nm08_workaround'):

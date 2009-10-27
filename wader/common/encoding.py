@@ -95,12 +95,12 @@ def unpack_ucs2_bytes_in_ts31101_81(s):
 
     num = ord(s[:2].decode('hex'))
     base = (ord(s[2:4].decode('hex')) & 0x7f) << 7 # bits 15..8
-    chars = s[4:4+num*2]
+    chars = s[4:4 + num * 2]
 
     t = ''
     for i in range(num):
-        j = i*2
-        c_hex = chars[j:j+2]
+        j = i * 2
+        c_hex = chars[j:j + 2]
         c_chr = c_hex.decode('hex')
         c_ord = ord(c_chr)
 
@@ -136,12 +136,12 @@ def unpack_ucs2_bytes_in_ts31101_82(s):
     num = ord(s[:2].decode('hex'))
     base = ord(s[2:4].decode('hex')) << 8 # bits 16..9
     base += ord(s[4:6].decode('hex'))     # bits  8..1
-    chars = s[6:6+num*2]
+    chars = s[6:6 + num * 2]
 
     t = ''
     for i in range(num):
-        j = i*2
-        c_hex = chars[j:j+2]
+        j = i * 2
+        c_hex = chars[j:j + 2]
         c_chr = c_hex.decode('hex')
         c_ord = ord(c_chr)
 

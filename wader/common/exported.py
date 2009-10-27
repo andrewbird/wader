@@ -40,6 +40,7 @@ from wader.common.utils import convert_ip_to_int
 # the appropiated implementation through the MRO. But this leads to MH madness
 # What we can do thou is rely on composition instead of MH for this one
 
+
 def to_a(_list, signature='u'):
     """
     Returns a :class:`dbus.Array` out of `_list`

@@ -31,6 +31,7 @@ import platform
 import socket
 import struct
 
+
 def _ifinfo(sock, addr, ifname):
     iface = struct.pack('256s', ifname[:15])
     info = fcntl.ioctl(sock.fileno(), addr, iface)
@@ -41,6 +42,7 @@ def _ifinfo(sock, addr, ifname):
         return ':'.join(hwaddr)
     else:
         return socket.inet_ntoa(info[20:24])
+
 
 def ifconfig(ifname):
     ifreq = {'ifname': ifname}
