@@ -19,6 +19,7 @@
 
 from wader.common.hardware.huawei import HuaweiWCDMADevicePlugin
 
+
 class HuaweiE660A(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E660A"""
     name = "Huawei E660A"

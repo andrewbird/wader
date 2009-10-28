@@ -20,6 +20,7 @@
 
 from wader.common.hardware.sierra import SierraWCDMADevicePlugin
 
+
 class SierraWireless875(SierraWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for SierraWireless 875"""
     name = "SierraWireless 875"

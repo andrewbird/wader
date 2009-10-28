@@ -19,6 +19,7 @@
 
 from wader.common.hardware.option import OptionWCDMADevicePlugin
 
+
 class OptionGTMax36(OptionWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Option's GT Max 36"""
     name = "Option GT Max 36"

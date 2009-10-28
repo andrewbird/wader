@@ -17,12 +17,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
 from wader.common.hardware.sonyericsson import SonyEricssonCustomizer
 from wader.common.plugin import DevicePlugin
 from wader.common.middleware import WCDMAWrapper
 
+
 class K610iWrapper(WCDMAWrapper):
+
     def set_charset(self, charset):
         if charset == 'UCS2':
             d = super(K610iWrapper, self).set_charset('IRA')
@@ -32,8 +33,10 @@ class K610iWrapper(WCDMAWrapper):
         d.addCallback(lambda ignord: self.device.sim.set_charset(charset))
         return d
 
+
 class SonyEricssonK610iCustomizer(SonyEricssonCustomizer):
     wrapper_klass = K610iWrapper
+
 
 class SonyEricssonK610iUSB(DevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Sony Ericsson k610i"""

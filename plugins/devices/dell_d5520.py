@@ -17,34 +17,34 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import serial
+
+from wader.common import consts
+from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NOVATEL_BAND_DICT)
-from wader.common.hardware.base import build_band_dict
-from wader.common import consts
 
-import serial
 
 class NovatelD5520Customizer(NovatelWCDMACustomizer):
-    """:class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for Novatel's Dell D5520"""
-
-# Quad-Band 850/900/1800/1900 MHz GPRS/EDGE
-# Tri-Band 850/1900/2100 MHz HSUPA/HSDPA/UMTS
+    """
+    :class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for D5520
+    """
+    # Quad-Band 850/900/1800/1900 MHz GPRS/EDGE
+    # Tri-Band 850/1900/2100 MHz HSUPA/HSDPA/UMTS
 
     band_dict = build_band_dict(
                   NOVATEL_BAND_DICT,
-                  [ consts.MM_NETWORK_BAND_ANY,
+                  [consts.MM_NETWORK_BAND_ANY,
 
-                    consts.MM_NETWORK_BAND_G850,
-                    consts.MM_NETWORK_BAND_EGSM,
-                    consts.MM_NETWORK_BAND_DCS,
-                    consts.MM_NETWORK_BAND_PCS,
+                   consts.MM_NETWORK_BAND_G850,
+                   consts.MM_NETWORK_BAND_EGSM,
+                   consts.MM_NETWORK_BAND_DCS,
+                   consts.MM_NETWORK_BAND_PCS,
 
-                    consts.MM_NETWORK_BAND_U850,
-                    consts.MM_NETWORK_BAND_U1900,
-                    consts.MM_NETWORK_BAND_U2100,
-                  ]
-                )
+                   consts.MM_NETWORK_BAND_U850,
+                   consts.MM_NETWORK_BAND_U1900,
+                   consts.MM_NETWORK_BAND_U2100])
 
 
 class NovatelD5520(NovatelWCDMADevicePlugin):
@@ -71,4 +71,3 @@ class NovatelD5520(NovatelWCDMADevicePlugin):
         ser.close()
 
 novateld5520 = NovatelD5520()
-

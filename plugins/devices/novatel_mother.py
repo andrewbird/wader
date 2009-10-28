@@ -21,6 +21,7 @@ from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
 from wader.plugins.novatel_mc990d import NovatelMC990D
 from wader.plugins.novatel_mifi2352 import NovatelMiFi2352
 
+
 class NovatelMother(NovatelWCDMADevicePlugin):
     """
     :class:`~wader.common.plugin.DevicePlugin` Novatel's Ovation/MiFi
@@ -42,9 +43,9 @@ class NovatelMother(NovatelWCDMADevicePlugin):
 
         self.mapping = {
             'Ovation MC990D Card' : NovatelMC990D,
-            'MiFi2352 '           : NovatelMiFi2352,
+            'MiFi2352 ' : NovatelMiFi2352,
 
-            'default'             : NovatelMiFi2352,
+            'default' : NovatelMiFi2352,
         }
 
 novatelmother = NovatelMother()

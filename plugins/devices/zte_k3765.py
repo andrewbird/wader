@@ -19,6 +19,7 @@
 
 from wader.common.hardware.zte import ZTEWCDMADevicePlugin
 
+
 class ZTEK3765(ZTEWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for ZTE's K3765-Z"""
     name = "Vodafone K3765-Z"
@@ -36,4 +37,3 @@ class ZTEK3765(ZTEWCDMADevicePlugin):
     hardcoded_ports = (3, 1)
 
 zte_k3765 = ZTEK3765()
-

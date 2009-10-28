@@ -17,10 +17,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import serial
+
 from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NovatelWrapper)
-import serial
+
 
 class NovatelU740Wrapper(NovatelWrapper):
 

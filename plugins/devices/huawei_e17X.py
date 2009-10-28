@@ -22,7 +22,9 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper)
 
+
 class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
+
     def get_phonebook_size(self):
         # the E170 that we have around keeps raising GenericErrors whenever
         # is asked for its size, we'll have to cheat till we have time
@@ -43,25 +45,21 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
         #    command to return the proper results.
 
         def get_max_index_cb(matches):
-            max = 0
-            for m in matches:
-                i = int(m.group('id'))
-                if i > max:
-                    max = i
-            return max
+            indexes = map(int, [m.group('id') for m in matches])
+            return max(indexes)
 
         def no_contacts_eb(failure):
             failure.trap(E.NotFound, E.GenericError)
             return 0
 
-        def get_valid_contacts(max):
-            if max == 0:
+        def get_valid_contacts(_max):
+            if not _max:
                 return defer.succeed([])
 
             def results_cb(matches):
                 return [self._hw_process_contact_match(m) for m in matches]
 
-            return self.send_at('AT^CPBR=1,%d' % max, name='list_contacts',
+            return self.send_at('AT^CPBR=1,%d' % _max, name='list_contacts',
                                 callback=results_cb)
 
         d = self.send_at('AT+CPBF=""', name='find_contacts',
@@ -88,4 +86,3 @@ class HuaweiE17X(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id' : [0x12d1],
         'usb_device.product_id' : [0x1003],
     }
-

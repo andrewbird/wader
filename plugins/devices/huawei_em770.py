@@ -19,13 +19,15 @@
 from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
+
 class HuaweiEM770(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's EM770"""
     name = "Huawei EM770"
     version = "0.1"
     author = u"Andrew Bird"
-    custom = HuaweiWCDMACustomizer   # Radio Switch query/response different from EM730V :-)
-                                     # so ignore that for now until we get a device
+    custom = HuaweiWCDMACustomizer
+    # Radio Switch query/response different from EM730V :-)
+    # so ignore that for now until we get a device
 
     __remote_name__ = "EM770"
 
@@ -33,4 +35,3 @@ class HuaweiEM770(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1001],
     }
-

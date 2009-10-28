@@ -23,11 +23,13 @@ from wader.common.hardware.option import (OptionWCDMADevicePlugin,
 
 
 class OptionEtnaWrapper(OptionWrapper):
+
     def get_roaming_ids(self):
         # FW 2.8.0Hd while panik if AT+CPOL is sent while in UCS2, we will
         # switch to IRA, perform the operation and switch back to UCS2
         self.set_charset("IRA")
         d = super(OptionEtnaWrapper, self).get_roaming_ids()
+
         def get_roaming_ids_cb(rids):
             d2 = self.set_charset("UCS2")
             d2.addCallback(lambda _: rids)
@@ -71,4 +73,3 @@ class OptionEtna(OptionWCDMADevicePlugin):
     }
 
 optionetna = OptionEtna()
-

@@ -18,6 +18,7 @@
 
 from wader.common.hardware.zte import ZTEWCDMADevicePlugin
 
+
 class ZTEK4505(ZTEWCDMADevicePlugin):
     """
     :class:`~wader.common.plugin.DevicePlugin` for ZTE's K4505
@@ -37,4 +38,3 @@ class ZTEK4505(ZTEWCDMADevicePlugin):
     hardcoded_ports = (2, 1)
 
 zte_k4505 = ZTEK4505()
-

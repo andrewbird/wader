@@ -19,6 +19,7 @@
 
 from wader.common.hardware.zte import ZTEWCDMADevicePlugin
 
+
 class ONDAMSA405HS(ZTEWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for ONDA's MSA405HS"""
     name = "ONDA MSA405HS"

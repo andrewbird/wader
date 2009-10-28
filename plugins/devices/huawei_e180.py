@@ -18,6 +18,7 @@
 
 from wader.common.hardware.huawei import HuaweiWCDMADevicePlugin
 
+
 class HuaweiE180(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E180"""
     name = "Huawei E180"
@@ -30,4 +31,3 @@ class HuaweiE180(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1003],
     }
-

@@ -18,6 +18,7 @@
 
 from wader.common.hardware.ericsson import EricssonDevicePlugin
 
+
 class EricssonMD300(EricssonDevicePlugin):
     """:class:`~wader.common.plugin.DBusDevicePlugin` for Ericsson's MD300"""
     name = "Ericsson MD300"
@@ -32,4 +33,3 @@ class EricssonMD300(EricssonDevicePlugin):
     }
 
 ericssonMD300 = EricssonMD300()
-

@@ -16,32 +16,32 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common import consts
+from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HUAWEI_BAND_DICT)
-from wader.common.hardware.base import build_band_dict
-from wader.common import consts
 
 
 class HuaweiK3715Customizer(HuaweiWCDMACustomizer):
-    """:class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for Huawei's K3715"""
+    """
+    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3715
+    """
 
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
     # HSDPA/UMTS 2100/900 MHz
 
     band_dict = build_band_dict(
                   HUAWEI_BAND_DICT,
-                  [ consts.MM_NETWORK_BAND_ANY,
+                  [consts.MM_NETWORK_BAND_ANY,
 
-                    consts.MM_NETWORK_BAND_G850,
-                    consts.MM_NETWORK_BAND_EGSM,
-                    consts.MM_NETWORK_BAND_DCS,
-                    consts.MM_NETWORK_BAND_PCS,
+                   consts.MM_NETWORK_BAND_G850,
+                   consts.MM_NETWORK_BAND_EGSM,
+                   consts.MM_NETWORK_BAND_DCS,
+                   consts.MM_NETWORK_BAND_PCS,
 
-#                    consts.MM_NETWORK_BAND_U900, # waiting for docs
-                    consts.MM_NETWORK_BAND_U2100,
-                  ]
-                )
+#                   consts.MM_NETWORK_BAND_U900, # waiting for docs
+                   consts.MM_NETWORK_BAND_U2100])
 
 
 class HuaweiK3715(HuaweiWCDMADevicePlugin):
@@ -57,4 +57,3 @@ class HuaweiK3715(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1001],
     }
-

@@ -16,12 +16,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+# Note: For this device to be identified by the OS the following two
+# prerequisties must be statisfied:
+# Kernel module 'hso' must be installed
+# Option storage flipping and package 'ozerocdoff' must be installed
 from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
 
-# Note: For this device to be identified by the OS the following two prerequisties
-# must be statisfied:
-# Kernel module 'hso' must be installed
-# Option storage flipping and HAL configuration package 'ozerocdoff' must be installed
 
 class OptionE3730(OptionHSOWCDMADevicePlugin):
     """
@@ -40,4 +40,3 @@ class OptionE3730(OptionHSOWCDMADevicePlugin):
     }
 
 optione3730 = OptionE3730()
-

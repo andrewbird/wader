@@ -19,6 +19,7 @@
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiEMXXCustomizer)
 
+
 class HuaweiEM730V(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's EM730V"""
     name = "Huawei EM730V"
@@ -32,4 +33,3 @@ class HuaweiEM730V(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1001],
     }
-

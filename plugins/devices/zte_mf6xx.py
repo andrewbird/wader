@@ -21,6 +21,7 @@ from wader.common.hardware.zte import ZTEWCDMADevicePlugin
 from wader.plugins.zte_mf620 import ZTEMF620
 from wader.plugins.zte_mf632 import ZTEMF632
 
+
 class ZTEMF6XX(ZTEWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for ZTE's MF6XX Family"""
     name = "ZTE MF6XX"
@@ -35,6 +36,8 @@ class ZTEMF6XX(ZTEWCDMADevicePlugin):
     }
 
     def __init__(self):
+        super(ZTEMF6XX, self).__init__()
+
         self.mapping = {
             'MF620' : ZTEMF620,
             'MF632' : ZTEMF632,
@@ -43,4 +46,3 @@ class ZTEMF6XX(ZTEWCDMADevicePlugin):
         }
 
 zte_mf6xx = ZTEMF6XX()
-

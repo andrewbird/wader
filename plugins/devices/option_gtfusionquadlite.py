@@ -19,6 +19,7 @@
 
 from wader.common.hardware.option import OptionWCDMADevicePlugin
 
+
 class OptionGTFusionQuadLite(OptionWCDMADevicePlugin):
     """
     :class:`~wader.common.plugin.DevicePlugin` for Option's GT Fusion Quad Lite

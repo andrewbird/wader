@@ -24,6 +24,7 @@ import re
 from wader.common.oses.linux import LinuxPlugin
 from wader.common.utils import get_file_data
 
+
 class SUSEDistro(LinuxPlugin):
 
     #XXX: Almost duplicated code with Fedora plugin

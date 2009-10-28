@@ -28,10 +28,12 @@ from wader.common.oses.linux import LinuxPlugin
 from wader.common.utils import save_file, get_file_data, create_dns_lock
 from wader.common.consts import APP_NAME, WADER_DNS_LOCK
 
+
 dns_template = """
 nameserver\t%s
 nameserver\t%s
 """
+
 
 class UbuntuBasedDistro(LinuxPlugin):
     """A plugin to be used on Ubuntu systems"""
@@ -66,6 +68,4 @@ class UbuntuBasedDistro(LinuxPlugin):
 
         return 'Ubuntu' in get_file_data('/etc/lsb-release')
 
-
 ubuntu = UbuntuBasedDistro()
-

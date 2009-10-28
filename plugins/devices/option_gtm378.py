@@ -17,13 +17,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
-
 # Ulf Michel contributed this info:
 # http://forge.vodafonebetavine.net/forum/message.php?msg_id=630
 #
 # OptionGTM378 integrated in Fuijitsu-Siemens Esprimo Mobile U Series
+from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
+
 
 class OptionGTM378(OptionHSOWCDMADevicePlugin):
     """

@@ -18,8 +18,9 @@
 
 from wader.common.hardware.ericsson import EricssonDevicePlugin
 
+
 class EricssonD5530(EricssonDevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin} for Ericsson's Dell D5530"""
+    """:class:`~wader.common.plugin.DevicePlugin` for Ericsson's Dell D5530"""
     name = "Dell D5530"
     version = "0.1"
     author = u"Andrew Bird"
@@ -32,4 +33,3 @@ class EricssonD5530(EricssonDevicePlugin):
     }
 
 ericssonD5530 = EricssonD5530()
-

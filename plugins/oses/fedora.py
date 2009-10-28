@@ -24,6 +24,7 @@ import re
 from wader.common.oses.linux import LinuxPlugin
 from wader.common.utils import get_file_data
 
+
 class FedoraBasedDistro(LinuxPlugin):
     """
     OSPlugin for Fedora-based distros

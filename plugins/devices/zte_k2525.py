@@ -23,7 +23,8 @@ from twisted.internet import defer
 from wader.common import consts
 import wader.common.aterrors as E
 from wader.common.command import build_cmd_dict
-from wader.common.encoding import unpack_ucs2_bytes, pack_ucs2_bytes, check_if_ucs2
+from wader.common.encoding import (unpack_ucs2_bytes, pack_ucs2_bytes,
+                                   check_if_ucs2)
 from wader.common.exceptions import LimitedServiceNetworkError
 from wader.common.middleware import WCDMAWrapper, NetworkOperator
 from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
@@ -34,54 +35,54 @@ from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
 ZTEK2525_CMD_DICT = ZTE_CMD_DICT.copy()
 
 ZTEK2525_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
-                                                         \r\n
-                                                         \+COPS:\s+
-                                                         (
-                                                         (?P<error>\d) |
-                                                         \d,\d,             # or followed by num,num,str ( fixed bearer )
-                                                         "(?P<netname>[\w\S ]*)"
-                                                         )                  # end of group
-                                                         \r\n
-                                                         """, re.VERBOSE))
+                             \r\n
+                             \+COPS:\s+
+                             (
+                             (?P<error>\d) |
+                             \d,\d, # or followed by num,num,str (fixed bearer)
+                             "(?P<netname>[\w\S ]*)"
+                             )      # end of group
+                             \r\n
+                             """, re.VERBOSE))
 
 ZTEK2525_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
-                                                         \r\n
-                                                         \+ZSNT=
-                                                         (?P<only>\d+),
-                                                         (?P<netsel>\d+),
-                                                         (?P<order>\d+)
-                                                         \r\n
-                                                         """, re.VERBOSE))
+                             \r\n
+                             \+ZSNT=
+                             (?P<only>\d+),
+                             (?P<netsel>\d+),
+                             (?P<order>\d+)
+                             \r\n
+                             """, re.VERBOSE))
 
 ZTEK2525_CMD_DICT['get_network_names'] = build_cmd_dict(re.compile(r"""
-                                                          \(
-                                                          (?P<id>\d+),
-                                                          "(?P<lname>[^"]*)",
-                                                          "(?P<sname>[^"]*)",
-                                                          "(?P<netid>\d+)"
-                                                          \),?
-                                                          """, re.VERBOSE),
-                                                          end=re.compile('\r\n\r\nOK\r\n'))
+                             \(
+                             (?P<id>\d+),
+                             "(?P<lname>[^"]*)",
+                             "(?P<sname>[^"]*)",
+                             "(?P<netid>\d+)"
+                             \),?
+                             """, re.VERBOSE),
+                             end=re.compile('\r\n\r\nOK\r\n'))
 
 ZTEK2525_CMD_DICT['get_sms'] = build_cmd_dict(re.compile(r"""
-                                                         \r\n
-                                                         \+CMGR:\s
-                                                         (?P<where>\d),
-                                                         (?P<contact>.*),
-                                                         \d+\r\n
-                                                         (?P<pdu>\w+)
-                                                         \r\n
-                                                         """, re.VERBOSE))
+                             \r\n
+                             \+CMGR:\s
+                             (?P<where>\d),
+                             (?P<contact>.*),
+                             \d+\r\n
+                             (?P<pdu>\w+)
+                             \r\n
+                             """, re.VERBOSE))
 
 ZTEK2525_CMD_DICT['list_sms'] = build_cmd_dict(re.compile(r"""
-                                                         \r\n
-                                                         \+CMGL:\s
-                                                         (?P<id>\d+),
-                                                         (?P<where>\d),
-                                                         (?P<contact>.*),
-                                                         \d+\r\n
-                                                         (?P<pdu>\w+)
-                                                         """, re.VERBOSE))
+                             \r\n
+                             \+CMGL:\s
+                             (?P<id>\d+),
+                             (?P<where>\d),
+                             (?P<contact>.*),
+                             \d+\r\n
+                             (?P<pdu>\w+)
+                             """, re.VERBOSE))
 
 
 class ZTEK2525Wrapper(ZTEWrapper):
@@ -149,7 +150,7 @@ class ZTEK2525Wrapper(ZTEWrapper):
         d = super(WCDMAWrapper, self).get_network_names()
 
         def get_network_names_cb(resp):
-            # K2525 is GPRS/EDGE only, so doesn't provide bearer type in results
+            # K2525 is GPRS/EDGE only, so won't provide bearer type in results
             return [NetworkOperator(*match.groups() + (0,)) for match in resp]
 
         d.addCallback(get_network_names_cb)
@@ -184,4 +185,3 @@ class ZTEK2525(ZTEWCDMADevicePlugin):
     }
 
 zte_k2525 = ZTEK2525()
-

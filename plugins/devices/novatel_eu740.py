@@ -17,6 +17,7 @@
 
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
 
+
 class NovatelEU740(NovatelWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Novatel's EU740"""
     name = "Novatel EU740"

@@ -23,12 +23,12 @@ DevicePlugin for Option Colt
 """
 
 from twisted.python import log
+from epsilon.modal import mode
 
 from wader.common.hardware.option import (OptionWCDMADevicePlugin,
                                         OptionWCDMACustomizer)
 from wader.common.sim import SIMBaseClass
 from wader.common.statem.auth import AuthStateMachine
-from epsilon.modal import mode
 
 
 class OptionColtAuthStateMachine(AuthStateMachine):
@@ -57,8 +57,10 @@ class OptionColtAuthStateMachine(AuthStateMachine):
         - SIM is not inserted
         - SIM's firmware error
         """
+
         def __enter__(self):
             pass
+
         def __exit__(self):
             pass
 
@@ -74,14 +76,16 @@ class OptionColtAuthStateMachine(AuthStateMachine):
 
 class OptionColtSIMClass(SIMBaseClass):
     """Option Colt SIM Class"""
+
     def __init__(self, sconn):
         super(OptionColtSIMClass, self).__init__(sconn)
 
     def initialize(self, set_encoding=False):
         self.charset = 'IRA'
         d = super(OptionColtSIMClass, self).initialize(set_encoding)
-        d.addCallback(lambda size: self.set_size(size))
+        d.addCallback(self.set_size)
         return d
+
 
 class OptionColtCustomizer(OptionWCDMACustomizer):
     """:class:`~wader.common.hardware.Customizer` for Option Colt"""
@@ -105,4 +109,3 @@ class OptionColt(OptionWCDMADevicePlugin):
 
 
 optioncolt = OptionColt()
-

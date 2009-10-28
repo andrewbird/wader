@@ -17,6 +17,7 @@
 
 from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
 
+
 class NovatelEU870D(NovatelWCDMADevicePlugin):
     """
     :class:`~wader.common.plugin.DevicePlugin` for Novatel's EU870D MiniCard
@@ -33,4 +34,3 @@ class NovatelEU870D(NovatelWCDMADevicePlugin):
     }
 
 novateleu870d = NovatelEU870D()
-

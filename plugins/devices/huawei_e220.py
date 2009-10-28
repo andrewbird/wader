@@ -20,18 +20,22 @@
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiSIMClass)
 
+
 class HuaweiE220SIMClass(HuaweiSIMClass):
     """Huawei E220 SIM Class"""
+
     def __init__(self, sconn):
         super(HuaweiE220SIMClass, self).__init__(sconn)
 
     def initialize(self, set_encoding=False):
         d = super(HuaweiE220SIMClass, self).initialize(set_encoding)
+
         def init_cb(size):
             self.sconn.get_smsc()
             # before switching to UCS2, we need to get once the SMSC number
             # otherwise as soon as we send a SMS, the device would reset
             # as if it had been unplugged and replugged to the system
+
             def process_charset(charset):
                 """
                 Do not set charset to UCS2 if is not necessary, returns size
@@ -64,5 +68,3 @@ class HuaweiE220(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1003, 0x1004],
     }
-
-

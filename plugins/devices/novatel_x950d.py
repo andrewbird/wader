@@ -17,34 +17,35 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import serial
+
 from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NOVATEL_BAND_DICT)
 from wader.common.hardware.base import build_band_dict
 from wader.common import consts
 
-import serial
 
 class NovatelX950DCustomizer(NovatelWCDMACustomizer):
-    """:class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for Novatel's X950D"""
+    """
+    :class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for X950D
+    """
 
-# Quad-Band 850/900/1800/1900 MHz GPRS/EDGE
-# Tri-Band 850/1900/2100 MHz HSUPA/HSDPA/UMTS
+    # Quad-Band 850/900/1800/1900 MHz GPRS/EDGE
+    # Tri-Band 850/1900/2100 MHz HSUPA/HSDPA/UMTS
 
     band_dict = build_band_dict(
                   NOVATEL_BAND_DICT,
-                  [ consts.MM_NETWORK_BAND_ANY,
+                  [consts.MM_NETWORK_BAND_ANY,
 
-                    consts.MM_NETWORK_BAND_G850,
-                    consts.MM_NETWORK_BAND_EGSM,
-                    consts.MM_NETWORK_BAND_DCS,
-                    consts.MM_NETWORK_BAND_PCS,
+                   consts.MM_NETWORK_BAND_G850,
+                   consts.MM_NETWORK_BAND_EGSM,
+                   consts.MM_NETWORK_BAND_DCS,
+                   consts.MM_NETWORK_BAND_PCS,
 
-                    consts.MM_NETWORK_BAND_U850,
-                    consts.MM_NETWORK_BAND_U1900,
-                    consts.MM_NETWORK_BAND_U2100,
-                  ]
-                )
+                   consts.MM_NETWORK_BAND_U850,
+                   consts.MM_NETWORK_BAND_U1900,
+                   consts.MM_NETWORK_BAND_U2100])
 
 
 class NovatelX950D(NovatelWCDMADevicePlugin):

@@ -18,6 +18,7 @@
 
 from wader.common.hardware.ericsson import EricssonDevicePlugin
 
+
 class EricssonF3507G(EricssonDevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin} for Ericsson's F3507G"""
     name = "Ericsson F3507G"

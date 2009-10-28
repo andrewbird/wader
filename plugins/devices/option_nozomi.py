@@ -19,6 +19,7 @@
 
 from wader.common.hardware.option import OptionWCDMADevicePlugin
 
+
 class OptionNozomi(OptionWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Option's Nozomi"""
     name = "Option GlobeTrotter 3G+"

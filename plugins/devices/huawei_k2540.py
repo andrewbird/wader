@@ -19,9 +19,9 @@
 from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
+
 class HuaweiK2540Customizer(HuaweiWCDMACustomizer):
-    conn_dict = {
-    }
+    conn_dict = {}
 
 
 class HuaweiK2540(HuaweiWCDMADevicePlugin):
@@ -37,4 +37,3 @@ class HuaweiK2540(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1001],
     }
-

@@ -16,16 +16,19 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import serial
+
+from wader.common import consts
 from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NOVATEL_BAND_DICT)
 from wader.common.hardware.base import build_band_dict
-from wader.common import consts
 
-import serial
 
 class NovatelXU870Customizer(NovatelWCDMACustomizer):
-    """:class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for Novatel's XU870"""
+    """
+    :class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for XU870
+    """
 
     # Supported bands (from Novatel docs)
     # GSM/GPRS
@@ -40,19 +43,18 @@ class NovatelXU870Customizer(NovatelWCDMACustomizer):
 
     band_dict = build_band_dict(
                   NOVATEL_BAND_DICT,
-                  [ consts.MM_NETWORK_BAND_ANY,
+                  [consts.MM_NETWORK_BAND_ANY,
 
-                    consts.MM_NETWORK_BAND_G850,
-                    consts.MM_NETWORK_BAND_EGSM,
-                    consts.MM_NETWORK_BAND_DCS,
-                    consts.MM_NETWORK_BAND_PCS,
+                   consts.MM_NETWORK_BAND_G850,
+                   consts.MM_NETWORK_BAND_EGSM,
+                   consts.MM_NETWORK_BAND_DCS,
+                   consts.MM_NETWORK_BAND_PCS,
 
-                    consts.MM_NETWORK_BAND_U850,
-                    consts.MM_NETWORK_BAND_U1900, # XXX: Novatel docs show UMTS 1900 (Band II)
-                                                  # but consts.py has this as UMTS 1900 Class IX
-                    consts.MM_NETWORK_BAND_U2100,
-                  ]
-                )
+                   consts.MM_NETWORK_BAND_U850,
+                   # XXX: Novatel docs show UMTS 1900 (Band II)
+                   # but consts.py has this as UMTS 1900 Class IX
+                   consts.MM_NETWORK_BAND_U1900,
+                   consts.MM_NETWORK_BAND_U2100])
 
 
 class NovatelXU870(NovatelWCDMADevicePlugin):

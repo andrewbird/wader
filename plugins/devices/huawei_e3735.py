@@ -19,6 +19,7 @@
 from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
+
 class HuaweiE3735(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E3735"""
     name = "Huawei E3735"
@@ -32,4 +33,3 @@ class HuaweiE3735(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1001],
     }
-

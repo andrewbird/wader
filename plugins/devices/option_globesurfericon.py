@@ -19,6 +19,7 @@
 
 from wader.common.hardware.option import OptionWCDMADevicePlugin
 
+
 class OptionGlobesurferIcon(OptionWCDMADevicePlugin):
     """
     :class:`~wader.common.plugin.DevicePlugin` for Options's Globesurfer Icon

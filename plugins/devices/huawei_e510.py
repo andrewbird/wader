@@ -19,6 +19,7 @@
 from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
+
 class HuaweiE510(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E510"""
     name = "Huawei E510"
@@ -41,4 +42,3 @@ class HuaweiE510(HuaweiWCDMADevicePlugin):
     hardcoded_ports = (0, 2)
 
 huaweie510 = HuaweiE510()
-

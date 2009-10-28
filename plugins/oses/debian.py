@@ -23,7 +23,9 @@ from os.path import exists
 
 from wader.common.oses.linux import LinuxPlugin
 
+
 class DebianBasedDistro(LinuxPlugin):
+
     def is_valid(self):
         if exists('/etc/debian_version'):
             # do not recognize Ubuntu as a DebianBasedDistro (is true tho)

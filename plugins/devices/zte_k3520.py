@@ -19,6 +19,7 @@
 
 from wader.common.hardware.zte import ZTEWCDMADevicePlugin
 
+
 class ZTEK3520(ZTEWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for ZTE's K3520"""
     name = "Vodafone K3520-Z"
@@ -35,4 +36,3 @@ class ZTEK3520(ZTEWCDMADevicePlugin):
     hardcoded_ports = (1, 3)
 
 zte_k3520 = ZTEK3520()
-

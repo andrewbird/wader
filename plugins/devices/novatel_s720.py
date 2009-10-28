@@ -16,10 +16,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
 # Plugin temporally disabled while we sort out the CDMA part
 
-#class NovatelS720(NovatelCDMADevicePlugin):
+
 class NovatelS720(object):
     """:class:`~wader.common.plugin.DevicePlugin` for Novatel S720"""
     name = "Novatel S720"
@@ -32,4 +31,3 @@ class NovatelS720(object):
         'usb_device.vendor_id' : [0x1410],
         'usb_device.product_id' : [0x1130],
     }
-

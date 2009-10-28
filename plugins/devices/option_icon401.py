@@ -18,6 +18,7 @@
 
 from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
 
+
 class OptionIcon401(OptionHSOWCDMADevicePlugin):
     """:class:`wader.common.plugin.DevicePlugin` for Options's Icon 401"""
     name = "Option Icon 401"

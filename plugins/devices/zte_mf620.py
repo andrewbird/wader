@@ -19,6 +19,7 @@
 
 from wader.common.hardware.zte import ZTEWCDMADevicePlugin
 
+
 class ZTEMF620(ZTEWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for ZTE's MF620"""
     name = "ZTE MF620"
@@ -31,4 +32,3 @@ class ZTEMF620(ZTEWCDMADevicePlugin):
         'usb_device.vendor_id': [0x19d2],
         'usb_device.product_id': [0x0001],
     }
-

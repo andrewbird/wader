@@ -17,10 +17,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
+# Stefano Rivera contributed this info through email on 20 Sept 2007
 from wader.common.hardware.option import OptionWCDMADevicePlugin
 
-# Stefano Rivera contributed this info through email on 20 Sept 2007
 
 class OptionGTFusion(OptionWCDMADevicePlugin):
     """

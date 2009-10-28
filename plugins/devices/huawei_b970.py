@@ -19,6 +19,7 @@
 from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
+
 class HuaweiB970(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's B970"""
     name = "Huawei B970"
@@ -32,4 +33,3 @@ class HuaweiB970(HuaweiWCDMADevicePlugin):
         'usb_device.vendor_id': [0x12d1],
         'usb_device.product_id': [0x1003],
     }
-

@@ -44,7 +44,6 @@ from wader.plugins.huawei_em770 import HuaweiEM770
 from wader.plugins.huawei_b970 import HuaweiB970
 
 
-
 class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
     """:class:`~wader.common.plugin.DevicePlugin` for Huawei's 1003 family"""
     name = "Huawei EXXX"
@@ -117,4 +116,3 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
 
 huaweiexxx1003 = HuaweiEXXX1003()
 huaweiexxx1001 = HuaweiEXXX1001()
-
