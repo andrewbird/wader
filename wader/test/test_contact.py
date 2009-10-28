@@ -29,6 +29,7 @@ try:
 except ImportError:
     SKIP_TEST = True
 
+
 class TestContactStore(unittest.TestCase):
     """Tests for wader.common.contact.ContactStore"""
     skip = "No contact providers found" if SKIP_TEST else None

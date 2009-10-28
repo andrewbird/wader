@@ -31,6 +31,7 @@ from wader.common.provider import (SMS_SCHEMA, SmsProvider, Message, Folder,
                                    TYPE_CONTRACT, NetworkProvider,
                                    NetworkOperator)
 
+
 class TestNetworkDBTriggers(unittest.TestCase):
     """Tests for the network DB triggers"""
 
@@ -432,6 +433,7 @@ class TestSmsDBTriggers(unittest.TestCase):
 
 class TestSmsProvider(unittest.TestCase):
     """Tests for SmsProvider"""
+
     def setUp(self):
         self.provider = SmsProvider(':memory:')
         self.provider.add_folder(inbox_folder)

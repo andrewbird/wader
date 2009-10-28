@@ -110,9 +110,11 @@ else:
     def get_dbus_error(e):
         return e.message
 
+
 def get_bands(bitwised_band):
     """Returns all the bitwised bands in ``bitwised_band``"""
     return [band for band in MM_NETWORK_BANDS if band & bitwised_band]
+
 
 class Config(object):
     """Simple GConf wrapper for string-only gets"""
@@ -141,6 +143,7 @@ config = Config(GCONF_BASE)
 # gconftool-2 -s -t string /apps/wader-core/test/phone 876543210
 #
 # edit the GCONF_BASE variable above, to change the '/apps/wader-core'
+
 
 class DBusTestCase(unittest.TestCase):
     """Test-suite for ModemManager DBus exported methods"""
@@ -1105,6 +1108,7 @@ class DBusTestCase(unittest.TestCase):
 
         def sms_saved_cb(indexes):
             # now check that the indexes are present in a List
+
             def sms_list_cb(messages):
                 sms_found = False
 
@@ -1166,6 +1170,7 @@ class DBusTestCase(unittest.TestCase):
 
         def sms_saved_cb(indexes):
             # now check that the indexes are present in a List
+
             def sms_list_cb(messages):
                 sms_found = False
 

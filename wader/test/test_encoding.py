@@ -23,6 +23,7 @@ from twisted.trial import unittest
 from wader.common.encoding import (check_if_ucs2,
                                    pack_ucs2_bytes, unpack_ucs2_bytes)
 
+
 class TestEncoding(unittest.TestCase):
     """Tests for encoding"""
 
@@ -45,4 +46,3 @@ class TestEncoding(unittest.TestCase):
         self.assertEqual(unpack_ucs2_bytes('0068006F006C0061'), 'hola')
         resp = 'holas'
         self.assertEqual(unpack_ucs2_bytes('0068006F006C00610073'), resp)
-

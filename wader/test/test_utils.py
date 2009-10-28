@@ -30,6 +30,7 @@ from wader.common.utils import (get_file_data, save_file, natsort,
                                 rssi_to_percentage, flatten_list,
                                 revert_dict)
 
+
 def ip_generator(n):
     c = 0
     while c < n:
@@ -111,4 +112,3 @@ class TestUtilities(unittest.TestCase):
     def test_revert_dict(self):
         self.assertEqual(revert_dict({'a' : 'b'}), {'b' : 'a'})
         self.assertEqual(revert_dict(dict(foo='bar')), dict(bar='foo'))
-
