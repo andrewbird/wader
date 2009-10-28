@@ -51,20 +51,20 @@ CTS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Contacts'
 SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.SMS'
 NET_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Network'
 
-MM_NETWORK_BAND_UNKNOWN = 0x0     # Unknown or invalid band
-MM_NETWORK_BAND_ANY = 0x1     # ANY
+MM_NETWORK_BAND_UNKNOWN = 0x0  # Unknown or invalid band
+MM_NETWORK_BAND_ANY = 0x1      # ANY
 MM_NETWORK_BAND_EGSM = 0x2     # 900 MHz
-MM_NETWORK_BAND_DCS = 0x4     # 1800 MHz
-MM_NETWORK_BAND_PCS = 0x8     # 1900 MHz
+MM_NETWORK_BAND_DCS = 0x4      # 1800 MHz
+MM_NETWORK_BAND_PCS = 0x8      # 1900 MHz
 MM_NETWORK_BAND_G850 = 0x10    #  850 MHz
-MM_NETWORK_BAND_U2100 = 0x20    # WCDMA 2100 MHz
-MM_NETWORK_BAND_U1700 = 0x40    # WCDMA 3GPP UMTS1800 MHz
+MM_NETWORK_BAND_U2100 = 0x20   # WCDMA 2100 MHz
+MM_NETWORK_BAND_U1700 = 0x40   # WCDMA 3GPP UMTS1800 MHz
 MM_NETWORK_BAND_17IV = 0x80    # WCDMA 3GPP AWS 1700/2100 MHz
 MM_NETWORK_BAND_U800 = 0x100   # WCDMA 3GPP UMTS800 MHz
 MM_NETWORK_BAND_U850 = 0x200   # WCDMA 3GPP UMTS850 MHz
 MM_NETWORK_BAND_U900 = 0x400   # WCDMA 3GPP UMTS900 MHz
-MM_NETWORK_BAND_U17IX = 0x800   # WCDMA 3GPP UMTS MHz
-MM_NETWORK_BAND_U1900 = 0x1000  # WCDMA 3GPP UMTS MHz
+MM_NETWORK_BAND_U17IX = 0x800  # WCDMA 3GPP UMTS MHz
+MM_NETWORK_BAND_U1900 = 0x1000 # WCDMA 3GPP UMTS MHz
 
 MM_NETWORK_BANDS = [
     MM_NETWORK_BAND_UNKNOWN,
@@ -191,23 +191,29 @@ class DBusTestCase(unittest.TestCase):
         return d
 
     def tearDownClass(self):
-        d = defer.Deferred()
         # disable device at the end of the test
-        self.device.Enable(False,
-                           dbus_interface=MDM_INTFACE,
-                           reply_handler=lambda: d.callback(True),
-                           error_handler=d.errback)
-        return d
+        self.device.Enable(False, dbus_interface=MDM_INTFACE)
 
     # org.freedesktop.ModemManager.Modem tests
     def test_ModemDeviceProperty(self):
         if sys.platform != 'linux2':
             raise unittest.SkipTest("Cannot be tested on OS != Linux")
 
+        def check_if_valid_device(device):
+            # Huawei, Novatel, ZTE, Old options, etc.
+            if 'tty' in device:
+                return True
+            # HSO devices
+            if 'hso' in device:
+                return True
+            # MBM devices
+            if 'usb' in device:
+                return True
+
         device = self.device.Get(MDM_INTFACE, 'Device',
                                  dbus_interface=dbus.PROPERTIES_IFACE)
         self.failUnlessIsInstance(device, basestring)
-        self.failUnless('tty' in device)
+        self.failUnless(check_if_valid_device(device))
 
     def test_ModemMasterDeviceProperty(self):
         master_device = self.device.Get(MDM_INTFACE, 'MasterDevice',
@@ -221,7 +227,7 @@ class DBusTestCase(unittest.TestCase):
         driver = self.device.Get(MDM_INTFACE, 'Driver',
                                  dbus_interface=dbus.PROPERTIES_IFACE)
         self.failUnlessIn(driver, ['hso', 'option', 'mbm', 'sierra',
-                                   'cdc_ether', 'cdc_wdm'])
+                                   'cdc_ether', 'cdc_wdm', 'cdc_acm'])
 
     def test_ModemTypeProperty(self):
         _type = self.device.Get(MDM_INTFACE, 'Type',
@@ -237,40 +243,21 @@ class DBusTestCase(unittest.TestCase):
 
     def test_ModemGetInfo(self):
         """Test for Modem.GetInfo"""
-        d = defer.Deferred()
-
-        def get_info_cb(info):
-            self.failUnless(len(info) == 3)
-            self.failUnlessIsInstance(info[0], basestring)
-            self.failUnlessIsInstance(info[1], basestring)
-            self.failUnlessIsInstance(info[2], basestring)
-            d.callback(True)
-
-        self.device.GetInfo(dbus_interface=MDM_INTFACE,
-                            reply_handler=get_info_cb,
-                            error_handler=d.errback)
-        return d
+        info = self.device.GetInfo(dbus_interface=MDM_INTFACE)
+        self.failUnless(len(info) == 3)
+        self.failUnlessIsInstance(info[0], basestring)
+        self.failUnlessIsInstance(info[1], basestring)
+        self.failUnlessIsInstance(info[2], basestring)
 
     # org.freedesktop.ModemManager.Modem.Gsm.Card tests
     def test_CardChangePin(self):
         """Test for Card.ChangePin"""
-        d = defer.Deferred()
         good_pin = config.get('test', 'pin', '0000')
         bad_pin = '1111'
-
-        def pin_changed_cb():
-            self.device.ChangePin(bad_pin, good_pin,
-                                  dbus_interface=CRD_INTFACE,
-                                  # test finishes with lambda
-                                  reply_handler=lambda: d.callback(True),
-                                  error_handler=d.errback)
-
+        # if this operations don't fail we can assume it is working
         self.device.ChangePin(good_pin, bad_pin,
-                              dbus_interface=CRD_INTFACE,
-                              reply_handler=pin_changed_cb,
-                              error_handler=d.errback)
-
-        return d
+                              dbus_interface=CRD_INTFACE)
+        self.device.ChangePin(bad_pin, good_pin)
 
     # if we unlocked the PIN at Enable we must increase the timeout
     # as the core gives the device 15 seconds to settle.
@@ -281,17 +268,8 @@ class DBusTestCase(unittest.TestCase):
         if not TEST_WADER_EXTENSIONS:
             raise unittest.SkipTest(GENERIC_SKIP_MSG)
 
-        d = defer.Deferred()
-
-        def card_check_cb(status):
-            self.assertEqual(status, "READY")
-            d.callback(True)
-
-        self.device.Check(dbus_interface=CRD_INTFACE,
-                          reply_handler=card_check_cb,
-                          error_handler=d.errback)
-
-        return d
+        status = self.device.Check(dbus_interface=CRD_INTFACE)
+        self.assertEqual(status, "READY")
 
     def test_CardEnableEcho(self):
         """Test for Card.EnableEcho"""
@@ -300,81 +278,38 @@ class DBusTestCase(unittest.TestCase):
 
     def test_CardEnablePin(self):
         """Test for Card.EnablePin"""
-        d = defer.Deferred()
         pin = config.get('test', 'pin', '0000')
-
-        def disable_pin_cb():
-            # now enable it again
-            self.device.EnablePin(pin, True,
-                                  dbus_interface=CRD_INTFACE,
-                                  # test finishes with lambda
-                                  reply_handler=lambda: d.callback(True),
-                                  error_handler=d.errback)
-        # disable PIN auth
-        self.device.EnablePin(pin, False,
-                              dbus_interface=CRD_INTFACE,
-                              reply_handler=disable_pin_cb,
-                              error_handler=d.errback)
-        return d
+        # disable and enable PIN auth, if this operations don't fail
+        # we can assume that the underlying implementation works
+        self.device.EnablePin(pin, False, dbus_interface=CRD_INTFACE)
+        self.device.EnablePin(pin, True, dbus_interface=CRD_INTFACE)
 
     test_CardEnablePin.timeout = 15
 
     def test_CardGetCharset(self):
         """Test for Card.GetCharset"""
-        d = defer.Deferred()
-
-        def get_charset_cb(charset):
-            self.failUnlessIn(charset, ['GSM', 'IRA', 'UCS2'])
-            d.callback(True)
-
-        self.device.GetCharset(dbus_interface=CRD_INTFACE,
-                               reply_handler=get_charset_cb,
-                               error_handler=d.errback)
-        return d
+        charset = self.device.GetCharset(dbus_interface=CRD_INTFACE)
+        self.failUnlessIn(charset, ['GSM', 'IRA', 'UCS2'])
 
     def test_CardGetCharsets(self):
         """Test for Card.GetCharsets"""
-        d = defer.Deferred()
-
-        def get_charsets_cb(charsets):
-            self.failUnlessIn('IRA', charsets)
-            self.failUnlessIn('UCS2', charsets)
-            d.callback(True)
-
-        self.device.GetCharsets(dbus_interface=CRD_INTFACE,
-                                reply_handler=get_charsets_cb,
-                                error_handler=d.errback)
-        return d
+        charsets = self.device.GetCharsets(dbus_interface=CRD_INTFACE)
+        self.failUnlessIn('IRA', charsets)
+        self.failUnlessIn('UCS2', charsets)
 
     def test_CardGetImei(self):
         """Test for Card.GetImei"""
-        d = defer.Deferred()
-
-        def get_imei_cb(imei):
-            imei_regexp = re.compile('^\d{14,17}$') # 14 <= IMEI <= 17
-            self.failUnless(imei_regexp.match(imei))
-            d.callback(True)
-
-        self.device.GetImei(dbus_interface=CRD_INTFACE,
-                            reply_handler=get_imei_cb,
-                            error_handler=d.errback)
-        return d
+        imei = self.device.GetImei(dbus_interface=CRD_INTFACE)
+        imei_regexp = re.compile('^\d{14,17}$') # 14 <= IMEI <= 17
+        self.failUnless(imei_regexp.match(imei))
 
     def test_CardGetImsi(self):
         """Test for Card.GetImsi"""
-        d = defer.Deferred()
-
-        def get_imsi_cb(imsi):
-            # according to http://en.wikipedia.org/wiki/IMSI there are
-            # also IMSIs with 14 digits
-            imsi_regexp = re.compile('^\d{14,15}$') # 14 <= IMSI <= 15
-            self.failUnless(imsi_regexp.match(imsi))
-            d.callback(True)
-
-        self.device.GetImsi(dbus_interface=CRD_INTFACE,
-                            reply_handler=get_imsi_cb,
-                            error_handler=d.errback)
-        return d
+        imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+        # according to http://en.wikipedia.org/wiki/IMSI there are
+        # also IMSIs with 14 digits
+        imsi_regexp = re.compile('^\d{14,15}$') # 14 <= IMSI <= 15
+        self.failUnless(imsi_regexp.match(imsi))
 
     def test_CardResetSettings(self):
         """Test for Card.ResetSettings"""
@@ -400,43 +335,22 @@ class DBusTestCase(unittest.TestCase):
 
     def test_CardSetCharset(self):
         """Test for Card.SetCharset"""
-        d = defer.Deferred()
         charsets = ["IRA", "GSM", "UCS2"]
-
-        def get_charset_cb(charset):
-            self.failUnlessIn(charset, charsets)
-            # now pick a new charset
-            new_charset = ""
-            while True:
-                new_charset = random.choice(charsets)
-                if new_charset != charset:
-                    break
-
-            def get_charset2_cb(_charset):
-                # check that the new charset is the expected one
-                self.assertEqual(new_charset, _charset)
-                # leave everything as found
-                self.device.SetCharset(charset,
-                                       dbus_interface=CRD_INTFACE,
-                                       # test finishes with lambda
-                                       reply_handler=lambda: d.callback(True),
-                                       error_handler=d.errback)
-
-            # set the charset to new_charset
-            self.device.SetCharset(new_charset,
-                                   dbus_interface=CRD_INTFACE,
-                                   error_handler=d.errback,
-                                   reply_handler=lambda:
-                                       self.device.GetCharset(
-                                           dbus_interface=CRD_INTFACE,
-                                           reply_handler=get_charset2_cb,
-                                           error_handler=d.errback))
-
         # get the current charset
-        self.device.GetCharset(dbus_interface=CRD_INTFACE,
-                               reply_handler=get_charset_cb,
-                               error_handler=d.errback)
-        return d
+        charset = self.device.GetCharset(dbus_interface=CRD_INTFACE)
+        self.failUnlessIn(charset, charsets)
+        # now pick a new charset
+        new_charset = random.choice(charsets)
+        while new_charset == charset:
+            new_charset = random.choice(charsets)
+
+        # set the charset to new_charset
+        self.device.SetCharset(new_charset, dbus_interface=CRD_INTFACE)
+        _charset = self.device.GetCharset(dbus_interface=CRD_INTFACE)
+        # check that the new charset is the expected one
+        self.assertEqual(new_charset, _charset)
+        # leave everything as found
+        self.device.SetCharset(charset, dbus_interface=CRD_INTFACE)
 
     def test_CardSupportedBandsProperty(self):
         """Test for Card.SupportedBands property"""
@@ -459,221 +373,109 @@ class DBusTestCase(unittest.TestCase):
     # org.freedesktop.ModemManager.Modem.Gsm.Contacts tests
     def test_ContactsAdd(self):
         """Test for Contacts.Add"""
-        d = defer.Deferred()
         name, number = "John", "+435443434343"
-
-        def add_contact_cb(index):
-
-            def on_contact_fetched((_index, _name, _number)):
-                self.assertEqual(name, _name)
-                self.assertEqual(number, _number)
-                # leave everything as found
-                self.device.Delete(_index, dbus_interface=CTS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            # get the object via DBus and check that its data is correct
-            self.device.Get(index, dbus_interface=CTS_INTFACE,
-                            reply_handler=on_contact_fetched,
-                            error_handler=d.errback)
-
-        self.device.Add(name, number,
-                        dbus_interface=CTS_INTFACE,
-                        reply_handler=add_contact_cb,
-                        error_handler=d.errback)
-        return d
+        # add a contact with ascii data
+        index = self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+        # get the object via DBus and check that its data is correct
+        _index, _name, _number = self.device.Get(index,
+                                                 dbus_interface=CTS_INTFACE)
+        self.assertEqual(name, _name)
+        self.assertEqual(number, _number)
+        # leave everything as found
+        self.device.Delete(_index, dbus_interface=CTS_INTFACE)
 
     def test_ContactsAdd_UTF8_name(self):
         """Test for Contacts.Add"""
-        d = defer.Deferred()
         name, number = u"中华人民共和国", "+43544311113"
-
-        def add_contact_cb(index):
-
-            def on_contact_fetched((_index, _name, _number)):
-                self.assertEqual(name, _name)
-                self.assertEqual(number, _number)
-                # leave everything as found
-                self.device.Delete(_index, dbus_interface=CTS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            # get the object via DBus and check that its data is correct
-            self.device.Get(index, dbus_interface=CTS_INTFACE,
-                            reply_handler=on_contact_fetched,
-                            error_handler=d.errback)
-
-        self.device.Add(name, number,
-                        dbus_interface=CTS_INTFACE,
-                        reply_handler=add_contact_cb,
-                        error_handler=d.errback)
-        return d
+        # add a contact with UTF8 data
+        index = self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+        # get the object via DBus and check that its data is correct
+        _index, _name, _number = self.device.Get(index,
+                                                 dbus_interface=CTS_INTFACE)
+        self.assertEqual(name, _name)
+        self.assertEqual(number, _number)
+        # leave everything as found
+        self.device.Delete(_index, dbus_interface=CTS_INTFACE)
 
     def test_ContactsDelete(self):
         """Test for Contacts.Delete"""
-        d = defer.Deferred()
         name, number = "Juan", "+21544343434"
-
-        def on_contact_added(index):
-
-            def is_it_present(contacts):
-                self.assertNotIn(index, [c[0] for c in contacts])
-                d.callback(True)
-
-            # now delete it and check that its index is no longer present
-            # if we list all the contacts
-            self.device.Delete(index, dbus_interface=CTS_INTFACE,
-                               error_handler=d.errback,
-                               reply_handler=lambda:
-                                  self.device.List(dbus_interface=CTS_INTFACE,
-                                                   reply_handler=is_it_present,
-                                                   error_handler=d.errback))
-
         # add a contact, and delete it
-        self.device.Add(name, number, dbus_interface=CTS_INTFACE,
-                        reply_handler=on_contact_added,
-                        error_handler=d.errback)
-        return d
+        index = self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+        # now delete it and check that its index is no longer present
+        # if we list all the contacts
+        self.device.Delete(index, dbus_interface=CTS_INTFACE)
+        contacts = self.device.List(dbus_interface=CTS_INTFACE)
+        self.assertNotIn(index, [c[0] for c in contacts])
 
     def test_ContactsEdit(self):
         """Test for Contacts.Edit"""
-        d = defer.Deferred()
         name, number = "Eugenio", "+435345342121"
         new_name, new_number = "Eugenia", "+43542323122"
-
-        def add_contact_cb(index):
-
-            def get_contact_cb((_index, _name, _number)):
-                self.assertEqual(_name, new_name)
-                self.assertEqual(_number, new_number)
-                # leave everything as found
-                self.device.Delete(_index, dbus_interface=CTS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            # edit it and get by index to check that the new values are set
-            self.device.Edit(index, new_name, new_number,
-                             dbus_interface=CTS_INTFACE,
-                             error_handler=d.errback,
-                             reply_handler=lambda index:
-                                self.device.Get(index,
-                                                dbus_interface=CTS_INTFACE,
-                                                reply_handler=get_contact_cb,
-                                                error_handler=d.errback))
         # add a contact
-        self.device.Add(name, number,
-                        dbus_interface=CTS_INTFACE,
-                        reply_handler=add_contact_cb,
-                        error_handler=d.errback)
-        return d
+        index = self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+        # edit it and get by index to check that the new values are set
+        self.device.Edit(index, new_name, new_number,
+                         dbus_interface=CTS_INTFACE)
+
+        _index, _name, _number = self.device.Get(index,
+                                                 dbus_interface=CTS_INTFACE)
+        self.assertEqual(_name, new_name)
+        self.assertEqual(_number, new_number)
+        # leave everything as found
+        self.device.Delete(_index, dbus_interface=CTS_INTFACE)
 
     def test_ContactsFindByName(self):
         """Test for Contacts.FindByName"""
-        test_data = {
-            'JuanFoo' : [0, '666066660'],
-            'JuanBar' : [0, '666066661'],
-            'JuanBaz' : [0, '666166662'],
-        }
-        test_searches = [
-            ('JuanB', 2), ('Jua', 3), ('JuanFoo', 1), ('Stuff', 0)
-        ]
+        # add three contacts with similar names
+        data = [('JohnOne', '+34656575757'), ('JohnTwo', '+34666575757'),
+                ('JohnThree', '+34766575757')]
+        indexes = [self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+                        for name, number in data]
+        # now search by name and make sure the matches match
+        search_data = [('John', 3), ('JohnT', 2), ('JohnOne', 1)]
+        for name, expected_matches in search_data:
+            contacts = self.device.FindByName(name, dbus_interface=CTS_INTFACE)
+            self.assertEqual(len(contacts), expected_matches)
 
-        for name, datat in test_data.iteritems():
-            test_data[name][0] = self.device.Add(name, datat[1],
-                                                dbus_interface=CTS_INTFACE)
-        for current_search in test_searches:
-            result_list = self.device.FindByName(current_search[0],
-                                                 dbus_interface=CTS_INTFACE)
-
-            self.assertEqual(len(result_list), current_search[1])
-            if current_search[1] != 0:
-                for result in result_list:
-                    self.assertEqual(result[2], test_data[result[1]][1])
-
-        for name, datat in test_data.iteritems():
-            self.device.Delete(datat[0], dbus_interface=CTS_INTFACE)
+        for index in indexes:
+            self.device.Delete(index, dbus_interface=CTS_INTFACE)
 
     def test_ContactsFindByNumber(self):
         """Test for Contacts.FindByNumber"""
-        test_data = {
-            '666066660' : [0, 'JuanFoo'],
-            '666066661' : [0, 'JuanBar'],
-            '666166662' : [0, 'JuanBaz'],
-        }
-        test_searches = [
-            ('6660', 2), ('666', 3), ('666066660', 1), ('1234', 0),
-        ]
+        # add three contacts with similar numbers
+        data = [('JohnOne', '+34656575757'), ('JohnTwo', '+34666575757'),
+                ('JohnThree', '+34766575757')]
+        indexes = [self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+                        for name, number in data]
+        # now search by number and make sure the matches match
+        search_data = [('575757', 3), ('66575757', 2), ('+34666575757', 1)]
+        for number, expected_matches in search_data:
+            contacts = self.device.FindByNumber(number,
+                                                dbus_interface=CTS_INTFACE)
+            self.assertEqual(len(contacts), expected_matches)
 
-        for number, datat in test_data.iteritems():
-            test_data[number][0] = self.device.Add(datat[1], number,
-                                                   dbus_interface=CTS_INTFACE)
-
-        for current_search in test_searches:
-            result_list = self.device.FindByNumber(current_search[0],
-                                                   dbus_interface=CTS_INTFACE)
-            self.assertEqual(len(result_list), current_search[1])
-
-            if current_search[1] != 0:
-                for result in result_list:
-                    self.assertEqual(result[1], test_data[result[2]][1])
-
-        for number, datat in test_data.iteritems():
-            self.device.Delete(datat[0], dbus_interface=CTS_INTFACE)
+        for index in indexes:
+            self.device.Delete(index, dbus_interface=CTS_INTFACE)
 
     def test_ContactsGet(self):
         """Test Contacts.Get"""
-        d = defer.Deferred()
         name, number = "Mario", "+312232332"
 
-        def add_contact_cb(index):
+        index = self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+        reply = self.device.Get(index, dbus_interface=CTS_INTFACE)
 
-            def get_contact_cb(reply):
-                self.assertIn(name, reply)
-                self.assertIn(number, reply)
-                self.assertIn(index, reply)
+        self.assertIn(name, reply)
+        self.assertIn(number, reply)
+        self.assertIn(index, reply)
 
-                # leave everything as found
-                self.device.Delete(index,
-                                   dbus_interface=CTS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            # test get by index
-            self.device.Get(index,
-                            dbus_interface=CTS_INTFACE,
-                            reply_handler=get_contact_cb,
-                            error_handler=d.errback)
-        # add a contact
-        self.device.Add(name, number,
-                        dbus_interface=CTS_INTFACE,
-                        reply_handler=add_contact_cb,
-                        error_handler=d.errback)
-        return d
+        self.device.Delete(index, dbus_interface=CTS_INTFACE)
 
     def test_ContactsGetCount(self):
         """Test for Contacts.GetCount"""
-        d = defer.Deferred()
-
-        def get_count_cb(count):
-
-            def list_contacts_cb(contacts):
-                # this two should match
-                self.assertEqual(count, len(contacts))
-                d.callback(True)
-
-            self.device.List(dbus_interface=CTS_INTFACE,
-                             reply_handler=list_contacts_cb,
-                             error_handler=d.errback)
-
-        # get the total count and compare it
-        self.device.GetCount(dbus_interface=CTS_INTFACE,
-                             reply_handler=get_count_cb,
-                             error_handler=d.errback)
-        return d
+        count = self.device.GetCount(dbus_interface=CTS_INTFACE)
+        contacts = self.device.List(dbus_interface=CTS_INTFACE)
+        self.assertEqual(count, len(contacts))
 
     def test_ContactsGetCount_2(self):
         """Test for Contacts.GetCount"""
@@ -686,70 +488,26 @@ class DBusTestCase(unittest.TestCase):
 
     def test_ContactsGetPhonebookSize(self):
         """Test for Contacts.GetPhonebookSize"""
-        d = defer.Deferred()
-
-        def get_phonebooksize_cb(size):
-            self.failUnlessIsInstance(size, int)
-            self.failUnless(size >= 200)
-            d.callback(True)
-
-        self.device.GetPhonebookSize(dbus_interface=CTS_INTFACE,
-                                     reply_handler=get_phonebooksize_cb,
-                                     error_handler=d.errback)
-        return d
+        size = self.device.GetPhonebookSize(dbus_interface=CTS_INTFACE)
+        self.failUnlessIsInstance(size, int)
+        self.failUnless(size >= 200)
 
     def test_ContactsList(self):
         """Test for Contacts.List"""
-        d = defer.Deferred()
         name, number = "Jauma", "+356456445654"
 
-        def add_contact_cb(index):
+        index = self.device.Add(name, number, dbus_interface=CTS_INTFACE)
+        reply = self.device.List(dbus_interface=CTS_INTFACE)
 
-            def list_contacts_cb(reply):
-                found = False
-                for contact in reply:
-                    if (index, name, number) == contact:
-                        found = True
-                        break
+        found = False
+        for contact in reply:
+            if (index, name, number) == contact:
+                found = True
+                break
 
-                # check that we found it
-                self.failUnless(found)
-
-                # leave everything as found
-                self.device.Delete(index,
-                                   dbus_interface=CTS_INTFACE,
-                                   # test finishes with lambda
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            self.device.List(dbus_interface=CTS_INTFACE,
-                             reply_handler=list_contacts_cb,
-                             error_handler=d.errback)
-
-        self.device.Add(name, number,
-                        dbus_interface=CTS_INTFACE,
-                        reply_handler=add_contact_cb,
-                        error_handler=d.errback)
-        return d
-
-    def test_ContactsList_2(self):
-        """Test for Contacts.List"""
-        contacts = [
-                {'name' : "FooAnt" , 'number' : "+34666666666" , 'index' : 0},
-                {'name' : "BarAnt" , 'number' : "+34666666665" , 'index' : 0},
-                {'name' : "BazAnt" , 'number' : "+34666666664" , 'index' : 0}
-                ]
-
-        for contact in contacts:
-            contact['index'] = self.device.Add(contact['name'],
-                                               contact['number'])
-
-        for contact in contacts:
-            self.assertEqual(self.device.FindByNumber(contact['number'])[0][1],
-                                                      contact['name'] )
-
-        for contact in contacts:
-            self.device.Delete(contact['index'])
+        self.failUnless(found)
+        # leave everything as found
+        self.device.Delete(index, dbus_interface=CTS_INTFACE)
 
     # org.freedesktop.ModemManager.Modem.Gsm.Network tests
     def test_NetworkGetApns(self):
@@ -761,57 +519,28 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkGetBand(self):
         """Test for Network.GetBand"""
-        d = defer.Deferred()
-
-        def get_band_cb(band):
-            self.failUnlessIsInstance(band, (dbus.UInt32, int))
-            self.failUnless(band > 0)
-            d.callback(True)
-
-        self.device.GetBand(dbus_interface=NET_INTFACE,
-                            reply_handler=get_band_cb,
-                            error_handler=d.errback)
-        return d
+        band = self.device.GetBand(dbus_interface=NET_INTFACE)
+        self.failUnlessIsInstance(band, (dbus.UInt32, int))
+        self.failUnless(band > 0)
 
     def test_NetworkGetNetworkMode(self):
         """Test for Network.GetNetworkMode"""
-        d = defer.Deferred()
-
-        def get_network_mode_cb(mode):
-            self.failUnlessIsInstance(mode, (dbus.UInt32, int))
-            # currently goes between 0 and 12
-            self.failUnless(mode >= 0 and mode < 20)
-            d.callback(True)
-
-        self.device.GetNetworkMode(dbus_interface=NET_INTFACE,
-                                   reply_handler=get_network_mode_cb,
-                                   error_handler=d.errback)
-        return d
+        mode = self.device.GetNetworkMode(dbus_interface=NET_INTFACE)
+        self.failUnlessIsInstance(mode, (dbus.UInt32, int))
+        # currently goes between 0 and 0x400
+        self.failUnless(mode >= 0 and mode <= 0x400)
 
     def test_NetworkGetRegistrationInfo(self):
         """Test for Network.GetRegistrationInfo"""
-        d = defer.Deferred()
-
-        def get_registration_info_cb(reply):
-            status, numeric_oper = reply[:2]
-            # we must be registered to our home network or roaming
-            self.failUnlessIn(status, [1, 5])
-
-            def check_numeric_oper_too(imsi):
-                # we should be registered with our home network
-                self.failUnless(imsi.startswith(numeric_oper))
-                d.callback(True)
-
-            # get the IMSI and check that we are connected to a network
-            # with a netid that matches the beginning of our IMSI
-            self.device.GetImsi(dbus_interface=CRD_INTFACE,
-                                reply_handler=check_numeric_oper_too,
-                                error_handler=d.errback)
-
-        self.device.GetRegistrationInfo(dbus_interface=NET_INTFACE,
-                                        reply_handler=get_registration_info_cb,
-                                        error_handler=d.errback)
-        return d
+        reply = self.device.GetRegistrationInfo(dbus_interface=NET_INTFACE)
+        status, numeric_oper = reply[:2]
+        # we must be registered to our home network or roaming
+        self.failUnlessIn(status, [1, 5])
+        # get the IMSI and check that we are connected to a network
+        # with a netid that matches the beginning of our IMSI
+        imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+        # we should be registered with our home network
+        self.failUnless(imsi.startswith(numeric_oper))
 
     def test_NetworkGetRoamingIDs(self):
         """Test for Network.GetRoamingIDs"""
@@ -822,49 +551,25 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkGetSignalQuality(self):
         """Test for Network.GetSignalQuality"""
-        d = defer.Deferred()
-
-        def get_signal_quality_cb(quality):
-            # signal quality should be an int between 1 and 100
-            self.failUnlessIsInstance(quality, (dbus.UInt32, int))
-            self.failUnless(quality >= 1 and quality <= 100)
-            d.callback(True)
-
-        self.device.GetSignalQuality(dbus_interface=NET_INTFACE,
-                                     reply_handler=get_signal_quality_cb,
-                                     error_handler=d.errback)
-        return d
+        quality = self.device.GetSignalQuality(dbus_interface=NET_INTFACE)
+        self.failUnlessIsInstance(quality, (dbus.UInt32, int))
+        self.failUnless(quality >= 1 and quality <= 100)
 
     def test_NetworkScan(self):
         """Test for Network.Scan"""
-        d = defer.Deferred()
-
-        def get_imsi_cb(imsi):
-
-            def network_scan_cb(networks):
-                home_network_found = False
-                for network in networks:
-                    if network['operator-num'] == imsi[:5]:
-                        home_network_found = True
-                        break
-
-                # our home network has to be around
-                # unless we are roaming ;)
-                self.assertEqual(home_network_found, True)
-                d.callback(True)
-
-            self.device.Scan(dbus_interface=NET_INTFACE,
-                             # increase the timeout as Scan is a
-                             # potentially long operation
-                             timeout=45,
-                             reply_handler=network_scan_cb,
-                             error_handler=d.errback)
-
         # get the first five digits of the IMSI and check that its around
-        self.device.GetImsi(dbus_interface=CRD_INTFACE,
-                            reply_handler=get_imsi_cb,
-                            error_handler=d.errback)
-        return d
+        imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+        # potentially long operation, increasing timeout to 45
+        networks = self.device.Scan(dbus_interface=NET_INTFACE, timeout=45)
+        home_network_found = False
+        for network in networks:
+            if network['operator-num'] == imsi[:5]:
+                home_network_found = True
+                break
+
+        # our home network has to be around
+        # unless we are roaming ;)
+        self.assertEqual(home_network_found, True)
 
     def test_NetworkSetApn(self):
         """Test for Network.SetApn"""
@@ -886,7 +591,7 @@ class DBusTestCase(unittest.TestCase):
             _band = self.device.GetBand(dbus_interface=NET_INTFACE)
             self.failUnless(band & _band)
 
-        # leave it in BAND_ANY
+        # leave it in BAND_ANY and give it some seconds to settle
         self.device.SetBand(MM_NETWORK_BAND_ANY)
         time.sleep(5)
 
@@ -904,7 +609,7 @@ class DBusTestCase(unittest.TestCase):
             _mode = self.device.GetNetworkMode(dbus_interface=NET_INTFACE)
             self.assertEqual(mode, _mode)
 
-        # leave it in MODE_ANY
+        # leave it in MODE_ANY and give it some seconds to settle
         self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
                                    dbus_interface=NET_INTFACE)
         time.sleep(5)
@@ -932,276 +637,157 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SimpleGetStatus(self):
         """Test for Simple.GetStatus"""
-        d = defer.Deferred()
-
-        def get_status_cb(status):
-            self.failUnless('band' in status)
-            self.failUnless('signal_quality' in status)
-            self.failUnless('operator_code' in status)
-            self.failUnless('operator_name' in status)
-            self.failUnlessIsInstance(status['operator_name'], basestring)
-            self.failUnlessIsInstance(status['operator_code'], basestring)
-            self.failUnlessIsInstance(status['signal_quality'], dbus.UInt32)
-            self.failUnlessIsInstance(status['band'], dbus.UInt32)
-
-            d.callback(True)
-
-        self.device.GetStatus(dbus_interface=SPL_INTFACE,
-                              reply_handler=get_status_cb,
-                              error_handler=d.errback)
-        return d
+        status = self.device.GetStatus(dbus_interface=SPL_INTFACE)
+        self.failUnless('band' in status)
+        self.failUnless('signal_quality' in status)
+        self.failUnless('operator_code' in status)
+        self.failUnless('operator_name' in status)
+        self.failUnlessIsInstance(status['operator_name'], basestring)
+        self.failUnlessIsInstance(status['operator_code'], basestring)
+        self.failUnlessIsInstance(status['signal_quality'], dbus.UInt32)
+        self.failUnlessIsInstance(status['band'], dbus.UInt32)
 
     # org.freedesktop.ModemManager.Modem.Gsm.SMS tests
     def test_SmsDelete(self):
-        """Test for SMS.Delete"""
-        d = defer.Deferred()
+        """Test for Sms.Delete"""
         sms = {'number' : '+33622754135', 'text' : 'delete test'}
-
-        def sms_saved_cb(indexes):
-
-            def on_sms_list_cb(messages):
-                sms_found = False
-                for msg in messages:
-                    if msg['index'] == indexes[0]:
-                        sms_found = True
-
-                # the index should not be present
-                self.assertEqual(sms_found, False)
-                d.callback(True)
-
-            self.assertEqual(len(indexes), 1)
-            self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE,
-                               error_handler=d.errback,
-                               reply_handler=lambda:
-                                   self.device.List(
-                                       dbus_interface=SMS_INTFACE,
-                                       reply_handler=on_sms_list_cb,
-                                       error_handler=d.errback))
-
         # save a sms, delete it and check is no longer present
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         reply_handler=sms_saved_cb,
-                         error_handler=d.errback)
-        return d
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        self.assertEqual(len(indexes), 1)
+        self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE)
+
+        sms_found = False
+        messages = self.device.List(dbus_interface=SMS_INTFACE)
+        for msg in messages:
+            if msg['index'] == indexes[0]:
+                sms_found = True
+                break
+
+        # the index should not be present
+        self.assertEqual(sms_found, False)
 
     def test_SmsDeleteMultiparted(self):
-        """Test for SMS.Delete"""
-        d = defer.Deferred()
+        """Test for Sms.Delete"""
         sms = {'number' : '+34622754135',
                'text' : """test_SmsDeleteMultiparted test_SmsDeleteMultiparted
                            test_SmsDeleteMultiparted test_SmsDeleteMultiparted
                            test_SmsDeleteMultiparted test_SmsDeleteMultiparted
                            test_SmsDeleteMultiparted test_SmsDeleteMultiparted
-                           """
-        }
-
-        def sms_saved_cb(indexes):
-
-            def on_sms_list_cb(messages):
-                sms_found = False
-                for msg in messages:
-                    if msg['index'] == indexes[0]:
-                        sms_found = True
-
-                # the index should not be present
-                self.assertEqual(sms_found, False)
-                d.callback(True)
-
-            self.assertEqual(len(indexes), 1)
-            self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE,
-                               error_handler=d.errback,
-                               reply_handler=lambda:
-                                   self.device.List(
-                                       dbus_interface=SMS_INTFACE,
-                                       reply_handler=on_sms_list_cb,
-                                       error_handler=d.errback))
-
+                           """}
         # save a sms, delete it and check is no longer present
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         reply_handler=sms_saved_cb,
-                         error_handler=d.errback)
-        return d
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        self.assertEqual(len(indexes), 1)
+        self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE)
+
+        messages = self.device.List(dbus_interface=SMS_INTFACE)
+        sms_found = False
+        for msg in messages:
+            if msg['index'] == indexes[0]:
+                sms_found = True
+        # the index should not be present
+        self.assertEqual(sms_found, False)
 
     def test_SmsGet(self):
-        """Test for SMS.Get"""
-        d = defer.Deferred()
+        """Test for Sms.Get"""
         sms = {'number' : '+33646754145', 'text' : 'get test'}
-
-        def sms_get_cb(_sms):
-            self.assertEqual(sms['number'], _sms['number'])
-            self.assertEqual(sms['text'], _sms['text'])
-            # leave everything as found
-            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
-                               reply_handler=lambda: d.callback(True),
-                               error_handler=d.errback)
-
         # save the message, get it by index, and check its values match
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         error_handler=d.errback,
-                         reply_handler=lambda indexes:
-                             self.device.Get(indexes[0],
-                                         dbus_interface=SMS_INTFACE,
-                                         reply_handler=sms_get_cb,
-                                         error_handler=d.errback))
-        return d
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        _sms = self.device.Get(indexes[0], dbus_interface=SMS_INTFACE)
+        self.assertEqual(sms['number'], _sms['number'])
+        self.assertEqual(sms['text'], _sms['text'])
+        # leave everything as found
+        self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE)
 
     def test_SmsGetMultiparted(self):
-        """Test for SMS.Get"""
-        d = defer.Deferred()
-
+        """Test for Sms.Get"""
         sms = {'number' : '+34622754135',
                'text' : """test_SmsGetMultiparted test_SmsGetMultiparted
                            test_SmsGetMultiparted test_SmsGetMultiparted
                            test_SmsGetMultiparted test_SmsGetMultiparted
                            test_SmsGetMultiparted test_SmsGetMultiparted
-                           """
-        }
-
-        def sms_get_cb(_sms):
-            self.assertEqual(sms['number'], _sms['number'])
-            self.assertEqual(sms['text'], _sms['text'])
-            # leave everything as found
-            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
-                               reply_handler=lambda: d.callback(True),
-                               error_handler=d.errback)
-
+                           """}
         # save the message, get it by index, and check its values match
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         error_handler=d.errback,
-                         reply_handler=lambda indexes:
-                             self.device.Get(indexes[0],
-                                         dbus_interface=SMS_INTFACE,
-                                         reply_handler=sms_get_cb,
-                                         error_handler=d.errback))
-        return d
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        _sms = self.device.Get(indexes[0], dbus_interface=SMS_INTFACE)
+        self.assertEqual(sms['number'], _sms['number'])
+        self.assertEqual(sms['text'], _sms['text'])
+        # leave everything as found
+        self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE)
 
     def test_SmsGetSmsc(self):
-        """Test for SMS.GetSmsc"""
-        d = defer.Deferred()
-
-        def get_smsc_cb(smsc):
-            self.failUnless(smsc.startswith('+'))
-            d.callback(True)
-
-        self.device.GetSmsc(dbus_interface=SMS_INTFACE,
-                            reply_handler=get_smsc_cb,
-                            error_handler=d.errback)
-        return d
+        """Test for Sms.GetSmsc"""
+        smsc = self.device.GetSmsc(dbus_interface=SMS_INTFACE)
+        self.failUnless(smsc.startswith('+'))
 
     def test_SmsGetFormat(self):
-        """Test for SMS.GetFormat"""
-        d = defer.Deferred()
-
-        def get_format_cb(fmt):
-            self.failUnlessIn(fmt, [0, 1])
-            d.callback(True)
-
-        self.device.GetFormat(dbus_interface=SMS_INTFACE,
-                              reply_handler=get_format_cb,
-                              error_handler=d.errback)
-        return d
+        """Test for Sms.GetFormat"""
+        fmt = self.device.GetFormat(dbus_interface=SMS_INTFACE)
+        self.failUnlessIn(fmt, [0, 1])
 
     def test_SmsList(self):
-        """Test for SMS.List"""
-        d = defer.Deferred()
+        """Test for Sms.List"""
         sms = {'number' : '+33622754135', 'text' : 'list test'}
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        messages = self.device.List(dbus_interface=SMS_INTFACE)
+        # now check that the indexes are present in a List
 
-        def sms_saved_cb(indexes):
-            # now check that the indexes are present in a List
+        sms_found = False
+        for msg in messages:
+            if msg['index'] == indexes[0]:
+                sms_found = True
+                break
+        self.assertEqual(sms_found, True)
 
-            def sms_list_cb(messages):
-                sms_found = False
-
-                for msg in messages:
-                    if msg['index'] == indexes[0]:
-                        sms_found = True
-                        break
-
-                self.assertEqual(sms_found, True)
-
-                # leave everything as found
-                self.device.Delete(indexes[0],
-                                   dbus_interface=SMS_INTFACE,
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            self.device.List(dbus_interface=SMS_INTFACE,
-                             reply_handler=sms_list_cb,
-                             error_handler=d.errback)
-
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         reply_handler=sms_saved_cb,
-                         error_handler=d.errback)
-        return d
+        # leave everything as found
+        self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE)
 
     def test_SmsList_2(self):
         # get the current number of Sms
         size_before = len(self.device.List(dbus_interface=SMS_INTFACE))
-
         # add three new ones
-        indexes = []
-        what = [
-            {'number':'+324342322', 'text': 'hey there'},
-            {'number':'+334223312', 'text': 'where you at?'},
-            {'number':'+324323232', 'text': 'hows it going?'}
-        ]
+        messages = [
+            {'number' : '+324342322', 'text': 'hey there'},
+            {'number' : '+334223312', 'text': 'where you at?'},
+            {'number' : '+324323232', 'text': 'hows it going?'}]
 
-        for sms in what:
+        indexes = []
+        for sms in messages:
             indexes.extend(self.device.Save(sms, dbus_interface=SMS_INTFACE))
 
         size_after = len(self.device.List(dbus_interface=SMS_INTFACE))
         # and check that the size has increased just three
         self.assertEqual(size_before + 3, size_after)
-
         # leave everything as found
         for index in indexes:
             self.device.Delete(index, dbus_interface=SMS_INTFACE)
 
     def test_SmsListMultiparted(self):
-        """Test for SMS.List"""
-        d = defer.Deferred()
+        """Test for Sms.List"""
         sms = {'number' : '+34622754135',
-                'text' : """test_SmsListMultiparted test_SmsListMultiparted
-                            test_SmsListMultiparted test_SmsListMultiparted
-                            test_SmsListMultiparted test_SmsListMultiparted
-                            test_SmsListMultiparted test_SmsListMultiparted
-                            """
-        }
+               'text' : """test_SmsListMultiparted test_SmsListMultiparted
+                           test_SmsListMultiparted test_SmsListMultiparted
+                           test_SmsListMultiparted test_SmsListMultiparted
+                           test_SmsListMultiparted test_SmsListMultiparted"""}
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        # now check that the indexes are present in a List
+        messages = self.device.List(dbus_interface=SMS_INTFACE)
+        sms_found = False
 
-        def sms_saved_cb(indexes):
-            # now check that the indexes are present in a List
+        for msg in messages:
+            if msg['index'] == indexes[0]:
+                sms_found = True
+                break
 
-            def sms_list_cb(messages):
-                sms_found = False
-
-                for msg in messages:
-                    if msg['index'] == indexes[0]:
-                        sms_found = True
-                        break
-
-                self.assertEqual(sms_found, True)
-
-                # leave everything as found
-                self.device.Delete(indexes[0],
-                                   dbus_interface=SMS_INTFACE,
-                                   reply_handler=lambda: d.callback(True),
-                                   error_handler=d.errback)
-
-            self.device.List(dbus_interface=SMS_INTFACE,
-                             reply_handler=sms_list_cb,
-                             error_handler=d.errback)
-
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         reply_handler=sms_saved_cb,
-                         error_handler=d.errback)
-        return d
+        self.assertEqual(sms_found, True)
+        # leave everything as found
+        self.device.Delete(indexes[0], dbus_interface=SMS_INTFACE)
 
     def test_SmsListMultiparted_2(self):
         # get the current number of Sms
         size_before = len(self.device.List(dbus_interface=SMS_INTFACE))
         # add three new ones
         what = [
-            {'number' : '+324342322', 'text': 'hey there'},
+            {'number' : '+324342322', 'text' : 'hey there'},
             {'number' : '+34622754135',
              'text' : """test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
@@ -1214,8 +800,7 @@ class DBusTestCase(unittest.TestCase):
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                           """},
-            {'number':'+324323232', 'text': 'hows it going?'},
-        ]
+            {'number' : '+324323232', 'text' : 'hows it going?'}]
 
         indexes = []
         for sms in what:
@@ -1230,63 +815,34 @@ class DBusTestCase(unittest.TestCase):
             self.device.Delete(index, dbus_interface=SMS_INTFACE)
 
     def test_SmsSave(self):
-        """Test for SMS.Save"""
-        d = defer.Deferred()
+        """Test for Sms.Save"""
         sms = {'number' : '+34645454445', 'text' : 'save test'}
-
-        def sms_get_cb(_sms):
-            self.assertEqual(sms['number'], _sms['number'])
-            self.assertEqual(sms['text'], _sms['text'])
-            # leave everything as found
-            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
-                               # test finishes with lambda
-                               reply_handler=lambda: d.callback(True),
-                               error_handler=d.errback)
-
         # save the message, get it by index, and check its values match
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         error_handler=d.errback,
-                         reply_handler=lambda indexes:
-                            self.device.Get(indexes[0],
-                                dbus_interface=SMS_INTFACE,
-                                reply_handler=sms_get_cb,
-                                error_handler=d.errback))
-
-        return d
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        _sms = self.device.Get(indexes[0], dbus_interface=SMS_INTFACE)
+        self.assertEqual(sms['number'], _sms['number'])
+        self.assertEqual(sms['text'], _sms['text'])
+        # leave everything as found
+        self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE)
 
     def test_SmsSaveMultiparted(self):
-        """Test for SMS.Save"""
-        d = defer.Deferred()
+        """Test for Sms.Save"""
         sms = {'number' : '+34622754135',
                'text' : """test_SmsSaveMultiparted test_SmsSaveMultiparted
                            test_SmsSaveMultiparted test_SmsSaveMultiparted
                            test_SmsSaveMultiparted test_SmsSaveMultiparted
                            test_SmsSaveMultiparted test_SmsSaveMultiparted
-                           """
-        }
-
-        def sms_get_cb(_sms):
-            self.assertEqual(sms['number'], _sms['number'])
-            self.assertEqual(sms['text'], _sms['text'])
-            # leave everything as found
-            self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE,
-                               # test finishes with lambda
-                               reply_handler=lambda: d.callback(True),
-                               error_handler=d.errback)
-
+                           """}
         # save the message, get it by index, and check its values match
-        self.device.Save(sms, dbus_interface=SMS_INTFACE,
-                         error_handler=d.errback,
-                         reply_handler=lambda indexes:
-                            self.device.Get(indexes[0],
-                                dbus_interface=SMS_INTFACE,
-                                reply_handler=sms_get_cb,
-                                error_handler=d.errback))
-
-        return d
+        indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
+        _sms = self.device.Get(indexes[0], dbus_interface=SMS_INTFACE)
+        self.assertEqual(sms['number'], _sms['number'])
+        self.assertEqual(sms['text'], _sms['text'])
+        # leave everything as found
+        self.device.Delete(_sms['index'], dbus_interface=SMS_INTFACE)
 
     def test_SmsSend(self):
-        """Test for SMS.Send"""
+        """Test for Sms.Send"""
         raise unittest.SkipTest("Not ready")
         #number = config.get('test', 'phone')
         #if not number:
@@ -1320,7 +876,7 @@ class DBusTestCase(unittest.TestCase):
         #return d
 
     def test_SmsSendFromStorage(self):
-        """Test for SMS.SendFromStorage"""
+        """Test for Sms.SendFromStorage"""
         raise unittest.SkipTest("Not ready")
         #number = config.get('test', 'phone')
         #if not number:
@@ -1363,67 +919,34 @@ class DBusTestCase(unittest.TestCase):
         #return d
 
     def test_SmsSetFormat(self):
-        """Test for SMS.SetFormat"""
-        d = defer.Deferred()
-
-        def get_format_cb(fmt):
-            self.assertEquals(fmt, 1)
-            # leave format as found
-            self.device.SetFormat(0,
-                                  dbus_interface=SMS_INTFACE,
-                                  # test finishes with lambda
-                                  reply_handler=lambda: d.callback(True),
-                                  error_handler=d.errback)
-
-        def set_format_eb(e):
-            if 'CMSError303' in get_dbus_error(e):
-                # it does not support setting +CMFG=1 (Ericsson)
-                d.callback(True)
-            else:
-                d.errback(e)
-
+        """Test for Sms.SetFormat"""
         # set text format and check immediately that a
         # GetFormat call returns 1
-        self.device.SetFormat(1, dbus_interface=SMS_INTFACE,
-                              error_handler=set_format_eb,
-                              reply_handler=lambda:
-                                    self.device.GetFormat(
-                                      dbus_interface=SMS_INTFACE,
-                                      reply_handler=get_format_cb,
-                                      error_handler=d.errback))
-        return d
+        try:
+            self.device.SetFormat(1, dbus_interface=SMS_INTFACE)
+        except dbus.DBusException, e:
+            if 'CMSError303' in get_dbus_error(e):
+                # MD300 doesn't allows to set text format
+                return
+        else:
+            fmt = self.device.GetFormat(dbus_interface=SMS_INTFACE)
+            self.assertEqual(fmt, 1)
+            # leave format as found
+            self.device.SetFormat(0, dbus_interface=SMS_INTFACE)
 
     def test_SmsSetIndication(self):
-        """Test for SMS.SetIndication"""
+        """Test for Sms.SetIndication"""
         raise unittest.SkipTest("Untested")
 
     def test_SmsSetSmsc(self):
-        """Test for SMS.SetSmsc"""
-        d = defer.Deferred()
+        """Test for Sms.SetSmsc"""
         bad_smsc = '+3453456343'
-
-        def get_smsc_cb(smsc):
-
-            def get_bad_smsc_cb(_bad_smsc):
-                # bad_smsc has been correctly set
-                self.assertEqual(bad_smsc, _bad_smsc)
-                # leave everything as found
-                self.device.SetSmsc(smsc, dbus_interface=SMS_INTFACE,
-                                    # test finishes with lambda
-                                    reply_handler=lambda: d.callback(True),
-                                    error_handler=d.errback)
-
-            # set the SMSC to a bad value and read it to confirm it worked
-            self.device.SetSmsc(bad_smsc, dbus_interface=SMS_INTFACE,
-                                error_handler=d.errback,
-                                reply_handler=lambda:
-                                   self.device.GetSmsc(
-                                       dbus_interface=SMS_INTFACE,
-                                       reply_handler=get_bad_smsc_cb,
-                                       error_handler=d.errback))
-
         # get the original SMSC and memoize it
-        self.device.GetSmsc(dbus_interface=SMS_INTFACE,
-                            reply_handler=get_smsc_cb,
-                            error_handler=d.errback)
-        return d
+        smsc = self.device.GetSmsc(dbus_interface=SMS_INTFACE)
+        # set the SMSC to a bad value and read it to confirm it worked
+        self.device.SetSmsc(bad_smsc, dbus_interface=SMS_INTFACE)
+        _bad_smsc = self.device.GetSmsc(dbus_interface=SMS_INTFACE)
+        # bad_smsc has been correctly set
+        self.assertEqual(bad_smsc, _bad_smsc)
+        # leave everything as found
+        self.device.SetSmsc(smsc, dbus_interface=SMS_INTFACE)

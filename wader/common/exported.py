@@ -403,7 +403,7 @@ class NetworkExporter(CardExporter):
 
                 if n.rat:
                     # some devices won't provide this info
-                    net['access-tech'] = n.rat
+                    net['access-tech'] = str(n.rat)
 
                 response.append(net)
 

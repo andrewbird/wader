@@ -244,7 +244,7 @@ class HardwareManager(DBusComponent):
         def do_get_driver_name(key, _udi, props):
             if key in props[_udi]:
                 name = props[_udi][key]
-                if name not in ['usb', 'usb-storage', 'pci', 'pcmcia']:
+                if name not in ['usb', 'usbfs', 'usb-storage', 'pci', 'pcmcia']:
                     return name
 
         if context:

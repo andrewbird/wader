@@ -33,6 +33,8 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
 from wader.common.statem.simple import SimpleStateMachine
+from wader.common.utils import revert_dict
+
 
 MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
@@ -47,6 +49,8 @@ ERICSSON_CONN_DICT = {
     consts.MM_NETWORK_MODE_2G_ONLY : 5,
     consts.MM_NETWORK_MODE_3G_ONLY : 6,
 }
+
+ERICSSON_CONN_DICT_REV = revert_dict(ERICSSON_CONN_DICT)
 
 ERINFO_2G_GPRS, ERINFO_2G_EGPRS = 1, 2
 ERINFO_3G_UMTS, ERINFO_3G_HSDPA = 1, 2
@@ -220,24 +224,14 @@ class EricssonWrapper(WCDMAWrapper):
 
     def get_network_mode(self):
 
-        def get_network_mode_cb(resp):
-            gsm = int(resp[0].group('gsm'))
-            umts = int(resp[0].group('umts'))
+        def get_radio_status_cb(_mode):
+            if _mode in ERICSSON_CONN_DICT_REV:
+                return ERICSSON_CONN_DICT_REV[_mode]
 
-            if gsm == ERINFO_2G_GPRS:
-                return consts.MM_NETWORK_MODE_GPRS
-            elif gsm == ERINFO_2G_EGPRS:
-                return consts.MM_NETWORK_MODE_EDGE
-            elif umts == ERINFO_3G_UMTS:
-                return consts.MM_NETWORK_MODE_UMTS
-            elif umts == ERINFO_3G_HSDPA:
-                return consts.MM_NETWORK_MODE_HSDPA
+            raise KeyError("Unknown network mode %d" % _mode)
 
-            raise E.GenericError("unknown network mode: %d, %d" % (gsm, umts))
-
-        cmd = ATCmd('AT*ERINFO?', name='get_network_mode')
-        d = self.queue_at_cmd(cmd)
-        d.addCallback(get_network_mode_cb)
+        d = self.get_radio_status()
+        d.addCallback(get_radio_status_cb)
         return d
 
     def get_netreg_status(self):
@@ -267,9 +261,18 @@ class EricssonWrapper(WCDMAWrapper):
         # So we need to override and provide an alternative. +CIND
         # returns an indication between 0-5 so let's just multiply
         # that by 6 to get a RSSI between 0-30
+
+        def get_signal_quality_cb(response):
+            try:
+                return int(response[0].group('sig')) * 6
+            except IndexError:
+                # Sometimes it won't reply to a +CIND? command
+                # we'll assume that we don't have RSSI rigth now
+                return 0
+
         cmd = ATCmd('AT+CIND?', name='get_signal_quality')
         d = self.queue_at_cmd(cmd)
-        d.addCallback(lambda response: int(response[0].group('sig')) * 6)
+        d.addCallback(get_signal_quality_cb)
         return d
 
     def get_pin_status(self):

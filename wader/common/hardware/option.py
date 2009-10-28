@@ -228,8 +228,8 @@ class OptionWrapper(WCDMAWrapper):
 
         def get_band_dict_cb(bands):
             ret = 0
-            for key in bands.keys():
-                if key == consts.MM_NETWORK_BAND_ANY:
+            for key in bands:
+                if key == 'ANY':
                     # skip ANY
                     continue
 
@@ -245,7 +245,7 @@ class OptionWrapper(WCDMAWrapper):
     def get_network_mode(self):
         """Returns the current network mode"""
 
-        def callback(resp):
+        def get_network_mode_cb(resp):
             _mode = int(resp[0].group('mode'))
             OPTION_BAND_DICT_REV = revert_dict(OPTION_CONN_DICT)
             if _mode in OPTION_BAND_DICT_REV:
@@ -254,7 +254,7 @@ class OptionWrapper(WCDMAWrapper):
             raise KeyError("Unknown network mode %d" % _mode)
 
         d = self.send_at('AT_OPSYS?', name='get_network_mode',
-                         callback=callback)
+                         callback=get_network_mode_cb)
         return d
 
     def set_band(self, band):

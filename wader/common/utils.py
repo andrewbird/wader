@@ -55,10 +55,7 @@ def convert_ip_to_int(ip):
     :type ip: str
     :rtype: int
     """
-    i = struct.unpack('i', socket.inet_pton(socket.AF_INET, ip))[0]
-    if i < 0:
-        i += 0xffffffff + 1
-    return i
+    return struct.unpack('i', socket.inet_pton(socket.AF_INET, ip))[0]
 
 
 def convert_int_to_ip(i):
