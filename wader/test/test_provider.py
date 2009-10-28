@@ -164,8 +164,14 @@ class TestNetworkProvider(unittest.TestCase):
         self.provider.close()
 
     def test_populate_dbs(self):
-        networks = [NetworkOperator(["21401"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
-                    NetworkOperator(["21401"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        networks = [NetworkOperator(["21401"], "prepaid.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_PREPAID, '+23323232', '+23423232', "Spain",
+                        "Vodafone"),
+                    NetworkOperator(["21401"], "contract.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
+                        "Vodafone")]
         self.provider.populate_networks(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("214013241213122")
@@ -180,8 +186,14 @@ class TestNetworkProvider(unittest.TestCase):
         self.assertRaises(ValueError, self.provider.get_network_by_id, "21401")
 
     def test_get_network_by_id_five_digit_netid(self):
-        networks = [NetworkOperator(["21401"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
-                    NetworkOperator(["21401"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        networks = [NetworkOperator(["21401"], "prepaid.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_PREPAID, '+23323232', '+23423232', "Spain",
+                        "Vodafone"),
+                    NetworkOperator(["21401"], "contract.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
+                        "Vodafone")]
         self.provider.populate_networks(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("2140153241213122")
@@ -191,8 +203,14 @@ class TestNetworkProvider(unittest.TestCase):
         c.execute("delete from network_info where 1=1")
 
     def test_get_network_by_id_six_digit_netid(self):
-        networks = [NetworkOperator(["214016"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
-                    NetworkOperator(["214015"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        networks = [NetworkOperator(["214016"], "prepaid.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_PREPAID, '+23323232', '+23423232', "Spain",
+                        "Vodafone"),
+                    NetworkOperator(["214015"], "contract.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
+                        "Vodafone")]
         self.provider.populate_networks(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("2140153241213122")
@@ -203,8 +221,14 @@ class TestNetworkProvider(unittest.TestCase):
         c.execute("delete from network_info where 1=1")
 
     def test_get_network_by_id_seven_digit_netid(self):
-        networks = [NetworkOperator(["2140161"], "prepaid.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_PREPAID, '+23323232', '+23423232', "Spain", "Vodafone"),
-                    NetworkOperator(["2140162"], "contract.vodafone.es", "vodafone", "vodafone", "10.0.0.1", "10.0.0.2", TYPE_CONTRACT, '+23123121', '+2132121', "Spain", "Vodafone")]
+        networks = [NetworkOperator(["2140161"], "prepaid.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_PREPAID, '+23323232', '+23423232', "Spain",
+                        "Vodafone"),
+                    NetworkOperator(["2140162"], "contract.vodafone.es",
+                        "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
+                        TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
+                        "Vodafone")]
         self.provider.populate_networks(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("2140161213322323")

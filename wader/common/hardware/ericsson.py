@@ -363,13 +363,12 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
     begin = SimpleStateMachine.begin
     check_pin = SimpleStateMachine.check_pin
     register = SimpleStateMachine.register
-    done = SimpleStateMachine.done
 
     class set_apn(mode):
 
         def __enter__(self):
             log.msg("EricssonSimpleStateMachine: set_apn entered")
-            d = self.sconn.set_charset("GSM")
+            self.sconn.set_charset("GSM")
 
         def __exit__(self):
             log.msg("EricssonSimpleStateMachine: set_apn exited")
@@ -389,7 +388,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
         def __exit__(self):
             log.msg("EricssonSimpleStateMachine: connect exited")
             # restore charset after being connected
-            return self.sconn.set_charset("UCS2")
+            self.sconn.set_charset("UCS2")
 
         def do_next(self):
 

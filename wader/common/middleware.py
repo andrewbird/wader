@@ -905,7 +905,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         def do_init():
             d = self.device.initialize()
-            d.addCallback(lambda size: deferred.callback(size))
+            d.addCallback(deferred.callback)
 
         reactor.callLater(DELAY, do_init)
         return deferred

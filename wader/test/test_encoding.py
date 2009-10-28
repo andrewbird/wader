@@ -40,7 +40,8 @@ class TestEncoding(unittest.TestCase):
         # 07911356131313F311000A9260214365870008AA0A0068006F006C00610073
         self.assertEqual(pack_ucs2_bytes('holas'), '0068006F006C00610073')
 
-        self.assertEqual(pack_ucs2_bytes(u"中华人民共和国"), '4E2D534E4EBA6C115171548C56FD')
+        self.assertEqual(pack_ucs2_bytes(u"中华人民共和国"),
+                         '4E2D534E4EBA6C115171548C56FD')
 
     def test_unpack_ucs2_bytes(self):
         self.assertEqual(unpack_ucs2_bytes('0068006F006C0061'), 'hola')

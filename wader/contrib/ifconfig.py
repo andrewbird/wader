@@ -65,7 +65,7 @@ def ifconfig(ifname):
     try:
         for k, v in infos.items():
             ifreq[k] = _ifinfo(sock, v, ifname)
-    except:
+    except socket.error, e:
         pass
 
     sock.close()

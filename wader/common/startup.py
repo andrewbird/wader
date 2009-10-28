@@ -186,7 +186,8 @@ def create_skeleton_and_do_initial_setup():
         populate_dbs(provider.populate_networks)
     except:
         log.err()
-    provider.close()
+    finally:
+        provider.close()
 
 
 def populate_dbs(f):
