@@ -366,7 +366,7 @@ class OptionHSOWrapper(OptionWrapper):
         def _get_ip4_config_cb(resp):
             ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
             # XXX: Fix dns3
-            dns2, dns3 = resp[0].group('dns2'), '195.235.113.3'
+            dns2 = dns3 = resp[0].group('dns2')
             self.device.set_status(consts.DEV_CONNECTED)
             return [ip, dns1, dns2, dns3]
 
