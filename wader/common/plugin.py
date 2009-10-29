@@ -80,7 +80,6 @@ class DevicePlugin(object):
 
     def set_status(self, status):
         """Sets internal device status to ``status``"""
-        self._status = status
         if status == DEV_ENABLED and self._status < status:
             self.exporter.DeviceEnabled(self.udi)
 
