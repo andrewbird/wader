@@ -33,7 +33,6 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
 from wader.common.statem.simple import SimpleStateMachine
-from wader.common.utils import revert_dict
 
 
 MAX_RETRIES = 6
@@ -49,8 +48,6 @@ ERICSSON_CONN_DICT = {
     consts.MM_NETWORK_MODE_2G_ONLY : 5,
     consts.MM_NETWORK_MODE_3G_ONLY : 6,
 }
-
-ERICSSON_CONN_DICT_REV = revert_dict(ERICSSON_CONN_DICT)
 
 ERINFO_2G_GPRS, ERINFO_2G_EGPRS = 1, 2
 ERINFO_3G_UMTS, ERINFO_3G_HSDPA = 1, 2
@@ -224,14 +221,24 @@ class EricssonWrapper(WCDMAWrapper):
 
     def get_network_mode(self):
 
-        def get_radio_status_cb(_mode):
-            if _mode in ERICSSON_CONN_DICT_REV:
-                return ERICSSON_CONN_DICT_REV[_mode]
+        def get_network_mode_cb(resp):
+            gsm = int(resp[0].group('gsm'))
+            umts = int(resp[0].group('umts'))
 
-            raise KeyError("Unknown network mode %d" % _mode)
+            if gsm == ERINFO_2G_GPRS:
+                return consts.MM_NETWORK_MODE_GPRS
+            elif gsm == ERINFO_2G_EGPRS:
+                return consts.MM_NETWORK_MODE_EDGE
+            elif umts == ERINFO_3G_UMTS:
+                return consts.MM_NETWORK_MODE_UMTS
+            elif umts == ERINFO_3G_HSDPA:
+                return consts.MM_NETWORK_MODE_HSDPA
 
-        d = self.get_radio_status()
-        d.addCallback(get_radio_status_cb)
+            raise E.GenericError("unknown network mode: %d, %d" % (gsm, umts))
+
+        cmd = ATCmd('AT*ERINFO?', name='get_network_mode')
+        d = self.queue_at_cmd(cmd)
+        d.addCallback(get_network_mode_cb)
         return d
 
     def get_netreg_status(self):
@@ -351,11 +358,11 @@ class EricssonWrapper(WCDMAWrapper):
         d = super(EricssonWrapper, self).set_charset(charset)
         return d
 
-    def set_network_mode(self, mode):
-        if mode not in self.custom.conn_dict:
-            raise KeyError("Mode %d not found" % mode)
+    def set_network_mode(self, _mode):
+        if _mode not in self.custom.conn_dict:
+            raise KeyError("Mode %d not found" % _mode)
 
-        return self.send_at("AT+CFUN=%d" % self.custom.conn_dict[mode])
+        return self.send_at("AT+CFUN=%d" % self.custom.conn_dict[_mode])
 
     def reset_settings(self):
         cmd = ATCmd('AT&F', name='reset_settings')

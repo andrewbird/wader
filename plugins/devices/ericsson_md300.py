@@ -16,7 +16,34 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.ericsson import EricssonDevicePlugin
+from wader.common.hardware.ericsson import (EricssonDevicePlugin,
+                                            EricssonWrapper,
+                                            EricssonCustomizer,
+                                            ERICSSON_CONN_DICT)
+from wader.common.utils import revert_dict
+
+
+ERICSSON_CONN_DICT_REV = revert_dict(ERICSSON_CONN_DICT)
+
+
+class EricssonMD300Wrapper(EricssonWrapper):
+
+    def get_network_mode(self):
+
+        def get_radio_status_cb(mode):
+            if mode in ERICSSON_CONN_DICT_REV:
+                return ERICSSON_CONN_DICT_REV[mode]
+
+            raise KeyError("Unknown network mode %d" % mode)
+
+        d = self.get_radio_status()
+        d.addCallback(get_radio_status_cb)
+        return d
+
+
+class EricssonMD300Customizer(EricssonCustomizer):
+    wrapper_klass = EricssonMD300Wrapper
+
 
 
 class EricssonMD300(EricssonDevicePlugin):
@@ -24,6 +51,7 @@ class EricssonMD300(EricssonDevicePlugin):
     name = "Ericsson MD300"
     version = "0.1"
     author = u"Andrew Bird"
+    custom = EricssonMD300Customizer()
 
     __remote_name__ = "MD300"
 
