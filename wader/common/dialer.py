@@ -322,21 +322,15 @@ class DialerManager(Object, DBusExporterHelper):
         opath = self.get_next_opath()
         dialer = self.get_dialer(device_opath, opath)
 
-        # Installing NM0.8 Connect workaround
-        if nm08_present():
-            dialer.device.sconn.state_dict['nm08_workaround'] = True
-
         def start_traffic_monitoring(opath):
             dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
-            return opath
+            deferred.callback(opath)
 
         def after_configuring_device_connect():
             self.dialers[opath] = dialer
             d = dialer.configure(conf)
             d.addCallback(lambda ign: dialer.connect())
             d.addCallback(start_traffic_monitoring)
-            d.addErrback(log.err)
-            d.chainDeferred(deferred)
 
         if dialer.__class__.__name__ == 'NMDialer':
             after_configuring_device_connect()
@@ -350,10 +344,6 @@ class DialerManager(Object, DBusExporterHelper):
         """Stops connection of device ``device_path``"""
         if device_path in self.dialers:
             dialer = self.dialers[device_path]
-            # if NM0.8 is present we will need to prevent the Enable(False)
-            # operation that we are about to receive
-            if nm08_present():
-                dialer.device.sconn.state_dict['nm08_workaround'] = True
 
             d = dialer.disconnect()
 

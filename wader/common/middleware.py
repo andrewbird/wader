@@ -845,10 +845,6 @@ class WCDMAWrapper(WCDMAProtocol):
 
             def on_disconnect_from_internet(_):
                 self.device.set_status(DEV_ENABLED)
-                if self.state_dict.get('nm08_workaround'):
-                    self.state_dict.pop('nm08_workaround')
-                    return
-
                 self.device.close()
 
             d = self.disconnect_from_internet()
@@ -857,10 +853,6 @@ class WCDMAWrapper(WCDMAProtocol):
             return d
 
         if self.device.status == DEV_ENABLED:
-            if self.state_dict.get('nm08_workaround'):
-                self.state_dict.pop('nm08_workaround')
-                return
-
             return self.device.close()
 
     def _do_enable_device(self):
