@@ -25,16 +25,15 @@ import shutil
 from string import Template
 import tempfile
 
-from twisted.python import log, procutils
 from twisted.internet import utils, reactor, defer, protocol, error
+from twisted.python import log, procutils
 
 import wader.common.consts as consts
 from wader.common.dialer import Dialer
 from wader.common.utils import get_file_data, save_file, is_bogus_ip
 
-PAP_SECRETS = os.path.join('/etc', 'ppp', 'pap-secrets')
-CHAP_SECRETS = os.path.join('/etc', 'ppp', 'chap-secrets')
 WVDIAL_CONF = os.path.join('/etc', 'ppp', 'peers', 'wvdial')
+WVDIAL_RETRIES = 3
 
 DEFAULT_TEMPLATE = """
 debug
@@ -63,12 +62,6 @@ refuse-eap
 CHAP_TEMPLATE = DEFAULT_TEMPLATE + """
 refuse-pap
 """
-
-TEMPLATES_DICT = {
-    'default' : DEFAULT_TEMPLATE,
-    'PAP' : PAP_TEMPLATE,
-    'CHAP' : CHAP_TEMPLATE,
-}
 
 
 def get_wvdial_conf_file(conf, serial_port):
@@ -139,10 +132,10 @@ class WVDialDialer(Dialer):
         return self.disconnect()
 
     def disconnect(self):
-        # ignore the fact that we are gonna be disconnected
         if not self.proto:
             return defer.succeed(self.opath)
 
+        # ignore the fact that we are gonna be disconnected
         self.proto.ignore_disconnect = True
 
         try:
@@ -176,6 +169,8 @@ class WVDialDialer(Dialer):
         # backup wvdial configuration
         self.backup_path = self._backup_conf()
         self.conf = conf
+        # generate auth configuration
+        self._generate_auth_config()
         # generate wvdial.conf from template
         port = self.device.ports.dport
         self.conf_path = get_wvdial_conf_file(self.conf, port.path)
@@ -191,12 +186,21 @@ class WVDialDialer(Dialer):
 
         self._restore_conf()
 
+    def _generate_auth_config(self):
+        if not self.conf.refuse_chap:
+            save_file(WVDIAL_CONF, CHAP_TEMPLATE)
+        elif not self.conf.refuse_pap:
+            save_file(WVDIAL_CONF, PAP_TEMPLATE)
+        else:
+            # this could be a NOOP, but the user might have modified
+            # the stock /etc/ppp/peers/wvdial file, so the safest option
+            # is to overwrite with our known good options.
+            save_file(WVDIAL_CONF, DEFAULT_TEMPLATE)
+
     def _backup_conf(self):
         path = tempfile.mkstemp('wvdial', consts.APP_NAME)[1]
         try:
             shutil.copy(WVDIAL_CONF, path)
-            # XXX: Handle PAP&CHAP
-            save_file(path, DEFAULT_TEMPLATE)
             return path
         except IOError:
             return None
@@ -205,6 +209,7 @@ class WVDialDialer(Dialer):
         if self.backup_path:
             shutil.copy(self.backup_path, WVDIAL_CONF)
             os.unlink(self.backup_path)
+            self.backup_path = None
 
     def _set_iface(self, iface):
         self.iface = iface
@@ -243,7 +248,7 @@ class WVDialProtocol(protocol.ProcessProtocol):
         self.dialer = dialer
         self.__connected = False
         self.pid = None
-        self.number_of_inits = 0
+        self.retries = 0
         self.deferred = defer.Deferred()
         self.ignore_disconnect = False
         self.dns = []
@@ -267,10 +272,9 @@ class WVDialProtocol(protocol.ProcessProtocol):
 
     def processEnded(self, status_object):
         log.msg('wvdial: quitting')
-        if not self.__connected:
-            if not self.ignore_disconnect:
-                self.dialer.disconnect()
-                self.dialer.Disconnected()
+        if not self.__connected and not self.ignore_disconnect:
+            self.dialer.disconnect()
+            self.dialer.Disconnected()
 
     def _set_connected(self):
         if self.__connected:
@@ -281,9 +285,9 @@ class WVDialProtocol(protocol.ProcessProtocol):
         self.deferred.callback(self.dialer.opath)
 
     def _extract_iface(self, data):
-        m = PPPD_IFACE_REGEXP.search(data)
-        if m:
-            self.dialer._set_iface(m.group('iface'))
+        match = PPPD_IFACE_REGEXP.search(data)
+        if match:
+            self.dialer._set_iface(match.group('iface'))
             log.msg("wvdial: dialer interface %s" % self.dialer.iface)
 
     def _extract_dns_strings(self, data):
@@ -308,13 +312,12 @@ class WVDialProtocol(protocol.ProcessProtocol):
             return
 
         # extract pppd pid
-        pid = PPPD_PID_REGEXP.search(data)
-        if pid:
-            self.pid = pid.group('pid')
-            self.number_of_inits += 1
+        match = PPPD_PID_REGEXP.search(data)
+        if match:
+            self.pid = match.group('pid')
+            self.retries += 1
 
-        connected = CONNECTED_REGEXP.search(data)
-        if connected:
+        if CONNECTED_REGEXP.search(data):
             self._set_connected()
 
     def _extract_disconnected(self, data):
@@ -324,7 +327,7 @@ class WVDialProtocol(protocol.ProcessProtocol):
         pppd_died = PPPD_DIED_REGEXP.search(data)
         # wvdial refuses to stop after three attempts?
 
-        if disconnected or pppd_died or self.number_of_inits >= 3:
+        if disconnected or pppd_died or self.retries >= WVDIAL_RETRIES:
             if not self.ignore_disconnect:
                 self.__connected = False
                 self.dialer.disconnect()
