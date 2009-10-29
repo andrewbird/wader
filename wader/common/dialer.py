@@ -56,6 +56,8 @@ class DialerConf(object):
     staticdns = False
     dns1 = None
     dns2 = None
+    refuse_pap = True
+    refuse_chap = True
 
     def __init__(self, opath):
         super(DialerConf, self).__init__()
@@ -116,7 +118,13 @@ class DialerConf(object):
         else:
             self.staticdns = False
 
-        # finally, get the secrets
+        # get authentication options
+        if 'ppp' in props:
+            # if refuse-{ch,p}ap is not present it means we will use it!
+            self.refuse_pap = props['ppp'].get('refuse-pap', False)
+            self.refuse_chap = props['ppp'].get('refuse-chap', False)
+
+        # get the secrets
         try:
             self.password = self._get_profile_secrets(profile)
         except:
