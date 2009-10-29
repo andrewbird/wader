@@ -18,6 +18,7 @@
 """HSOLink Dialer"""
 
 from wader.common.dialer import Dialer
+from wader.common.hardware.option import NO_AUTH, PAP_AUTH, CHAP_AUTH
 from wader.common.oal import osobj
 
 
@@ -30,9 +31,16 @@ class HSODialer(Dialer):
         self.iface = 'hso0'
 
     def configure(self, config):
+        if not config.refuse_chap:
+            auth = CHAP_AUTH
+        elif not config.refuse_pap:
+            auth = PAP_AUTH
+        else:
+            auth = NO_AUTH
+
         d = self.device.sconn.set_apn(config.apn)
         d.addCallback(lambda _: self.device.sconn.hso_authenticate(
-                                        config.username, config.password))
+                                       config.username, config.password, auth))
         return d
 
     def connect(self):

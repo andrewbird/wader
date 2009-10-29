@@ -43,6 +43,8 @@ RETRY_TIMEOUT = 4
 HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
 
+NO_AUTH, PAP_AUTH, CHAP_AUTH = 0, 1, 2
+
 OPTION_BAND_MAP_DICT = {
     'ANY' : consts.MM_NETWORK_BAND_ANY,
     'EGSM' : consts.MM_NETWORK_BAND_EGSM,
@@ -371,10 +373,14 @@ class OptionHSOWrapper(OptionWrapper):
         d.addCallback(_get_ip4_config_cb)
         return d
 
-    def hso_authenticate(self, user, passwd):
+    def hso_authenticate(self, user, passwd, auth):
         """Authenticates using ``user`` and ``passwd`` on HSO devices"""
         conn_id = self.state_dict['conn_id']
-        cmd = ATCmd('AT$QCPDPP=%d,1,"%s","%s"' % (conn_id, user, passwd),
+        # XXX: I haven't been able to make NO_AUTH work, defaulting to PAP
+        if auth == NO_AUTH:
+            auth = PAP_AUTH
+        args = (conn_id, auth, user, passwd)
+        cmd = ATCmd('AT$QCPDPP=%d,%d,"%s","%s"' % args,
                     name='hso_authenticate')
         d = self.queue_at_cmd(cmd)
         d.addCallback(lambda resp: resp[0].group('resp'))
@@ -407,8 +413,11 @@ class HSOSimpleStateMachine(SimpleStateMachine):
 
             username = self.settings['username']
             password = self.settings['password']
+            # XXX: One day Connect.Simple will receive auth too
+            # defaulting to PAP_AUTH as that's what we had before
+            auth = PAP_AUTH
 
-            d = self.sconn.hso_authenticate(username, password)
+            d = self.sconn.hso_authenticate(username, password, auth)
             d.addCallback(on_hso_authenticated)
             d.addCallback(lambda _: self.transition_to('done'))
 
