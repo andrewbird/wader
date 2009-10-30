@@ -71,10 +71,11 @@ class ICollaborator(Interface):
 
 class IDialer(Interface):
 
+    def close(arg):
+        """Frees internal dialer resources"""
+
     def configure(config, device):
-        """
-        Configures the dialer with `config` for `device`
-        """
+        """Configures the dialer with `config` for `device`"""
 
     def connect():
         """

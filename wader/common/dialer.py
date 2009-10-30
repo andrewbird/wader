@@ -36,7 +36,7 @@ from wader.common._dbus import DBusExporterHelper
 import wader.common.consts as consts
 from wader.common.interfaces import IDialer
 from wader.common.oal import osobj
-from wader.common.runtime import nm07_present, nm08_present
+from wader.common.runtime import nm07_present
 from wader.common.utils import convert_int_to_ip
 
 CONFIG_DELAY = 3
@@ -171,6 +171,19 @@ class Dialer(Object):
         # make sure this is repeatedly called
         return True
 
+    def close(self, path=None):
+        # remove the emit stats task
+        if self.stats_id is not None:
+            source_remove(self.stats_id)
+            self.stats_id = None
+        # remove from DBus bus
+        try:
+            self.remove_from_connection()
+        except LookupError, e:
+            log.err(e)
+
+        return path
+
     def configure(self, config):
         """
         Configures ``self.device`` with ``config``
@@ -248,13 +261,22 @@ class DialerManager(Object, DBusExporterHelper):
         super(DialerManager, self).__init__(bus_name=name,
                                     object_path=consts.WADER_DIALUP_OBJECT)
         self.index = 0
-        self.dialers = {}
+        # dict with the stablished connections, key is the object path of
+        # the connection and the value is the dialer being used.
+        self.connections = {}
+        # dict with the ongoing connection attempts, key is the device
+        # path and the value is the used dialer. The rationale of using
+        # the device path and not the connection opath is that the latter
+        # is returned when the connection is stablished, while the former
+        # is available from the first moment. It has the downer of only
+        # being able to stop one connection attempt per device.
+        self.connection_attempts = {}
         self.ctrl = ctrl
         self._connect_to_signals()
 
     def _device_removed_cb(self, udi):
         """Executed when a udi goes away"""
-        if udi in self.dialers:
+        if udi in self.connections:
             log.msg("Device %s removed! deleting dialer instance" % udi)
             try:
                 self.deactivate_connection(udi)
@@ -308,8 +330,9 @@ class DialerManager(Object, DBusExporterHelper):
             d = plugin.sconn.set_band(conf.band)
             d.addCallback(lambda _:
                     plugin.sconn.set_network_mode(conf.network_type))
-            d.addCallback(lambda _:
-                    reactor.callLater(CONFIG_DELAY, deferred.callback, True))
+
+        d.addCallback(lambda _:
+                reactor.callLater(CONFIG_DELAY, deferred.callback, True))
 
         return deferred
 
@@ -321,13 +344,17 @@ class DialerManager(Object, DBusExporterHelper):
         conf = DialerConf(profile_opath)
         opath = self.get_next_opath()
         dialer = self.get_dialer(device_opath, opath)
+        self.connection_attempts[device_opath] = dialer
 
         def start_traffic_monitoring(opath):
             dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
+            # transfer the dialer from connection_attempts dict to connections dict
+            self.connections[opath] = dialer
+            if device_opath in self.connection_attempts:
+                self.connection_attempts.pop(device_opath)
             deferred.callback(opath)
 
         def after_configuring_device_connect():
-            self.dialers[opath] = dialer
             d = dialer.configure(conf)
             d.addCallback(lambda ign: dialer.connect())
             d.addCallback(start_traffic_monitoring)
@@ -340,37 +367,23 @@ class DialerManager(Object, DBusExporterHelper):
                                             after_configuring_device_connect))
         return deferred
 
-    def deactivate_connection(self, device_path):
-        """Stops connection of device ``device_path``"""
-        if device_path in self.dialers:
-            dialer = self.dialers[device_path]
+    def deactivate_connection(self, device_opath):
+        """Stops connection of device ``device_opath``"""
+        if device_opath in self.connections:
+            dialer = self.connections.pop(device_opath)
 
             d = dialer.disconnect()
-
-            def free_dialer_resources(path):
-                # remove the emit stats task
-                source_remove(dialer.stats_id)
-                dialer.stats_id = None
-                # remove from DBus bus
-                try:
-                    dialer.remove_from_connection()
-                except LookupError, e:
-                    log.err(e)
-
-                return path
-
-            d.addCallback(free_dialer_resources)
+            d.addCallback(dialer.close)
             return d
 
-        raise KeyError("Dialup %s not handled" % device_path)
+        raise KeyError("Dialup %s not handled" % device_opath)
 
-    def stop_connection(self, device_path):
-        """Stops connection attempt of device ``device_path``"""
-        if device_path not in self.dialers:
-            raise KeyError("Dialup %s not handled" % device_path)
-
-        dialer = self.dialers[device_path]
-        return dialer.stop()
+    def stop_connection(self, device_opath):
+        """Stops connection attempt of device ``device_opath``"""
+        dialer = self.connection_attempts.pop(device_opath)
+        d = dialer.stop()
+        d.addCallback(dialer.close)
+        return d
 
     @method(consts.WADER_DIALUP_INTFACE, in_signature='oo', out_signature='o',
             async_callbacks=('async_cb', 'async_eb'))
@@ -391,16 +404,12 @@ class DialerManager(Object, DBusExporterHelper):
             async_callbacks=('async_cb', 'async_eb'))
     def StopConnection(self, device_path, async_cb, async_eb):
         """See :meth:`DialerManager.stop_connection`"""
-        try:
-            d = self.stop_connection(device_path)
-        except KeyError:
-            d = defer.succeed(True)
-
+        d = self.stop_connection(device_path)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(consts.WADER_DIALUP_INTFACE,
             in_signature='o', out_signature='(uu)')
-    def GetStats(self, device_path):
-        """Get the traffic statistics for device ``device_path``"""
-        dialer = self.dialers[device_path]
+    def GetStats(self, opath):
+        """Get the traffic statistics for connection ``opath``"""
+        dialer = self.connections[opath]
         return dialer.get_stats()[:2]

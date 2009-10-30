@@ -70,4 +70,6 @@ class HSODialer(Dialer):
         return d
 
     def stop(self):
+        # set internal flag in device for disconnection
+        self.device.sconn.state_dict['should_stop'] = True
         return self.disconnect()

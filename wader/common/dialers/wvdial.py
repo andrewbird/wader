@@ -118,21 +118,27 @@ class WVDialDialer(Dialer):
         self.proto = None
         self.iconn = None
         self.iface = 'ppp0'
+        self.should_stop = False
 
     def configure(self, config):
         return defer.maybeDeferred(self._generate_config, config)
 
     def connect(self):
+        if self.should_stop:
+            self.should_stop = False
+            return
+
         self.proto = WVDialProtocol(self)
         args = [self.binary, '-C', self.conf_path, 'connect']
         self.iconn = reactor.spawnProcess(self.proto, args[0], args, env=None)
         return self.proto.deferred
 
     def stop(self):
+        self.should_stop = True
         return self.disconnect()
 
     def disconnect(self):
-        if not self.proto:
+        if self.proto is None:
             return defer.succeed(self.opath)
 
         # ignore the fact that we are gonna be disconnected
@@ -156,10 +162,9 @@ class WVDialDialer(Dialer):
             def disconnect_cb(error_code):
                 log.msg("wvdial: exit code %d" % error_code)
                 self._cleanup()
-                return defer.succeed(self.opath)
+                return self.opath
 
             d.addCallback(disconnect_cb)
-            d.addErrback(log.err)
             return d
         else:
             self._cleanup()

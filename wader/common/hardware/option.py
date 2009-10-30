@@ -342,6 +342,10 @@ class OptionHSOWrapper(OptionWrapper):
 
             def get_ip4_eb(failure):
                 failure.trap(E.GenericError)
+                if self.state_dict.get('should_stop'):
+                    self.state_dict.pop('should_stop')
+                    return
+
                 self.state_dict['num_of_retries'] += 1
                 if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
                     return failure
