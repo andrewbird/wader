@@ -714,7 +714,8 @@ class WCDMAWrapper(WCDMAProtocol):
 
         It will not enable it if its already enabled and viceversa
         """
-        if self.device.status >= DEV_ENABLED:
+        if self.device.status >= DEV_ENABLED and enable:
+            # no need to enable an enabled device
             return defer.succeed("OK")
 
         def check_if_necessary(status):
