@@ -147,7 +147,7 @@ class HardwareManager(DBusComponent):
 
     def register_controller(self, controller):
         """
-        See :meth:`wader.common.interfaces.IHardwareManager.register_controller`
+        See `IHardwareManager.register_controller`
         """
         self.controller = controller
 
@@ -242,9 +242,11 @@ class HardwareManager(DBusComponent):
         """Returns the info.linux.driver of `udi`"""
 
         def do_get_driver_name(key, _udi, props):
+            banned_drivers = ['usb', 'usbfs', 'usb-storage', 'pci', 'pcmcia']
             if key in props[_udi]:
                 name = props[_udi][key]
-                if name not in ['usb', 'usbfs', 'usb-storage', 'pci', 'pcmcia']:
+
+                if name not in banned_drivers:
                     return name
 
         if context:
@@ -299,6 +301,7 @@ class HardwareManager(DBusComponent):
 
         # now that we have an id to lookup for, lets repeat the process till we
         # get another RuntimeError
+
         def find_out_if_contained(_info, properties):
             """
             Returns `True` if `_info` values are contained in `props`
@@ -321,8 +324,8 @@ class HardwareManager(DBusComponent):
             # hal likes to swap between usb_device.vendor_id and usb.vendor_id
             if 'usb_device.vendor_id' in _info:
                 # our last chance, perhaps its swapped
-                newinfo = {'usb.vendor_id' : _info['usb_device.vendor_id'],
-                           'usb.product_id' : _info['usb_device.product_id']}
+                newinfo = {'usb.vendor_id': _info['usb_device.vendor_id'],
+                           'usb.product_id': _info['usb_device.product_id']}
                 return compare_dicts(newinfo, properties)
 
             # the original compare_dicts failed, so return False

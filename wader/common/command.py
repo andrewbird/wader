@@ -51,11 +51,11 @@ def get_cmd_dict_copy():
 
 CMD_DICT = {
 
-    'add_contact' : build_cmd_dict(),
+    'add_contact': build_cmd_dict(),
 
-    'change_pin' : build_cmd_dict(),
+    'change_pin': build_cmd_dict(),
 
-    'check_pin' : build_cmd_dict(re.compile(r"""
+    'check_pin': build_cmd_dict(re.compile(r"""
                                          \r\n
                                          \+CPIN:\s
                                          (?P<resp>
@@ -65,19 +65,19 @@ CMD_DICT = {
                                          )
                                          \r\n""", re.X)),
 
-    'delete_contact' : build_cmd_dict(),
+    'delete_contact': build_cmd_dict(),
 
-    'delete_sms' : build_cmd_dict(),
+    'delete_sms': build_cmd_dict(),
 
-    'disable_echo' : build_cmd_dict(),
+    'disable_echo': build_cmd_dict(),
 
-    'enable_echo' : build_cmd_dict(),
+    'enable_echo': build_cmd_dict(),
 
-    'enable_radio' : build_cmd_dict(),
+    'enable_radio': build_cmd_dict(),
 
-    'enable_pin' : build_cmd_dict(),
+    'enable_pin': build_cmd_dict(),
 
-    'find_contacts' : build_cmd_dict(re.compile(r"""
+    'find_contacts': build_cmd_dict(re.compile(r"""
                             \r\n
                             \+CPBF:\s
                             (?P<id>\d+),
@@ -86,7 +86,7 @@ CMD_DICT = {
                             \"(?P<name>.*)\"
                             """, re.X)),
 
-    'get_apns' : build_cmd_dict(re.compile(r"""
+    'get_apns': build_cmd_dict(re.compile(r"""
                             \r\n
                             \+CGDCONT:\s
                             (?P<index>\d),
@@ -97,7 +97,7 @@ CMD_DICT = {
 
     'get_charsets': build_cmd_dict(re.compile('"(?P<lang>.*?)",?')),
 
-    'get_contact' : build_cmd_dict(re.compile(r"""
+    'get_contact': build_cmd_dict(re.compile(r"""
                             \r\n
                             \+CPBR:\s(?P<id>\d+),
                             "(?P<number>[+0-9a-fA-F]+)",
@@ -105,7 +105,7 @@ CMD_DICT = {
                             "(?P<name>.*)"
                             \r\n""", re.X)),
 
-    'list_contacts' : build_cmd_dict(
+    'list_contacts': build_cmd_dict(
                         end=re.compile('(\r\n)?\r\n(OK)\r\n'),
                         extract=re.compile(r"""
                             \r\n
@@ -115,10 +115,10 @@ CMD_DICT = {
                             "(?P<name>.*)"
                             """, re.X)),
 
-    'get_card_version' : build_cmd_dict(re.compile(
+    'get_card_version': build_cmd_dict(re.compile(
                               '\r\n(\+C?GMR:)?(?P<version>.*)\r\n\r\nOK\r\n')),
 
-    'get_card_model' : build_cmd_dict(re.compile(
+    'get_card_model': build_cmd_dict(re.compile(
                               '\r\n(?P<model>.*)\r\n\r\nOK\r\n')),
 
     'get_charset': build_cmd_dict(re.compile(
@@ -129,18 +129,18 @@ CMD_DICT = {
     'get_manufacturer_name': build_cmd_dict(re.compile(
                               '\r\n(?P<name>.*)\r\n\r\nOK\r\n')),
 
-    'get_imei' : build_cmd_dict(re.compile("\r\n(?P<imei>\d+)\r\n")),
+    'get_imei': build_cmd_dict(re.compile("\r\n(?P<imei>\d+)\r\n")),
 
-    'get_imsi' : build_cmd_dict(re.compile('\r\n(?P<imsi>\d+)\r\n')),
+    'get_imsi': build_cmd_dict(re.compile('\r\n(?P<imsi>\d+)\r\n')),
 
-    'get_netreg_status' : build_cmd_dict(re.compile(r"""
+    'get_netreg_status': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CREG:\s
                               (?P<mode>\d),(?P<status>\d+)
                               \r\n
                               """, re.X)),
 
-    'get_network_info' : build_cmd_dict(re.compile(r"""
+    'get_network_info': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+COPS:\s+
                               (\d,\d,     # or followed by num,num,str,num
@@ -150,7 +150,7 @@ CMD_DICT = {
                               )           # end of group
                               \r\n""", re.X)),
 
-    'get_network_names' : build_cmd_dict(re.compile(r"""
+    'get_network_names': build_cmd_dict(re.compile(r"""
                               \(
                               (?P<id>\d+),
                               "(?P<lname>[^"]*)",
@@ -160,41 +160,41 @@ CMD_DICT = {
                               \),?""", re.X),
                               end=re.compile('\r\n\r\nOK\r\n')),
 
-    'get_signal_quality' : build_cmd_dict(re.compile(r"""
+    'get_signal_quality': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CSQ:\s(?P<rssi>\d+),(?P<ber>\d+)
                               \r\n""", re.X)),
 
-    'get_sms_format' : build_cmd_dict(
+    'get_sms_format': build_cmd_dict(
                               re.compile('\r\n\+CMGF:\s(?P<format>\d)\r\n')),
 
-    'get_phonebook_size' : build_cmd_dict(re.compile(r"""
+    'get_phonebook_size': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CPBR:\s
                               \(\d\-(?P<size>\d+)\),\d+,\d+
                               \r\n""", re.X)),
 
-    'get_pin_status' : build_cmd_dict(
+    'get_pin_status': build_cmd_dict(
                               re.compile('\r\n\+CLCK:\s(?P<status>\d)\r\n')),
 
-    'get_radio_status' : build_cmd_dict(
+    'get_radio_status': build_cmd_dict(
                               re.compile("\r\n\+CFUN:\s?(?P<status>\d)\r\n")),
 
-    'get_roaming_ids' : build_cmd_dict(re.compile(r"""
+    'get_roaming_ids': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CPOL:\s(?P<index>\d+),
                               (?P<type>\d),
                               "(?P<netid>\d+)"
                               """, re.X)),
 
-    'list_sms' : build_cmd_dict(re.compile(r"""
+    'list_sms': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CMGL:\s
                               (?P<id>\d+),
                               (?P<where>\d),,\d+
                               \r\n(?P<pdu>\w+)""", re.X)),
 
-    'get_sms' : build_cmd_dict(re.compile(r"""
+    'get_sms': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CMGR:\s
                               (?P<where>\d),,
@@ -202,40 +202,40 @@ CMD_DICT = {
                               (?P<pdu>\w+)
                               \r\n""", re.X)),
 
-    'get_smsc' : build_cmd_dict(re.compile(
+    'get_smsc': build_cmd_dict(re.compile(
                               '\r\n\+CSCA:\s"(?P<smsc>.*)",\d+\r\n')),
 
-    'register_with_netid' : build_cmd_dict(),
+    'register_with_netid': build_cmd_dict(),
 
-    'reset_settings' : build_cmd_dict(),
+    'reset_settings': build_cmd_dict(),
 
-    'save_sms' : build_cmd_dict(re.compile('\r\n\+CMGW:\s(?P<index>\d+)\r\n')),
+    'save_sms': build_cmd_dict(re.compile('\r\n\+CMGW:\s(?P<index>\d+)\r\n')),
 
-    'send_at' : build_cmd_dict(),
+    'send_at': build_cmd_dict(),
 
-    'send_sms' : build_cmd_dict(re.compile(
+    'send_sms': build_cmd_dict(re.compile(
                               '\r\n\+CMGS:\s(?P<index>\d+)\r\n')),
 
-    'send_sms_from_storage' : build_cmd_dict(re.compile(
+    'send_sms_from_storage': build_cmd_dict(re.compile(
                               '\r\n\+CMSS:\s(?P<index>\d+)\r\n')),
 
-    'send_pin' : build_cmd_dict(),
+    'send_pin': build_cmd_dict(),
 
-    'send_puk' : build_cmd_dict(),
+    'send_puk': build_cmd_dict(),
 
-    'set_apn' : build_cmd_dict(),
+    'set_apn': build_cmd_dict(),
 
-    'set_charset' : build_cmd_dict(),
+    'set_charset': build_cmd_dict(),
 
-    'set_netreg_notification' : build_cmd_dict(),
+    'set_netreg_notification': build_cmd_dict(),
 
-    'set_network_info_format' : build_cmd_dict(),
+    'set_network_info_format': build_cmd_dict(),
 
-    'set_sms_indication' : build_cmd_dict(),
+    'set_sms_indication': build_cmd_dict(),
 
-    'set_sms_format' : build_cmd_dict(),
+    'set_sms_format': build_cmd_dict(),
 
-    'set_smsc' : build_cmd_dict(),
+    'set_smsc': build_cmd_dict(),
 }
 
 

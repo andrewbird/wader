@@ -114,7 +114,7 @@ class ContactStore(object):
 
     def find_contacts_by_number(self, number):
         """
-        :meth:`wader.common.interfaces.IContactProvider.find_contacts_by_number`
+        see `IContactProvider.find_contacts_by_number`
         """
         # first try a full match, if succeeds return result
         # otherwise try to remove 3 chars and if succeeds return result

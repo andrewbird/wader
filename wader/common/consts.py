@@ -75,8 +75,8 @@ NM_CONNECTED, NM_DISCONNECTED = 8, 3
 NM_PASSWD = 'passwd' # NM_SETTINGS_GSM_PASSWORD
 
 MM_MODEM_TYPE = {
-    UInt32(1) : 'GSM',
-    UInt32(2) : 'CDMA',
+    UInt32(1): 'GSM',
+    UInt32(2): 'CDMA',
 }
 
 MM_MODEM_TYPE_REV = dict(GSM=UInt32(1), CDMA=UInt32(2))

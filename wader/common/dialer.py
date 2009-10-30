@@ -348,7 +348,7 @@ class DialerManager(Object, DBusExporterHelper):
 
         def start_traffic_monitoring(opath):
             dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
-            # transfer the dialer from connection_attempts dict to connections dict
+            # transfer the dialer from connection_attempts to connections dict
             self.connections[opath] = dialer
             if device_opath in self.connection_attempts:
                 self.connection_attempts.pop(device_opath)

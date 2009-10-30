@@ -388,13 +388,13 @@ class ProfileManager(Object, GConfHelper):
         props = {}
 
         # gsm
-        props['gsm'] = {'band' : 0,
-                        'username' : network.username,
-                        'password' : network.password,
-                        'network-type' : 0,
-                        'number' : '*99#',
-                        'apn' : network.apn,
-                        'name' : 'gsm'}
+        props['gsm'] = {'band': 0,
+                        'username': network.username,
+                        'password': network.password,
+                        'network-type': 0,
+                        'number': '*99#',
+                        'apn': network.apn,
+                        'name': 'gsm'}
         # ppp
         props['ppp'] = dict(name='ppp')
         # serial
@@ -416,12 +416,12 @@ class ProfileManager(Object, GConfHelper):
             ignore_auto_dns = False
             dns = []
 
-        props['ipv4'] = {'addresses' : [],
-                         'dns' : dns,
+        props['ipv4'] = {'addresses': [],
+                         'dns': dns,
                          'ignore-auto-dns': ignore_auto_dns,
-                         'method' : 'auto',
-                         'name' : 'ipv4',
-                         'routes' : []}
+                         'method': 'auto',
+                         'name': 'ipv4',
+                         'routes': []}
         return props
 
     def get_profiles(self):

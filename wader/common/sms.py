@@ -254,16 +254,16 @@ class Message(object):
         import pprint
         import StringIO
         out = StringIO.StringIO()
-        props = {'number' : self.number,
-                 'index' : self.index,
-                 'real_indexes' : self.real_indexes,
-                 'csca' : self.csca,
-                 'datetime' : self.datetime,
-                 'reference' : self.ref,
-                 'count' : self.cnt,
-                 'sequence' : self.seq,
-                 'completed' : self.completed,
-                 'fragments' : self._fragments}
+        props = {'number': self.number,
+                 'index': self.index,
+                 'real_indexes': self.real_indexes,
+                 'csca': self.csca,
+                 'datetime': self.datetime,
+                 'reference': self.ref,
+                 'count': self.cnt,
+                 'sequence': self.seq,
+                 'completed': self.completed,
+                 'fragments': self._fragments}
 
         pp = pprint.PrettyPrinter(indent=4, stream=out)
         pp.pprint(props)

@@ -39,14 +39,14 @@ MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
 
 ERICSSON_BAND_DICT = {
-    consts.MM_NETWORK_BAND_UNKNOWN : None,
-    consts.MM_NETWORK_BAND_ANY : None,
+    consts.MM_NETWORK_BAND_UNKNOWN: None,
+    consts.MM_NETWORK_BAND_ANY: None,
 }
 
 ERICSSON_CONN_DICT = {
-    consts.MM_NETWORK_MODE_ANY : 1,
-    consts.MM_NETWORK_MODE_2G_ONLY : 5,
-    consts.MM_NETWORK_MODE_3G_ONLY : 6,
+    consts.MM_NETWORK_MODE_ANY: 1,
+    consts.MM_NETWORK_MODE_2G_ONLY: 5,
+    consts.MM_NETWORK_MODE_3G_ONLY: 6,
 }
 
 ERINFO_2G_GPRS, ERINFO_2G_EGPRS = 1, 2
@@ -444,13 +444,12 @@ class EricssonCustomizer(WCDMACustomizer):
     conn_dict = ERICSSON_CONN_DICT
 
     signal_translations = {
-        '*ESTKDISP' : (None, None),
+        '*ESTKDISP': (None, None),
         '*ESTKSMENU': (None, None),
-        '*EMWI' : (None, None),
-        '*E2NAP' : (None, None),
-        '+CIEV' : (None, None),
-        '+PACSP0' : (None, None),
-    }
+        '*EMWI': (None, None),
+        '*E2NAP': (None, None),
+        '+CIEV': (None, None),
+        '+PACSP0': (None, None)}
 
     wrapper_klass = EricssonWrapper
     simp_klass = EricssonSimpleStateMachine

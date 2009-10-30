@@ -43,46 +43,46 @@ NETINFO_REGEXP = re.compile('[^a-zA-Z0-9.\-\s]*')
 BADOPER_REGEXP = re.compile('FFF*')
 
 HUAWEI_CONN_DICT = {
-    consts.MM_NETWORK_MODE_ANY : (2, 0),
+    consts.MM_NETWORK_MODE_ANY: (2, 0),
 
-    consts.MM_NETWORK_MODE_2G_ONLY : (13, 1),
+    consts.MM_NETWORK_MODE_2G_ONLY: (13, 1),
 
-    consts.MM_NETWORK_MODE_3G_ONLY : (14, 2),
+    consts.MM_NETWORK_MODE_3G_ONLY: (14, 2),
 
-    consts.MM_NETWORK_MODE_2G_PREFERRED : (2, 1),
+    consts.MM_NETWORK_MODE_2G_PREFERRED: (2, 1),
 
-    consts.MM_NETWORK_MODE_3G_PREFERRED : (2, 2),
+    consts.MM_NETWORK_MODE_3G_PREFERRED: (2, 2),
 }
 
 HUAWEI_BAND_DICT = {
-    consts.MM_NETWORK_BAND_ANY : 0x3FFFFFFF,
+    consts.MM_NETWORK_BAND_ANY: 0x3FFFFFFF,
 
-    consts.MM_NETWORK_BAND_DCS : 0x00000080,
-    consts.MM_NETWORK_BAND_EGSM : 0x00000100,
-    consts.MM_NETWORK_BAND_PCS : 0x00200000,
-    consts.MM_NETWORK_BAND_G850 : 0x00080000,
+    consts.MM_NETWORK_BAND_DCS: 0x00000080,
+    consts.MM_NETWORK_BAND_EGSM: 0x00000100,
+    consts.MM_NETWORK_BAND_PCS: 0x00200000,
+    consts.MM_NETWORK_BAND_G850: 0x00080000,
 
-    consts.MM_NETWORK_BAND_U2100 : 0x00400000,
-    consts.MM_NETWORK_BAND_U1900 : 0x00800000,
-    consts.MM_NETWORK_BAND_U850 : 0x04000000,
+    consts.MM_NETWORK_BAND_U2100: 0x00400000,
+    consts.MM_NETWORK_BAND_U1900: 0x00800000,
+    consts.MM_NETWORK_BAND_U850: 0x04000000,
 }
 
 
 def huawei_new_conn_mode(args):
     """Translates `args` to Wader's internal representation"""
     mode_args_dict = {
-        '0,0' : consts.MM_NETWORK_MODE_UNKNOWN,
-        '0,2' : consts.MM_NETWORK_MODE_UNKNOWN,
-        '3,0' : consts.MM_NETWORK_MODE_GPRS,
-        '3,1' : consts.MM_NETWORK_MODE_GPRS,
-        '3,2' : consts.MM_NETWORK_MODE_GPRS,
-        '3,3' : consts.MM_NETWORK_MODE_GPRS,
-        '5,0' : consts.MM_NETWORK_MODE_UNKNOWN,
-        '5,4' : consts.MM_NETWORK_MODE_UMTS,
-        '5,5' : consts.MM_NETWORK_MODE_HSDPA,
-        '5,6' : consts.MM_NETWORK_MODE_HSUPA,
-        '5,7' : consts.MM_NETWORK_MODE_HSPA,
-        '5,9' : consts.MM_NETWORK_MODE_HSPA, # doc says HSPA+
+        '0,0': consts.MM_NETWORK_MODE_UNKNOWN,
+        '0,2': consts.MM_NETWORK_MODE_UNKNOWN,
+        '3,0': consts.MM_NETWORK_MODE_GPRS,
+        '3,1': consts.MM_NETWORK_MODE_GPRS,
+        '3,2': consts.MM_NETWORK_MODE_GPRS,
+        '3,3': consts.MM_NETWORK_MODE_GPRS,
+        '5,0': consts.MM_NETWORK_MODE_UNKNOWN,
+        '5,4': consts.MM_NETWORK_MODE_UMTS,
+        '5,5': consts.MM_NETWORK_MODE_HSDPA,
+        '5,6': consts.MM_NETWORK_MODE_HSUPA,
+        '5,7': consts.MM_NETWORK_MODE_HSPA,
+        '5,9': consts.MM_NETWORK_MODE_HSPA, # doc says HSPA+
     }
     return mode_args_dict[args]
 
@@ -402,16 +402,16 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
                            S.SIG_RSSI]
 
     signal_translations = {
-        '^MODE' : (S.SIG_NETWORK_MODE, huawei_new_conn_mode),
-        '^RSSI' : (S.SIG_RSSI, lambda rssi: rssi_to_percentage(int(rssi))),
-        '^DSFLOWRPT' : (None, None),
-        '^BOOT' : (None, None),
-        '^SRVST' : (None, None),
-        '^SIMST' : (None, None),
-        '^CEND' : (None, None),
-        '^EARST' : (None, None),
-        '^STIN' : (None, None),
-        '^SMMEMFULL' : (None, None),
+        '^MODE': (S.SIG_NETWORK_MODE, huawei_new_conn_mode),
+        '^RSSI': (S.SIG_RSSI, lambda rssi: rssi_to_percentage(int(rssi))),
+        '^DSFLOWRPT': (None, None),
+        '^BOOT': (None, None),
+        '^SRVST': (None, None),
+        '^SIMST': (None, None),
+        '^CEND': (None, None),
+        '^EARST': (None, None),
+        '^STIN': (None, None),
+        '^SMMEMFULL': (None, None),
     }
 
 

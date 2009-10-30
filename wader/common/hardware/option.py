@@ -46,27 +46,27 @@ HSO_RETRY_TIMEOUT = 3
 NO_AUTH, PAP_AUTH, CHAP_AUTH = 0, 1, 2
 
 OPTION_BAND_MAP_DICT = {
-    'ANY' : consts.MM_NETWORK_BAND_ANY,
-    'EGSM' : consts.MM_NETWORK_BAND_EGSM,
-    'DCS' : consts.MM_NETWORK_BAND_DCS,
-    'PCS' : consts.MM_NETWORK_BAND_PCS,
-    'G850' : consts.MM_NETWORK_BAND_G850,
-    'U2100' : consts.MM_NETWORK_BAND_U2100,
-    'U1900' : consts.MM_NETWORK_BAND_U1900,
-    'U1700' : consts.MM_NETWORK_BAND_U1700,
-    '17IV' : consts.MM_NETWORK_BAND_17IV,
-    'U850' : consts.MM_NETWORK_BAND_U850,
-    'U800' : consts.MM_NETWORK_BAND_U850,
-    'U900' : consts.MM_NETWORK_BAND_U900,
-    'U17IX' : consts.MM_NETWORK_BAND_U17IX,
+    'ANY': consts.MM_NETWORK_BAND_ANY,
+    'EGSM': consts.MM_NETWORK_BAND_EGSM,
+    'DCS': consts.MM_NETWORK_BAND_DCS,
+    'PCS': consts.MM_NETWORK_BAND_PCS,
+    'G850': consts.MM_NETWORK_BAND_G850,
+    'U2100': consts.MM_NETWORK_BAND_U2100,
+    'U1900': consts.MM_NETWORK_BAND_U1900,
+    'U1700': consts.MM_NETWORK_BAND_U1700,
+    '17IV': consts.MM_NETWORK_BAND_17IV,
+    'U850': consts.MM_NETWORK_BAND_U850,
+    'U800': consts.MM_NETWORK_BAND_U850,
+    'U900': consts.MM_NETWORK_BAND_U900,
+    'U17IX': consts.MM_NETWORK_BAND_U17IX,
 }
 
 OPTION_CONN_DICT = {
-    consts.MM_NETWORK_MODE_2G_ONLY : 0,
-    consts.MM_NETWORK_MODE_3G_ONLY : 1,
-    consts.MM_NETWORK_MODE_2G_PREFERRED : 2,
-    consts.MM_NETWORK_MODE_3G_PREFERRED : 3,
-    consts.MM_NETWORK_MODE_ANY : 5,
+    consts.MM_NETWORK_MODE_2G_ONLY: 0,
+    consts.MM_NETWORK_MODE_3G_ONLY: 1,
+    consts.MM_NETWORK_MODE_2G_PREFERRED: 2,
+    consts.MM_NETWORK_MODE_3G_PREFERRED: 3,
+    consts.MM_NETWORK_MODE_ANY: 5,
 }
 
 # The option band dictionary does not need to be specified as we
@@ -178,9 +178,9 @@ def new_conn_mode_cb(args):
     Translates Option's unsolicited notifications to Wader's representation
     """
     ossysi_args_dict = {
-        '0' : consts.MM_NETWORK_MODE_GPRS,
-        '2' : consts.MM_NETWORK_MODE_UMTS,
-        '3' : consts.MM_NETWORK_MODE_UNKNOWN,
+        '0': consts.MM_NETWORK_MODE_GPRS,
+        '2': consts.MM_NETWORK_MODE_UMTS,
+        '3': consts.MM_NETWORK_MODE_UNKNOWN,
     }
     return ossysi_args_dict[args]
 
@@ -440,10 +440,9 @@ class OptionWCDMACustomizer(WCDMACustomizer):
     cmd_dict = OPTION_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE, S.SIG_RSSI]
     signal_translations = {
-        '_OSSYSI' : (S.SIG_NETWORK_MODE, new_conn_mode_cb),
-        '_OSIGQ' : (S.SIG_RSSI, lambda args:
-                        (rssi_to_percentage(int(args.split(',')[0]))))
-    }
+        '_OSSYSI': (S.SIG_NETWORK_MODE, new_conn_mode_cb),
+        '_OSIGQ': (S.SIG_RSSI, lambda args:
+                        (rssi_to_percentage(int(args.split(',')[0]))))}
     wrapper_klass = OptionWrapper
 
 

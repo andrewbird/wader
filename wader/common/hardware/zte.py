@@ -30,33 +30,33 @@ from wader.common.utils import revert_dict
 import wader.common.signals as S
 
 ZTE_MODE_DICT = {
-    consts.MM_NETWORK_MODE_ANY : (0, 0),
-    consts.MM_NETWORK_MODE_2G_ONLY : (1, 0),
-    consts.MM_NETWORK_MODE_3G_ONLY : (2, 0),
-    consts.MM_NETWORK_MODE_2G_PREFERRED : (0, 1),
-    consts.MM_NETWORK_MODE_3G_PREFERRED : (0, 2),
+    consts.MM_NETWORK_MODE_ANY: (0, 0),
+    consts.MM_NETWORK_MODE_2G_ONLY: (1, 0),
+    consts.MM_NETWORK_MODE_3G_ONLY: (2, 0),
+    consts.MM_NETWORK_MODE_2G_PREFERRED: (0, 1),
+    consts.MM_NETWORK_MODE_3G_PREFERRED: (0, 2),
 }
 
 ZTE_BAND_DICT = {
-    consts.MM_NETWORK_BAND_ANY : 0,   # any band
+    consts.MM_NETWORK_BAND_ANY: 0,   # any band
 
     (consts.MM_NETWORK_BAND_U850 |
      consts.MM_NETWORK_BAND_EGSM |
-     consts.MM_NETWORK_BAND_DCS) : 1,
+     consts.MM_NETWORK_BAND_DCS): 1,
 
     (consts.MM_NETWORK_BAND_U2100 |
      consts.MM_NETWORK_BAND_EGSM |
-     consts.MM_NETWORK_BAND_DCS) : 2, # Europe
+     consts.MM_NETWORK_BAND_DCS): 2, # Europe
 
     (consts.MM_NETWORK_BAND_U850 |
      consts.MM_NETWORK_BAND_U2100 |
      consts.MM_NETWORK_BAND_EGSM |
-     consts.MM_NETWORK_BAND_DCS) : 3,
+     consts.MM_NETWORK_BAND_DCS): 3,
 
     (consts.MM_NETWORK_BAND_U850 |
      consts.MM_NETWORK_BAND_U1900 |
      consts.MM_NETWORK_BAND_G850 |
-     consts.MM_NETWORK_BAND_PCS) : 4,
+     consts.MM_NETWORK_BAND_PCS): 4,
 }
 # AT+ZBANDI=0 : Automatic (Auto) - Default
 # AT+ZBANDI=1 : UMTS 850 + GSM 900/1800
@@ -166,11 +166,11 @@ class ZTEWCDMACustomizer(WCDMACustomizer):
     cmd_dict = ZTE_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE]
     signal_translations = {
-        '+ZDONR' : (None, None),
-        '+ZPASR' : (S.SIG_NETWORK_MODE, zte_new_conn_mode),
-        '+ZUSIMR' : (None, None),
-        '+ZPSTM' : (None, None),
-        '+ZEND' : (None, None),
+        '+ZDONR': (None, None),
+        '+ZPASR': (S.SIG_NETWORK_MODE, zte_new_conn_mode),
+        '+ZUSIMR': (None, None),
+        '+ZPSTM': (None, None),
+        '+ZEND': (None, None),
     }
     wrapper_klass = ZTEWrapper
 

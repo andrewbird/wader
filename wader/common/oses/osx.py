@@ -63,7 +63,7 @@ class HardwareManager(object):
 
     def register_controller(self, controller):
         """
-        See :meth:`wader.common.interfaces.IHardwareManager.register_controller`
+        See `IHardwareManager.register_controller`
         """
         self.controller = controller
 

@@ -110,5 +110,5 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(flatten_list([1, iter([2, 3, 4])]), [1, 2, 3, 4])
 
     def test_revert_dict(self):
-        self.assertEqual(revert_dict({'a' : 'b'}), {'b' : 'a'})
+        self.assertEqual(revert_dict({'a': 'b'}), {'b': 'a'})
         self.assertEqual(revert_dict(dict(foo='bar')), dict(bar='foo'))

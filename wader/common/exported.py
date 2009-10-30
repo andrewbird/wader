@@ -396,10 +396,10 @@ class NetworkExporter(CardExporter):
                 # to not break existing software (it seems that
                 # nm-applet in OpenSuSe uses it) we decided not to
                 # change it for now.
-                net = {'status' : str(n.stat),
-                       'operator-long' : n.long_name,
-                       'operator-short' : n.short_name,
-                       'operator-num' : n.netid}
+                net = {'status': str(n.stat),
+                       'operator-long': n.long_name,
+                       'operator-short': n.short_name,
+                       'operator-num': n.netid}
 
                 if n.rat:
                     # some devices won't provide this info

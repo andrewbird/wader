@@ -239,19 +239,19 @@ class GnomeKeyring(object):
 
     def get(self, uuid):
         """See :meth:`KeyringManager.get_secret`"""
-        attrs = {'connection-uuid' : str(uuid)}
+        attrs = {'connection-uuid': str(uuid)}
         try:
             secrets = gnomekeyring.find_items_sync(
                             gnomekeyring.ITEM_GENERIC_SECRET, attrs)
-            return {'gsm' : {NM_PASSWD : secrets[0].secret}}
+            return {'gsm': {NM_PASSWD: secrets[0].secret}}
         except gnomekeyring.NoMatchError:
             msg = "No secrets for connection '%s'"
             raise KeyringNoMatchError(msg % str(uuid))
 
     def update(self, uuid, conn_id, secrets, update=True):
         """See :meth:`KeyringManager.update_secret`"""
-        attrs = {'connection-uuid' : str(uuid), 'setting-name' : 'gsm',
-                 'setting-key' : 'password'}
+        attrs = {'connection-uuid': str(uuid), 'setting-name': 'gsm',
+                 'setting-key': 'password'}
 
         password = secrets['gsm'][NM_PASSWD]
 
@@ -262,7 +262,7 @@ class GnomeKeyring(object):
 
     def delete(self, uuid):
         """See :meth:`KeyringManager.delete_secret`"""
-        attrs = {'connection-uuid' : str(uuid)}
+        attrs = {'connection-uuid': str(uuid)}
         secrets = gnomekeyring.find_items_sync(
                             gnomekeyring.ITEM_GENERIC_SECRET, attrs)
         # we find the secret, and we delete it

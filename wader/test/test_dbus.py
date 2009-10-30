@@ -650,7 +650,7 @@ class DBusTestCase(unittest.TestCase):
     # org.freedesktop.ModemManager.Modem.Gsm.SMS tests
     def test_SmsDelete(self):
         """Test for Sms.Delete"""
-        sms = {'number' : '+33622754135', 'text' : 'delete test'}
+        sms = {'number': '+33622754135', 'text': 'delete test'}
         # save a sms, delete it and check is no longer present
         indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
         self.assertEqual(len(indexes), 1)
@@ -668,8 +668,8 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsDeleteMultiparted(self):
         """Test for Sms.Delete"""
-        sms = {'number' : '+34622754135',
-               'text' : """test_SmsDeleteMultiparted test_SmsDeleteMultiparted
+        sms = {'number': '+34622754135',
+               'text': """test_SmsDeleteMultiparted test_SmsDeleteMultiparted
                            test_SmsDeleteMultiparted test_SmsDeleteMultiparted
                            test_SmsDeleteMultiparted test_SmsDeleteMultiparted
                            test_SmsDeleteMultiparted test_SmsDeleteMultiparted
@@ -689,7 +689,7 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsGet(self):
         """Test for Sms.Get"""
-        sms = {'number' : '+33646754145', 'text' : 'get test'}
+        sms = {'number': '+33646754145', 'text': 'get test'}
         # save the message, get it by index, and check its values match
         indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
         _sms = self.device.Get(indexes[0], dbus_interface=SMS_INTFACE)
@@ -700,8 +700,8 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsGetMultiparted(self):
         """Test for Sms.Get"""
-        sms = {'number' : '+34622754135',
-               'text' : """test_SmsGetMultiparted test_SmsGetMultiparted
+        sms = {'number': '+34622754135',
+               'text': """test_SmsGetMultiparted test_SmsGetMultiparted
                            test_SmsGetMultiparted test_SmsGetMultiparted
                            test_SmsGetMultiparted test_SmsGetMultiparted
                            test_SmsGetMultiparted test_SmsGetMultiparted
@@ -726,7 +726,7 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsList(self):
         """Test for Sms.List"""
-        sms = {'number' : '+33622754135', 'text' : 'list test'}
+        sms = {'number': '+33622754135', 'text': 'list test'}
         indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
         messages = self.device.List(dbus_interface=SMS_INTFACE)
         # now check that the indexes are present in a List
@@ -746,9 +746,9 @@ class DBusTestCase(unittest.TestCase):
         size_before = len(self.device.List(dbus_interface=SMS_INTFACE))
         # add three new ones
         messages = [
-            {'number' : '+324342322', 'text': 'hey there'},
-            {'number' : '+334223312', 'text': 'where you at?'},
-            {'number' : '+324323232', 'text': 'hows it going?'}]
+            {'number': '+324342322', 'text': 'hey there'},
+            {'number': '+334223312', 'text': 'where you at?'},
+            {'number': '+324323232', 'text': 'hows it going?'}]
 
         indexes = []
         for sms in messages:
@@ -763,8 +763,8 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsListMultiparted(self):
         """Test for Sms.List"""
-        sms = {'number' : '+34622754135',
-               'text' : """test_SmsListMultiparted test_SmsListMultiparted
+        sms = {'number': '+34622754135',
+               'text': """test_SmsListMultiparted test_SmsListMultiparted
                            test_SmsListMultiparted test_SmsListMultiparted
                            test_SmsListMultiparted test_SmsListMultiparted
                            test_SmsListMultiparted test_SmsListMultiparted"""}
@@ -787,20 +787,20 @@ class DBusTestCase(unittest.TestCase):
         size_before = len(self.device.List(dbus_interface=SMS_INTFACE))
         # add three new ones
         what = [
-            {'number' : '+324342322', 'text' : 'hey there'},
-            {'number' : '+34622754135',
-             'text' : """test_SmsListMultiparted_2 test_SmsListMultiparted_2
+            {'number': '+324342322', 'text': 'hey there'},
+            {'number': '+34622754135',
+             'text': """test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          """},
-            {'number' : '+34622754135',
-             'text' : """test_SmsListMultiparted_2 test_SmsListMultiparted_2
+            {'number': '+34622754135',
+             'text': """test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                          test_SmsListMultiparted_2 test_SmsListMultiparted_2
                           """},
-            {'number' : '+324323232', 'text' : 'hows it going?'}]
+            {'number': '+324323232', 'text': 'hows it going?'}]
 
         indexes = []
         for sms in what:
@@ -816,7 +816,7 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsSave(self):
         """Test for Sms.Save"""
-        sms = {'number' : '+34645454445', 'text' : 'save test'}
+        sms = {'number': '+34645454445', 'text': 'save test'}
         # save the message, get it by index, and check its values match
         indexes = self.device.Save(sms, dbus_interface=SMS_INTFACE)
         _sms = self.device.Get(indexes[0], dbus_interface=SMS_INTFACE)
@@ -827,8 +827,8 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsSaveMultiparted(self):
         """Test for Sms.Save"""
-        sms = {'number' : '+34622754135',
-               'text' : """test_SmsSaveMultiparted test_SmsSaveMultiparted
+        sms = {'number': '+34622754135',
+               'text': """test_SmsSaveMultiparted test_SmsSaveMultiparted
                            test_SmsSaveMultiparted test_SmsSaveMultiparted
                            test_SmsSaveMultiparted test_SmsSaveMultiparted
                            test_SmsSaveMultiparted test_SmsSaveMultiparted

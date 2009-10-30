@@ -71,7 +71,7 @@ class DevicePlugin(object):
         # used to identify the rest of the family
         self.mapping = {}
         # dictionary with org.freedesktop.DBus.Properties
-        self.props = {MDM_INTFACE : {}, HSO_INTFACE : {}, CRD_INTFACE : {}}
+        self.props = {MDM_INTFACE: {}, HSO_INTFACE: {}, CRD_INTFACE: {}}
         self.ports = None
 
     def __repr__(self):
