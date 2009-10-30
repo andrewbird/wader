@@ -516,14 +516,16 @@ class SmsProvider(DBProvider):
         thread.index = c.lastrowid
         return thread
 
-    def add_sms(self, sms):
+    def add_sms(self, sms, folder=inbox_folder):
         """
         Adds ``sms`` to the DB and returns the object updated with index
+
+        :param folder: Folder where this SMS will be added
         """
         c = self.conn.cursor()
         if sms.thread is None:
             # create a new thread for this sms
-            thread = self.get_thread_by_number(sms.number)
+            thread = self.get_thread_by_number(sms.number, folder=folder)
             sms.thread = thread
 
         c.execute("insert into message values (?, ?, ?, ?, ?, ?)",
