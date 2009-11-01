@@ -20,6 +20,7 @@
 from datetime import datetime
 import sqlite3
 from time import mktime
+from pytz import timezone
 
 from wader.common.consts import NETWORKS_DB
 from wader.common.sms import Message as _Message
@@ -451,7 +452,8 @@ class Message(_Message):
     @classmethod
     def from_row(cls, row, thread=None):
         return cls(row[2], row[3], index=row[0], flags=row[4],
-                   _datetime=datetime.fromtimestamp(row[1]), thread=thread)
+                   _datetime=datetime.fromtimestamp(row[1], timezone('UTC')),
+                   thread=thread)
 
 
 class Thread(object):
