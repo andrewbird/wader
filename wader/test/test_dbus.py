@@ -138,8 +138,12 @@ config = Config(GCONF_BASE)
 # ==================================================
 #                    ATTENTION
 # ==================================================
-# in order to store the PIN in gconf for testing run
+# The following settings are required to be specified
+# for some tests otherwise they won't run:
+#
 # gconftool-2 -s -t string /apps/wader-core/test/pin 0000
+# gconftool-2 -s -t string /apps/wader-core/test/puk 12345678
+# Unused for now:
 # gconftool-2 -s -t string /apps/wader-core/test/phone 876543210
 #
 # edit the GCONF_BASE variable above, to change the '/apps/wader-core'
@@ -169,6 +173,16 @@ class DBusTestCase(unittest.TestCase):
             if 'SimPinRequired' in get_dbus_error(e):
                 pin = config.get('test', 'pin', '0000')
                 self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
+                                    reply_handler=enable_device_cb,
+                                    error_handler=d.errback)
+            elif 'SimPukRequired' in get_dbus_error(e):
+                pin = config.get('test', 'pin', '0000')
+                puk = config.get('test', 'puk')
+                if not puk:
+                    msg = "SimPukRequired error and no PUK defined in config"
+                    raise unittest.SkipTest(msg)
+
+                self.device.SendPuk(puk, pin, dbus_interface=CRD_INTFACE,
                                     reply_handler=enable_device_cb,
                                     error_handler=d.errback)
             else:
