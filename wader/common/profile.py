@@ -44,7 +44,8 @@ from wader.common.consts import (NM_USER_SETTINGS, NM_SYSTEM_SETTINGS_OBJ,
                                  MM_SYSTEM_SETTINGS_PATH,
                                  WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
-                                 WADER_PROFILES_OBJPATH)
+                                 WADER_PROFILES_OBJPATH,
+                                 MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY)
 import wader.common.exceptions as ex
 from wader.common.secrets import ProfileSecrets
 from wader.common.utils import (convert_ip_to_int, patch_list_signature,
@@ -392,10 +393,10 @@ class ProfileManager(Object, GConfHelper):
         props = {}
 
         # gsm
-        props['gsm'] = {'band': 0,
+        props['gsm'] = {'band': MM_NETWORK_BAND_ANY,
                         'username': network.username,
                         'password': network.password,
-                        'network-type': 0,
+                        'network-type': MM_NETWORK_MODE_ANY,
                         'number': '*99#',
                         'apn': network.apn,
                         'name': 'gsm'}
