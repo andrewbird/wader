@@ -385,6 +385,10 @@ class ProfileManager(Object, GConfHelper):
         # XXX: use the first NetworkOperator object for now
         network = network[0]
 
+        return self.get_profile_options_from_network(network)
+
+    def get_profile_options_from_network(self, network):
+        """Generates a new :class:`Profile` from ``network``"""
         props = {}
 
         # gsm
