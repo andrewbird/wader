@@ -23,6 +23,7 @@ from time import mktime
 from pytz import timezone
 
 from wader.common.consts import NETWORKS_DB
+from wader.common.consts import USAGE_DB
 from wader.common.sms import Message as _Message
 from wader.common.utils import get_value_and_pop
 
@@ -238,6 +239,19 @@ begin
 end;
 """
 
+USAGE_SCHEMA = """
+create table usage(
+    id integer primary key autoincrement,
+    start_time  integer not null,
+    end_time integer not null,
+    bytes_recv integer not null,
+    bytes_sent integer not null,
+    umts boolean);
+    
+create table version (
+    version integer default 1);
+"""
+
 # constants
 INBOX, OUTBOX, DRAFTS = 1, 2, 3
 UNREAD, READ = 0x01, 0x02
@@ -281,6 +295,96 @@ class DBProvider(object):
         """Closes the provider and frees resources"""
         self.conn.close()
 
+# data usage
+
+class DataUsage(object):
+    """I represent data usage in the DB"""
+
+    def __init__(self, id=None, bytes_recv=None,  bytes_sent=None,  end_time=None, start_time= None,  umts=None):
+        self.id = id
+        self.bytes_recv = bytes_recv
+        self.bytes_sent = bytes_sent
+        self.end_time = end_time
+        self.start_time = start_time
+        self.umts = umts
+        
+    def __repr__(self):
+        args = (self.name.capitalize(), self.country.capitalize(),
+                self.netid, self.type)
+        return "<NetworkOperator %s%s, %s %d>" % args
+
+
+class UsageProvider(DBProvider):
+    """DB usage provider"""
+  
+    def __init__(self, path=USAGE_DB):
+        super(UsageProvider, self).__init__(path, USAGE_SCHEMA)
+        
+
+    def add_usage_item(self, umts, start, end, bytes_recv, bytes_sent):
+        c = self.conn.cursor()
+        print "UsageProvider: add_usage_item"
+        args = ( None,  start, end, bytes_recv, bytes_sent, umts)
+        c.execute("insert into usage values (?,?,?,?,?,?)", args)
+        
+        return DataUsage( umts=umts, start_time=start, end_time=end, bytes_recv=bytes_recv, bytes_sent=bytes_sent)
+
+    def get_usage_for_day(self, dateobj):
+        """
+        Returns all C{UsageItem} for day C{dateobj}
+        """
+        c = self.conn.cursor()
+        print "UsageProvider: get_usage_for_day"
+        
+        if not isinstance(dateobj, datetime.date):
+            raise ValueError("Don't know what to do with %s" % dateobj)
+
+        today = dateobj.timetuple()
+        tomorrow = (dateobj + datetime.timedelta(hours=24)).timetuple()
+        args = (Time.fromStructTime(today), Time.fromStructTime(tomorrow) )
+        c.execute("SELECT * FROM usage where start_time >=  ? & end_time < ?",  args)
+        
+        return list(c.fetchall())
+        
+        
+        #        return list(self.store.query(UsageProvider,
+#                    AND(UsageProvider.start_time >= Time.fromStructTime(today),
+#                        UsageProvider.end_time < Time.fromStructTime(tomorrow)))
+#                )
+
+    def get_usage_for_month(self, dateobj):
+        """
+        Returns all C{UsageItem} for month C{dateobj}
+        """
+        c = self.conn.cursor()
+        print "UsageProvider: get_usage_for_month - returning 10000"
+        
+        if not isinstance(dateobj, datetime.date):
+            raise ValueError("Don't know what to do with %s" % dateobj)
+
+        first_current_month_day = dateobj.replace(day=1).timetuple()
+        if dateobj.month < 12:
+            nextmonth = dateobj.month + 1
+            nextyear = dateobj.year
+        else:
+            nextmonth = 1
+            nextyear = dateobj.year + 1
+
+        first_next_month_day = dateobj.replace(day=1, month=nextmonth, year=nextyear).timetuple()
+        
+        args =(Time.fromStructTime(first_current_month_day),  Time.fromStructTime(first_next_month_day))
+        c.execute("SELECT * FROM usage where start_time >=  ? & start_time < ?",  args)
+        return list(c.fetchall())
+
+
+#        return list(self.store.query(UsageProvider,
+#                AND(UsageProvider.start_time >= Time.fromStructTime(
+#                                            first_current_month_day),
+#                    UsageProvider.start_time < Time.fromStructTime(
+#                                            first_next_month_day)))
+#                )
+
+
 
 # networks
 class NetworkOperator(object):
@@ -304,7 +408,7 @@ class NetworkOperator(object):
     def __repr__(self):
         args = (self.name.capitalize(), self.country.capitalize(),
                 self.netid, self.type)
-        return "<NetworkOperator %s, %s, %s %s>" % args
+        return "<NetworkOperator %s%s, %s %d>" % args
 
 
 class NetworkProvider(DBProvider):
