@@ -407,8 +407,8 @@ class NetworkOperator(object):
 
     def __repr__(self):
         args = (self.name.capitalize(), self.country.capitalize(),
-                self.netid, self.type)
-        return "<NetworkOperator %s%s, %s %d>" % args
+                self.netid, str(self.type))
+        return "<NetworkOperator %s%s, %s %s>" % args
 
 
 class NetworkProvider(DBProvider):
