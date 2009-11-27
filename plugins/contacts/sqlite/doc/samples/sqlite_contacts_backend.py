@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-import os
 from optparse import OptionParser
-from wader.plugins.sqlite_provider import sqlite_provider, SQLContact
 
+from wader.plugins.sqlite_provider import sqlite_provider, SQLContact
 
 def _parse_args():
 	parser=OptionParser()
@@ -34,7 +33,7 @@ def _parse_args():
             help='Contact id (for delete)', action="store")
         return parser.parse_args()
 
-(opts,args) = _parse_args()
+opts, args = _parse_args()
 
 class SQLiteContactProvider():
     """SQLite IContactProvider sample usage"""
@@ -55,7 +54,11 @@ class SQLiteContactProvider():
     def _close(self):
         self.provider.close()
 
-cP=SQLiteContactProvider()
-if opts.action == "add" : print cP._add_contact()
-elif opts.action == "list" : print cP._list_contacts()
-elif opts.action == 'remove': print cP._remove_contact()
+cp = SQLiteContactProvider()
+
+if opts.action == "add":
+    print cp._add_contact()
+elif opts.action == "list":
+    print cp._list_contacts()
+elif opts.action == 'remove':
+    print cp._remove_contact()

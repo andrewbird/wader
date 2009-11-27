@@ -17,18 +17,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Unittests for the ModemManager IContactProvider"""
 
-import time
 from optparse import OptionParser
+import sys
+import time
 
 import dbus
 import dbus.mainloop.glib
 from twisted.internet import defer
 from twisted.python import log
 
-from wader.plugins.mm_provider import mm_provider, MMContact
-from wader.common.config import config
 from wader.common.consts import (WADER_SERVICE, WADER_INTFACE, WADER_OBJPATH,
                                  MDM_INTFACE, CRD_INTFACE)
+from wader.plugins.mm_provider import mm_provider, MMContact
 
 def _parse_args():
 	parser=OptionParser()
@@ -67,7 +67,7 @@ class ModemManagerContactProvider():
                                     reply_handler=enable_device_cb,
                                     error_handler=log.err)
             else:
-                raise unittest.SkipTest("Cannot handle error %s" % error)
+                sys.exit(1)
 
         def get_device_from_opath(opaths):
             self.opath = opaths[0]

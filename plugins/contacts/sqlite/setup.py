@@ -1,5 +1,6 @@
-from setuptools import setup, find_packages
 import os
+
+from setuptools import setup
 
 version = open(os.path.join('VERSION')).readline().rstrip()
 
@@ -10,4 +11,3 @@ setup(name='wader-plugins-contacts-sqlite',
         author_email='pmarti@warp.es',
         license='GPL',
         packages=['wader.plugins', 'wader.test'])
-
