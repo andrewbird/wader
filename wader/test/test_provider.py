@@ -779,3 +779,39 @@ class TestUsageProvider(unittest.TestCase):
         usage_items = self.provider.get_usage_for_day(date.today())
         self.assertNotIn(item, usage_items)
 
+    def test_get_usage_for_day(self):
+        # add one usage item for today (45m)
+        now1 = datetime.now()
+        later1 = now1 + timedelta(minutes=45)
+        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
+        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
+                                             bytes_sent1, umts1)
+        # add another usage item for today (17m)  55 minutes later
+        now2 = datetime.now() + timedelta(minutes=55)
+        later2 = now1 + timedelta(minutes=17)
+        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
+        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
+                                             bytes_sent2, umts2)
+
+        # add another usage item for tomorrow (25m)
+        now3 = datetime.now() + timedelta(days=1)
+        later3 = now3 + timedelta(minutes=25)
+        umts3, bytes_recv3, bytes_sent3 = True, 14000, 1785
+        item3 = self.provider.add_usage_item(now3, later3, bytes_recv3,
+                                             bytes_sent3, umts3)
+
+        # now get the usage for today
+        today_items = self.provider.get_usage_for_day(date.today())
+        self.assertIn(item1, today_items)
+        self.assertIn(item2, today_items)
+        self.assertNotIn(item3, today_items)
+        # get the usage for tomorrow
+        tomorrow = date.today() + timedelta(days=1)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        self.assertNotIn(item1, tomorrow_items)
+        self.assertNotIn(item2, tomorrow_items)
+        self.assertIn(item3, tomorrow_items)
+
+        # leave it as we found it
+        for i in [item1, item2, item3]:
+            self.provider.delete_usage_item(i)

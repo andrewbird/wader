@@ -335,8 +335,7 @@ class UsageItem(object):
         if other.index is not None and self.index is not None:
             return self.index == other.index
 
-        return (other.end_time == self.end_time
-                    and other.start_time == self.start_time)
+        raise ValueError("Cannot compare myself with %s" % other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
