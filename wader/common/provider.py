@@ -17,12 +17,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Data providers"""
 
-from datetime import datetime
+import datetime
 import sqlite3
 from time import mktime
 
 from pytz import timezone
-from epsilon.extime import Time
 
 from wader.common.consts import NETWORKS_DB
 from wader.common.consts import USAGE_DB
@@ -244,8 +243,8 @@ end;
 USAGE_SCHEMA = """
 create table usage(
     id integer primary key autoincrement,
-    start_time  integer not null,
-    end_time integer not null,
+    start_time datetime not null,
+    end_time datetime not null,
     bytes_recv integer not null,
     bytes_sent integer not null,
     umts boolean);
@@ -276,6 +275,19 @@ def message_read(flags):
     return (int(flags) & READ) >> 1
 
 
+def adapt_datetime(ts):
+    return mktime(ts.utctimetuple())
+
+
+def convert_datetime(ts):
+    return datetime.datetime.utcfromtimestamp(float(ts))
+
+
+sqlite3.register_adapter(datetime.datetime, adapt_datetime)
+sqlite3.register_converter("datetime", convert_datetime)
+
+
+
 # common classes
 class DBError(Exception):
     """Base class for DB related errors"""
@@ -284,8 +296,8 @@ class DBError(Exception):
 class DBProvider(object):
     """Base class for the DB providers"""
 
-    def __init__(self, path, schema):
-        self.conn = sqlite3.connect(path, isolation_level=None)
+    def __init__(self, path, schema, **kw):
+        self.conn = sqlite3.connect(path, isolation_level=None, **kw)
         c = self.conn.cursor()
         try:
             c.executescript(schema)
@@ -299,12 +311,12 @@ class DBProvider(object):
 
 
 # data usage
-class DataUsage(object):
+class UsageItem(object):
     """I represent data usage in the DB"""
 
-    def __init__(self, id=None, bytes_recv=None, bytes_sent=None,
+    def __init__(self, index=None, bytes_recv=None, bytes_sent=None,
                  end_time=None, start_time=None, umts=None):
-        self.id = id
+        self.index = index
         self.bytes_recv = bytes_recv
         self.bytes_sent = bytes_sent
         self.end_time = end_time
@@ -312,66 +324,94 @@ class DataUsage(object):
         self.umts = umts
 
     def __repr__(self):
-        args = (self.name.capitalize(), self.country.capitalize(),
-                self.netid, self.type)
-        return "<NetworkOperator %s%s, %s %d>" % args
+        args = (str(self.end_time - self.start_time), self.bytes_recv,
+                self.bytes_sent)
+        return "<UsageItem time: %s bytes_recv: %d  bytes_sent: %d>" % args
+
+    def __eq__(self, other):
+        if other.index is not None and self.index is not None:
+            return self.index == other.index
+
+        return (other.end_time == self.end_time
+                    and other.start_time == self.start_time)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    @classmethod
+    def from_row(cls, row):
+        return cls(index=row[0], start_time=row[1], end_time=row[2],
+                   bytes_recv=int(row[3]), bytes_sent=int(row[4]),
+                   umts=bool(row[5]))
 
 
 class UsageProvider(DBProvider):
     """DB usage provider"""
 
     def __init__(self, path=USAGE_DB):
-        super(UsageProvider, self).__init__(path, USAGE_SCHEMA)
+        super(UsageProvider, self).__init__(path, USAGE_SCHEMA,
+                                        detect_types=sqlite3.PARSE_DECLTYPES)
 
-    def add_usage_item(self, umts, start, end, bytes_recv, bytes_sent):
+    def add_usage_item(self, start, end, bytes_recv, bytes_sent, umts):
         c = self.conn.cursor()
         args = (None, start, end, bytes_recv, bytes_sent, umts)
-        c.execute("insert into usage values (?,?,?,?,?,?)", args)
+        c.execute("insert into usage(id, start_time, end_time, bytes_recv,"
+                  "bytes_sent, umts) values (?,?,?,?,?,?)", args)
 
-        return DataUsage(umts=umts, start_time=start, end_time=end,
-                         bytes_recv=bytes_recv, bytes_sent=bytes_sent)
+        return UsageItem(umts=umts, start_time=start, end_time=end,
+                         bytes_recv=bytes_recv, bytes_sent=bytes_sent,
+                         index=c.lastrowid)
 
-    def get_usage_for_day(self, dateobj):
+    def delete_usage_item(self, item):
+        c = self.conn.cursor()
+        c.execute("delete from usage where id=?", (item.index,))
+
+    def get_usage_for_day(self, day):
         """
-        Returns all C{UsageItem} for day C{dateobj}
+        Returns all `UsageItem` for ``day``
+
+        :type day: ``datetime.date``
         """
         c = self.conn.cursor()
 
-        if not isinstance(dateobj, datetime.date):
-            raise ValueError("Don't know what to do with %s" % dateobj)
+        if not isinstance(day, datetime.date):
+            raise ValueError("Don't know what to do with %s" % day)
 
-        today = dateobj.timetuple()
-        tomorrow = (dateobj + datetime.timedelta(hours=24)).timetuple()
-        args = (Time.fromStructTime(today), Time.fromStructTime(tomorrow))
-        c.execute("SELECT * FROM usage where start_time >= ? AND end_time < ?",
+        def date_to_datetime(dt):
+            return mktime(dt.timetuple())
+
+        tomorrow = day + datetime.timedelta(days=1)
+        args = (date_to_datetime(day), date_to_datetime(tomorrow))
+        c.execute("select * from usage where start_time >= ? and end_time < ?",
                   args)
 
-        return list(c.fetchall())
+        return [UsageItem.from_row(row) for row in c.fetchall()]
 
-    def get_usage_for_month(self, dateobj):
+    def get_usage_for_month(self, month):
         """
-        Returns all C{UsageItem} for month C{dateobj}
+        Returns all ``UsageItem`` for ``month``
+
+        :type month: ``datetime.date``
         """
         c = self.conn.cursor()
 
-        if not isinstance(dateobj, datetime.date):
-            raise ValueError("Don't know what to do with %s" % dateobj)
+        if not isinstance(month, datetime.date):
+            raise ValueError("Don't know what to do with %s" % month)
 
-        first_current_month_day = dateobj.replace(day=1).timetuple()
-        if dateobj.month < 12:
-            nextmonth = dateobj.month + 1
-            nextyear = dateobj.year
+        first_current_month_day = month.replace(day=1).timetuple()
+        if month.month < 12:
+            _month = month.month + 1
+            _year = month.year
         else:
-            nextmonth = 1
-            nextyear = dateobj.year + 1
+            _month = 1
+            _year = month.year + 1
 
-        first_next_month_day = dateobj.replace(day=1, month=nextmonth,
-                                               year=nextyear).timetuple()
+        first_next_month_day = month.replace(day=1, month=_month, year=_year)
 
-        args = (Time.fromStructTime(first_current_month_day),
-                Time.fromStructTime(first_next_month_day))
-        c.execute("SELECT * FROM usage where start_time >= ? AND start_time < ?", args)
-        return list(c.fetchall())
+        args = (first_current_month_day, first_next_month_day)
+        c.execute("select * from usage where start_time >= ? and start_time < ?",
+                  args)
+        return [UsageItem.from_row(row) for row in c.fetchall()]
 
 
 # networks
@@ -544,7 +584,7 @@ class Message(_Message):
     @classmethod
     def from_row(cls, row, thread=None):
         return cls(row[2], row[3], index=row[0], flags=row[4],
-                   _datetime=datetime.fromtimestamp(row[1], timezone('UTC')),
+                   _datetime=datetime.datetime.fromtimestamp(row[1], timezone('UTC')),
                    thread=thread)
 
 
@@ -574,7 +614,7 @@ class Thread(object):
     @classmethod
     def from_row(cls, row, folder=None):
         """Returns a :class:`Thread` out of ``row``"""
-        return cls(datetime.fromtimestamp(row[1]), row[2], index=row[0],
+        return cls(datetime.datetime.fromtimestamp(row[1]), row[2], index=row[0],
                    message_count=row[3], snippet=row[4], read=row[5],
                    folder=folder)
 
@@ -680,7 +720,7 @@ class SmsProvider(DBProvider):
             return Thread.from_row(c.fetchone())
         elif c.rowcount < 1:
             # create thread for this number
-            thread = Thread(datetime.now(), number, folder=folder)
+            thread = Thread(datetime.datetime.now(), number, folder=folder)
             return self.add_thread(thread)
         elif c.rowcount > 1:
             raise DBError("Too many threads associated to number %s" % number)

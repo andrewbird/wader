@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Unittests for the provider layer """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import sqlite3
 from time import time
 
@@ -29,7 +29,7 @@ from wader.common.provider import (SMS_SCHEMA, SmsProvider, Message, Folder,
                                    outbox_folder, drafts_folder, READ, UNREAD,
                                    message_read, NETWORKS_SCHEMA, TYPE_PREPAID,
                                    TYPE_CONTRACT, NetworkProvider,
-                                   NetworkOperator)
+                                   NetworkOperator, UsageProvider, UsageItem)
 
 
 class TestNetworkDBTriggers(unittest.TestCase):
@@ -747,3 +747,21 @@ class TestSmsProvider(unittest.TestCase):
         self.assertEqual(sms1.flags, UNREAD)
         # leave it as we found it
         self.provider.delete_thread(t)
+
+
+class TestUsageProvider(unittest.TestCase):
+    def setUp(self):
+        self.provider = UsageProvider(':memory:')
+
+    def tearDown(self):
+        self.provider.close()
+
+    def test_add_usage_item(self):
+        now = datetime.now()
+        later = now + timedelta(minutes=30)
+        umts, bytes_recv, bytes_sent = True, 12345460, 12333211
+        item = self.provider.add_usage_item(now, later, bytes_recv,
+                                            bytes_sent, umts)
+        usage_items = self.provider.get_usage_for_day(date.today())
+        self.assertIn(item, usage_items)
+        self.provider.delete_usage_item(item)
