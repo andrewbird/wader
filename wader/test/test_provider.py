@@ -765,3 +765,17 @@ class TestUsageProvider(unittest.TestCase):
         usage_items = self.provider.get_usage_for_day(date.today())
         self.assertIn(item, usage_items)
         self.provider.delete_usage_item(item)
+
+    def test_delete_usage_item(self):
+        now = datetime.now()
+        later = now + timedelta(minutes=60)
+        umts, bytes_recv, bytes_sent = True, 12345470, 12333212
+        item = self.provider.add_usage_item(now, later, bytes_recv,
+                                            bytes_sent, umts)
+        usage_items = self.provider.get_usage_for_day(date.today())
+        self.assertIn(item, usage_items)
+        self.provider.delete_usage_item(item)
+        # now check that it is indeed gone
+        usage_items = self.provider.get_usage_for_day(date.today())
+        self.assertNotIn(item, usage_items)
+
