@@ -287,6 +287,9 @@ sqlite3.register_adapter(datetime.datetime, adapt_datetime)
 sqlite3.register_converter("datetime", convert_datetime)
 
 
+def date_to_datetime(date):
+    return datetime.datetime.fromtimestamp(mktime(date.timetuple()))
+
 
 # common classes
 class DBError(Exception):
@@ -376,9 +379,6 @@ class UsageProvider(DBProvider):
 
         if not isinstance(day, datetime.date):
             raise ValueError("Don't know what to do with %s" % day)
-
-        def date_to_datetime(dt):
-            return mktime(dt.timetuple())
 
         tomorrow = day + datetime.timedelta(days=1)
         args = (date_to_datetime(day), date_to_datetime(tomorrow))
