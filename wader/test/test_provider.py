@@ -815,3 +815,37 @@ class TestUsageProvider(unittest.TestCase):
         # leave it as we found it
         for i in [item1, item2, item3]:
             self.provider.delete_usage_item(i)
+
+    def test_get_usage_for_month(self):
+        current_month = date.today().month
+        # add one usage item for day 12 of this month (45m)
+        now1 = datetime(date.today().year, current_month, 12, 13, 10)
+        later1 = now1 + timedelta(minutes=45)
+        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
+        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
+                                             bytes_sent1, umts1)
+        # add another usage item for day 13 of this month (17m)
+        now2 = datetime(date.today().year, current_month, 13, 15, 10)
+        later2 = now1 + timedelta(minutes=17)
+        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
+        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
+                                             bytes_sent2, umts2)
+        # add another usage item for next month
+        now3 = datetime.now() + timedelta(weeks=4)
+        later3 = now3 + timedelta(minutes=25)
+        umts3, bytes_recv3, bytes_sent3 = True, 14000, 1785
+        item3 = self.provider.add_usage_item(now3, later3, bytes_recv3,
+                                             bytes_sent3, umts3)
+        # now get the usage for this month
+        this_month_items = self.provider.get_usage_for_month(now1.date())
+        self.assertIn(item1, this_month_items)
+        self.assertIn(item2, this_month_items)
+        self.assertNotIn(item3, this_month_items)
+        # now get the usage for next month
+        next_month_items = self.provider.get_usage_for_month(now3.date())
+        self.assertNotIn(item1, next_month_items)
+        self.assertNotIn(item2, next_month_items)
+        self.assertIn(item3, next_month_items)
+        # leave it as we found it
+        for i in [item1, item2, item3]:
+            self.provider.delete_usage_item(i)

@@ -397,7 +397,7 @@ class UsageProvider(DBProvider):
         if not isinstance(month, datetime.date):
             raise ValueError("Don't know what to do with %s" % month)
 
-        first_current_month_day = month.replace(day=1).timetuple()
+        first_current_month_day = month.replace(day=1)
         if month.month < 12:
             _month = month.month + 1
             _year = month.year
@@ -407,7 +407,8 @@ class UsageProvider(DBProvider):
 
         first_next_month_day = month.replace(day=1, month=_month, year=_year)
 
-        args = (first_current_month_day, first_next_month_day)
+        args = (date_to_datetime(first_current_month_day),
+                date_to_datetime(first_next_month_day))
         c.execute("select * from usage where start_time >= ? and start_time < ?",
                   args)
         return [UsageItem.from_row(row) for row in c.fetchall()]
