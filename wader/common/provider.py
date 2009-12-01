@@ -24,7 +24,6 @@ from time import mktime
 from pytz import timezone
 
 from wader.common.consts import NETWORKS_DB
-from wader.common.consts import USAGE_DB
 from wader.common.sms import Message as _Message
 from wader.common.utils import get_value_and_pop
 
