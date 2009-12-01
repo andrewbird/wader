@@ -18,11 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Daemons for Wader"""
 
-try:
-    from glib import timeout_add_seconds, source_remove
-except ImportError:
-    from gobject import timeout_add_seconds, source_remove
-
+from gobject import timeout_add_seconds, source_remove
 from twisted.python import log
 
 from wader.common.utils import rssi_to_percentage

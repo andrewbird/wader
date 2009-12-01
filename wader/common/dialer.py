@@ -21,11 +21,7 @@
 from math import floor
 from time import time
 
-try:
-    from glib import timeout_add_seconds, source_remove
-except ImportError:
-    from gobject import timeout_add_seconds, source_remove
-
+from gobject import timeout_add_seconds, source_remove
 import dbus
 from dbus.service import Object, BusName, method, signal
 from zope.interface import implements
