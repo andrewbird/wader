@@ -29,7 +29,7 @@ from wader.common.provider import (SMS_SCHEMA, SmsProvider, Message, Folder,
                                    outbox_folder, drafts_folder, READ, UNREAD,
                                    message_read, NETWORKS_SCHEMA, TYPE_PREPAID,
                                    TYPE_CONTRACT, NetworkProvider,
-                                   NetworkOperator, UsageProvider, UsageItem)
+                                   NetworkOperator, UsageProvider)
 
 
 class TestNetworkDBTriggers(unittest.TestCase):
