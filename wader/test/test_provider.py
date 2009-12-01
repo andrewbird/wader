@@ -818,6 +818,7 @@ class TestUsageProvider(unittest.TestCase):
 
     def test_get_usage_for_month(self):
         current_month = date.today().month
+        current_year = date.today().year
         # add one usage item for day 12 of this month (45m)
         now1 = datetime(date.today().year, current_month, 12, 13, 10)
         later1 = now1 + timedelta(minutes=45)
@@ -831,7 +832,15 @@ class TestUsageProvider(unittest.TestCase):
         item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
                                              bytes_sent2, umts2)
         # add another usage item for next month
-        now3 = datetime.now() + timedelta(weeks=4)
+        if current_month < 12:
+            month = current_month + 1
+            year = current_year
+        else:
+            month = 1
+            year = current_year + 1
+
+        # next month at 6.50am (25m)
+        now3 = datetime(year, month, 2, 6, 50)
         later3 = now3 + timedelta(minutes=25)
         umts3, bytes_recv3, bytes_sent3 = True, 14000, 1785
         item3 = self.provider.add_usage_item(now3, later3, bytes_recv3,
@@ -842,7 +851,7 @@ class TestUsageProvider(unittest.TestCase):
         self.assertIn(item2, this_month_items)
         self.assertNotIn(item3, this_month_items)
         # now get the usage for next month
-        next_month_items = self.provider.get_usage_for_month(now3.date())
+        next_month_items = self.provider.get_usage_for_month(now3)
         self.assertNotIn(item1, next_month_items)
         self.assertNotIn(item2, next_month_items)
         self.assertIn(item3, next_month_items)
