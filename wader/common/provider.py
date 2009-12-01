@@ -350,7 +350,7 @@ class UsageItem(object):
 class UsageProvider(DBProvider):
     """DB usage provider"""
 
-    def __init__(self, path=USAGE_DB):
+    def __init__(self, path):
         super(UsageProvider, self).__init__(path, USAGE_SCHEMA,
                                         detect_types=sqlite3.PARSE_DECLTYPES)
 
