@@ -339,6 +339,15 @@ class UsageItem(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def total(self):
+        return self.bytes_recv + self.bytes_sent
+
+    def is_3g(self):
+        return self.umts
+
+    def is_gprs(self):
+        return not self.umts
+
     @classmethod
     def from_row(cls, row):
         return cls(index=row[0], start_time=row[1], end_time=row[2],
