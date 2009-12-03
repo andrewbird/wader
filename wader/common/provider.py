@@ -466,7 +466,7 @@ class NetworkProvider(DBProvider):
     def _get_network_by_id(self, netid):
         c = self.conn.cursor()
         c.execute("select n.name, n.country, a.apn, a.username,"
-                  "a.password, a.dns1, a.dns2, a.type from network_info n "
+                  "a.password, a.dns1, a.dns2, a.type, m.smsc, m.mmsc from network_info n "
                   "inner join apn a on n.id = a.network_id "
                   "inner join message_information m "
                   "on n.id = m.network_id and a.type = m.type "
@@ -476,7 +476,7 @@ class NetworkProvider(DBProvider):
         for row in c.fetchall():
             attrs = dict(netid=[netid], name=row[0], country=row[1], apn=row[2],
                          username=row[3], password=row[4], dns1=row[5],
-                         dns2=row[6], type=row[7])
+                         dns2=row[6], type=row[7],  smsc=row[8],  mmsc=row[9])
             ret.append(NetworkOperator(**attrs))
 
         return ret
