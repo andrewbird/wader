@@ -315,8 +315,8 @@ class TestSmsDBTriggers(unittest.TestCase):
         c.execute("insert into message values (null, ?, '+34654321232',"
                   "'hey there', 2, 5)", (now,))
         c.execute("select date from thread where id=5")
-        date = c.fetchone()[0]
-        self.assertEqual(now, date)
+        _date = c.fetchone()[0]
+        self.assertEqual(now, _date)
         # leave everything as we found it
         c.execute("delete from thread where id=5")
 
@@ -857,4 +857,50 @@ class TestUsageProvider(unittest.TestCase):
         self.assertIn(item3, next_month_items)
         # leave it as we found it
         for i in [item1, item2, item3]:
+            self.provider.delete_usage_item(i)
+
+    def test_get_total_usage(self):
+        current_month = date.today().month
+        current_year = date.today().year
+        # add one usage item for day 12 of this month (45m)
+        now1 = datetime(current_year, current_month, 12, 13, 10)
+        later1 = now1 + timedelta(minutes=45)
+        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
+        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
+                                             bytes_sent1, umts1)
+        # add another usage item for day 13 of this month (17m), one year ago
+        now2 = datetime(current_year - 1, current_month, 13, 15, 10)
+        later2 = now1 + timedelta(minutes=17)
+        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
+        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
+                                             bytes_sent2, umts2)
+
+        items = self.provider.get_total_usage()
+        self.assertIn(item1, items)
+        self.assertIn(item2, items)
+        # leave it as we found it
+        for i in [item1, item2]:
+            self.provider.delete_usage_item(i)
+
+    def test_get_total_usage_passing_a_date(self):
+        current_month = date.today().month
+        current_year = date.today().year
+        # add one usage item for day 12 of this month (45m)
+        now1 = datetime(current_year, current_month, 12, 13, 10)
+        later1 = now1 + timedelta(minutes=45)
+        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
+        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
+                                             bytes_sent1, umts1)
+        # add another usage item for day 13 of this month (17m), one year ago
+        now2 = datetime(current_year - 1, current_month, 13, 15, 10)
+        later2 = now1 + timedelta(minutes=17)
+        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
+        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
+                                             bytes_sent2, umts2)
+
+        items = self.provider.get_total_usage(now1.date())
+        self.assertIn(item1, items)
+        self.assertNotIn(item2, items)
+        # leave it as we found it
+        for i in [item1, item2]:
             self.provider.delete_usage_item(i)

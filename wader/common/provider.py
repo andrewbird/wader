@@ -421,6 +421,21 @@ class UsageProvider(DBProvider):
                   args)
         return [UsageItem.from_row(row) for row in c.fetchall()]
 
+    def get_total_usage(self, month=None):
+        c = self.conn.cursor()
+
+        if month is None:
+            sql = "select * from usage"
+            c.execute(sql)
+        else:
+            if not isinstance(month, datetime.date):
+                raise ValueError("Don't know what to do with %s" % month)
+
+            sql = "select * from usage where start_time >= ?"
+            c.execute(sql, (date_to_datetime(month),))
+
+        return [UsageItem.from_row(row) for row in c.fetchall()]
+
 
 # networks
 class NetworkOperator(object):
