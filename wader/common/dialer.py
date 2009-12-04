@@ -36,6 +36,7 @@ from wader.common.runtime import nm07_present
 from wader.common.utils import convert_int_to_ip
 
 CONFIG_DELAY = 3
+SECRETS_TIMEOUT = 3
 
 
 class DialerConf(object):
@@ -70,8 +71,8 @@ class DialerConf(object):
 
     def _get_profile_secrets(self, profile):
         tag, hints, ask = 'gsm', [consts.NM_PASSWD], False
-        resp = profile.GetSecrets(tag, hints, ask,
-                  dbus_interface=consts.NM_SYSTEM_SETTINGS_SECRETS)
+        resp = profile.GetSecrets(tag, hints, ask, timeout=SECRETS_TIMEOUT,
+                             dbus_interface=consts.NM_SYSTEM_SETTINGS_SECRETS)
 
         if not resp:
             # if we don't get secrets without asking, lets try asking
