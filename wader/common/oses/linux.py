@@ -527,6 +527,7 @@ class HardwareManager(DBusComponent):
                 hso_props = plugin.props[consts.HSO_INTFACE]
                 net_device = self._get_network_device(root_udi, context)
                 hso_props['NetworkDevice'] = net_device
+
                 props['IpMethod'] = consts.MM_IP_METHOD_STATIC
                 # XXX: Fix HSO Device
                 props['Device'] = 'hso0'
@@ -540,8 +541,15 @@ class HardwareManager(DBusComponent):
             elif 'cdc' in props['Driver']:
                 # MBM device
                 props['IpMethod'] = consts.MM_IP_METHOD_DHCP
-                # XXX: Fix MBM Device
-                props['Device'] = 'usb0'
+
+                # Devices from 2.6.33 can be called usb%d or wwan%d
+                hso_props = plugin.props[consts.HSO_INTFACE]
+                net_device = self._get_network_device(root_udi, context)
+                hso_props['NetworkDevice'] = net_device
+
+            if hasattr(plugin, 'ipmethod'):
+                # allows us to specify a method in a driver independant way
+                props['IpMethod'] = plugin.ipmethod
 
             if hasattr(plugin, 'hardcoded_ports'):
                 # if the device has the hardcoded_ports attribute that means
@@ -618,7 +626,7 @@ class LinuxPlugin(UnixPlugin):
         if action == 'down':
             args = [iface, action]
         else:
-            args = [iface, ip, 'netmask', '255.255.255.255', action]
+            args = [iface, ip, 'netmask', '255.255.255.255', '-arp', action]
 
         return utils.getProcessValue('/sbin/ifconfig', args, reactor=reactor)
 

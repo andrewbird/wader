@@ -18,25 +18,29 @@
 """HSOLink Dialer"""
 
 from wader.common.dialer import Dialer
-from wader.common.hardware.option import NO_AUTH, PAP_AUTH, CHAP_AUTH
+from wader.common.consts import (HSO_NO_AUTH, HSO_PAP_AUTH, HSO_CHAP_AUTH,
+                                 HSO_INTFACE)
 from wader.common.oal import osobj
 
 
 class HSODialer(Dialer):
-    """Dialer for HSO devices"""
+    """Dialer for HSO type devices"""
+
+    # Note: The interface is called HSO for historical reasons but actually
+    #       it can be used by devices other than Option's e.g. ZTE's Icera
 
     def __init__(self, device, opath, **kwds):
         super(HSODialer, self).__init__(device, opath, **kwds)
-        # XXX: hardcoding iface to hso0
-        self.iface = 'hso0'
+        # After 2.6.33 can be wwan%d or usb%d or hso%d
+        self.iface = self.device.props[HSO_INTFACE]['NetworkDevice']
 
     def configure(self, config):
         if not config.refuse_chap:
-            auth = CHAP_AUTH
+            auth = HSO_CHAP_AUTH
         elif not config.refuse_pap:
-            auth = PAP_AUTH
+            auth = HSO_PAP_AUTH
         else:
-            auth = NO_AUTH
+            auth = HSO_NO_AUTH
 
         d = self.device.sconn.set_apn(config.apn)
         d.addCallback(lambda _: self.device.sconn.hso_authenticate(
@@ -45,10 +49,9 @@ class HSODialer(Dialer):
 
     def connect(self):
         # start the connection
-        conn_id = self.device.sconn.state_dict['conn_id']
-        self.device.sconn.send_at('AT_OWANCALL=%d,1,0' % conn_id)
+        d = self.device.sconn.hso_connect()
         # now get the IP4Config and set up device and routes
-        d = self.device.sconn.get_ip4_config()
+        d.addCallback(lambda _: self.device.sconn.get_ip4_config())
         d.addCallback(self._get_ip4_config_cb)
         d.addCallback(lambda _: self.Connected())
         d.addCallback(lambda _: self.opath)
@@ -61,8 +64,7 @@ class HSODialer(Dialer):
         return d
 
     def disconnect(self):
-        conn_id = self.device.sconn.state_dict['conn_id']
-        d = self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
+        d = self.device.sconn.disconnect_from_internet()
         osobj.delete_default_route(self.iface)
         osobj.delete_dns_info(None, self.iface)
         osobj.configure_iface(self.iface, '', 'down')

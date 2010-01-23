@@ -297,7 +297,9 @@ class DialerManager(Object, DBusExporterHelper):
         from wader.common.dialers.nm_dialer import NMDialer
 
         device = self.ctrl.hm.clients[dev_opath]
-        if nm07_present():
+        if device.dialer == 'hso_native':
+            klass = HSODialer
+        elif nm07_present():
             klass = NMDialer
         else:
             # NM 0.6.X

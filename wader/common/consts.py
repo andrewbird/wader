@@ -137,6 +137,9 @@ MM_IP_METHOD_DHCP = UInt32(2)
 
 MM_SYSTEM_SETTINGS_PATH = '/org/freedesktop/ModemManager/Settings'
 
+# HSO authentication
+HSO_NO_AUTH, HSO_PAP_AUTH, HSO_CHAP_AUTH = 0, 1, 2
+
 DATA_DIR = join('/usr', 'share', '%s' % APP_SLUG_NAME)
 WADER_DOC = join('/usr', 'share', 'doc', '%s' % APP_SLUG_NAME, 'guide')
 
