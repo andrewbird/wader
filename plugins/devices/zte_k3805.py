@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common.hardware.icera import IceraWCDMADevicePlugin
+from wader.common.consts import MM_IP_METHOD_STATIC
 
 
 class ZTEK3805(IceraWCDMADevicePlugin):
@@ -34,6 +35,9 @@ class ZTEK3805(IceraWCDMADevicePlugin):
     }
 
     hardcoded_ports = (0, 1)
+
+    dialer = 'hso_native'
+    ipmethod = MM_IP_METHOD_STATIC
 
 
 zte_k3805 = ZTEK3805()

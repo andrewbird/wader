@@ -20,16 +20,24 @@ Common stuff for all ZTE's Icera based cards
 """
 
 import re
-from twisted.internet import defer
+from epsilon.modal import mode
+from twisted.internet import defer, reactor
+from twisted.python import log
 
 from wader.common import consts
-from wader.common.command import get_cmd_dict_copy, build_cmd_dict
+import wader.common.aterrors as E
+from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
+from wader.common.exported import HSOExporter
 from wader.common.sim import SIMBaseClass
+from wader.common.statem.simple import SimpleStateMachine
 from wader.common.plugin import DevicePlugin
 from wader.common.utils import revert_dict
 import wader.common.signals as S
+
+HSO_MAX_RETRIES = 10
+HSO_RETRY_TIMEOUT = 3
 
 ICERA_MODE_DICT = {
     consts.MM_NETWORK_MODE_ANY: 5,
@@ -73,6 +81,20 @@ ICERA_CMD_DICT['get_network_mode'] = build_cmd_dict(
         (?P<mode>\d+),
         (?P<domain>\d+)
     """, re.VERBOSE))
+
+# %IPDPADDR:<cid>,<ip>,<gw>,<dns1>,<dns2>[,<nbns1>,<nbns2>]\r\n
+ICERA_CMD_DICT['get_ip4_config'] = build_cmd_dict(
+    re.compile(r"""
+        %IPDPADDR:
+        \s*(?P<cid>\d+),
+        \s*(?P<ip>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+),
+        \s*(?P<gw>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+),
+        \s*(?P<dns1>[0-9.]*),
+        \s*(?P<dns2>[0-9.]*)
+        (?P<ign>.*|,.*)
+    """, re.VERBOSE))
+
+ICERA_CMD_DICT['hso_authenticate'] = build_cmd_dict()
 
 ICERA_CONN_DICT_REV = {
     '2G-GPRS': consts.MM_NETWORK_MODE_GPRS,
@@ -173,6 +195,117 @@ class IceraWrapper(WCDMAWrapper):
 
         return self.send_at("AT%%IPSYS=%d" % self.custom.conn_dict[mode])
 
+    def get_ip4_config(self):
+        """
+        Returns the ip4 config on a NDIS device
+
+        Wrapper around _get_ip4_config that provides some error control
+        """
+        ip_method = self.device.props[consts.MDM_INTFACE]['IpMethod']
+        if ip_method != consts.MM_IP_METHOD_STATIC:
+            msg = "Cannot get IP4 config from a non static ip method"
+            raise E.OperationNotSupported(msg)
+
+        self.state_dict['retry_call'] = None
+        self.state_dict['num_of_retries'] = 0
+
+        def real_get_ip4_config(deferred):
+
+            def get_ip4_eb(failure):
+                failure.trap(E.GenericError)
+                if self.state_dict.get('should_stop'):
+                    self.state_dict.pop('should_stop')
+                    return
+
+                self.state_dict['num_of_retries'] += 1
+                if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
+                    return failure
+
+                self.state_dict['retry_call'] = reactor.callLater(
+                        HSO_RETRY_TIMEOUT,
+                        real_get_ip4_config, deferred)
+
+            d = self._get_ip4_config()
+            d.addCallback(deferred.callback)
+            d.addErrback(get_ip4_eb)
+            return deferred
+
+        auxdef = defer.Deferred()
+        return real_get_ip4_config(auxdef)
+
+    def _get_ip4_config(self):
+        """Returns the ip4 config on a Icera NDIS device"""
+        conn_id = self.state_dict['conn_id']
+        cmd = ATCmd('AT%%IPDPADDR=%d' % conn_id, name='get_ip4_config')
+        d = self.queue_at_cmd(cmd)
+
+        def _get_ip4_config_cb(resp):
+            if not resp:
+                raise E.GenericError()
+
+            ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
+            # XXX: Fix dns3
+            dns2 = dns3 = resp[0].group('dns2')
+            self.device.set_status(consts.DEV_CONNECTED)
+            return [ip, dns1, dns2, dns3]
+
+        d.addCallback(_get_ip4_config_cb)
+        return d
+
+    def hso_authenticate(self, user, passwd, auth):
+        """Authenticates using ``user`` and ``passwd`` on Icera NDIS devices"""
+        conn_id = self.state_dict['conn_id']
+        args = (conn_id, auth, user, passwd)
+        cmd = ATCmd('AT%%IPDPCFG=%d,0,%d,"%s","%s"' % args,
+                    name='hso_authenticate')
+        d = self.queue_at_cmd(cmd)
+        d.addCallback(lambda resp: resp[0].group('resp'))
+        return d
+
+    def hso_connect(self):
+        conn_id = self.state_dict['conn_id']
+        return self.send_at('AT%%IPDPACT=%d,1' % conn_id)
+
+    def disconnect_from_internet(self):
+        """
+        meth:`~wader.common.middleware.WCDMAWrapper.disconnect_from_internet`
+        """
+        conn_id = self.state_dict['conn_id']
+        d = self.send_at('AT%%IPDPACT=%d,0' % conn_id)
+        d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
+        return d
+
+
+# XXX: maybe we can see about sharing this once SimpleConnect is working
+class IceraSimpleStateMachine(SimpleStateMachine):
+    begin = SimpleStateMachine.begin
+    check_pin = SimpleStateMachine.check_pin
+    register = SimpleStateMachine.register
+    set_apn = SimpleStateMachine.set_apn
+    set_band = SimpleStateMachine.set_band
+    set_network_mode = SimpleStateMachine.set_network_mode
+    done = SimpleStateMachine.done
+
+    class connect(mode):
+
+        def __enter__(self):
+            log.msg("Icera Simple SM: connect entered")
+
+        def __exit__(self):
+            log.msg("Icera Simple SM: connect exited")
+
+        def do_next(self):
+
+            username = self.settings['username']
+            password = self.settings['password']
+            # XXX: One day Connect.Simple will receive auth too
+            # defaulting to PAP_AUTH as that's what we had before
+            auth = consts.HSO_PAP_AUTH
+
+            d = self.sconn.hso_authenticate(username, password, auth)
+            d.addCallback(lambda _: self.sconn.hso_connect())
+            d.addCallback(lambda _: self.transition_to('done'))
+
 
 class IceraWCDMACustomizer(WCDMACustomizer):
     """WCDMA customizer for ZTE Icera based devices"""
@@ -188,6 +321,8 @@ class IceraWCDMACustomizer(WCDMACustomizer):
         '%NWSTATE': (S.SIG_NETWORK_MODE, icera_new_conn_mode),
     }
     wrapper_klass = IceraWrapper
+    exporter_klass = HSOExporter
+    simp_klass = IceraSimpleStateMachine
 
 
 class IceraWCDMADevicePlugin(DevicePlugin):
