@@ -176,7 +176,7 @@ class IceraWrapper(WCDMAWrapper):
             if _mode in ICERA_MODE_DICT_REV:
                 return ICERA_MODE_DICT_REV[_mode]
 
-            raise KeyError("Unknown network mode %s" % tech)
+            raise KeyError("Unknown network mode %s" % _mode)
 
         d = self.send_at('AT%IPSYS?', name='get_network_mode',
                          callback=get_network_mode_cb)
