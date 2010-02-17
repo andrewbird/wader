@@ -400,7 +400,7 @@ class DBusTestCase(unittest.TestCase):
 
     def test_ContactsAdd_UTF8_name(self):
         """Test for Contacts.Add"""
-        name, number = u"中华人民共和国", "+43544311113"
+        name, number = u"中华人民共和", "+43544311113"
         # add a contact with UTF8 data
         index = self.device.Add(name, number, dbus_interface=CTS_INTFACE)
         # get the object via DBus and check that its data is correct
