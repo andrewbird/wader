@@ -238,6 +238,7 @@ class Message(object):
         self.cnt = cnt  # Total number of fragments
         self.seq = seq  # fragment number
         self.completed = False
+        self.request_status = False
         self._fragments = []
 
         if text is not None:
@@ -296,6 +297,8 @@ class Message(object):
             m.csca = d['smsc']
         if 'timestamp' in d:
             m.datetime = datetime.fromtimestamp(d['timestamp'], tz)
+        if 'request_status' in d:
+            m.request_status = d['request_status']
 
         return m
 
@@ -340,6 +343,8 @@ class Message(object):
             ret['timestamp'] = mktime(self.datetime.timetuple())
         if self.csca is not None:
             ret['smsc'] = self.csca
+        if self.request_status:
+            ret['request_status'] = self.request_status
 
         return ret
 
@@ -348,7 +353,8 @@ class Message(object):
         p = PDU()
         csca = self.csca if self.csca is not None else ""
 
-        return p.encode_pdu(self.number, self.text, csca=csca, store=store)
+        return p.encode_pdu(self.number, self.text, csca=csca, store=store,
+                            request_status=self.request_status)
 
     def add_fragment(self, sms):
         self.add_text_fragment(sms.text, sms.seq)
