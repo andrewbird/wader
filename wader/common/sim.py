@@ -52,7 +52,7 @@ class SIMBaseClass(object):
 
     def _setup_sms(self):
         # Notification when a SMS arrives...
-        self.sconn.set_sms_indication(2, 1)
+        self.sconn.set_sms_indication(2, 1, 0, 1, 1)
         # set PDU mode
         self.sconn.set_sms_format(0)
 
