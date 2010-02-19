@@ -26,13 +26,16 @@ from twisted.internet.defer import  succeed, gatherResults
 from messaging import PDU
 
 from wader.common.interfaces import IMessage
-from wader.common.signals import SIG_SMS, SIG_SMS_COMP
+from wader.common.signals import SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 # XXX: What should this threshold be?
 SMS_DATE_THRESHOLD = 5
 
 SMS_STATUS_REPORT = 0x03
+
+
+p = PDU()
 
 
 def debug(s):
@@ -86,6 +89,7 @@ class MessageAssemblyLayer(object):
         self.wrappee = wrappee
         self.last_index = 0
         self.sms_map = {}
+        self.sms_pending = {}
         self.cached = False
 
     def initialize(self, obj=None):
@@ -96,6 +100,7 @@ class MessageAssemblyLayer(object):
         # revert to initial state
         self.last_index = 0
         self.sms_map = {}
+        self.sms_pending = {}
         self.cached = False
         # populate sms cache
         self.list_sms()
@@ -198,6 +203,15 @@ class MessageAssemblyLayer(object):
         d.addCallback(gen_cache)
         return d
 
+    def send_sms(self, sms):
+        debug("MAL::send_sms: %s" % sms)
+        if not sms.request_status:
+            return self.wrappee.do_send_sms(sms)
+
+        d = self.wrappee.do_send_sms(sms)
+        d.addCallback(self._save_sms_reference, sms)
+        return d
+
     def send_sms_from_storage(self, index):
         debug("MAL::send_sms_from_storage: %d" % index)
         if index in self.sms_map:
@@ -217,6 +231,23 @@ class MessageAssemblyLayer(object):
         d.addCallback(lambda indexes: self._do_add_sms(sms, indexes))
         d.addCallback(lambda logical_index: [logical_index])
         return d
+
+    def _save_sms_reference(self, indexes, sms):
+        index = indexes[0]
+        self.sms_pending[index] = sms
+        return indexes
+
+    def on_sms_delivery_report(self, pdu):
+        """Executed when a SMS delivery report is received"""
+        report = p.decode_pdu(pdu)
+        sms = Message.from_dict(report)
+        assert sms.is_status_report(), "SMS IS NOT STATUS REPORT"
+        if sms.ref in self.sms_pending:
+            self.sms_pending.pop(sms.ref)
+            return self.wrappee.emit_signal(SIG_SMS_DELV, sms.ref)
+
+        msg = "Received status report with unknown reference: %d"
+        raise CacheIncoherenceError(msg % sms.ref)
 
     def on_sms_notification(self, index):
         """Executed when a SMS notification is received"""
@@ -243,8 +274,8 @@ class Message(object):
         self.cnt = cnt  # Total number of fragments
         self.seq = seq  # fragment number
         self.completed = False
-        self.request_status = True
-        self.status_report = False
+        self.request_status = False
+        self.type = None
         self._fragments = []
 
         if text is not None:
@@ -299,10 +330,11 @@ class Message(object):
         m.index = d.get('index')
         m.where = d.get('where')
         m.csca = d.get('smsc')
-        m.request_status = d.get('request_status', False)
         m.ref = d.get('ref')
+        m.request_status = d.get('request_status', False)
         m.cnt = d.get('cnt', 0)
         m.seq = d.get('seq', 0)
+        m.type = d.get('type')
 
         if 'text' in d:
             m.add_text_fragment(d['text'])
@@ -310,8 +342,6 @@ class Message(object):
 
         if 'timestamp' in d:
             m.datetime = datetime.fromtimestamp(d['timestamp'], tz)
-
-        m.status_report = bool(SMS_STATUS_REPORT & d.get('type', 0))
 
         debug("Message::from_dict returning: %s" % m)
         return m
@@ -325,7 +355,6 @@ class Message(object):
         :rtype: ``Message``
         """
         debug("Message::from_pdu: %s" % pdu)
-        p = PDU()
         ret = p.decode_pdu(pdu)
 
         _datetime = None
@@ -336,9 +365,9 @@ class Message(object):
                 _datetime = datetime.now()
 
 
-        m = cls(ret['sender'], _datetime=_datetime, csca=ret['csca'],
+        m = cls(ret['number'], _datetime=_datetime, csca=ret['csca'],
                 ref=ret['ref'], cnt=ret['cnt'], seq=ret['seq'])
-        m.status_report = bool(SMS_STATUS_REPORT & ret.get('type', 0))
+        m.type = ret.get('type')
         m.add_text_fragment(ret['text'], ret['seq'])
 
         debug("Message::from_pdu returning: %s" % m)
@@ -367,7 +396,6 @@ class Message(object):
 
     def to_pdu(self, store=False):
         """Returns the PDU representation of this message"""
-        p = PDU()
         csca = self.csca if self.csca is not None else ""
 
         return p.encode_pdu(self.number, self.text, csca=csca, store=store,
@@ -397,6 +425,12 @@ class Message(object):
         else:
             error = "Cannot assembly SMS fragment with ref %d"
             raise ValueError(error % sms.ref)
+
+    def is_status_report(self):
+        if self.type is None:
+            return False
+
+        return bool(self.type & SMS_STATUS_REPORT)
 
 
 def extract_datetime(datestr):

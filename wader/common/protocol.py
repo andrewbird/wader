@@ -32,7 +32,9 @@ import wader.common.signals as S
 CALL_RECV = re.compile('\r\nRING\r\n')
 STK_DEBUG = re.compile('\r\n\+STC:\s\d+\r\n')
 # Standard solicited notifications
-NEW_SMS = re.compile('\r\n\+CMTI:\s"(?P<where>\w{2,})",(?P<id>\d+)\r\n')
+SMS_RECEIVED = re.compile('\r\n\+CMTI:\s"(?P<where>\w{2,})",(?P<id>\d+)\r\n')
+SMS_DELIVERY = re.compile('\r\n\+CDS:\s\d+\r\n(?P<pdu>[A-Za-z0-9]+)\r\n')
+
 SPLIT_PROMPT = re.compile('\r?\r\n>\s$')
 CREG_REGEXP = re.compile('\r\n\+CREG:\s*(?P<status>\d)\r\n')
 
@@ -212,7 +214,7 @@ class BufferingStateMachine(object, protocol.Protocol):
 
         # second most possible event:
         # new SMS arrived
-        match = NEW_SMS.match(self.idlebuf)
+        match = SMS_RECEIVED.match(self.idlebuf)
         if match:
             mal = getattr(self, 'mal', None)
             if mal:
@@ -223,14 +225,32 @@ class BufferingStateMachine(object, protocol.Protocol):
             if not self.idlebuf:
                 return
 
-        # third most possible event
+        # third most possible event:
+        # SMS delivery report
+        match = SMS_DELIVERY.match(self.idlebuf)
+        if match:
+            mal = getattr(self, 'mal', None)
+            if mal:
+                pdu = match.group('pdu')
+                mal.on_sms_delivery_report(pdu)
+
+            # the report might be repeated, consume as many as possible
+            # idle: unmatched data '\r\n+CDS: 27\r\n07914306073011F006C
+            # 00B914306565711F90120910134454001209101344540000100\r\n\r
+            # \n+CDS: 27\r\n07914306073011F006C10B914306565711F90120910
+            # 144454001209101444540000100\r\n'
+            self.idlebuf = self.idlebuf.replace(match.group(), '')
+            if not self.idlebuf:
+                return
+
+        # fourth most possible event
         match = STK_DEBUG.match(self.idlebuf)
         if match:
             self.idlebuf = self.idlebuf.replace(match.group(), '')
             if not self.idlebuf:
                 return
 
-        # fourth most possible event
+        # fifth most possible event
         match = CREG_REGEXP.match(self.idlebuf)
         if match:
             status = int(match.group('status'))
@@ -239,7 +259,7 @@ class BufferingStateMachine(object, protocol.Protocol):
             if not self.idlebuf:
                 return
 
-        # fifth most possible event:
+        # sixth most possible event:
         match = CALL_RECV.match(self.idlebuf)
         if match:
             self.emit_signal(S.SIG_CALL)

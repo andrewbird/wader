@@ -654,6 +654,9 @@ class WCDMAWrapper(WCDMAProtocol):
 
         ``sms`` might span several messages if it is a multipart SMS
         """
+        return self.mal.send_sms(sms)
+
+    def do_send_sms(self, sms):
 
         def send_sms_cb(response):
             return int(response[0].group('index'))
@@ -667,10 +670,10 @@ class WCDMAWrapper(WCDMAProtocol):
         return defer.gatherResults(ret)
 
     def send_sms_from_storage(self, index):
+        """Sends the SMS stored at ``index`` and returns the new index"""
         return self.mal.send_sms_from_storage(index)
 
     def do_send_sms_from_storage(self, index):
-        """Sends the SMS stored at ``index`` and returns the new index"""
         d = super(WCDMAWrapper, self).send_sms_from_storage(index)
         d.addCallback(lambda response: int(response[0].group('index')))
         return d

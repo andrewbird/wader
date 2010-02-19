@@ -626,6 +626,11 @@ class SMSExporter(NetworkExporter):
     def Completed(self, index, completed):
         log.msg('emitting Complete(%d)' % index)
 
+    @signal(dbus_interface=SMS_INTFACE, signature='u')
+    def Delivered(self, reference):
+        log.msg('emitting Delivered(%d)' % reference)
+
+
 
 class ContactsExporter(SMSExporter):
     """
