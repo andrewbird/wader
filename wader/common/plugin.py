@@ -91,7 +91,7 @@ class DevicePlugin(object):
         self.props[iface][name] = value
 
         if hasattr(self.exporter, 'MmPropertiesChanged'):
-            self.exporter.MmPropertiesChanged(iface, self.props[iface])
+            self.exporter.MmPropertiesChanged(iface, {name: value})
 
     def set_status(self, status):
         """Sets internal device status to ``status``"""
