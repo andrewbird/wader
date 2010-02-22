@@ -246,8 +246,7 @@ class MessageAssemblyLayer(object):
             self.sms_pending.pop(sms.ref)
             return self.wrappee.emit_signal(SIG_SMS_DELV, sms.ref)
 
-        msg = "Received status report with unknown reference: %d"
-        raise CacheIncoherenceError(msg % sms.ref)
+        log.err("Received status report with unknown reference: %d" % sms.ref)
 
     def on_sms_notification(self, index):
         """Executed when a SMS notification is received"""
