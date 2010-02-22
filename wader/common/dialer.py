@@ -31,7 +31,7 @@ from twisted.python import log
 from wader.common._dbus import DBusExporterHelper
 import wader.common.consts as consts
 from wader.common.interfaces import IDialer
-from wader.common.oal import osobj
+from wader.common.oal import get_os_object
 from wader.common.runtime import nm07_present
 from wader.common.utils import convert_int_to_ip
 
@@ -203,7 +203,7 @@ class Dialer(Object):
         """
         if self.iface is not None:
             now = time()
-            rx_bytes, tx_bytes = osobj.get_iface_stats(self.iface)
+            rx_bytes, tx_bytes = get_os_object().get_iface_stats(self.iface)
             # if any of these three are not 0, it means that this is at
             # least the second time this method is executed, thus we
             # should have cached meaningful data
@@ -257,7 +257,7 @@ class DialerManager(Object, DBusExporterHelper):
         name = BusName(consts.WADER_DIALUP_SERVICE, bus=self.bus)
         super(DialerManager, self).__init__(bus_name=name,
                                     object_path=consts.WADER_DIALUP_OBJECT)
-        self.index = 0
+        self._client_count = -1
         # dict with the stablished connections, key is the object path of
         # the connection and the value is the dialer being used.
         self.connections = {}
@@ -271,12 +271,12 @@ class DialerManager(Object, DBusExporterHelper):
         self.ctrl = ctrl
         self._connect_to_signals()
 
-    def _device_removed_cb(self, udi):
-        """Executed when a udi goes away"""
-        if udi in self.connections:
-            log.msg("Device %s removed! deleting dialer instance" % udi)
+    def _device_removed_cb(self, opath):
+        """Executed when a device goes away"""
+        if opath in self.connections:
+            log.msg("Device %s removed! deleting dialer instance" % opath)
             try:
-                self.deactivate_connection(udi)
+                self.deactivate_connection(opath)
             except KeyError:
                 pass
 
@@ -309,15 +309,15 @@ class DialerManager(Object, DBusExporterHelper):
 
     def get_next_opath(self):
         """Returns the next free object path"""
-        self.index += 1
-        return consts.WADER_DIALUP_BASE % self.index
+        self._client_count += 1
+        return consts.WADER_DIALUP_BASE % self._client_count
 
-    def configure_radio_parameters(self, device_path, conf):
-        """Configures ``device_path`` using ``conf``"""
+    def configure_radio_parameters(self, device_opath, conf):
+        """Configures ``device_opath`` using ``conf``"""
         if not all([conf.band, conf.network_type]):
             return defer.succeed(True)
 
-        plugin = self.ctrl.hm.clients[device_path]
+        plugin = self.ctrl.hm.clients[device_opath]
 
         deferred = defer.Deferred()
 
@@ -386,29 +386,22 @@ class DialerManager(Object, DBusExporterHelper):
 
     @method(consts.WADER_DIALUP_INTFACE, in_signature='oo', out_signature='o',
             async_callbacks=('async_cb', 'async_eb'))
-    def ActivateConnection(self, profile_path, device_path,
+    def ActivateConnection(self, profile_path, device_opath,
                             async_cb, async_eb):
         """See :meth:`DialerManager.activate_connection`"""
-        d = self.activate_connection(profile_path, device_path)
+        d = self.activate_connection(profile_path, device_opath)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(consts.WADER_DIALUP_INTFACE, in_signature='o', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
-    def DeactivateConnection(self, device_path, async_cb, async_eb):
+    def DeactivateConnection(self, device_opath, async_cb, async_eb):
         """See :meth:`DialerManager.deactivate_connection`"""
-        d = self.deactivate_connection(device_path)
+        d = self.deactivate_connection(device_opath)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(consts.WADER_DIALUP_INTFACE, in_signature='o', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
-    def StopConnection(self, device_path, async_cb, async_eb):
+    def StopConnection(self, device_opath, async_cb, async_eb):
         """See :meth:`DialerManager.stop_connection`"""
-        d = self.stop_connection(device_path)
+        d = self.stop_connection(device_opath)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
-
-    @method(consts.WADER_DIALUP_INTFACE,
-            in_signature='o', out_signature='(uu)')
-    def GetStats(self, opath):
-        """Get the traffic statistics for connection ``opath``"""
-        dialer = self.connections[opath]
-        return dialer.get_stats()[:2]

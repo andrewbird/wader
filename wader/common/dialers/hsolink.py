@@ -20,7 +20,7 @@
 from wader.common.dialer import Dialer
 from wader.common.consts import (HSO_NO_AUTH, HSO_PAP_AUTH, HSO_CHAP_AUTH,
                                  HSO_INTFACE)
-from wader.common.oal import osobj
+from wader.common.oal import get_os_object
 
 
 class HSODialer(Dialer):
@@ -32,7 +32,7 @@ class HSODialer(Dialer):
     def __init__(self, device, opath, **kwds):
         super(HSODialer, self).__init__(device, opath, **kwds)
         # After 2.6.33 can be wwan%d or usb%d or hso%d
-        self.iface = self.device.props[HSO_INTFACE]['NetworkDevice']
+        self.iface = self.device.get_property(HSO_INTFACE, 'NetworkDevice')
 
     def configure(self, config):
         if not config.refuse_chap:
@@ -58,6 +58,7 @@ class HSODialer(Dialer):
         return d
 
     def _get_ip4_config_cb(self, (ip, dns1, dns2, dns3)):
+        osobj = get_os_object()
         d = osobj.configure_iface(self.iface, ip, 'up')
         d.addCallback(lambda _: osobj.add_default_route(self.iface))
         d.addCallback(lambda _: osobj.add_dns_info([dns1, dns2], self.iface))
@@ -65,6 +66,7 @@ class HSODialer(Dialer):
 
     def disconnect(self):
         d = self.device.sconn.disconnect_from_internet()
+        osobj = get_os_object()
         osobj.delete_default_route(self.iface)
         osobj.delete_dns_info(None, self.iface)
         osobj.configure_iface(self.iface, '', 'down')

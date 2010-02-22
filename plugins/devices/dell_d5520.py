@@ -57,8 +57,8 @@ class NovatelD5520(NovatelWCDMADevicePlugin):
     __remote_name__ = "Expedite EU870D MiniCard"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x413c],
-        'usb_device.product_id' : [0x8137],
+        'ID_VENDOR_ID': [0x413c],
+        'ID_MODEL_ID': [0x8137],
     }
 
     def preprobe_init(self, ports, info):

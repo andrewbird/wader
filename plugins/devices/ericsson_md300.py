@@ -45,7 +45,6 @@ class EricssonMD300Customizer(EricssonCustomizer):
     wrapper_klass = EricssonMD300Wrapper
 
 
-
 class EricssonMD300(EricssonDevicePlugin):
     """:class:`~wader.common.plugin.DBusDevicePlugin` for Ericsson's MD300"""
     name = "Ericsson MD300"
@@ -56,8 +55,8 @@ class EricssonMD300(EricssonDevicePlugin):
     __remote_name__ = "MD300"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x0fce],
-        'usb_device.product_id': [0xd0cf],
+        'ID_VENDOR_ID': [0x0fce],
+        'ID_MODEL_ID': [0xd0cf],
     }
 
 ericssonMD300 = EricssonMD300()

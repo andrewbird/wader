@@ -219,7 +219,8 @@ class WVDialDialer(Dialer):
     def _set_iface(self, iface):
         self.iface = iface
         if self.conf.staticdns:
-            from wader.common.oal import osobj
+            from wader.common.oal import get_os_object
+            osobj = get_os_object()
             osobj.add_dns_info((self.conf.dns1, self.conf.dns2), iface)
 
 

@@ -79,8 +79,8 @@ class StartupController(Object, DBusExporterHelper):
                        bus=dbus.SystemBus(mainloop=gloop))
         super(StartupController, self).__init__(bus_name=name,
                                         object_path=consts.WADER_OBJPATH)
-        from wader.common.oal import osobj
-        self.hm = osobj.hw_manager
+        from wader.common.oal import get_os_object
+        self.hm = get_os_object().hw_manager
         assert self.hm is not None, "Running Wader on an unsupported OS?"
         self.hm.register_controller(self)
 
@@ -93,18 +93,18 @@ class StartupController(Object, DBusExporterHelper):
         It also includes the object paths of already handled devices
         """
         d = self.hm.get_devices()
-        d.addCallback(lambda devs: [d.udi for d in devs])
+        d.addCallback(lambda devs: [d.opath for d in devs])
         return self.add_callbacks(d, async_cb, async_eb)
 
     @signal(consts.WADER_INTFACE, signature='o')
-    def DeviceAdded(self, udi):
+    def DeviceAdded(self, opath):
         """Emitted when a 3G device is added"""
-        log.msg("emitting DeviceAdded('%s')" % udi)
+        log.msg("emitting DeviceAdded('%s')" % opath)
 
     @signal(consts.WADER_INTFACE, signature='o')
-    def DeviceRemoved(self, udi):
+    def DeviceRemoved(self, opath):
         """Emitted when a 3G device is removed"""
-        log.msg("emitting DeviceRemoved('%s')" % udi)
+        log.msg("emitting DeviceRemoved('%s')" % opath)
 
 
 def get_wader_application():
@@ -135,8 +135,7 @@ def get_wader_application():
 def attach_to_serial_port(device):
     """Attaches the serial port in ``device``"""
     d = defer.Deferred()
-    ports = device.ports
-    port = ports.cport if ports.has_two() else ports.dport
+    port = device.ports.get_application_port()
     port.obj = SerialPort(device.sconn, port.path, reactor,
                           baudrate=device.baudrate)
     reactor.callLater(ATTACH_DELAY, lambda: d.callback(device))

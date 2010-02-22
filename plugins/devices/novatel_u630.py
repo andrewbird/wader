@@ -29,8 +29,8 @@ class NovatelU630(NovatelWCDMADevicePlugin):
     __remote_name__ = "Merlin U630 (HW REV Rev 2)"
 
     __properties__ = {
-        'pcmcia.manf_id': [0x00a4],
-        'pcmcia.card_id': [0x0276],
+        'ID_VENDOR_ID': [0x00a4],
+        'ID_MODEL_ID': [0x0276],
     }
 
     # Unfortunately it is not possible to switch the Second port from DM

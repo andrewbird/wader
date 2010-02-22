@@ -29,8 +29,8 @@ class ONDAMSA405HS(ZTEWCDMADevicePlugin):
     __remote_name__ = "MSA405"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0037],
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x0037],
     }
 
     # Onda MSA405HS uses ttyUSB2(data) and ttyUSB1(status)

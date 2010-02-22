@@ -58,8 +58,8 @@ class NovatelX950D(NovatelWCDMADevicePlugin):
     __remote_name__ = "Merlin X950D ExpressCard"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x1450],
+        'ID_VENDOR_ID': [0x1410],
+        'ID_MODEL_ID': [0x1450],
     }
 
     def preprobe_init(self, ports, info):

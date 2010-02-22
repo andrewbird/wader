@@ -28,8 +28,8 @@ class EricssonF3507G(EricssonDevicePlugin):
     __remote_name__ = "F3507g"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x0bdb],
-        'usb_device.product_id': [0x1900, 0x1902],
+        'ID_VENDOR_ID': [0x0bdb],
+        'ID_MODEL_ID': [0x1900, 0x1902],
     }
 
 ericssonF3507G = EricssonF3507G()

@@ -23,7 +23,8 @@ from twisted.internet import defer
 from twisted.python import log
 from zope.interface import implements
 
-from wader.common import consts
+from wader.common.consts import (MDM_INTFACE, MM_MODEM_TYPE_REV,
+                                 MM_IP_METHOD_PPP)
 from wader.common.hardware.base import _identify_device
 from wader.common.interfaces import IHardwareManager
 from wader.common.oses.unix import UnixPlugin
@@ -59,6 +60,7 @@ class HardwareManager(object):
     def __init__(self):
         super(HardwareManager, self).__init__()
         self.controller = None
+        self._device_count = 0
         self.clients = {}
 
     def register_controller(self, controller):
@@ -87,36 +89,40 @@ class HardwareManager(object):
     def _get_device_from_model(self, model, dev_info):
         plugin = PluginManager.get_plugin_by_remote_name(model)
         if plugin:
-            props = plugin.props[consts.MDM_INTFACE]
-            props['Device'] = dev_info['callout'].split('/')[-1]
+            device = dev_info['callout'].split('/')[-1]
+            plugin.set_property(MDM_INTFACE, 'Device', device)
             # XXX: Fix MasterDevice
-            props['MasterDevice'] = 'iokit:com.vodafone.BMC.NotImplemented'
+            plugin.set_property(MDM_INTFACE, 'MasterDevice',
+                                'iokit:com.vodafone.BMC.NotImplemented')
             # XXX: Fix CDMA
-            props['Type'] = consts.MM_MODEM_TYPE_REV['GSM']
-            plugin.udi = self._get_udi_from_devinfo(dev_info, model)
+            plugin.set_property(MDM_INTFACE, 'Type', MM_MODEM_TYPE_REV['GSM'])
+            plugin.set_property(MDM_INTFACE, 'Driver', 'notimplemented')
+            plugin.set_property(MDM_INTFACE, 'IpMethod', MM_IP_METHOD_PPP)
+            plugin.set_property(MDM_INTFACE, 'Enabled', False)
+            plugin.set_property(MDM_INTFACE, 'UnlockRequired', "")
+            plugin.opath = self._generate_opath()
             plugin.ports = Ports(dev_info['callout'], dev_info['dialin'])
 
         return plugin
 
     def _check_if_devices_are_registered(self, devices):
         for device in devices:
-            if device.udi not in self.clients:
-                self._register_client(device, device.udi, True)
+            if device.opath not in self.clients:
+                self._register_client(device, emit=True)
 
         return devices
 
-    def _register_client(self, plugin, udi, emit=False):
+    def _register_client(self, plugin, emit=False):
         """
-        Registers `plugin` in `self.clients` using `udi`
+        Registers `plugin` in `self.clients`
 
         Will emit a DeviceAdded signal if emit is True
         """
-        log.msg("registering plugin %s using udi %s" % (plugin, udi))
-        self.clients[udi] = setup_and_export_device(plugin)
+        log.msg("registering plugin %s using opath %s" % (plugin, plugin.opath))
+        self.clients[plugin.opath] = setup_and_export_device(plugin)
         if emit:
-            self.controller.DeviceAdded(udi)
+            self.controller.DeviceAdded(plugin.opath)
 
-    def _get_udi_from_devinfo(self, dev_info, model):
-        base = dev_info['base'].replace('-', '')
-        udi = "/device/%s/%s" % (base, model.replace(' ', ''))
-        return udi
+    def _generate_opath(self):
+        self._device_count += 1
+        return '/org/freedesktop/ModemManager/Devices/%d' % self._device_count

@@ -34,18 +34,18 @@ class NovatelMother(NovatelWCDMADevicePlugin):
     __remote_name__ = None
 
     __properties__ = {
-        'usb_device.vendor_id': [0x1410],
-        'usb_device.product_id': [0x7001],
+        'ID_VENDOR_ID': [0x1410],
+        'ID_MODEL_ID': [0x7001],
     }
 
     def __init__(self):
         super(NovatelMother, self).__init__()
 
         self.mapping = {
-            'Ovation MC990D Card' : NovatelMC990D,
-            'MiFi2352 ' : NovatelMiFi2352,
+            'Ovation MC990D Card': NovatelMC990D,
+            'MiFi2352 ': NovatelMiFi2352,
 
-            'default' : NovatelMiFi2352,
+            'default': NovatelMiFi2352,
         }
 
 novatelmother = NovatelMother()

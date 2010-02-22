@@ -33,15 +33,15 @@ class ZTEK3565(ZTEWCDMADevicePlugin):
     __remote_name__ = "K3565-Z"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0049, 0x0052, 0x0063], # depends on fw ver
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x0049, 0x0052, 0x0063], # depends on fw ver
     }
 
     def preprobe_init(self, ports, info):
-        if info['usb_device.product_id'] == 0x0052:
+        if info['ID_MODEL_ID'] == 0x0052:
             # K3565-Z (0x0052) uses ttyUSB2(data) and ttyUSB1(status)
             self.hardcoded_ports = (2, 1)
-        elif info['usb_device.product_id'] == 0x0063:
+        elif info['ID_MODEL_ID'] == 0x0063:
             # K3565-Z (0x0063) uses ttyUSB3(data) and ttyUSB1(status)
             self.hardcoded_ports = (3, 1)
         else: # let probing occur

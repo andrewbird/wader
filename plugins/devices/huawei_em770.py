@@ -32,6 +32,6 @@ class HuaweiEM770(HuaweiWCDMADevicePlugin):
     __remote_name__ = "EM770"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x12d1],
-        'usb_device.product_id': [0x1001],
+        'ID_VENDOR_ID': [0x12d1],
+        'ID_MODEL_ID': [0x1001],
     }

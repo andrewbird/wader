@@ -28,6 +28,6 @@ class ZTEMF632(ZTEWCDMADevicePlugin):
     __remote_name__ = "MF632"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0002],
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x0002],
     }

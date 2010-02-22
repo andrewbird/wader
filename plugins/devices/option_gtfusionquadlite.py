@@ -31,8 +31,8 @@ class OptionGTFusionQuadLite(OptionWCDMADevicePlugin):
     __remote_name__ = 'GlobeTrotter Fusion Quad Lite'
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x0af0],
-        'usb_device.product_id': [0x6300],
+        'ID_VENDOR_ID': [0x0af0],
+        'ID_MODEL_ID': [0x6300],
     }
 
 optiongtfusionquadlite = OptionGTFusionQuadLite()

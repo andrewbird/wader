@@ -67,8 +67,8 @@ class NovatelXU870(NovatelWCDMADevicePlugin):
     __remote_name__ = "Merlin XU870 ExpressCard"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x1430],
+        'ID_VENDOR_ID': [0x1410],
+        'ID_MODEL_ID': [0x1430],
     }
 
     def preprobe_init(self, ports, info):

@@ -29,8 +29,8 @@ class NovatelEU870D(NovatelWCDMADevicePlugin):
     __remote_name__ = "Expedite EU870D MiniCard"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x2420],
+        'ID_VENDOR_ID': [0x1410],
+        'ID_MODEL_ID': [0x2420],
     }
 
 novateleu870d = NovatelEU870D()

@@ -23,29 +23,6 @@ import dbus.service
 from twisted.python import log
 
 
-class DBusComponent(object):
-    """I provide a couple of useful methods to deal with DBus"""
-
-    def __init__(self):
-        self.bus = dbus.SystemBus()
-        self.obj = self.bus.get_object('org.freedesktop.Hal',
-                                  '/org/freedesktop/Hal/Manager')
-        self.manager = dbus.Interface(self.obj, 'org.freedesktop.Hal.Manager')
-
-    def get_properties_from_udi(self, udi):
-        """Returns all the properties from ``udi``"""
-        obj = self.bus.get_object('org.freedesktop.Hal', udi)
-        dev = dbus.Interface(obj, 'org.freedesktop.Hal.Device')
-        return dev.GetAllProperties()
-
-    def get_devices_properties(self):
-        """Returns all the properties from all devices registed in HAL"""
-        props = {}
-        for udi in self.manager.GetAllDevices():
-            props[udi] = self.get_properties_from_udi(udi)
-        return props
-
-
 class DBusExporterHelper(object):
     """I am a helper for classes that export methods over DBus"""
 

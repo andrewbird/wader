@@ -52,6 +52,15 @@ class Ports(object):
         self.dport = Port(dport)
         self.cport = Port(cport)
 
+    def get_application_port(self):
+        """Returns the application port"""
+        if self.cport.path:
+            return self.cport
+        elif self.dport.path:
+            return self.dport
+        else:
+            raise AttributeError("No application port")
+
     def has_two(self):
         """
         Check if there are two active ports

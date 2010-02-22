@@ -30,8 +30,8 @@ class ZTEK3805(IceraWCDMADevicePlugin):
     __remote_name__ = "K3805-z"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x1003],
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x1003],
     }
 
     hardcoded_ports = (0, 1)
@@ -41,4 +41,3 @@ class ZTEK3805(IceraWCDMADevicePlugin):
 
 
 zte_k3805 = ZTEK3805()
-

@@ -29,8 +29,8 @@ class ZTEK3765(ZTEWCDMADevicePlugin):
     __remote_name__ = "K3765-Z"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x2002],
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x2002],
     }
 
     # K3765-Z uses ttyUSB3(data) and ttyUSB1(status)

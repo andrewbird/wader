@@ -23,6 +23,7 @@ OS provides an abstraction layer so path differences between OSes/distros
 won't affect Wader
 """
 
+_os_obj = None
 
 def get_os_object():
     """
@@ -30,14 +31,17 @@ def get_os_object():
 
     If the OS is unknown it will return None
     """
+    global _os_obj
+    if _os_obj is not None:
+        return _os_obj
+
     from wader.common.plugin import PluginManager
     from wader.common.interfaces import IOSPlugin
 
     for osplugin in PluginManager.get_plugins(IOSPlugin):
         if osplugin.is_valid():
             osplugin.initialize()
-            return osplugin
+            _os_obj = osplugin
+            return _os_obj
 
     return None
-
-osobj = get_os_object()

@@ -22,7 +22,6 @@ from __future__ import with_statement
 import re
 import socket
 import struct
-import sys
 
 from dbus import Array, UInt32
 
@@ -55,7 +54,7 @@ def convert_ip_to_int(ip):
     :type ip: str
     :rtype: int
     """
-    return struct.unpack('i', socket.inet_pton(socket.AF_INET, ip))[0]
+    return struct.unpack('I', socket.inet_pton(socket.AF_INET, ip))[0]
 
 
 def convert_int_to_ip(i):
@@ -65,9 +64,13 @@ def convert_int_to_ip(i):
     :param i: The integer to convert
     :rtype: str
     """
-    if i > sys.maxint:
-        i -= 0xffffffff + 1
-    return socket.inet_ntop(socket.AF_INET, struct.pack('i', i))
+    # taken from ModemManager/test/test-mm.py
+    ip = socket.ntohl(i)
+    n1 = ip >> 24 & 0xFF
+    n2 = ip >> 16 & 0xFF
+    n3 = ip >> 8 & 0xFF
+    n4 = ip & 0xFF
+    return "%d.%d.%d.%d" % (n1, n2, n3, n4)
 
 
 def convert_int_to_uint(i):

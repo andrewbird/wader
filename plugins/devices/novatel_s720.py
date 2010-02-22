@@ -28,6 +28,6 @@ class NovatelS720(object):
     __remote_name__ = "MERLIN S720"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x1130],
+        'ID_VENDOR_ID': [0x1410],
+        'ID_MODEL_ID': [0x1130],
     }

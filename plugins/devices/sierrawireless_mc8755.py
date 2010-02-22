@@ -31,8 +31,8 @@ class SierraWirelessMC8755(SierraWCDMADevicePlugin):
     __remote_name__ = "MC8755"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x03f0],
-        'usb_device.product_id': [0x1e1d],
+        'ID_VENDOR_ID': [0x03f0],
+        'ID_MODEL_ID': [0x1e1d],
     }
 
 sierrawirelessmc8755 = SierraWirelessMC8755()

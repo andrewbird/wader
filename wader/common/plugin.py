@@ -62,14 +62,15 @@ class DevicePlugin(object):
         self._status = DEV_DISABLED
         # collection of daemons
         self.daemons = None
-        # DBus UDI
-        self.udi = None
-        self.root_udi = None
         # onyl used in devices that like to share ids, like
         # huawei's exxx family. It should have at least a
         # 'default' key mapping to a safe device that can be
         # used to identify the rest of the family
         self.mapping = {}
+        # object path
+        self.opath = None
+        # sysfs_path
+        self.sysfs_path = None
         # dictionary with org.freedesktop.DBus.Properties
         self.props = {MDM_INTFACE: {}, HSO_INTFACE: {}, CRD_INTFACE: {}}
         self.ports = None
@@ -78,12 +79,27 @@ class DevicePlugin(object):
         args = (self.__class__.__name__, self.ports)
         return "<%s %s>" % args
 
+    def get_property(self, iface, name):
+        return self.props[iface][name]
+
+    def get_properties(self, iface=None):
+        if iface is None:
+            return self.props
+        return self.props[iface]
+
+    def set_property(self, iface, name, value):
+        self.props[iface][name] = value
+
+        if hasattr(self.exporter, 'MmPropertiesChanged'):
+            self.exporter.MmPropertiesChanged(iface, self.props[iface])
+
     def set_status(self, status):
         """Sets internal device status to ``status``"""
         if status == DEV_ENABLED and self._status < status:
-            self.exporter.DeviceEnabled(self.udi)
+            self.exporter.DeviceEnabled(self.opath)
 
         self._status = status
+        self.set_property(MDM_INTFACE, 'Enabled', status >= DEV_ENABLED)
 
     @property
     def status(self):
@@ -162,8 +178,8 @@ class DevicePlugin(object):
         if not isinstance(other, DevicePlugin):
             raise ValueError("Cannot patch myself with a %s" % type(other))
 
-        self.udi = other.udi
-        self.root_udi = other.root_udi
+        self.opath = other.opath
+        self.sysfs_path = other.sysfs_path
         self.ports = other.ports
         self.props = other.props.copy()
         self.baudrate = other.baudrate
@@ -246,9 +262,8 @@ class PluginManager(object):
             if plugin.__remote_name__ == name:
                 return plugin
 
-            if hasattr(plugin, 'mapping'):
-                if name in plugin.mapping:
-                    return plugin.mapping[name]()
+            if name in plugin.mapping:
+                return plugin.mapping[name]()
 
         raise ex.UnknownPluginNameError(name)
 

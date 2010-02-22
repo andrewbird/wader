@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2010  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
-# Author:  Pablo Martí
+# Author:  Andrew Bird, inspired by Pablo Martí
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +17,18 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import (OptionWCDMADevicePlugin,
-                                          OptionWCDMACustomizer,
-                                          OptionWrapper)
+from wader.common.hardware.option import (OptionHSOWCDMADevicePlugin,
+                                          OptionHSOWCDMACustomizer,
+                                          OptionHSOWrapper)
 
 
-class OptionEtnaWrapper(OptionWrapper):
+class OptionEtnaNDISWrapper(OptionHSOWrapper):
 
     def get_roaming_ids(self):
         # FW 2.8.0Hd while panik if AT+CPOL is sent while in UCS2, we will
         # switch to IRA, perform the operation and switch back to UCS2
         self.set_charset("IRA")
-        d = super(OptionEtnaWrapper, self).get_roaming_ids()
+        d = super(OptionEtnaNDISWrapper, self).get_roaming_ids()
 
         def get_roaming_ids_cb(rids):
             d2 = self.set_charset("UCS2")
@@ -54,22 +54,26 @@ class OptionEtnaWrapper(OptionWrapper):
         return d
 
 
-class OptionEtnaCustomizer(OptionWCDMACustomizer):
-    wrapper_klass = OptionEtnaWrapper
+class OptionEtnaNDISCustomizer(OptionHSOWCDMACustomizer):
+    wrapper_klass = OptionEtnaNDISWrapper
 
 
-class OptionEtna(OptionWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Options's Etna"""
-    name = "Option Etna"
+class OptionEtnaNDIS(OptionHSOWCDMADevicePlugin):
+    """:class:`~wader.common.plugin.DevicePlugin` for Options's Etna(NDIS)"""
+    name = "Option Etna(NDIS)"
     version = "0.1"
-    author = u"Pablo Martí"
-    custom = OptionEtnaCustomizer()
+    author = u"Andrew Bird"
+    custom = OptionEtnaNDISCustomizer()
+
+    dialer = 'hso'
 
     __remote_name__ = "GlobeTrotter HSUPA Modem"
 
     __properties__ = {
           'ID_VENDOR_ID': [0x0af0],
-          'ID_MODEL_ID': [0x7001],
+          'ID_MODEL_ID': [0x7011],
     }
 
-optionetna = OptionEtna()
+
+optionetnandis = OptionEtnaNDIS()
+

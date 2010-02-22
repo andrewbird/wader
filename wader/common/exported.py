@@ -56,7 +56,7 @@ class ModemExporter(Object, DBusExporterHelper):
     def __init__(self, device):
         name = BusName(WADER_SERVICE, bus=dbus.SystemBus())
         super(ModemExporter, self).__init__(bus_name=name,
-                                            object_path=device.udi)
+                                            object_path=device.opath)
         self.device = device
         self.sconn = device.sconn
 
@@ -98,13 +98,11 @@ class ModemExporter(Object, DBusExporterHelper):
     @method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
     def Get(self, interface, _property):
         """See org.freedesktop.DBus.Properties documentation"""
-        if interface in self.device.props:
-            if _property in self.device.props[interface]:
-                return self.device.props[interface][_property]
-
-            raise ValueError("Unknown property %s.%s" % (interface, _property))
-
-        raise ValueError("Unknown interface %s" % interface)
+        try:
+            return self.device.get_property(interface, _property)
+        except KeyError:
+            args = (interface, _property)
+            raise ValueError("Unknown interface %s or property %s" % args)
 
     @method(dbus.PROPERTIES_IFACE, in_signature='s', out_signature='a{sv}')
     def GetAll(self, interface_name):
@@ -142,6 +140,10 @@ class ModemExporter(Object, DBusExporterHelper):
     @signal(dbus_interface=MDM_INTFACE, signature='(uuuu)')
     def DialStats(self, (rx_bytes, tx_bytes, rx_rate, tx_rate)):
         pass
+
+    @signal(dbus_interface=dbus.PROPERTIES_IFACE, signature='sa{sv}')
+    def MmPropertiesChanged(self, iface, properties):
+        log.msg("emitting MmPropertiesChanged: %s %s" % (iface, properties))
 
 
 class SimpleExporter(ModemExporter):

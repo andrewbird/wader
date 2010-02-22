@@ -83,6 +83,6 @@ class HuaweiE17X(HuaweiWCDMADevicePlugin):
     __remote_name__ = "E17X"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x12d1],
-        'usb_device.product_id' : [0x1003],
+        'ID_VENDOR_ID': [0x12d1],
+        'ID_MODEL_ID': [0x1003],
     }

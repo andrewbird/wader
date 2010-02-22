@@ -59,7 +59,7 @@ class NetworkRegistrationStateMachine(Modal):
 
     def connect_to_signals(self):
         bus = dbus.SystemBus()
-        device = bus.get_object(WADER_SERVICE, self.sconn.device.udi)
+        device = bus.get_object(WADER_SERVICE, self.sconn.device.opath)
         sm = device.connect_to_signal(SIG_CREG, self.on_netreg_cb)
         self.signal_matchs.append(sm)
 

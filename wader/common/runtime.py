@@ -24,7 +24,7 @@ from os.path import exists
 
 
 def nm07_present():
-    return False
+    return True
     #obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
     #try:
     #    devices = obj.GetDevices()
@@ -34,7 +34,7 @@ def nm07_present():
 
 
 def nm08_present():
-    return False
+    return True
     #obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
     #try:
     #    devices = obj.GetDevices()

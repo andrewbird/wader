@@ -88,15 +88,8 @@ class TestUtilities(unittest.TestCase):
     def test_ip_to_int_conversion(self):
         for ip in ip_generator(50000):
             num = convert_ip_to_int(ip)
+            self.failIf(num < 0)
             self.assertEqual(ip, convert_int_to_ip(num))
-
-    def test_problematic_int_conversion(self):
-        a, b = 1159778244, -1104335932
-        ipa, ipb = "196.207.32.69", "196.43.45.190"
-        self.assertEqual(a, convert_ip_to_int(ipa))
-        self.assertEqual(b, convert_ip_to_int(ipb))
-        self.assertEqual(convert_int_to_ip(a), ipa)
-        self.assertEqual(convert_int_to_ip(b), ipb)
 
     def test_rssi_to_percentage(self):
         self.assertEqual(rssi_to_percentage(31), 100)

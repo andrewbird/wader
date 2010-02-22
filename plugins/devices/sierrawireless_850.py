@@ -30,8 +30,8 @@ class SierraWireless850(SierraWCDMADevicePlugin):
     __remote_name__ = "AC850"   #response from AT+CGMM
 
     __properties__ = {
-        'pcmcia.manf_id' : [0x192],
-        'pcmcia.card_id': [0x710],
+        'ID_VENDOR_ID': [0x192],
+        'ID_MODEL_ID': [0x710],
     }
 
 sierrawireless850 = SierraWireless850()

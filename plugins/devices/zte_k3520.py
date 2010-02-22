@@ -29,8 +29,8 @@ class ZTEK3520(ZTEWCDMADevicePlugin):
     __remote_name__ = "K3520-Z"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0025, 0x0055], # depends on fw rev
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x0025, 0x0055], # depends on fw rev
     }
 
     hardcoded_ports = (1, 3)

@@ -25,12 +25,10 @@ from wader.common.dialer import Dialer
 from wader.common.consts import (NM_SERVICE, NM_INTFACE, NM_OBJPATH,
                                  NM_GSM_INTFACE, NM_USER_SETTINGS,
                                  NM_CONNECTED, NM_DISCONNECTED,
-                                 NM_DEVICE, WADER_PROFILES_SERVICE,
+                                 WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH)
 from wader.common.runtime import nm08_present
-
-CONNECTED, DISCONNECTED = 1, 2
 
 
 class NMDialer(Dialer):
@@ -42,7 +40,7 @@ class NMDialer(Dialer):
         self.int = None
         self.conn_obj = None
         self.iface = 'ppp0'
-        self.state = DISCONNECTED
+        self.state = NM_DISCONNECTED
 
         self.nm_opath = None
         self.connect_deferred = None
@@ -60,37 +58,33 @@ class NMDialer(Dialer):
         Returns the object path to use in the connection / signal
         """
         if not nm08_present():
-            return self.device.udi
+            return self.device.opath
         else:
             obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)
             interface = dbus.Interface(obj, NM_INTFACE)
             for opath in interface.GetDevices():
-                device = self.bus.get_object(NM_SERVICE, opath)
-                udi = device.Get(NM_DEVICE, 'Udi',
-                                 dbus_interface=dbus.PROPERTIES_IFACE)
-                if self.device.udi == udi:
+                if self.device.opath == opath:
                     return opath
 
     def _on_properties_changed(self, changed):
         if 'State' not in changed:
             return
 
-        if changed['State'] == NM_CONNECTED and self.state == DISCONNECTED:
+        if changed['State'] == NM_CONNECTED and self.state == NM_DISCONNECTED:
             # emit the connected signal and send back the opath
             # if the deferred is present
-            self.state = CONNECTED
+            self.state = NM_CONNECTED
             self.Connected()
             self.connect_deferred.callback(self.opath)
 
-        if changed['State'] == NM_DISCONNECTED and self.state == CONNECTED:
-            if self.state == CONNECTED:
-                self.state = DISCONNECTED
-                self.Disconnected()
-                if self.disconnect_deferred is not None:
-                    # could happen if we are connected and a NM_DISCONNECTED
-                    # signal arrives without having explicitly disconnected
-                    self.disconnect_deferred.callback(self.conn_obj)
-                self._cleanup()
+        if changed['State'] == NM_DISCONNECTED and self.state == NM_CONNECTED:
+            self.state = NM_DISCONNECTED
+            self.Disconnected()
+            if self.disconnect_deferred is not None:
+                # could happen if we are connected and a NM_DISCONNECTED
+                # signal arrives without having explicitly disconnected
+                self.disconnect_deferred.callback(self.conn_obj)
+            self._cleanup()
 
     def _setup_signals(self):
         self.sm = self.bus.add_signal_receiver(self._on_properties_changed,

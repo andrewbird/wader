@@ -27,8 +27,8 @@ class NovatelEU740(NovatelWCDMADevicePlugin):
     __remote_name__ = "Expedite EU740"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x930],
-        'usb_device.product_id' : [0x1303],
+        'ID_VENDOR_ID': [0x930],
+        'ID_MODEL_ID': [0x1303],
     }
 
 novateleu740 = NovatelEU740()

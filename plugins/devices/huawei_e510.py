@@ -30,14 +30,14 @@ class HuaweiE510(HuaweiWCDMADevicePlugin):
     __remote_name__ = "E510"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x12d1],
-        'usb_device.product_id': [0x1411],
+        'ID_VENDOR_ID': [0x12d1],
+        'ID_MODEL_ID': [0x1411],
     }
 
     def preprobe_init(self, ports, info):
         # This device might be found by means of the mother plugin too
-        if info['usb_device.product_id'] == 0x1001:
-            self.__properties__['usb_device.product_id'][0] = 0x1001
+        if info['ID_MODEL_ID'] == 0x1001:
+            self.__properties__['ID_MODEL_ID'][0] = 0x1001
 
     hardcoded_ports = (0, 2)
 

@@ -35,8 +35,8 @@ class OptionE3730(OptionHSOWCDMADevicePlugin):
     __remote_name__ = 'GlobeTrotter HSUPA Modem'
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x0af0],
-        'usb_device.product_id': [0x7301],
+        'ID_VENDOR_ID': [0x0af0],
+        'ID_MODEL_ID': [0x7301],
     }
 
 optione3730 = OptionE3730()

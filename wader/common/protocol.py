@@ -59,10 +59,8 @@ class BufferingStateMachine(object, protocol.Protocol):
     def _get_log_prefix(self):
         try:
             if not self._prefix:
-                if self.device.ports.has_two():
-                    self._prefix = self.device.ports.cport.obj.logPrefix()
-                else:
-                    self._prefix = self.device.ports.dport.obj.logPrefix()
+                port = self.device.ports.get_application_port()
+                self._prefix = port.obj.logPrefix()
         except AttributeError:
             self._prefix = ''
 

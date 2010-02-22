@@ -53,27 +53,27 @@ class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
     __remote_name__ = None
 
     __properties__ = {
-        'usb_device.vendor_id': [0x12d1],
-        'usb_device.product_id': [0x1003, 0x1004],
+        'ID_VENDOR_ID': [0x12d1],
+        'ID_MODEL_ID': [0x1003, 0x1004],
     }
 
     def __init__(self):
         super(HuaweiEXXX1003, self).__init__()
 
         self.mapping = {
-            'E870' : HuaweiE870,      # Expresscards
+            'E870': HuaweiE870,      # Expresscards
 
-            'E17X' : HuaweiE17X,      # USB Sticks
-            'E180' : HuaweiE180,
-            'E220' : HuaweiE220,
-            'E270' : HuaweiE270,
-            'E272' : HuaweiE272,
-            'E160X' : HuaweiK3565,
-            'K3565' : HuaweiK3565,
+            'E17X': HuaweiE17X,      # USB Sticks
+            'E180': HuaweiE180,
+            'E220': HuaweiE220,
+            'E270': HuaweiE270,
+            'E272': HuaweiE272,
+            'E160X': HuaweiK3565,
+            'K3565': HuaweiK3565,
 
-            'B970' : HuaweiB970,      # Routers
+            'B970': HuaweiB970,      # Routers
 
-            'default' : HuaweiE220,
+            'default': HuaweiE220,
         }
 
 
@@ -86,31 +86,31 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
     __remote_name__ = None
 
     __properties__ = {
-        'usb_device.vendor_id': [0x12d1],
-        'usb_device.product_id': [0x1001],
+        'ID_VENDOR_ID': [0x12d1],
+        'ID_MODEL_ID': [0x1001],
     }
 
     def __init__(self):
         super(HuaweiEXXX1001, self).__init__()
 
         self.mapping = {
-            'E169'  : HuaweiE169,
-            'E510'  : HuaweiE510,     # Cardbus
-#            '183'   : HuaweiE618,
-            'E620'  : HuaweiE620,
-            'E660'  : HuaweiE660,
-            'E660A' : HuaweiE660A,
+            'E169': HuaweiE169,
+            'E510': HuaweiE510,     # Cardbus
+            #'183': HuaweiE618,
+            'E620': HuaweiE620,
+            'E660': HuaweiE660,
+            'E660A': HuaweiE660A,
 
-            'E3735'  : HuaweiE3735,   # Expresscards
+            'E3735': HuaweiE3735,   # Expresscards
 
-            'K2540' : HuaweiK2540,    # USB Sticks
-            'K3520' : HuaweiK3520,
-            'K3715' : HuaweiK3715,
+            'K2540': HuaweiK2540,    # USB Sticks
+            'K3520': HuaweiK3520,
+            'K3715': HuaweiK3715,
 
-            'EM730V' : HuaweiEM730V,  # Embedded Modules
-            'EM770' : HuaweiEM770,
+            'EM730V': HuaweiEM730V,  # Embedded Modules
+            'EM770': HuaweiEM770,
 
-            'default' : HuaweiE660,
+            'default': HuaweiE660,
         }
 
 

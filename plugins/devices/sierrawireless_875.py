@@ -30,8 +30,8 @@ class SierraWireless875(SierraWCDMADevicePlugin):
     __remote_name__ = "AC875"   #response from AT+CGMM
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1199],
-        'usb_device.product_id': [0x6820],
+        'ID_VENDOR_ID': [0x1199],
+        'ID_MODEL_ID': [0x6820],
     }
 
 sierrawireless875 = SierraWireless875()

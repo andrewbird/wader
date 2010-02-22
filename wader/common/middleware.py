@@ -162,7 +162,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """
 
         def cache_and_return_response(response):
-            self.device.props[CRD_INTFACE]['PinEnabled'] = enable
+            self.device.set_property(CRD_INTFACE, 'PinEnabled', enable)
             return response[0].group('resp')
 
         d = super(WCDMAWrapper, self).enable_pin(pin, enable)
@@ -750,16 +750,16 @@ class WCDMAWrapper(WCDMAProtocol):
 
     # some high-level methods exported over DBus
     def init_properties(self):
-
-        def set_property(name, what, iface=CRD_INTFACE):
-            self.device.props[iface][name] = what
-
         d = self.get_bands()
-        d.addCallback(lambda bands: set_property('SupportedBands', bands))
+        d.addCallback(lambda bands:
+                self.device.set_property(CRD_INTFACE, 'SupportedBands', bands))
         d.addCallback(lambda _: self.get_network_modes())
-        d.addCallback(lambda modes: set_property('SupportedModes', modes))
+        d.addCallback(lambda modes:
+                self.device.set_property(CRD_INTFACE, 'SupportedModes', modes))
         d.addCallback(lambda _: self.get_pin_status())
-        d.addCallback(lambda active: set_property('PinEnabled', bool(active)))
+        d.addCallback(lambda active:
+                self.device.set_property(CRD_INTFACE, 'PinEnabled',
+                                         bool(active)))
         return d
 
     def get_simple_status(self):
@@ -860,10 +860,10 @@ class WCDMAWrapper(WCDMAProtocol):
             return self.device.close()
 
     def _do_enable_device(self):
-        from wader.common.startup import attach_to_serial_port
         if self.device.status == DEV_ENABLED:
             return defer.succeed(self.device)
 
+        from wader.common.startup import attach_to_serial_port
         if self.device.status == DEV_AUTHENTICATED:
             # if a device was enabled and then disabled, there's no
             # need to check the authentication again

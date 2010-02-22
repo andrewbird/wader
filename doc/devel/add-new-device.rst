@@ -8,7 +8,8 @@ How to support a new device
 All devices should inherit from :class:`~wader.common.middleware.WCDMAWrapper`
 in order to override its base methods. It accepts two argument for
 its constructor, an instance or subclass of
-:class:`~wader.common.plugin.DevicePlugin` and the udi of the device to use.
+:class:`~wader.common.plugin.DevicePlugin` and the object path of the device
+to use.
 
 A DevicePlugin contains all the necessary information to speak with
 the device: a data port, a control port (if exists), a baudrate, etc.
@@ -25,7 +26,7 @@ customise for your device plugin:
   we will issue an `AT+GMR` command right at the beginning to find out the
   real device model. Set this attribute to whatever your device replies to the
   `AT+GMR` command.
-- ``mapping``: A dictionary that, when is not empty, means that that
+- ``mapping``: A dictionary that, when is not empty, means that this
   particular combination of vendor and product ids is shared between several
   models from the same company. As the ids are the same, the only way to
   differentiate them is issuing an `AT+GMR` command to get the device model.

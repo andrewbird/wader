@@ -36,8 +36,8 @@ class OptionGTM378(OptionHSOWCDMADevicePlugin):
     __remote_name__ = 'GTM378'
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x0af0],
-        'usb_device.product_id': [0x6901, 0x6911],
+        'ID_VENDOR_ID': [0x0af0],
+        'ID_MODEL_ID': [0x6901, 0x6911],
     }
 
 optiongtm378 = OptionGTM378()

@@ -32,6 +32,17 @@ from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWrapper,
                                        ZTE_CMD_DICT)
 
+
+ZTEK2525_BAND_DICT = {
+    consts.MM_NETWORK_BAND_UNKNOWN: None,
+    consts.MM_NETWORK_BAND_ANY: None,
+}
+
+ZTEK2525_CONN_DICT = {
+    consts.MM_NETWORK_MODE_ANY: None,
+    consts.MM_NETWORK_MODE_2G_ONLY: None,
+}
+
 ZTEK2525_CMD_DICT = ZTE_CMD_DICT.copy()
 
 ZTEK2525_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
@@ -165,7 +176,8 @@ class ZTEK2525Wrapper(ZTEWrapper):
 
 
 class ZTEK2525Customizer(ZTEWCDMACustomizer):
-    conn_dict = {}
+    band_dict = ZTEK2525_BAND_DICT
+    conn_dict = ZTEK2525_CONN_DICT
     cmd_dict = ZTEK2525_CMD_DICT
     wrapper_klass = ZTEK2525Wrapper
 
@@ -180,8 +192,9 @@ class ZTEK2525(ZTEWCDMADevicePlugin):
     __remote_name__ = "K2525"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0022],
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x0022],
     }
+
 
 zte_k2525 = ZTEK2525()

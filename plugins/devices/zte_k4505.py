@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2007  Vodafone España, S.A.
-# Author:  Pablo Martí
+# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Author:  Andrew Bird, inspired by Pablo Martí
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from twisted.python import log
 from wader.common.hardware.zte import ZTEWCDMADevicePlugin
 
 
@@ -30,11 +31,17 @@ class ZTEK4505(ZTEWCDMADevicePlugin):
     __remote_name__ = "K4505-Z"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0016],
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x0016, 0x0104],
     }
 
-    # K4505-Z uses ttyUSB2(data) and ttyUSB1(status)
-    hardcoded_ports = (2, 1)
+    def preprobe_init(self, ports, info):
+        if info['ID_MODEL_ID'] == 0x0016:
+            self.hardcoded_ports = (2, 1)
+        elif info['ID_MODEL_ID'] == 0x0104:
+            self.hardcoded_ports = (3, 1)
+        else: # let probing occur
+            log.msg("Unknown K4505-Z product ID, falling through to probing")
+
 
 zte_k4505 = ZTEK4505()

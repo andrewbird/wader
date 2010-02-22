@@ -47,5 +47,5 @@ elif options.should_start:
 
     tap_path = os.path.join(DATA_DIR, 'core-tap.py')
     sh("/usr/bin/twistd --nodaemon --python=%s --logfile=%s "
-       "--pidfile=%s --reactor=glib2" % (tap_path, LOG_PATH, PID_PATH))
+       "--pidfile=%s --reactor=glib2 2>/tmp/wader.err" % (tap_path, LOG_PATH, PID_PATH))
 

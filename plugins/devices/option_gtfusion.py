@@ -32,8 +32,8 @@ class OptionGTFusion(OptionWCDMADevicePlugin):
     __remote_name__ = 'GlobeTrotter Fusion'
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x0af0],
-        'usb_device.product_id': [0x6000],
+        'ID_VENDOR_ID': [0x0af0],
+        'ID_MODEL_ID': [0x6000],
     }
 
 optiongtfusion = OptionGTFusion()

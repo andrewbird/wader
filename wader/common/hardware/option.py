@@ -319,7 +319,7 @@ class OptionHSOWrapper(OptionWrapper):
 
         Wrapper around _get_ip4_config that provides some error control
         """
-        ip_method = self.device.props[consts.MDM_INTFACE]['IpMethod']
+        ip_method = self.device.get_property(consts.MDM_INTFACE, 'IpMethod')
         if ip_method != consts.MM_IP_METHOD_STATIC:
             msg = "Cannot get IP4 config from a non static ip method"
             raise E.OperationNotSupported(msg)

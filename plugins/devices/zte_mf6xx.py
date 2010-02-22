@@ -31,18 +31,18 @@ class ZTEMF6XX(ZTEWCDMADevicePlugin):
     __remote_name__ = None
 
     __properties__ = {
-        'usb_device.vendor_id': [0x19d2],
-        'usb_device.product_id': [0x0001],
+        'ID_VENDOR_ID': [0x19d2],
+        'ID_MODEL_ID': [0x0001],
     }
 
     def __init__(self):
         super(ZTEMF6XX, self).__init__()
 
         self.mapping = {
-            'MF620' : ZTEMF620,
-            'MF632' : ZTEMF632,
+            'MF620': ZTEMF620,
+            'MF632': ZTEMF632,
 
-            'default' : ZTEMF620,
+            'default': ZTEMF620,
         }
 
 zte_mf6xx = ZTEMF6XX()

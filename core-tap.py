@@ -28,9 +28,9 @@ from wader.common.startup import (create_skeleton_and_do_initial_setup,
 # it will just return if its not necessary
 create_skeleton_and_do_initial_setup()
 
-# access osobj singleton
-from wader.common.oal import osobj
-if osobj is None:
+# check if we have an OSPlugin for this OS/Distro
+from wader.common.oal import get_os_object
+if get_os_object() is None:
     message = 'OS/Distro not registered'
     details = """
 The OS/Distro under which you are running %s
@@ -40,4 +40,3 @@ you can do in order to support your OS/Distro
     raise SystemExit("%s\n%s" % (message, details))
 
 application = get_wader_application()
-

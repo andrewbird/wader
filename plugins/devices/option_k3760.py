@@ -47,8 +47,8 @@ class OptionK3760(OptionHSOWCDMADevicePlugin):
     __remote_name__ = "GlobeTrotter HSUPA Modem"
 
     __properties__ = {
-          'usb_device.vendor_id' : [0xaf0],
-          'usb_device.product_id': [0x7501],
+          'ID_VENDOR_ID': [0xaf0],
+          'ID_MODEL_ID': [0x7501],
     }
 
 option_k3760 = OptionK3760()

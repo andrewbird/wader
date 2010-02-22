@@ -29,8 +29,8 @@ class OptionNozomi(OptionWCDMADevicePlugin):
     __remote_name__ = "GlobeTrotter 3G+"
 
     __properties__ = {
-        'pci.vendor_id' : [0x1931],
-        'pci.product_id' : [0xc],
+        'ID_VENDOR_ID': [0x1931],
+        'ID_MODEL_ID': [0xc],
     }
 
 option_nozomi = OptionNozomi()

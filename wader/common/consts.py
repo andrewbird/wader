@@ -152,7 +152,7 @@ EXTRA_DIR = join(RESOURCES_DIR, 'extra')
 NETWORKS_DB = join(DATA_DIR, 'networks.db')
 
 # usage database
-USAGE_DB = join(DATA_DIR,  'usage.db')
+USAGE_DB = join(DATA_DIR, 'usage.db')
 
 # TEMPLATES
 WVTEMPLATE = join(TEMPLATES_DIR, 'wvdial.conf.tpl')

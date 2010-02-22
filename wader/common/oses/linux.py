@@ -18,103 +18,37 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Linux-based OS plugin"""
 
-from time import time
 from os.path import join, exists
+import re
+import sys
+sys.path.insert(0, "/home/pablo/devel/git/python-gudev/.libs")
 
-import dbus
-import serial
+import gudev
 from zope.interface import implements
-from twisted.internet import defer, reactor, utils, error
+from twisted.internet import defer, reactor, utils
 from twisted.python import log
 
-from wader.common._dbus import DBusComponent
 from wader.common.interfaces import IHardwareManager
+from wader.common.hardware.base import identify_device, probe_ports
 from wader.common.plugin import PluginManager
 from wader.common import consts
 from wader.common.oses.unix import UnixPlugin
 from wader.common.startup import setup_and_export_device
 from wader.common.serialport import Ports
-from wader.common.utils import get_file_data, natsort, flatten_list
+from wader.common.utils import get_file_data, natsort
+
 
 IDLE, BUSY = range(2)
-ADD_THRESHOLD = 10.
+ADD_THRESHOLD = 6
+
+MODEL, VENDOR, DRIVER = "ID_MODEL_ID", "ID_VENDOR_ID", "ID_USB_DRIVER"
+
+SUBSYSTEMS = ["tty", "usb", "net"]
+REQUIRED_PROPS = [VENDOR, MODEL, DRIVER, "ID_BUS", "DEVNAME"]
+BAD_DEVFILE = re.compile('^/dev/(tty\d*?|console|ptmx)$')
 
 
-def probe_port(port):
-    """
-    Check whether `port` exists and works
-
-    :rtype: bool
-    """
-    try:
-        ser = serial.Serial(port, timeout=.01)
-        try:
-            ser.write('AT+CGMR\r\n')
-        except OSError, e:
-            log.err(e, "Error identifying device in port %s" % port)
-            return False
-        if not ser.readline():
-            # Huawei E620 with driver option registers three serial
-            # ports and the middle one wont raise any exception while
-            # opening it even thou its a dummy port.
-            return False
-
-        return True
-    except serial.SerialException, e:
-        return False
-    finally:
-        if 'ser' in locals():
-            ser.close()
-
-
-def probe_ports(ports):
-    """
-    Obtains the data and control ports out of ``ports``
-
-    :rtype: tuple
-    """
-    dport = cport = None
-    while ports:
-        port = ports.pop(0)
-        if probe_port(port):
-            if dport is None:
-                # data port tends to the be the first one
-                dport = port
-            elif cport is None:
-                # control port the next one
-                cport = port
-                break
-
-    return dport, cport
-
-
-def extract_info(props):
-    """
-    Extracts the bus-related information from Hal's ``props``
-
-    :param props: Hal dict
-    :rtype: dict
-    """
-    info = {}
-    if 'usb.vendor_id' in props:
-        info['usb_device.vendor_id'] = props['usb.vendor_id']
-        info['usb_device.product_id'] = props['usb.product_id']
-    elif 'usb_device.vendor_id' in props:
-        info['usb_device.vendor_id'] = props['usb_device.vendor_id']
-        info['usb_device.product_id'] = props['usb_device.product_id']
-    elif 'pcmcia.manf_id' in props:
-        info['pcmcia.manf_id'] = props['pcmcia.manf_id']
-        info['pcmcia.card_id'] = props['pcmcia.card_id']
-    elif 'pci.vendor_id' in props:
-        info['pci.vendor_id'] = props['pci.vendor_id']
-        info['pci.product_id'] = props['pci.product_id']
-    else:
-        raise RuntimeError("Unknown bus for device %s" % props['info.udi'])
-
-    return info
-
-
-class HardwareManager(DBusComponent):
+class HardwareManager(object):
     """
     I find and configure devices on Linux
 
@@ -130,20 +64,45 @@ class HardwareManager(DBusComponent):
         self.clients = {}
         #: reference to StartupController
         self.controller = None
-        self.mode = IDLE
-        # list with the added udis during a hotplugging event
-        self.added_udis = []
-        # last time of an action
-        self.last_action = None
-        self.call_id = None
-        # list of waiting get_devices petitions
-        self._waiting = []
+        self._waiting_deferred = None
+        # remember the total client count for opath generation
+        self._client_count = -1
+        self.gudev_client = gudev.Client(SUBSYSTEMS)
+        # temporary place to store hotplugged devices to process
+        self._hotplugged_devices = []
+        self._call = None
 
         self._connect_to_signals()
 
     def _connect_to_signals(self):
-        self.manager.connect_to_signal('DeviceAdded', self._dev_added_cb)
-        self.manager.connect_to_signal('DeviceRemoved', self._dev_removed_cb)
+        self.gudev_client.connect("uevent", self._on_uevent)
+
+    def _on_uevent(self, client, action, device):
+        log.msg("UEVENT device: %s  action: %s" % (device.get_sysfs_path(), action))
+        if action == 'remove':
+            # handle remove
+            for opath, plugin in self.clients.items():
+                if plugin.sysfs_path == device.get_sysfs_path():
+                    self.controller.DeviceRemoved(plugin.opath)
+                    self._unregister_client(plugin)
+
+        elif action == 'add':
+            # if valid, append it to the list of hotplugged devices
+            # for later processing
+            if self._is_valid_device(device):
+                self._hotplugged_devices.append(device)
+
+            if self._call is None:
+                # the first time we set a small delay and whenever a device
+                # is added we will reset the call ADD_THRESHOLD seconds
+                self._call = reactor.callLater(2,
+                                            self._process_hotplugged_devices)
+            elif self._call.active():
+                # XXX: this can be optimized by substracting x milliseconds
+                # for every device added to the reset call. However it
+                # introduces some more logic and perhaps should live outside.
+
+                self._call.reset(ADD_THRESHOLD)
 
     def register_controller(self, controller):
         """
@@ -153,412 +112,251 @@ class HardwareManager(DBusComponent):
 
     def get_devices(self):
         """See :meth:`wader.common.interfaces.IHardwareManager.get_devices`"""
-        # only enter here if its the very first time
-        if self.mode == IDLE and not self.clients:
-            self.mode = BUSY
-            parent_udis = self._get_parent_udis()
-            d = self._get_devices_from_udis(parent_udis)
-            d.addCallback(self._check_if_devices_are_registered)
-            return d
-
-        elif self.mode == IDLE:
+        # If clients is an empty dict we assume that this is the first
+        # time get_devices is executed. If not, we just return the current
+        # devices. If get_devices is executed in the middle of a hotplugging
+        # event, the "just added" device won't be returned, but it will be
+        # processed in a few seconds by _process_hotplugged_devices anyway.
+        if self.clients:
             return defer.succeed(self.clients.values())
 
-        # we are waiting for an on-going process started already
-        # we queue the request and will be callbacked when the
-        # data is ready
-        d = defer.Deferred()
-        self._waiting.append(d)
-        return d
+        devices = []
+        # get all the devices under the tty, usb and net subsystems
+        for subsystem in SUBSYSTEMS:
+            for device in self.gudev_client.query_by_subsystem(subsystem):
+                if self._is_valid_device(device):
+                    devices.append(device)
 
-    def _transition_to_idle(self, ignored=None):
-        self.mode = IDLE
+        return self._process_found_devices(devices)
 
-    def _get_device_from_udi(self, udi):
-        """Returns a device built out of the info extracted from ``udi``"""
-        context = self._get_child_udis_from_udi(udi)
-        info = extract_info(self.get_properties_from_udi(udi))
-        ports = self._get_ports_from_udi(udi, context=context)
-        device = self._get_device_from_info_and_ports(info, udi, ports,
-                                                      context=context)
-        return device
+    def _process_hotplugged_devices(self):
+        # get DevicePlugin out of a list of gudev.Device
+        self._process_found_devices(self._hotplugged_devices)
+        self._hotplugged_devices, self._call = [], None
 
-    def _get_devices_from_udis(self, udis):
+    def _process_found_devices(self, devices=None, emit=True):
         """
-        Returns a list of devices built out of the info extracted from ``udis``
+        Processes gudev ``devices`` and returns ``DevicePlugin``s
+
+        Find devices with a common parent and merge them, identify
+        the ones that need it, register and emit a signal if ``emit``
+        is True.
         """
-        from wader.common.hardware.base import identify_device
-        unknown_devs = map(self._get_device_from_udi, udis)
-        deferreds = map(identify_device, unknown_devs)
+        deferreds = []
+        for device in self._setup_devices(devices):
+            d = identify_device(device)
+            d.addCallback(self._register_client, emit=emit)
+            deferreds.append(d)
+
         return defer.gatherResults(deferreds)
 
-    def _get_modem_path(self, dev_udi):
-        """Returns the object path of the modem device child of ``dev_udi``"""
-
-        def is_child_of(parent_udi, child_udi):
-            cur_udi = child_udi
-            while 1:
-                try:
-                    p = self.get_properties_from_udi(cur_udi)['info.parent']
-                    if p == parent_udi:
-                        return True
-                except KeyError:
-                    return False
-                else:
-                    cur_udi = p
-
-        for udi in self.manager.FindDeviceByCapability("modem"):
-            if is_child_of(dev_udi, udi):
-                return udi
-
-        raise RuntimeError("Couldn't find the modem path of %s" % dev_udi)
-
-    def _get_hso_modem_path(self, udi):
-        child_udis = flatten_list(self._get_child_udis_from_udi(udi))
-        obj = dbus.SystemBus().get_object(consts.NM_SERVICE, consts.NM_OBJPATH)
-        devices = obj.GetDevices(dbus_interface=consts.NM_INTFACE)
-
-        while devices:
-            udi = devices.pop()
-            # if nm08_present
-            # this will break BMC, beware!
-            if 'NetworkManager' in udi:
-                # NM 0.8
-                device = dbus.SystemBus().get_object(consts.NM_SERVICE, udi)
-                try:
-                    mdm_udi = device.Get(consts.NM_DEVICE, 'Udi',
-                                         dbus_interface=dbus.PROPERTIES_IFACE)
-                    if mdm_udi and mdm_udi in child_udis:
-                        return mdm_udi
-                except:
-                    log.err()
-            else:
-                # NM <= 0.7.1
-                if 'serial.device' in self.get_properties_from_udi(udi):
-                    if udi in child_udis:
-                        return udi
-
-    def _get_driver_name(self, udi, context=None):
-        """Returns the info.linux.driver of `udi`"""
-
-        def do_get_driver_name(key, _udi, props):
-            banned_drivers = ['usb', 'usbfs', 'usb-storage', 'pci', 'pcmcia']
-            if key in props[_udi]:
-                name = props[_udi][key]
-
-                if name not in banned_drivers:
-                    return name
-
-        if context:
-            childs, device_props = context
-        else:
-            childs, device_props = self._get_child_udis_from_udi(udi)
-
-        # extend the list of childs with the parent udi itself, devices
-        # such as Option Nozomi won't work otherwise
-        childs.extend([udi])
-
-        for _udi in childs:
-            name = do_get_driver_name('info.linux.driver', _udi, device_props)
-            if name:
-                return name
-
-        raise RuntimeError("Could not find the driver name of device %s" % udi)
-
-    def _get_network_device(self, udi, context=None):
-        if context:
-            childs, dp = context
-        else:
-            childs, dp = self._get_child_udis_from_udi(udi)
-
-        for _udi in childs:
-            properties = dp[_udi]
-            if 'net.interface' in properties:
-                return properties['net.interface']
-
-        raise KeyError("Couldn't find net.interface in device %s" % udi)
-
-    def _get_parent_udis(self):
-        """Returns the root udi of all the devices with modem capabilities"""
-        return set(map(self._get_parent_udi,
-                       self.manager.FindDeviceByCapability("modem")))
-
-    def _get_parent_udi(self, udi):
-        """Returns the absolute parent udi of ``udi``"""
-        OD = 'serial.originating_device'
-
-        def get_parent(props):
-            return (props[OD] if OD in props else props['info.parent'])
-
-        current_udi = udi
-        while 1:
-            properties = self.get_properties_from_udi(current_udi)
-            try:
-                info = extract_info(properties)
-                break
-            except RuntimeError:
-                current_udi = get_parent(properties)
-
-        # now that we have an id to lookup for, lets repeat the process till we
-        # get another RuntimeError
-
-        def find_out_if_contained(_info, properties):
-            """
-            Returns `True` if `_info` values are contained in `props`
-
-            As hal likes to swap between usb.vendor_id and usb_device.vendor_id
-            I have got a special case where I will retry
-            """
-
-            def compare_dicts(d1, d2):
-                for key in d1:
-                    try:
-                        return d1[key] == d2[key]
-                    except KeyError:
-                        return False
-
-            if compare_dicts(_info, properties):
-                # we got a straight map
-                return True
-
-            # hal likes to swap between usb_device.vendor_id and usb.vendor_id
-            if 'usb_device.vendor_id' in _info:
-                # our last chance, perhaps its swapped
-                newinfo = {'usb.vendor_id': _info['usb_device.vendor_id'],
-                           'usb.product_id': _info['usb_device.product_id']}
-                return compare_dicts(newinfo, properties)
-
-            # the original compare_dicts failed, so return False
+    def _is_valid_device(self, device):
+        """Checks whether ``device`` is valid"""
+        if not device.get_device_file():
             return False
 
-        last_udi = current_udi
-        while 1:
-            properties = self.get_properties_from_udi(current_udi)
-            if not find_out_if_contained(info, properties):
-                break
+        # before checking all the properties, filter out all the /dev/tty%d
+        if BAD_DEVFILE.match(device.get_device_file()):
+            return False
 
-            last_udi, current_udi = current_udi, get_parent(properties)
+        # filter out /dev/usb/foo/bar/foo like too
+        parts = device.get_device_file().split('/')
+        if len(parts) > 3:
+            return False
 
-        return last_udi
+        # check that it has all the required properties
+        # otherwise we are not interested on it
+        props = device.get_property_keys()
+        for prop in REQUIRED_PROPS:
+            if prop not in props:
+                return False
 
-    def _check_if_devices_are_registered(self, devices, to_idle=True):
+        return True
+
+    def _setup_devices(self, devices):
+        """Sets up ``devices``"""
+        found_devices = {}
         for device in devices:
-            if device.udi not in self.clients:
-                self._register_client(device, device.udi, emit=True)
+            props = {}
 
-        for deferred in self._waiting:
-            deferred.callback(devices)
+            for property in REQUIRED_PROPS:
+                value = device.get_property(property)
+                # values are either string or hex
+                try:
+                    props[property] = int(value, 16)
+                except ValueError:
+                    props[property] = value
 
-        self._waiting = []
+            # if this properties are present, we should use them as
+            # data port and control port
+            for mm_prop in ['ID_MM_PORT_TYPE_MODEM', 'ID_MM_PORT_TYPE_AUX']:
+                if mm_prop in device.get_property_keys():
+                    props[mm_prop] = bool(int(device.get_property(mm_prop)))
 
-        if to_idle:
-            # back to IDLE
-            self._transition_to_idle()
+            # now find out the device parent
+            parent = self._get_last_parent_that_matches_props(device, props)
 
-        return devices
+            if parent in self.clients:
+                # this device has already been setup
+                return
 
-    def _register_client(self, plugin, udi, emit=False):
+            if parent in found_devices:
+                # we have already found a device with the same parent, update
+                # the attributes
+                found_devices[parent].update(props)
+            else:
+                # a new parent has been found, store its sysfs_path as key
+                # as all the childs have the same property DEVNAME, we need to
+                # create a new and temporal property named DEVICES
+                found_devices[parent] = props
+                found_devices[parent]['DEVICES'] = []
+
+            if 'DEVNAME' in props:
+                # append the device name as usual
+                found_devices[parent]['DEVICES'].append(props['DEVNAME'])
+                # if any of this is present save them for later use
+                for _prop in ['ID_MM_PORT_TYPE_MODEM', 'ID_MM_PORT_TYPE_AUX']:
+                    if props.get(_prop, False):
+                        found_devices[parent][_prop] = props['DEVNAME']
+
+        return [self._get_device_from_info(sysfs_path, info)
+                      for sysfs_path, info in found_devices.items()]
+
+    def _get_last_parent_that_matches_props(self, device, props):
+        parent = device.get_parent()
+        while 1:
+            properties = {}
+            for key in parent.get_property_keys():
+                properties[key] = parent.get_property(key)
+                if key == "PRODUCT":
+                    # udev seems to miss the ID_VENDOR_ID and ID_MODEL_ID attrs
+                    # and all of the sudden a "PRODUCT" attribute appears with
+                    # a value of ID_VENDOR_ID/ID_MODEL_ID/UNKNOWN.
+                    vendor, model = parent.get_property(key).split('/')[:2]
+                    properties[VENDOR] = int(vendor, 16)
+                    properties[MODEL] = int(model, 16)
+
+            if VENDOR in properties and MODEL in properties:
+                if (props[VENDOR] != properties[VENDOR] and
+                        props[MODEL] != properties[MODEL]):
+                    break
+
+            parent = parent.get_parent()
+            if parent is None:
+                path = device.get_sysfs_path()
+                raise ValueError("Could not find %s parent" % path)
+
+        # XXX: need to check with modemmanager if it matches
+        return parent.get_sysfs_path()
+
+    def _register_client(self, plugin, emit=False):
         """
-        Registers `plugin` in `self.clients` by its `udi`
+        Registers `plugin` in `self.clients` indexes by its object path
 
         Will emit a DeviceAdded signal if emit is True
         """
-        log.msg("registering plugin %s using udi %s" % (plugin, udi))
-        self.clients[udi] = setup_and_export_device(plugin)
+        log.msg("registering plugin %s using opath %s" % (plugin, plugin.opath))
+        self.clients[plugin.opath] = setup_and_export_device(plugin)
 
         if emit:
-            self.controller.DeviceAdded(udi)
+            self.controller.DeviceAdded(plugin.opath)
 
-    def _unregister_client(self, udi):
-        """Removes client identified by ``udi``"""
-        plugin = self.clients.pop(udi)
+        return plugin
+
+    def _unregister_client(self, client):
+        """Removes client identified by ``opath``"""
+        plugin = self.clients.pop(client.opath)
         plugin.close(removed=True)
 
-    def _dev_added_cb(self, udi):
-        self.mode = BUSY
-        self.last_action = time()
-
-        assert udi not in self.added_udis
-        self.added_udis.append(udi)
-
-        try:
-            if not self.call_id or self.call_id.called:
-                self.call_id = reactor.callLater(ADD_THRESHOLD,
-                                             self._process_added_udis)
-            else:
-                self.call_id.reset(ADD_THRESHOLD)
-        except (error.AlreadyCalled, error.AlreadyCancelled):
-            log.err(None, "Error on _device_added_cb")
-            # call has already been fired
-            self._cleanup_udis()
-
-            self._transition_to_idle()
-
-    def _dev_removed_cb(self, udi):
-        if self.mode == BUSY:
-            # we're in the middle of a hotpluggin event and the udis that
-            # we just added to self.added_udis are disappearing!
-            # whats going on? Some devices such as the Huawei E870 will
-            # add some child udis, and will remove them once libusual kicks
-            # in, so we need to wait for at most ADD_THRESHOLD seconds
-            # since the last removal/add to find out what really got added
-            if udi in self.added_udis:
-                self.added_udis.remove(udi)
-                return
-
-        if udi in self.clients:
-            self._unregister_client(udi)
-            self.controller.DeviceRemoved(udi)
-
-    def _cleanup_udis(self):
-        self.added_udis = []
-        if self.call_id and not self.call_id.called:
-            self.call_id.cancel()
-
-        self.call_id = None
-
-    def _process_added_udis(self):
-        # obtain the parent udis of all the devices with modem capabilities
-        parent_udis = self._get_parent_udis()
-        # we're only interested on devices not being handled and just added
-        not_handled_udis = set(self.clients.keys()) ^ parent_udis
-        just_added_udis = not_handled_udis & set(self.added_udis)
-        # get devices out of UDIs and register them emitting DeviceAdded
-        d = self._get_devices_from_udis(just_added_udis)
-        d.addCallback(self._check_if_devices_are_registered)
-
-        # cleanup
-        self._cleanup_udis()
+    def _generate_opath(self):
+        self._client_count += 1
+        return "/org/freedesktop/ModemManager/Devices/%d" % self._client_count
 
     def _get_hso_ports(self, ports):
         dport = cport = None
-        BASE = '/sys/class/tty'
-
         for port in ports:
             name = port.split('/')[-1]
-            path = join(BASE, name, 'hsotype')
-            if not exists(path):
-                continue
+            path = join('/sys/class/tty', name, 'hsotype')
 
-            what = get_file_data(path).strip().lower()
-            if what == 'modem' and dport is None:
-                dport = port
-            elif what == 'application' and cport is None:
-                cport = port
+            if exists(path):
+                what = get_file_data(path).strip().lower()
+                if what == 'modem':
+                    dport = port
+                elif what == 'application':
+                    cport = port
 
-            if dport and cport:
-                break
+                if dport and cport:
+                    break
 
         return dport, cport
 
-    def _get_child_udis_from_udi(self, udi):
-        """Returns the paths of ``udi`` childs and the properties used"""
-        device_props = self.get_devices_properties()
-        dev_udis = sorted(device_props.keys(), key=len)
-        dev_udis2 = dev_udis[:]
-        childs = []
-        while dev_udis:
-            _udi = dev_udis.pop()
-            if _udi != udi and 'info.parent' in device_props[_udi]:
-                par_udi = device_props[_udi]['info.parent']
+    def _get_device_from_info(self, sysfs_path, info):
+        """Returns a `DevicePlugin` out of ``info``"""
+        # order the ports before probing
+        ports = info['DEVICES']
+        natsort(ports)
 
-                if par_udi == udi or par_udi in childs:
-                    childs.append(_udi)
-
-        while dev_udis2:
-            _udi = dev_udis2.pop()
-            if _udi != udi and 'info.parent' in device_props[_udi]:
-                par_udi = device_props[_udi]['info.parent']
-
-                if par_udi == udi or (par_udi in childs and
-                                            _udi not in childs):
-                    childs.append(_udi)
-
-        return childs, device_props
-
-    def _get_ports_from_udi(self, parent_udi, context=None):
-        """Returns all the ports that ``parent_udi`` has registered"""
-        if context:
-            childs, dp = context
-        else:
-            childs, dp = self._get_child_udis_from_udi(parent_udi)
-
-        if childs:
-            serial_devs = [dp[_udi]['serial.device']
-                            for _udi in childs if 'serial.device' in dp[_udi]]
-            ports = map(str, set(serial_devs))
-            natsort(ports)
-            return ports
-
-        raise RuntimeError("Couldn't find any child of device %s" % parent_udi)
-
-    def _get_device_from_info_and_ports(self, info, root_udi, ports,
-                                        context=None):
-        """Returns a `DevicePlugin` out of ``info`` and ``ports``"""
-        plugin = PluginManager.get_plugin_by_vendor_product_id(*info.values())
-
+        query = [info.get(key) for key in [VENDOR, MODEL]]
+        plugin = PluginManager.get_plugin_by_vendor_product_id(*query)
         if plugin:
-            # set its udi
-            try:
-                plugin.udi = self._get_modem_path(root_udi)
-            except RuntimeError, e:
-                log.err(e, "Error while getting modem path")
-                plugin.udi = root_udi
-
-            plugin.root_udi = root_udi
+            plugin.sysfs_path = sysfs_path
+            plugin.opath = self._generate_opath()
             # set DBus properties (Modem interface)
-            props = plugin.props[consts.MDM_INTFACE]
-            props['IpMethod'] = consts.MM_IP_METHOD_PPP
-            # XXX: Fix MasterDevice
-            props['MasterDevice'] = 'udev:/sys/devices/not/implemented'
+            plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
+                                consts.MM_IP_METHOD_PPP)
+            plugin.set_property(consts.MDM_INTFACE, 'MasterDevice',
+                                'udev:%s' % sysfs_path)
             # XXX: Fix CDMA
-            props['Type'] = consts.MM_MODEM_TYPE_REV['GSM']
-            props['Driver'] = self._get_driver_name(root_udi, context)
+            plugin.set_property(consts.MDM_INTFACE, 'Type',
+                                consts.MM_MODEM_TYPE_REV['GSM'])
+            plugin.set_property(consts.MDM_INTFACE, 'Driver', info[DRIVER])
+            plugin.set_property(consts.MDM_INTFACE, 'Enabled', False)
+            plugin.set_property(consts.MDM_INTFACE, 'UnlockRequired', "")
 
             # preprobe stuff
             if hasattr(plugin, 'preprobe_init'):
                 # this plugin requires special initialisation before probing
-                plugin.preprobe_init(ports, extract_info(info))
+                plugin.preprobe_init(ports, info)
 
             # now get the ports
             ports_need_probe = True
-            if props['Driver'] == 'hso':
+            if plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'hso':
                 # set DBus properties (Modem.Gsm.Hso interface)
-                hso_props = plugin.props[consts.HSO_INTFACE]
-                net_device = self._get_network_device(root_udi, context)
-                hso_props['NetworkDevice'] = net_device
-
-                props['IpMethod'] = consts.MM_IP_METHOD_STATIC
+                #net_device = self._get_network_device(root_udi, context)
+                #hso_props['NetworkDevice'] = net_device
+                plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
+                                    consts.MM_IP_METHOD_STATIC)
                 # XXX: Fix HSO Device
-                props['Device'] = 'hso0'
+                plugin.set_property(consts.MDM_INTFACE, 'Device', 'hso0')
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
-                # Fix modem udi path
-                modem_udi = self._get_hso_modem_path(plugin.udi)
-                if modem_udi:
-                    plugin.udi = modem_udi
 
-            elif 'cdc' in props['Driver']:
+            elif plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'cdc':
                 # MBM device
-                props['IpMethod'] = consts.MM_IP_METHOD_DHCP
-
-                # Devices from 2.6.33 can be called usb%d or wwan%d
-                hso_props = plugin.props[consts.HSO_INTFACE]
-                net_device = self._get_network_device(root_udi, context)
-                hso_props['NetworkDevice'] = net_device
+                plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
+                                    consts.MM_IP_METHOD_DHCP)
 
             if hasattr(plugin, 'ipmethod'):
                 # allows us to specify a method in a driver independant way
-                props['IpMethod'] = plugin.ipmethod
+                plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
+                                    plugin.ipmethod)
 
-            if hasattr(plugin, 'hardcoded_ports'):
-                # if the device has the hardcoded_ports attribute that means
-                # that it allocates the data and control port in a funky way
-                # and thus the indexes are hardcoded.
-                dport_idx, cport_idx = plugin.hardcoded_ports
-                dport = ports[dport_idx]
-                cport = ports[cport_idx] if cport_idx is not None else None
-            elif ports_need_probe:
+            # if this two properties are present, use them right away and
+            # do not probe
+            if ('ID_MM_PORT_TYPE_MODEM' in info
+                    or 'ID_MM_PORT_TYPE_AUX' in info):
+                try:
+                    dport = info['ID_MM_PORT_TYPE_MODEM']
+                except KeyError:
+                    pass
+                try:
+                    cport = info['ID_MM_PORT_TYPE_AUX']
+                except KeyError:
+                    pass
+
+                ports_need_probe = False
+
+            if ports_need_probe:
                 # the ports were not hardcoded nor was an HSO device
                 dport, cport = probe_ports(ports)
 
@@ -567,14 +365,15 @@ class HardwareManager(DBusComponent):
                 msg = 'No data port and no control port with ports: %s'
                 raise RuntimeError(msg % ports)
 
-            if 'Device' not in props:
+            if 'Device' not in plugin.get_properties(consts.MDM_INTFACE):
                 # do not set it again
-                props['Device'] = dport.split('/')[-1]
+                device = dport.split('/')[-1]
+                plugin.set_property(consts.MDM_INTFACE, 'Device', device)
 
             plugin.ports = Ports(dport, cport)
             return plugin
 
-        raise RuntimeError("Couldn't find a plugin with info %s" % info)
+        raise RuntimeError("Could not find a plugin with info %s" % info)
 
 
 def get_hw_manager():

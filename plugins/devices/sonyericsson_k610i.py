@@ -48,8 +48,8 @@ class SonyEricssonK610iUSB(DevicePlugin):
     __remote_name__ = "AAD-3022041-BV"
 
     __properties__ = {
-        'usb_device.vendor_id': [0x0fce],
-        'usb_device.product_id': [0xd046],
+        'ID_VENDOR_ID': [0x0fce],
+        'ID_MODEL_ID': [0xd046],
     }
 
 sonyericsson_k610iUSB = SonyEricssonK610iUSB()

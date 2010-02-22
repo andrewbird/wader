@@ -32,8 +32,8 @@ class NovatelMC990D(NovatelWCDMADevicePlugin):
     __remote_name__ = "Ovation MC990D Card"
 
     __properties__ = {
-        'usb_device.vendor_id' : [0x1410],
-        'usb_device.product_id' : [0x7001],
+        'ID_VENDOR_ID': [0x1410],
+        'ID_MODEL_ID': [0x7001],
     }
 
     def preprobe_init(self, ports, info):

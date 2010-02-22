@@ -10,7 +10,11 @@ Classes
    :members:
    :undoc-members:
 
-Function
---------
+Functions
+---------
 
 .. autofunction:: identify_device(port)
+
+.. autofunction:: probe_port(port)
+
+.. autofunction:: probe_ports(ports)

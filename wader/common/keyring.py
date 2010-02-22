@@ -18,10 +18,7 @@
 """Keyring module for Wader"""
 
 import os
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
 
 import gobject
 import dbus
