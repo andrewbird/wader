@@ -63,7 +63,9 @@ class NMDialer(Dialer):
             obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)
             interface = dbus.Interface(obj, NM_INTFACE)
             for opath in interface.GetDevices():
-                if self.device.opath == opath:
+                dev = self.bus.get_object(NM_SERVICE, opath)
+                udi = dev.Get('org.freedesktop.NetworkManager.Devices', 'Udi')
+                if self.device.opath == udi:
                     return opath
 
     def _on_properties_changed(self, changed):
