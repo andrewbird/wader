@@ -20,8 +20,6 @@
 
 from os.path import join, exists
 import re
-import sys
-sys.path.insert(0, "/home/pablo/devel/git/python-gudev/.libs")
 
 import gudev
 from zope.interface import implements
