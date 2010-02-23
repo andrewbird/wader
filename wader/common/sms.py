@@ -23,6 +23,7 @@ from time import mktime
 
 from zope.interface import implements
 from twisted.internet.defer import  succeed, gatherResults
+from twisted.python import log
 from messaging import PDU
 
 from wader.common.interfaces import IMessage
