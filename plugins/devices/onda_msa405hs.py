@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2009  Vodafone España, S.A.
+# Copyright (C) 2006-2010  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Andrew Bird
 #
@@ -33,7 +33,5 @@ class ONDAMSA405HS(ZTEWCDMADevicePlugin):
         'ID_MODEL_ID': [0x0037],
     }
 
-    # Onda MSA405HS uses ttyUSB2(data) and ttyUSB1(status)
-    hardcoded_ports = (2, 1)
 
 onda_msa405hs = ONDAMSA405HS()

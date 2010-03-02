@@ -60,11 +60,5 @@ class HuaweiK3765(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x1451, 0x1465],
     }
 
-    def preprobe_init(self, ports, info):
-        if info['ID_MODEL_ID'] == 0x1465:
-            self.hardcoded_ports = (0, 4) # auto probing can hang
-        else: # let probing occur
-            pass
-
 
 huaweik3765 = HuaweiK3765()

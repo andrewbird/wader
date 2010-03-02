@@ -60,7 +60,5 @@ class HuaweiK4505(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x1464],
     }
 
-    hardcoded_ports = (0, 4) # auto probing can hang
-
 
 huaweik4505 = HuaweiK4505()

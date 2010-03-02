@@ -345,10 +345,12 @@ class HardwareManager(object):
                     or 'ID_MM_PORT_TYPE_AUX' in info):
                 try:
                     dport = info['ID_MM_PORT_TYPE_MODEM']
+                    log.msg("%s: ID_MM_PORT_TYPE_MODEM" % dport)
                 except KeyError:
                     pass
                 try:
                     cport = info['ID_MM_PORT_TYPE_AUX']
+                    log.msg("%s: ID_MM_PORT_TYPE_AUX" % cport)
                 except KeyError:
                     pass
 

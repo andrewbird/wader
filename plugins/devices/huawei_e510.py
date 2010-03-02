@@ -39,6 +39,5 @@ class HuaweiE510(HuaweiWCDMADevicePlugin):
         if info['ID_MODEL_ID'] == 0x1001:
             self.__properties__['ID_MODEL_ID'][0] = 0x1001
 
-    hardcoded_ports = (0, 2)
 
 huaweie510 = HuaweiE510()

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2007-2009  Vodafone España, S.A.
+# Copyright (C) 2007-2010  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Andrew Bird
 #
@@ -33,8 +33,6 @@ class ZTEK3805(IceraWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x19d2],
         'ID_MODEL_ID': [0x1003],
     }
-
-    hardcoded_ports = (0, 1)
 
     dialer = 'hso_native'
     ipmethod = MM_IP_METHOD_STATIC

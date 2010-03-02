@@ -1,0 +1,39 @@
+# Used to tag the ports with their usage, based on USB interface numbers.
+# This can remove the need to probe at all, but generally it's used to
+# ensure that the data/modem port is identified
+
+ACTION!="add", GOTO="vmc_zte_end"
+
+SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", \
+   ENV{.MM_USBIFNUM}="$attr{bInterfaceNumber}"
+
+# Tag the interface with type
+SUBSYSTEM!="tty", GOTO="vmc_zte_tty_end"
+
+# ONDA MSA405HS
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0037", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0037", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+# K3520-Z
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0025", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0025", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0055", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0055", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+# K3565-Z
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0049", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0049", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0052", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0052", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0063", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0063", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+# K3765-Z
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2002", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2002", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+# K4505-Z
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0016", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0016", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
+LABEL="vmc_zte_tty_end"
+
+LABEL="vmc_zte_end"

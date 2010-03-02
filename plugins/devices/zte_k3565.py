@@ -37,14 +37,5 @@ class ZTEK3565(ZTEWCDMADevicePlugin):
         'ID_MODEL_ID': [0x0049, 0x0052, 0x0063], # depends on fw ver
     }
 
-    def preprobe_init(self, ports, info):
-        if info['ID_MODEL_ID'] == 0x0052:
-            # K3565-Z (0x0052) uses ttyUSB2(data) and ttyUSB1(status)
-            self.hardcoded_ports = (2, 1)
-        elif info['ID_MODEL_ID'] == 0x0063:
-            # K3565-Z (0x0063) uses ttyUSB3(data) and ttyUSB1(status)
-            self.hardcoded_ports = (3, 1)
-        else: # let probing occur
-            log.msg("Unknown K3565-Z product ID, falling through to probing")
 
 zte_k3565 = ZTEK3565()
