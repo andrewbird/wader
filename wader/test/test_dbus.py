@@ -950,7 +950,11 @@ class DBusTestCase(unittest.TestCase):
 
     def test_SmsSetIndication(self):
         """Test for Sms.SetIndication"""
-        raise unittest.SkipTest("Untested")
+        # simple test for AT+CNMI, if this set command fails the
+        # AT string needs to be changed. The reason the test is so simple
+        # is because there's no GetIndication command in the spec, and I
+        # didn't feel like coordinating an extension with the MM guys.
+        self.device.SetIndication(2, 1, 0, 1, 0)
 
     def test_SmsSetSmsc(self):
         """Test for Sms.SetSmsc"""
