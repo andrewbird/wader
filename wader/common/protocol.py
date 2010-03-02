@@ -319,7 +319,7 @@ class BufferingStateMachine(object, protocol.Protocol):
                 self.waitbuf = self.waitbuf.replace(m.group(), '', 1)
                 self.transition_to_idle()
             else:
-                match = SPLIT_PROMPT.match(data)
+                match = SPLIT_PROMPT.search(data)
                 if match:
                     log.msg("waiting: split command prompt detected")
                     self.send_splitcmd()
