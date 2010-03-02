@@ -27,6 +27,11 @@ from wader.common.consts import NETWORKS_DB
 from wader.common.sms import Message as _Message
 from wader.common.utils import get_value_and_pop
 
+if sqlite3.version_info >= (2, 4, 1):
+    # Starting in 2.4.1, the str type is not accepted anymore, therefore,
+    # we convert all str objects to Unicode
+    sqlite3.register_adapter(str, lambda s: s.decode('utf-8'))
+
 
 SMS_SCHEMA = """
 create table message (

@@ -90,7 +90,7 @@ class MessageAssemblyLayer(object):
         self.wrappee = wrappee
         self.last_index = 0
         self.sms_map = {}
-        self.sms_pending = {}
+        self.sms_pending = []
         self.cached = False
 
     def initialize(self, obj=None):
@@ -101,7 +101,7 @@ class MessageAssemblyLayer(object):
         # revert to initial state
         self.last_index = 0
         self.sms_map = {}
-        self.sms_pending = {}
+        self.sms_pending = []
         self.cached = False
         # populate sms cache
         self.list_sms()
@@ -206,7 +206,8 @@ class MessageAssemblyLayer(object):
 
     def send_sms(self, sms):
         debug("MAL::send_sms: %s" % sms)
-        if not sms.request_status:
+        sms.status_request = True
+        if not sms.status_request:
             return self.wrappee.do_send_sms(sms)
 
         d = self.wrappee.do_send_sms(sms)
@@ -234,20 +235,30 @@ class MessageAssemblyLayer(object):
         return d
 
     def _save_sms_reference(self, indexes, sms):
-        index = indexes[0]
-        self.sms_pending[index] = sms
-        return indexes
+        sms.status_references.extend(indexes)
+        sms.status_reference = indexes[0]
+        self.sms_pending.append(sms)
+        return [sms.status_reference]
 
     def on_sms_delivery_report(self, pdu):
         """Executed when a SMS delivery report is received"""
         report = p.decode_pdu(pdu)
         sms = Message.from_dict(report)
         assert sms.is_status_report(), "SMS IS NOT STATUS REPORT"
-        if sms.ref in self.sms_pending:
-            self.sms_pending.pop(sms.ref)
-            return self.wrappee.emit_signal(SIG_SMS_DELV, sms.ref)
-
-        log.err("Received status report with unknown reference: %d" % sms.ref)
+        # XXX: O(N) here
+        for _sms in self.sms_pending:
+            if sms.ref in _sms.status_references:
+                # one confirmation received
+                _sms.status_references.remove(sms.ref)
+                # no more status references? Then we are done, remove it from
+                # the status_references list and emit signal
+                if not _sms.status_references:
+                    self.sms_pending.remove(_sms)
+                    return self.wrappee.emit_signal(SIG_SMS_DELV,
+                                                    _sms.status_reference)
+                break
+        else:
+            log.err("Received status report with unknown reference: %d" % sms.ref)
 
     def on_sms_notification(self, index):
         """Executed when a SMS notification is received"""
@@ -274,7 +285,9 @@ class Message(object):
         self.cnt = cnt  # Total number of fragments
         self.seq = seq  # fragment number
         self.completed = False
-        self.request_status = False
+        self.status_request = False
+        self.status_references = []
+        self.status_reference = None
         self.type = None
         self._fragments = []
 
@@ -331,7 +344,7 @@ class Message(object):
         m.where = d.get('where')
         m.csca = d.get('smsc')
         m.ref = d.get('ref')
-        m.request_status = d.get('request_status', False)
+        m.status_request = d.get('status_request', False)
         m.cnt = d.get('cnt', 0)
         m.seq = d.get('seq', 0)
         m.type = d.get('type')
@@ -389,8 +402,8 @@ class Message(object):
             ret['timestamp'] = mktime(self.datetime.timetuple())
         if self.csca is not None:
             ret['smsc'] = self.csca
-        if self.request_status:
-            ret['request_status'] = self.request_status
+        if self.status_request:
+            ret['status_request'] = self.status_request
 
         return ret
 
@@ -399,7 +412,7 @@ class Message(object):
         csca = self.csca if self.csca is not None else ""
 
         return p.encode_pdu(self.number, self.text, csca=csca, store=store,
-                            request_status=self.request_status)
+                            request_status=self.status_request)
 
     def add_fragment(self, sms):
         self.add_text_fragment(sms.text, sms.seq)
