@@ -48,7 +48,7 @@ class OptionK3760(OptionHSOWCDMADevicePlugin):
 
     __properties__ = {
           'ID_VENDOR_ID': [0xaf0],
-          'ID_MODEL_ID': [0x7501],
+          'ID_MODEL_ID': [0x7501, 0x7601],
     }
 
 option_k3760 = OptionK3760()
