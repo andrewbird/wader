@@ -206,7 +206,6 @@ class MessageAssemblyLayer(object):
 
     def send_sms(self, sms):
         debug("MAL::send_sms: %s" % sms)
-        sms.status_request = True
         if not sms.status_request:
             return self.wrappee.do_send_sms(sms)
 
