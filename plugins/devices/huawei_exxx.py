@@ -87,7 +87,7 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
 
     __properties__ = {
         'ID_VENDOR_ID': [0x12d1],
-        'ID_MODEL_ID': [0x1001],
+        'ID_MODEL_ID': [0x1001, 0x1003],
     }
 
     def __init__(self):
@@ -105,6 +105,7 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
 
             'K2540': HuaweiK2540,    # USB Sticks
             'K3520': HuaweiK3520,
+            'K3565': HuaweiK3565,
             'K3715': HuaweiK3715,
 
             'EM730V': HuaweiEM730V,  # Embedded Modules

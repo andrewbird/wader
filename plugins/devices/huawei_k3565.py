@@ -55,5 +55,5 @@ class HuaweiK3565(HuaweiWCDMADevicePlugin):
 
     __properties__ = {
         'ID_VENDOR_ID': [0x12d1],
-        'ID_MODEL_ID': [0x1003],
+        'ID_MODEL_ID': [0x1001, 0x1003],
     }
