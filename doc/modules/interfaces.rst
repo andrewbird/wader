@@ -16,27 +16,6 @@ Classes
 .. autoclass:: IMessage
    :show-inheritance:
 
-.. autoclass:: ICollaborator
-   :show-inheritance:
-
-   .. method:: get_pin()
-
-      Returns the PIN
-
-      :rtype: `Deferred`
-
-   .. method:: get_puk()
-
-      Returns a tuple with the PUK and PIN
-
-      :rtype: `Deferred`
-
-   .. method:: get_puk2()
-
-      Returns a tuple with the PUK2 and PIN
-
-      :rtype: `Deferred`
-
 .. autoclass:: IDialer
    :show-inheritance:
 

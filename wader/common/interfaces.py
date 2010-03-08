@@ -107,37 +107,6 @@ class IProfile(Interface):
         """Removes the profile"""
 
 
-class ICollaborator(Interface):
-    """
-    ICollaborator aids AuthStateMachine providing necessary PIN/PUK/Whatever
-
-    AuthStateMachine needs an object that provides ICollaborator in order to
-    work. ICollaborator abstracts the mechanism through wich the PIN/PUK is
-    obtained.
-    """
-
-    def get_pin():
-        """
-        Returns the PIN
-
-        :rtype: `Deferred`
-        """
-
-    def get_puk():
-        """
-        Returns a (puk, sim) tuple
-
-        :rtype: `Deferred`
-        """
-
-    def get_puk2():
-        """
-        Returns a (puk2, sim) tuple
-
-        :rtype: `Deferred`
-        """
-
-
 class IDialer(Interface):
 
     def close(arg):
