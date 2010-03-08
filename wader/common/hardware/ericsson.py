@@ -324,23 +324,23 @@ class EricssonWrapper(WCDMAWrapper):
             # no need to encode params in UCS2
             return super(EricssonWrapper, self).set_apn(apn)
 
-        def process_apns(apns):
+        def process_apns(apns, the_apn):
             state = self.state_dict
             for _index, _apn in apns:
-                if apn == _apn:
+                if _apn == the_apn:
                     state['conn_id'] = _index
                     return
 
-            max_cid = max([idx for idx, apn in apns])
+            max_cid = max([idx for idx, _apn in apns])
             conn_id = state['conn_id'] = max_cid + 1
-            args = tuple([conn_id] + map(pack_ucs2_bytes, ["IP", apn]))
+            args = tuple([conn_id] + map(pack_ucs2_bytes, ["IP", the_apn]))
             cmd = ATCmd('AT+CGDCONT=%d,"%s","%s"' % args, name='set_apn')
             d = self.queue_at_cmd(cmd)
             d.addCallback(lambda response: response[0].group('resp'))
             return d
 
         d = self.get_apns()
-        d.addCallback(process_apns)
+        d.addCallback(process_apns, apn)
         d.addErrback(log.err)
         return d
 
