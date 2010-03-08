@@ -25,7 +25,6 @@ from gobject import timeout_add_seconds, source_remove
 import dbus
 from dbus.service import Object, BusName, method, signal
 from zope.interface import implements
-from twisted.internet import defer, reactor
 from twisted.python import log
 
 from wader.common._dbus import DBusExporterHelper
@@ -33,6 +32,7 @@ import wader.common.consts as consts
 from wader.common.interfaces import IDialer
 from wader.common.oal import get_os_object
 from wader.common.utils import convert_int_to_ip
+
 
 CONFIG_DELAY = 3
 SECRETS_TIMEOUT = 3
@@ -284,34 +284,10 @@ class DialerManager(Object, DBusExporterHelper):
         self._client_count += 1
         return consts.WADER_DIALUP_BASE % self._client_count
 
-    def configure_radio_parameters(self, device_opath, conf):
-        """Configures ``device_opath`` using ``conf``"""
-        if not all([conf.band, conf.network_type]):
-            return defer.succeed(True)
-
-        plugin = self.ctrl.hm.clients[device_opath]
-
-        deferred = defer.Deferred()
-
-        if conf.band is not None and conf.network_type is None:
-            d = plugin.sconn.set_band(conf.band)
-        elif conf.band is None and conf.network_type is not None:
-            d = plugin.sconn.set_network_mode(conf.network_type)
-        else: # conf.band != None and conf.network_type != None
-            d = plugin.sconn.set_band(conf.band)
-            d.addCallback(lambda _:
-                    plugin.sconn.set_network_mode(conf.network_type))
-
-        d.addCallback(lambda _:
-                reactor.callLater(CONFIG_DELAY, deferred.callback, True))
-
-        return deferred
-
     def activate_connection(self, profile_opath, device_opath):
         """
         Start a connection with device ``device_opath`` using ``profile_opath``
         """
-        deferred = defer.Deferred()
         conf = DialerConf(profile_opath)
         opath = self.get_next_opath()
         dialer = self.get_dialer(device_opath, opath)
@@ -323,20 +299,12 @@ class DialerManager(Object, DBusExporterHelper):
             self.connections[opath] = dialer
             if device_opath in self.connection_attempts:
                 self.connection_attempts.pop(device_opath)
-            deferred.callback(opath)
+            return opath
 
-        def after_configuring_device_connect():
-            d = dialer.configure(conf)
-            d.addCallback(lambda ign: dialer.connect())
-            d.addCallback(start_traffic_monitoring)
-
-        if dialer.__class__.__name__ == 'NMDialer':
-            after_configuring_device_connect()
-        else:
-            d = self.configure_radio_parameters(device_opath, conf)
-            d.addCallback(lambda ign: reactor.callLater(CONFIG_DELAY,
-                                            after_configuring_device_connect))
-        return deferred
+        d = dialer.configure(conf)
+        d.addCallback(lambda ign: dialer.connect())
+        d.addCallback(start_traffic_monitoring)
+        return d
 
     def deactivate_connection(self, device_opath):
         """Stops connection of device ``device_opath``"""
