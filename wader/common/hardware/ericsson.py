@@ -331,7 +331,8 @@ class EricssonWrapper(WCDMAWrapper):
                     state['conn_id'] = _index
                     return
 
-            conn_id = state['conn_id'] = len(apns) + 1
+            max_cid = max([idx for idx, apn in apns])
+            conn_id = state['conn_id'] = max_cid + 1
             args = tuple([conn_id] + map(pack_ucs2_bytes, ["IP", apn]))
             cmd = ATCmd('AT+CGDCONT=%d,"%s","%s"' % args, name='set_apn')
             d = self.queue_at_cmd(cmd)

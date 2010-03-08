@@ -688,7 +688,8 @@ class WCDMAWrapper(WCDMAProtocol):
                     state['conn_id'] = _index
                     return
 
-            state['conn_id'] = len(apns) + 1
+            max_cid = max([idx for idx, apn in apns])
+            state['conn_id'] = max_cid + 1
             d = super(WCDMAWrapper, self).set_apn(state['conn_id'], apn)
             d.addCallback(lambda response: response[0].group('resp'))
             return d
