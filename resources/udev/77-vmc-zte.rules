@@ -25,6 +25,12 @@ ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0052", ENV{.MM_USBIFNUM}=="03", ENV{
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0052", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0063", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0063", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+# K3570-Z
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1008", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1008", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+# K3571-Z
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1010", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1010", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # K3765-Z
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2002", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2002", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
