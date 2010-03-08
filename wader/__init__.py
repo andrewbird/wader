@@ -17,5 +17,5 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # setup version
-from wader._version import version
-__version__ = version.short()
+from wader.common.consts import APP_VERSION
+version = tuple(map(int, APP_VERSION.split('.')))
