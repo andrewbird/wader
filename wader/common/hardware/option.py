@@ -353,7 +353,8 @@ class OptionHSOWrapper(OptionWrapper):
 
     def _get_ip4_config(self):
         """Returns the ip4 config on a HSO device"""
-        cmd = ATCmd('AT_OWANDATA=1', name='get_ip4_config')
+        conn_id = self.state_dict['conn_id']
+        cmd = ATCmd('AT_OWANDATA=%d' % conn_id, name='get_ip4_config')
         d = self.queue_at_cmd(cmd)
 
         def _get_ip4_config_cb(resp):
