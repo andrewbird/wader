@@ -19,7 +19,6 @@
 Classes that mediate access to the secrets. This is done through the
 :mod:`~wader.common.keyring` module.
 """
-
 from wader.common import keyring
 
 
@@ -30,10 +29,10 @@ class ProfileSecrets(object):
     I provide a uniform API to interact with the different keyrings.
     """
 
-    def __init__(self, connection, base_gpath):
+    def __init__(self, connection, manager):
         self.connection = connection
         self.uuid = connection.get_settings()['connection']['uuid']
-        self.manager = keyring.get_keyring_manager(base_gpath)
+        self.manager = manager
         self.temporal_secrets = {}
 
     def get(self, ask=True):
@@ -42,13 +41,11 @@ class ProfileSecrets(object):
 
         :param ask: Should we ask the user if the keyring is closed?
         """
-        if self.manager.is_open:
+        if self.is_open():
             try:
-                return self.manager.get_secret(self.uuid)
+                return self.manager.get_secrets(self.uuid)
             except keyring.KeyringNoMatchError:
                 # None signals that something went wrong
-                return None
-            else:
                 if self.temporal_secrets:
                     self.update(self.temporal_secrets, False)
                     return self.temporal_secrets
@@ -68,7 +65,7 @@ class ProfileSecrets(object):
         :param ask: Should we ask the user if the keyring is closed?
         """
         _id = self.connection.get_settings()['connection']['id']
-        if self.manager.is_open:
+        if self.is_open():
             self.manager.update_secret(self.uuid, _id, secrets)
         else:
             if ask:
@@ -85,14 +82,17 @@ class ProfileSecrets(object):
 
     def clean(self):
         """Cleans up the profile secrets"""
-        if self.manager.is_open:
+        if self.is_open():
             self.manager.delete_secret(self.uuid)
             self.manager.write()
 
         self.temporal_secrets = {}
 
-    def is_using_keyring(self):
-        return self.manager.is_open
+    def is_open(self):
+        return self.manager.is_open()
+
+    def is_new(self):
+        return self.manager.is_new()
 
     def register_open_callback(self, callback):
         """Registers ``callback`` to be executed when the keyring is open"""

@@ -38,6 +38,75 @@ class IMessage(Interface):
     index = Attribute("""Contact's index""")
 
 
+
+class IBackend(Interface):
+    """Interface that all the integration backends must implement"""
+
+    def get_dialer_klass(device):
+        """Returns the dialer class that ``device`` will use for dialing up"""
+
+    def get_profile_manager(arg=None):
+        """
+        Returns this backend's profile manager
+
+        ``arg`` is optional and is used in backends that require an
+        initialization argument.
+        """
+
+    def get_keyring():
+        """Returns an instance of the keyring manager for this platform"""
+
+    def should_be_used():
+        """Returns True if this backend should be used"""
+
+
+class IProfileManagerBackend(Interface):
+    """Interface that all the profile managers backends must implement"""
+
+    def add_profile(opts):
+        """Adds a profile with the given ``opts``"""
+
+    def get_profile_by_uuid(uuid):
+        """Returns the profile identified by ``uuid``"""
+
+    def get_profile_by_object_path(opath):
+        """Returns the profile with object path ``opath``"""
+
+    def get_profile_options_from_network(network):
+        """Returns the profile options out of ``network``"""
+
+    def get_profiles():
+        """Returns all the profiles in the system"""
+
+    def remove_profile(profile):
+        """Removes ``profile`` from the system"""
+
+    def update_profile(profile, opts):
+        """Updates ``profile`` with ``opts``"""
+
+
+class IProfile(Interface):
+    """Interface that all the profile objects must implement"""
+
+    def get_settings():
+        """Returns a dictionary with all the settings"""
+
+    def get_secrets():
+        """Returns the connection secrets"""
+
+    def get_timestamp():
+        """Returns the last time the profile was used"""
+
+    def is_good():
+        """Has this profile been successfully used?"""
+
+    def update(props):
+        """Updates the profile with ``props``"""
+
+    def remove():
+        """Removes the profile"""
+
+
 class ICollaborator(Interface):
     """
     ICollaborator aids AuthStateMachine providing necessary PIN/PUK/Whatever

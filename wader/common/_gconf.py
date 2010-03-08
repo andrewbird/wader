@@ -24,6 +24,7 @@ class GConfHelper(object):
     """I am the base class for gconf-backed conf system"""
 
     def __init__(self):
+        super(GConfHelper, self).__init__()
         self.client = gconf.client_get_default()
 
     def set_value(self, path, value):

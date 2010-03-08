@@ -51,28 +51,13 @@ NET_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Network'
 CRD_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Card'
 HSO_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Hso'
 
-NM_SERVICE = 'org.freedesktop.NetworkManager'
-NM_OBJPATH = '/org/freedesktop/NetworkManager'
-NM_INTFACE = 'org.freedesktop.NetworkManager'
-NM_DEVICE = NM_INTFACE + '.Device'
-NM_GSM_INTFACE = NM_DEVICE + '.Gsm'
-
-NM_USER_SETTINGS = 'org.freedesktop.NetworkManagerUserSettings'
-NM_SYSTEM_SETTINGS = 'org.freedesktop.NetworkManagerSettings'
-NM_SYSTEM_SETTINGS_OBJ = '/org/freedesktop/NetworkManagerSettings'
-NM_SYSTEM_SETTINGS_CONNECTION = NM_SYSTEM_SETTINGS + '.Connection'
-NM_SYSTEM_SETTINGS_SECRETS = NM_SYSTEM_SETTINGS_CONNECTION + '.Secrets'
-
-GCONF_PROFILES_BASE = '/system/networking/connections'
-
 STATUS_IDLE, STATUS_HOME, STATUS_SEARCHING = 0, 1, 2
 STATUS_DENIED, STATUS_UNKNOWN, STATUS_ROAMING = 3, 4, 5
 
 DEV_DISABLED, DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED = 0, 1, 2, 3
 
-NM_CONNECTED, NM_DISCONNECTED = 8, 3
-
-NM_PASSWD = 'passwd' # NM_SETTINGS_GSM_PASSWORD
+# Used by both w.c.h.option and w.c.h.icera
+HSO_NO_AUTH, HSO_PAP_AUTH, HSO_CHAP_AUTH = 0, 1, 2
 
 MM_MODEM_TYPE = {
     UInt32(1): 'GSM',
@@ -137,9 +122,6 @@ MM_IP_METHOD_DHCP = UInt32(2)
 
 MM_SYSTEM_SETTINGS_PATH = '/org/freedesktop/ModemManager/Settings'
 
-# HSO authentication
-HSO_NO_AUTH, HSO_PAP_AUTH, HSO_CHAP_AUTH = 0, 1, 2
-
 DATA_DIR = join('/usr', 'share', '%s' % APP_SLUG_NAME)
 WADER_DOC = join('/usr', 'share', 'doc', '%s' % APP_SLUG_NAME, 'guide')
 
@@ -148,14 +130,9 @@ RESOURCES_DIR = join(DATA_DIR, 'resources')
 TEMPLATES_DIR = join(RESOURCES_DIR, 'config')
 EXTRA_DIR = join(RESOURCES_DIR, 'extra')
 
-# network database
+# databases
 NETWORKS_DB = join(DATA_DIR, 'networks.db')
-
-# usage database
 USAGE_DB = join(DATA_DIR, 'usage.db')
-
-# TEMPLATES
-WVTEMPLATE = join(TEMPLATES_DIR, 'wvdial.conf.tpl')
 
 # plugins consts
 PLUGINS_DIR = join(DATA_DIR, 'plugins')

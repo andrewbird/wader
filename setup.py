@@ -31,7 +31,7 @@ from setuptools import setup
 from wader.common.consts import (APP_VERSION, APP_NAME,
                                  APP_SLUG_NAME)
 
-DATA_DIR = '/usr/share/%s'  % APP_SLUG_NAME
+DATA_DIR = '/usr/share/%s' % APP_SLUG_NAME
 BIN_DIR = '/usr/bin'
 RESOURCES = join(DATA_DIR, 'resources')
 DBUS_SYSTEMD = '/etc/dbus-1/system.d'
@@ -40,8 +40,10 @@ UDEV_RULESD = '/etc/udev/rules.d'
 
 FDI_THIRDPARTY = '/usr/share/hal/fdi/information/20thirdparty'
 
+
 def list_files(path, exclude=None):
     result = []
+
     def walk_callback(arg, directory, files):
         for ext in ['.svn', '.git']:
             if ext in files:
@@ -83,7 +85,7 @@ elif sys.platform == 'darwin':
     ext_modules.append(osxserialports)
 
 packages = [
-    'wader', 'wader.common', 'wader.common.oses', 'wader.common.dialers',
+    'wader', 'wader.common', 'wader.common.oses', 'wader.common.backends',
     'wader.common.statem', 'wader.common.hardware', 'wader.contrib',
     'wader.test', 'wader.plugins'
 ]

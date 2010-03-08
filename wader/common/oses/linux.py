@@ -288,6 +288,13 @@ class HardwareManager(object):
 
         return dport, cport
 
+    def _get_hso_device(self, sysfs_path):
+        for device in self.gudev_client.query_by_subsystem("net"):
+            if device.get_sysfs_path().startswith(sysfs_path):
+                return device.get_property("INTERFACE")
+
+        raise ValueError("Cannot find hso device for device %s" % sysfs_path)
+
     def _get_device_from_info(self, sysfs_path, info):
         """Returns a `DevicePlugin` out of ``info``"""
         # order the ports before probing
@@ -320,12 +327,10 @@ class HardwareManager(object):
             ports_need_probe = True
             if plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'hso':
                 # set DBus properties (Modem.Gsm.Hso interface)
-                #net_device = self._get_network_device(root_udi, context)
-                #hso_props['NetworkDevice'] = net_device
                 plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
                                     consts.MM_IP_METHOD_STATIC)
-                # XXX: Fix HSO Device
-                plugin.set_property(consts.MDM_INTFACE, 'Device', 'hso0')
+                hso_device = self._get_hso_device(sysfs_path)
+                plugin.set_property(consts.MDM_INTFACE, 'Device', hso_device)
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
 

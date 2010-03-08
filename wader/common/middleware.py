@@ -30,7 +30,7 @@ from twisted.python import log
 from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
-from wader.common.consts import (CRD_INTFACE, MM_NETWORK_BAND_ANY,
+from wader.common.consts import (MDM_INTFACE, CRD_INTFACE, MM_NETWORK_BAND_ANY,
                                  DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
@@ -888,8 +888,14 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _check_initted_device(self, result):
         """
-        Upon successful auth over DBus I'll check if the device was initted
+        To be executed after successful authentication over DBus
+
+        I will check if the device was really initted and will set
+        the UnlockRequired property to ''. If an auth was performed, I will
+        delay the rest of the initialization process some seconds (15) so
+        the device can settle.
         """
+        self.device.set_property(MDM_INTFACE, 'UnlockRequired', '')
         if self.device.status == DEV_AUTHENTICATED:
             log.msg("device was already initted, just returning orig result")
             return result

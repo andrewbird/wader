@@ -32,7 +32,6 @@ from wader.common._dbus import DBusExporterHelper
 import wader.common.consts as consts
 from wader.common.interfaces import IDialer
 from wader.common.oal import get_os_object
-from wader.common.runtime import nm07_present
 from wader.common.utils import convert_int_to_ip
 
 CONFIG_DELAY = 3
@@ -70,56 +69,38 @@ class DialerConf(object):
         return self.__repr__()
 
     def _get_profile_secrets(self, profile):
-        tag, hints, ask = 'gsm', [consts.NM_PASSWD], False
-        resp = profile.GetSecrets(tag, hints, ask, timeout=SECRETS_TIMEOUT,
-                             dbus_interface=consts.NM_SYSTEM_SETTINGS_SECRETS)
-
+        resp = profile.GetSecrets('gsm', ['password'], False,
+                                  timeout=SECRETS_TIMEOUT)
         if not resp:
             # if we don't get secrets without asking, lets try asking
-            resp = profile.GetSecrets(tag, hints, True,
-                    dbus_interface=consts.NM_SYSTEM_SETTINGS_SECRETS)
+            resp = profile.GetSecrets('gsm', ['password'], True,
+                                      timeout=SECRETS_TIMEOUT)
 
-        if consts.NM_PASSWD in resp[tag]:
-            return resp[tag][consts.NM_PASSWD]
+        return resp['gsm']['passwd']
 
     def _from_dbus_path(self, opath):
         profile = dbus.SystemBus().get_object(consts.WADER_PROFILES_SERVICE,
                                               opath)
-        props = profile.GetSettings(
-                       dbus_interface=consts.NM_SYSTEM_SETTINGS_CONNECTION)
+        props = profile.GetSettings()
 
         self.uuid = props['connection']['uuid']
         self.apn = props['gsm']['apn']
-        try:
-            self.username = props['gsm']['username']
-        except KeyError:
-            log.err("no username in profile, asumming '*' can be used")
-            self.username = '*'
+        self.username = props['gsm'].get('username', '*')
+        self.autoconnect = props['connection'].get('autoconnect', False)
+        self.band = props['gsm'].get('band')
+        self.network_type = props['gsm'].get('network-type')
 
-        if 'autoconnect' in props['connection']:
-            self.autoconnect = props['connection']['autoconnect']
-        if 'band' in props['gsm']:
-            self.band = props['gsm']['band']
-        if 'network-type' in props['gsm']:
-            self.network_type = props['gsm']['network-type']
-
-        if 'ipv4' in props:
-            self.staticdns = props['ipv4'].get('ignore-auto-dns', False)
-            if self.staticdns:
-                if len(props['ipv4']['dns']):
-                    dns1 = props['ipv4']['dns'][0]
-                    self.dns1 = convert_int_to_ip(dns1)
-                if len(props['ipv4']['dns']) > 1:
-                    dns2 = props['ipv4']['dns'][1]
-                    self.dns2 = convert_int_to_ip(dns2)
-        else:
-            self.staticdns = False
+        self.staticdns = props['ipv4'].get('ignore-auto-dns', False)
+        if props['ipv4'].get('dns'):
+            dns1 = props['ipv4']['dns'][0]
+            self.dns1 = convert_int_to_ip(dns1)
+            if len(props['ipv4']['dns']) > 1:
+                dns2 = props['ipv4']['dns'][1]
+                self.dns2 = convert_int_to_ip(dns2)
 
         # get authentication options
-        if 'ppp' in props:
-            # if refuse-{ch,p}ap is not present it means we will use it!
-            self.refuse_pap = props['ppp'].get('refuse-pap', False)
-            self.refuse_chap = props['ppp'].get('refuse-chap', False)
+        self.refuse_pap = props['ppp'].get('refuse-pap', True)
+        self.refuse_chap = props['ppp'].get('refuse-chap', True)
 
         # get the secrets
         try:
@@ -292,20 +273,11 @@ class DialerManager(Object, DBusExporterHelper):
         :param dev_opath: DBus object path of the device to use
         :param opath: DBus object path of the dialer
         """
-        from wader.common.dialers.wvdial import WVDialDialer
-        from wader.common.dialers.hsolink import HSODialer
-        from wader.common.dialers.nm_dialer import NMDialer
+        from wader.common.backends import get_backend
 
         device = self.ctrl.hm.clients[dev_opath]
-        if device.dialer == 'hso_native':
-            klass = HSODialer
-        elif nm07_present():
-            klass = NMDialer
-        else:
-            # NM 0.6.X
-            klass = HSODialer if device.dialer == 'hso' else WVDialDialer
-
-        return klass(device, opath, ctrl=self.ctrl)
+        dialer_klass = get_backend().get_dialer_klass(device)
+        return dialer_klass(device, opath, ctrl=self.ctrl)
 
     def get_next_opath(self):
         """Returns the next free object path"""
