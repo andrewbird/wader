@@ -326,23 +326,29 @@ class HardwareManager(object):
             # now get the ports
             ports_need_probe = True
             if plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'hso':
-                # set DBus properties (Modem.Gsm.Hso interface)
-                plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
-                                    consts.MM_IP_METHOD_STATIC)
-                hso_device = self._get_hso_device(sysfs_path)
-                plugin.set_property(consts.MDM_INTFACE, 'Device', hso_device)
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
 
             elif plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'cdc':
                 # MBM device
+                # XXX: Not all CDC devices support DHCP, to override see
+                #      plugin attribute 'ipmethod'
+                # XXX: Also need to support Ericsson devices via 'hso' dialer
+                #      so that we can use the plain backend. At least F3507G
+                #      supports a get_ip4_config() style AT command to get
+                #      network info, else we need to implement a DHCP client
                 plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
                                     consts.MM_IP_METHOD_DHCP)
 
-            if hasattr(plugin, 'ipmethod'):
-                # allows us to specify a method in a driver independant way
-                plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
-                                    plugin.ipmethod)
+            if plugin.dialer in 'hso':
+                # set DBus properties (Modem.Gsm.Hso interface)
+                hso_device = self._get_hso_device(sysfs_path)
+                plugin.set_property(consts.MDM_INTFACE, 'Device', hso_device)
+
+                if hasattr(plugin, 'ipmethod'):
+                    # allows us to specify a method in a driver independant way
+                    plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
+                                        plugin.ipmethod)
 
             # if this two properties are present, use them right away and
             # do not probe

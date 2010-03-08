@@ -34,7 +34,7 @@ class ZTEK3805(IceraWCDMADevicePlugin):
         'ID_MODEL_ID': [0x1003],
     }
 
-    dialer = 'hso_native'
+    dialer = 'hso'
     ipmethod = MM_IP_METHOD_STATIC
 
 

@@ -42,8 +42,6 @@ class OptionK3760(OptionHSOWCDMADevicePlugin):
     author = u"Pablo Martí"
     custom = OptionK3760Customizer()
 
-    dialer = 'hso'
-
     __remote_name__ = "GlobeTrotter HSUPA Modem"
 
     __properties__ = {

@@ -31,7 +31,6 @@ class OptionGTM378(OptionHSOWCDMADevicePlugin):
     name = "Option GT M378"
     version = "0.1"
     author = "Ulf Michel"
-    dialer = 'hso'
 
     __remote_name__ = 'GTM378'
 

@@ -16,10 +16,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-# Note: For this device to be identified by the OS the following two
-# prerequisties must be statisfied:
-# Kernel module 'hso' must be installed
-# Option storage flipping and package 'ozerocdoff' must be installed
 from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
 
 
@@ -30,7 +26,6 @@ class OptionE3730(OptionHSOWCDMADevicePlugin):
     name = "Option E3730"
     version = "0.1"
     author = "Andrew Bird"
-    dialer = 'hso'
 
     __remote_name__ = 'GlobeTrotter HSUPA Modem'
 
@@ -38,5 +33,6 @@ class OptionE3730(OptionHSOWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x0af0],
         'ID_MODEL_ID': [0x7301],
     }
+
 
 optione3730 = OptionE3730()

@@ -679,7 +679,7 @@ class PlainBackend(object):
         return True
 
     def get_dialer_klass(self, device):
-        if device.dialer in ['hso_native', 'hso']:
+        if device.dialer in ['hso']:
             return HSODialer
 
         return WVDialDialer

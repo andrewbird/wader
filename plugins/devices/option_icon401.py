@@ -25,8 +25,6 @@ class OptionIcon401(OptionHSOWCDMADevicePlugin):
     version = "0.1"
     author = "Pablo Marti"
 
-    dialer = 'hso'
-
     __remote_name__ = "GlobeTrotter HSUPA Modem"
 
     __properties__ = {

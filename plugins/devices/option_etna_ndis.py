@@ -65,8 +65,6 @@ class OptionEtnaNDIS(OptionHSOWCDMADevicePlugin):
     author = u"Andrew Bird"
     custom = OptionEtnaNDISCustomizer()
 
-    dialer = 'hso'
-
     __remote_name__ = "GlobeTrotter HSUPA Modem"
 
     __properties__ = {
@@ -76,4 +74,3 @@ class OptionEtnaNDIS(OptionHSOWCDMADevicePlugin):
 
 
 optionetnandis = OptionEtnaNDIS()
-

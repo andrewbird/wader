@@ -466,6 +466,8 @@ class OptionHSOWCDMADevicePlugin(OptionWCDMADevicePlugin):
     """DevicePlugin for Option HSO devices"""
 
     custom = OptionHSOWCDMACustomizer()
+    dialer = 'hso'
+    ipmethod = consts.MM_IP_METHOD_STATIC
 
     def __init__(self):
         super(OptionHSOWCDMADevicePlugin, self).__init__()
