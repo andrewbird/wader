@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2009  Vodafone España, S.A.
+# Copyright (C) 2006-2010  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -19,6 +19,7 @@
 
 from wader.common.hardware.huawei import HuaweiWCDMADevicePlugin
 
+from wader.plugins.huawei_e160b import HuaweiE160B
 from wader.plugins.huawei_e169 import HuaweiE169
 from wader.plugins.huawei_e17X import HuaweiE17X
 from wader.plugins.huawei_e180 import HuaweiE180
@@ -63,12 +64,12 @@ class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
         self.mapping = {
             'E870': HuaweiE870,      # Expresscards
 
-            'E17X': HuaweiE17X,      # USB Sticks
+            'E160B': HuaweiE160B,    # USB Sticks
+            'E17X': HuaweiE17X,
             'E180': HuaweiE180,
             'E220': HuaweiE220,
             'E270': HuaweiE270,
             'E272': HuaweiE272,
-            'E160X': HuaweiK3565,
             'K3565': HuaweiK3565,
 
             'B970': HuaweiB970,      # Routers
