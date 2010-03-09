@@ -10,8 +10,7 @@ def get_backend():
     if __backend is not None:
         return __backend
 
-    #for backend in [nm_backend, plain_backend]:
-    for backend in [plain_backend]:
+    for backend in [nm_backend, plain_backend]:
         if backend.should_be_used():
             __backend = backend
             return __backend
