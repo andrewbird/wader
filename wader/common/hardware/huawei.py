@@ -421,6 +421,12 @@ class HuaweiSIMClass(SIMBaseClass):
     def __init__(self, sconn):
         super(HuaweiSIMClass, self).__init__(sconn)
 
+    def setup_sms(self):
+        # Notification when a SMS arrives...
+        self.sconn.set_sms_indication(1, 1, 0, 1, 0)
+        # set PDU mode
+        self.sconn.set_sms_format(0)
+
     def initialize(self, set_encoding=True):
 
         def at_curc_eb(failure):

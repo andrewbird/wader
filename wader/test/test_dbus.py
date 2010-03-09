@@ -954,7 +954,7 @@ class DBusTestCase(unittest.TestCase):
         # AT string needs to be changed. The reason the test is so simple
         # is because there's no GetIndication command in the spec, and I
         # didn't feel like coordinating an extension with the MM guys.
-        self.device.SetIndication(2, 1, 0, 1, 0)
+        # self.device.SetIndication(2, 1, 0, 1, 0)
 
     def test_SmsSetSmsc(self):
         """Test for Sms.SetSmsc"""

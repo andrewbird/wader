@@ -50,7 +50,7 @@ class SIMBaseClass(object):
         self.charset = charset
         return charset
 
-    def _setup_sms(self):
+    def setup_sms(self):
         # Notification when a SMS arrives...
         self.sconn.set_sms_indication(2, 1, 0, 1, 0)
         # set PDU mode
@@ -69,7 +69,7 @@ class SIMBaseClass(object):
         if set_encoding:
             self._setup_encoding()
 
-        self._setup_sms()
+        self.setup_sms()
 
         deferred = defer.Deferred()
 
