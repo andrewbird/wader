@@ -329,14 +329,18 @@ class HardwareManager(object):
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
 
-            elif plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'cdc':
+            elif plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'cdc_acm':
                 # MBM device
                 # XXX: Not all CDC devices support DHCP, to override see
                 #      plugin attribute 'ipmethod'
                 # XXX: Also need to support Ericsson devices via 'hso' dialer
-                #      so that we can use the plain backend. At least F3507G
+                #      so that we can use the plain backend. At least F3607GW
                 #      supports a get_ip4_config() style AT command to get
                 #      network info, else we need to implement a DHCP client
+                # set DBus properties (Modem.Gsm.Hso interface)
+                hso_device = self._get_hso_device(sysfs_path)
+                plugin.set_property(consts.MDM_INTFACE, 'Device', hso_device)
+
                 plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
                                     consts.MM_IP_METHOD_DHCP)
 
