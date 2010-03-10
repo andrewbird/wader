@@ -190,10 +190,25 @@ class IceraWrapper(WCDMAWrapper):
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
+        # Note: Icera devices drop signal and network acquisition on bearer
+        #       preference set. This causes the connection sequence to take
+        #       7 secs instead of 2. So we test for current value and only
+        #       set if required. Perhaps a similar thing will happen on
+        #       band set, but as there are no bands defined for Icera at
+        #       the moment, the band set is a no-op.
         if mode not in self.custom.conn_dict:
             raise KeyError("Mode %s not found" % mode)
 
-        return self.send_at("AT%%IPSYS=%d" % self.custom.conn_dict[mode])
+        d = self.get_network_mode()
+
+        def get_network_mode_cb(_mode):
+            if _mode == mode:
+                return defer.succeed('OK')
+            else:
+                return self.send_at("AT%%IPSYS=%d" % self.custom.conn_dict[mode])
+
+        d.addCallback(get_network_mode_cb)
+        return d
 
     def get_ip4_config(self):
         """
