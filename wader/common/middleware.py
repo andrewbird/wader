@@ -383,7 +383,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """Returns the supported network modes"""
         modes = self.custom.conn_dict.keys()
         if MM_NETWORK_MODE_ANY in modes:
-            modes.pop(MM_NETWORK_BAND_ANY)
+            modes.pop(MM_NETWORK_MODE_ANY)
         # cast it to UInt32
         return defer.succeed(dbus.UInt32(sum(modes)))
 
