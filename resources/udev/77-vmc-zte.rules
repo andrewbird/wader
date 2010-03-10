@@ -37,7 +37,7 @@ ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2002", ENV{.MM_USBIFNUM}=="01", ENV{
 # K4505-Z
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0016", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0016", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 LABEL="vmc_zte_tty_end"
