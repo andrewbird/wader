@@ -37,6 +37,15 @@ def get_bands(bitwised_band):
     return [band for band in consts.MM_NETWORK_BANDS if band & bitwised_band]
 
 
+def get_network_modes(bitwised_mode):
+    """
+    Returns all the bitwised modes in ``bitwised_mode``
+
+    :rtype: list
+    """
+    return [mode for mode in consts.MM_NETWORK_MODES if mode & bitwised_mode]
+
+
 def rssi_to_percentage(rssi):
     """
     Converts ``rssi`` to a percentage value

@@ -32,7 +32,8 @@ from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
 from wader.common.consts import (MDM_INTFACE, CRD_INTFACE, MM_NETWORK_BAND_ANY,
-                                 DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED)
+                                 MM_NETWORK_MODE_ANY, DEV_AUTHENTICATED,
+                                 DEV_ENABLED, DEV_CONNECTED)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
@@ -218,7 +219,8 @@ class WCDMAWrapper(WCDMAProtocol):
         if MM_NETWORK_BAND_ANY in bands:
             bands.pop(MM_NETWORK_BAND_ANY)
 
-        return defer.succeed(sum(bands))
+        # cast it to UInt32
+        return defer.succeed(dbus.UInt32(sum(bands)))
 
     def get_card_model(self):
         """Returns the card model"""
@@ -379,7 +381,11 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_network_modes(self):
         """Returns the supported network modes"""
-        return defer.succeed(sorted(self.custom.conn_dict.keys()))
+        modes = self.custom.conn_dict.keys()
+        if MM_NETWORK_MODE_ANY in modes:
+            modes.pop(MM_NETWORK_BAND_ANY)
+        # cast it to UInt32
+        return defer.succeed(dbus.UInt32(sum(modes)))
 
     def get_network_names(self):
         """
@@ -754,14 +760,10 @@ class WCDMAWrapper(WCDMAProtocol):
     def init_properties(self):
         d = self.get_bands()
         d.addCallback(lambda bands:
-                # cast bands to UInt32
-                self.device.set_property(CRD_INTFACE, 'SupportedBands',
-                                         map(dbus.UInt32, bands)))
+                self.device.set_property(CRD_INTFACE, 'SupportedBands', bands))
         d.addCallback(lambda _: self.get_network_modes())
         d.addCallback(lambda modes:
-                # cast modes to UInt32
-                self.device.set_property(CRD_INTFACE, 'SupportedModes',
-                                         map(dbus.UInt32, modes)))
+                self.device.set_property(CRD_INTFACE, 'SupportedModes', modes))
         d.addCallback(lambda _: self.get_pin_status())
         d.addCallback(lambda active:
                 self.device.set_property(CRD_INTFACE, 'PinEnabled',
