@@ -336,7 +336,7 @@ class DBusTestCase(unittest.TestCase):
         if not modes:
             raise unittest.SkipTest("Cannot be tested")
 
-        self.failUnlessIn(MM_NETWORK_MODE_ANY, get_network_modes(modes))
+        self.failIfIn(MM_NETWORK_MODE_ANY, get_network_modes(modes))
 
     # org.freedesktop.ModemManager.Modem.Gsm.Contacts tests
     def test_ContactsAdd(self):
