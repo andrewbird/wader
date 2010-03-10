@@ -40,6 +40,9 @@ import gconf
 from twisted.internet import defer
 from twisted.trial import unittest
 
+from wader.common.utils import get_bands, get_network_modes
+from wader.common.consts import MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY
+
 MM_SERVICE = 'org.freedesktop.ModemManager'
 MM_OBJPATH = '/org/freedesktop/ModemManager'
 MM_INTFACE = MM_SERVICE
@@ -50,50 +53,6 @@ CRD_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Card'
 CTS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Contacts'
 SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.SMS'
 NET_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Network'
-
-MM_NETWORK_BAND_UNKNOWN = 0x0  # Unknown or invalid band
-MM_NETWORK_BAND_ANY = 0x1      # ANY
-MM_NETWORK_BAND_EGSM = 0x2     # 900 MHz
-MM_NETWORK_BAND_DCS = 0x4      # 1800 MHz
-MM_NETWORK_BAND_PCS = 0x8      # 1900 MHz
-MM_NETWORK_BAND_G850 = 0x10    #  850 MHz
-MM_NETWORK_BAND_U2100 = 0x20   # WCDMA 2100 MHz
-MM_NETWORK_BAND_U1700 = 0x40   # WCDMA 3GPP UMTS1800 MHz
-MM_NETWORK_BAND_17IV = 0x80    # WCDMA 3GPP AWS 1700/2100 MHz
-MM_NETWORK_BAND_U800 = 0x100   # WCDMA 3GPP UMTS800 MHz
-MM_NETWORK_BAND_U850 = 0x200   # WCDMA 3GPP UMTS850 MHz
-MM_NETWORK_BAND_U900 = 0x400   # WCDMA 3GPP UMTS900 MHz
-MM_NETWORK_BAND_U17IX = 0x800  # WCDMA 3GPP UMTS MHz
-MM_NETWORK_BAND_U1900 = 0x1000 # WCDMA 3GPP UMTS MHz
-
-MM_NETWORK_BANDS = [
-    MM_NETWORK_BAND_UNKNOWN,
-    MM_NETWORK_BAND_ANY,
-    MM_NETWORK_BAND_EGSM,
-    MM_NETWORK_BAND_DCS,
-    MM_NETWORK_BAND_PCS,
-    MM_NETWORK_BAND_G850,
-    MM_NETWORK_BAND_U2100,
-    MM_NETWORK_BAND_U1700,
-    MM_NETWORK_BAND_17IV,
-    MM_NETWORK_BAND_U800,
-    MM_NETWORK_BAND_U850,
-    MM_NETWORK_BAND_U900,
-    MM_NETWORK_BAND_U17IX,
-    MM_NETWORK_BAND_U1900]
-
-MM_NETWORK_MODE_UNKNOWN = 0x00000000
-MM_NETWORK_MODE_ANY = 0x00000001
-MM_NETWORK_MODE_GPRS = 0x00000002
-MM_NETWORK_MODE_EDGE = 0x00000004
-MM_NETWORK_MODE_UMTS = 0x00000008
-MM_NETWORK_MODE_HSDPA = 0x00000010
-MM_NETWORK_MODE_2G_PREFERRED = 0x00000020
-MM_NETWORK_MODE_3G_PREFERRED = 0x00000040
-MM_NETWORK_MODE_2G_ONLY = 0x00000080
-MM_NETWORK_MODE_3G_ONLY = 0x00000100
-MM_NETWORK_MODE_HSUPA = 0x00000200
-MM_NETWORK_MODE_HSPA = 0x00000400
 
 # should the extensions introduced by the Wader project be tested?
 TEST_WADER_EXTENSIONS = True
@@ -109,11 +68,6 @@ else:
 
     def get_dbus_error(e):
         return e.message
-
-
-def get_bands(bitwised_band):
-    """Returns all the bitwised bands in ``bitwised_band``"""
-    return [band for band in MM_NETWORK_BANDS if band & bitwised_band]
 
 
 class Config(object):
@@ -382,7 +336,7 @@ class DBusTestCase(unittest.TestCase):
         if not modes:
             raise unittest.SkipTest("Cannot be tested")
 
-        self.failUnlessIn(MM_NETWORK_MODE_ANY, modes)
+        self.failUnlessIn(MM_NETWORK_MODE_ANY, get_network_modes(modes))
 
     # org.freedesktop.ModemManager.Modem.Gsm.Contacts tests
     def test_ContactsAdd(self):
@@ -615,6 +569,8 @@ class DBusTestCase(unittest.TestCase):
                                 dbus_interface=dbus.PROPERTIES_IFACE)
         if not modes:
             raise unittest.SkipTest("Cannot be tested")
+
+        modes = get_network_modes(modes)
 
         while modes:
             mode = modes.pop()
