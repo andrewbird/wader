@@ -63,8 +63,6 @@ class SimpleStateMachine(Modal):
             log.msg("Simple SM: begin exited")
 
         def do_next(self):
-            # XXX: make sure that Connect.Simple works with nm-applet
-            # NM might assume that the device is powered off?
             self.transition_to('check_pin')
 
     class check_pin(mode):
