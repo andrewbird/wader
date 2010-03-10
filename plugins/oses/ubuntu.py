@@ -29,6 +29,9 @@ from wader.common.utils import save_file, get_file_data, create_dns_lock
 from wader.common.consts import APP_NAME, WADER_DNS_LOCK
 
 
+resolvconf_present = exists('/sbin/resolvconf')
+
+
 dns_template = """
 nameserver\t%s
 nameserver\t%s
@@ -39,7 +42,6 @@ class UbuntuBasedDistro(LinuxPlugin):
     """A plugin to be used on Ubuntu systems"""
 
     def add_dns_info(self, (dns1, dns2), iface=None):
-        from wader.common.runtime import resolvconf_present
         if not resolvconf_present:
             # resolvconf package is not present, we will resort to
             # using pppd's ip-{up,down}.d infrastructure. 95vmc-up
@@ -54,7 +56,6 @@ class UbuntuBasedDistro(LinuxPlugin):
                                    args, reactor=reactor)
 
     def delete_dns_info(self, dnsinfo, iface=None):
-        from wader.common.runtime import resolvconf_present
         if not resolvconf_present:
             # 95vmc-down will handle this for us
             return
