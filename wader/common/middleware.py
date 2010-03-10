@@ -25,6 +25,7 @@ N-tier folks can see this as a Business Logic class.
 
 from collections import deque
 
+import dbus
 import serial
 from twisted.python import log
 from twisted.internet import defer, reactor
@@ -753,10 +754,14 @@ class WCDMAWrapper(WCDMAProtocol):
     def init_properties(self):
         d = self.get_bands()
         d.addCallback(lambda bands:
-                self.device.set_property(CRD_INTFACE, 'SupportedBands', bands))
+                # cast bands to UInt32
+                self.device.set_property(CRD_INTFACE, 'SupportedBands',
+                                         map(dbus.UInt32, bands)))
         d.addCallback(lambda _: self.get_network_modes())
         d.addCallback(lambda modes:
-                self.device.set_property(CRD_INTFACE, 'SupportedModes', modes))
+                # cast modes to UInt32
+                self.device.set_property(CRD_INTFACE, 'SupportedModes',
+                                         map(dbus.UInt32, modes)))
         d.addCallback(lambda _: self.get_pin_status())
         d.addCallback(lambda active:
                 self.device.set_property(CRD_INTFACE, 'PinEnabled',
