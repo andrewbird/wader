@@ -305,12 +305,3 @@ wrong. Instructions to execute it::
 Do not forget the :option:`-r gtk2` switch, it will pick the `gtk2` reactor
 to run the tests, otherwise all the glib-dependent tests, like the
 :meth:`DBus` ones will fail.
-
-.. note::
-
-   Since Wader migrated to a DBus architecture, the tests related to the
-   device or DBus no longer work. We think that this was introduced in
-   trial, the tool that the twisted framework provides to run unit tests. So
-   for now those tests are broken, the goal is to bring them back to life
-   around the 0.4.0 release.
-
