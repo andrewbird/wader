@@ -33,6 +33,15 @@ class SimpleStateMachine(Modal):
     def __init__(self, device, settings):
         self.device = device
         self.sconn = device.sconn
+
+        # XXX: Currently, as of NM 0.8, nm-applet always passes
+        #      'network_mode'=ANY in ConnectSimple. We have to
+        #      remove it here or we stamp on the card setting
+        #      done from the user's profile
+        if 'network_mode' in settings:
+            log.msg("Simple SM:nm-applet sent us network mode %d"
+                        % settings['network_mode'])
+            del settings['network_mode']
         self.settings = settings
 
         self.deferred = defer.Deferred()
@@ -78,6 +87,7 @@ class SimpleStateMachine(Modal):
             # check the auth state, if its ready go to next state
             # otherwise try to auth with the provided pin, give it
             # some seconds to settle and go to next state
+
             def check_pin_cb(ignored, wait=False):
                 if not wait:
                     self.transition_to('register')
