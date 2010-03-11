@@ -15,11 +15,18 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""A simple wrapper to access the devices on a hassle-free way"""
+"""
+A simple wrapper to access the devices on a hassle-free way
+
+Note that it will not use async methods (for clarity's sake) and thus
+it will block. If you want to use it in async environments, you'll have
+to roll out your own wrapper.
+"""
 
 import dbus
 
 from wader.common import consts
+
 
 class ModemManager(object):
     """I provide an easy to use interface to interact with ModemManager"""
