@@ -287,6 +287,20 @@ returned by ``ActivateConnection`` to
 :meth:`~wader.common.dialer.DialerManager.DeactivateConnection`. This will
 deallocate all the resources allocated by ``ActivateConnection``.
 
+Interact via wader.common.modemmanager.ModemManager
+===================================================
+
+The :class:`wader.common.modemmanager.ModemManager` provides an easy to
+use interface to access the ModemManager DBus service with minimal fuss::
+
+    from wader.common.modemmanager import ModemManager
+
+    manager = ModemManager()
+    device = manager.get_devices()[0]
+    device.Enable(True)
+    print device.GetRegistrationInfo()
+
+
 Troubleshooting
 ===============
 
