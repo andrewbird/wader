@@ -34,12 +34,11 @@ Glossary
 
         __ http://www.freedesktop.org/wiki/Software/dbus
 
-    Hal
-        `Hardware abstraction layer`__, an interface between hardware and
-        software that abstracts differences between heterogeneous devices
-        and provides hints about their capabilities.
-
-        __ http://en.wikipedia.org/wiki/Mobile_Network_Code
+    udev
+        udev is the device manager for the Linux 2.6 kernel series. It is the
+        successor of devfs and hotplug, which means that it handles the /dev
+        directory and all user space actions when adding/removing devices,
+        including firmware load.
 
     UUID
         `Universally unique identifier`__.
