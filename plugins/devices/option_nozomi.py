@@ -33,4 +33,8 @@ class OptionNozomi(OptionWCDMADevicePlugin):
         'ID_MODEL_ID': [0xc],
     }
 
-option_nozomi = OptionNozomi()
+# device disabled in the udev transition as we couldn't find
+# a way to obtain its vendor and product ids cleanly. I'll
+# leave it commented in case someone decides to set up and
+# make it work.
+# option_nozomi = OptionNozomi()

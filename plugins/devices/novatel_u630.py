@@ -36,4 +36,8 @@ class NovatelU630(NovatelWCDMADevicePlugin):
     # Unfortunately it is not possible to switch the Second port from DM
     # to AT mode on the x6xx models, so we have to run with only one port
 
-novatelu630 = NovatelU630()
+# device disabled in the udev transition as we couldn't find
+# a way to obtain its vendor and product ids cleanly. I'll
+# leave it commented in case someone decides to set up and
+# make it work.
+# novatelu630 = NovatelU630()
