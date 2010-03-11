@@ -163,7 +163,7 @@ Sending a SMS can not be any easier::
     def sms_cb(indexes): print "SMS sent spanning", indexes
     def sms_eb(e): print "Error sending SMS", e
 
-    sms = Message("+34606575119", "hey dude")
+    sms = Message("+34612345678", "hey dude")
     device.Send(sms.to_dict(),
                 dbus_interface=consts.SMS_INTFACE,
                 reply_handler=sms_cb,
@@ -178,7 +178,7 @@ And sending an UCS2 encoded SMS can't get any easier either::
     def sms_cb(indexes): print "SMS sent spanning", indexes
     def sms_eb(e): print "Error sending SMS", e
 
-    sms = Message("+34606575119", "àèìòù")
+    sms = Message("+34612345678", "àèìòù")
     device.Send(sms.to_dict(),
                 dbus_interface=consts.SMS_INTFACE,
                 reply_handler=sms_cb,
@@ -203,7 +203,7 @@ And reading it again::
     method return sender=:1.54 -> dest=:1.58 reply_serial=2
        struct {
           uint32 1
-          string "Pablo"
+          string "Paul"
           string "+34545665655"
        }
 
@@ -221,7 +221,7 @@ Now lets add another contact and read all the contacts in the SIM card::
        array [
           struct {
              uint32 1
-             string "Pablo"
+             string "Paul"
              string "+34545665655"
           }
           struct {
@@ -300,6 +300,75 @@ use interface to access the ModemManager DBus service with minimal fuss::
     device.Enable(True)
     print device.GetRegistrationInfo()
 
+
+Sending a SMS
++++++++++++++
+
+Sending a SMS can not be any easier::
+
+    from wader.common.consts import SMS_INTFACE
+    from wader.common.modemmanager import ModemManager
+
+    manager = ModemManager()
+    device = manager.get_devices()[0]
+    device.Enable(True)
+
+    device.Send({'sender': '+34612345678', 'text': "hey dude"},
+                dbus_interface=SMS_INTFACE)
+
+And sending an UCS2 encoded SMS can't get any easier either::
+
+    from wader.common.consts import SMS_INTFACE
+    from wader.common.modemmanager import ModemManager
+
+    manager = ModemManager()
+    device = manager.get_devices()[0]
+    device.Enable(True)
+
+    device.Send({'sender': '+34612345678', 'text': "àèìòù"},
+                dbus_interface=SMS_INTFACE)
+
+Adding/Reading a Contact
+++++++++++++++++++++++++
+
+Adding a contact to the SIM and getting the index where it was stored::
+
+    from wader.common.consts import CTS_INTFACE
+    from wader.common.modemmanager import ModemManager
+
+    manager = ModemManager()
+    device = manager.get_devices()[0]
+    device.Enable(True)
+
+    # returns 1
+    print device.Add("Paul", "+34545665655",
+                     dbus_interface=CTS_INTFACE)
+
+And reading it again::
+
+    from wader.common.consts import CTS_INTFACE
+    from wader.common.modemmanager import ModemManager
+
+    manager = ModemManager()
+    device = manager.get_devices()[0]
+    device.Enable(True)
+
+    print device.Get(1, dbus_interface=CTS_INTFACE)
+
+Now lets add another contact and read all the contacts in the SIM card::
+
+    from wader.common.consts import CTS_INTFACE
+    from wader.common.modemmanager import ModemManager
+
+    manager = ModemManager()
+    device = manager.get_devices()[0]
+    device.Enable(True)
+
+    # returns 2
+    print device.Add("John", "+33546657784",
+                     dbus_interface=CTS_INTFACE)
+
+    print device.List(dbus_interface=CTS_INTFACE)
 
 Troubleshooting
 ===============
