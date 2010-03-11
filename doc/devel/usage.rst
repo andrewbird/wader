@@ -7,7 +7,7 @@ ModemManager API
 
 Wader is the first project, apart from :term:`ModemManager` itself, that
 implements :term:`ModemManager`'s API. This means that Wader can be
-seamlessly integrated with :term:`NetworkManager` 0.7.1+.
+seamlessly integrated with :term:`NetworkManager` 0.8+.
 
 Wader DBus overview
 ===================
@@ -19,10 +19,11 @@ automatically the first time you invoke the Wader service::
         /org/freedesktop/ModemManager org.freedesktop.ModemManager.EnumerateDevices
     method return sender=:1.193 -> dest=:1.189 reply_serial=2
        array [
-             object path "/org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial"
+          object path "/org/freedesktop/ModemManager/Devices/0"
+          object path "/org/freedesktop/ModemManager/Devices/1"
        ]
 
-Wader has found a Huawei E220 present in the system. The ``EnumerateDevices``
+Wader has found two devices present in the system. The ``EnumerateDevices``
 method call returns an array of object paths.
 
 The next operation should **always** be
@@ -30,7 +31,7 @@ The next operation should **always** be
 argument indicating whether the device should be enabled or not::
 
     dbus-send --system --dest=org.freedesktop.ModemManager --print-reply \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/1 \
         org.freedesktop.ModemManager.Modem.Enable boolean:true
     Error org.freedesktop.ModemManager.Modem.Gsm: SimPinRequired: \
         org.freedesktop.ModemManager.Error.PIN: org.freedesktop.ModemManager.Error.PIN:
@@ -41,7 +42,7 @@ the correct PIN/PUK. Had we been previously authenticated or PIN/PUK were not
 enabled, the method would not have returned anything::
 
     dbus-send --system --dest=org.freedesktop.ModemManager --print-reply \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/1 \
         org.freedesktop.ModemManager.Modem.Gsm.Card.SendPin string:0000
     method return sender=:1.193 -> dest=:1.191 reply_serial=2
 
@@ -57,15 +58,16 @@ with the device as you please.
 
     .. _device-specific interface: http://public.warp.es/wader/ticket/77
 
-And how do you obtain the UDIs of the devices then?
-+++++++++++++++++++++++++++++++++++++++++++++++++++
+And how do you obtain the object paths of the devices then?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Wader internally interacts with :term:`Hal` and requests the UDIs of all the
-devices that have modem capabilities. The command
-``FindDeviceByCapability("modem")`` returns the object paths of the devices
-tagged with the modem capability. Armed with this, Wader obtains all the
-serial ports associated with this device, and builds a ``DevicePlugin``
-out of it.
+Wader internally interacts with :term:`udev` and queries several subsystems
+in order to get possible devices in the system. The internal machinery will
+filter out all the uninteresting devices, and will set up and initialize
+the rest. This process includes finding all the serial ports that a device
+registers, identifying it (via vendor/product id match, or by its model
+name). Once all this is in place, Wader will build a ``DevicePlugin`` out
+of it.
 
 Wader will emit a ``DeviceAdded`` :term:`DBus` signal when a new 3G device
 has been added, and a ``DeviceRemoved`` signal when a 3G device has been
@@ -79,9 +81,9 @@ paths, one for each device found in the system::
         /org/freedesktop/ModemManager org.freedesktop.ModemManager.EnumerateDevices
     method return sender=:1.156 -> dest=:1.155 reply_serial=2
        array [
-          object path "/org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial"
-          object path "/org/freedesktop/Hal/devices/pci_1931_c"
-          object path "/org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial_0"
+          object path "/org/freedesktop/ModemManager/Devices/0"
+          object path "/org/freedesktop/ModemManager/Devices/1"
+          object path "/org/freedesktop/ModemManager/Devices/2"
        ]
 
 This is the response of ``EnumerateDevices`` with a Huawei E172, an E870 and an
@@ -104,7 +106,7 @@ devices themselves will register to its home network. Manually specifying
 a :term:`MNC` to connect to an arbitrary network is possible, though::
 
     dbus-send --type=method_call --print-reply --dest=org.freedesktop.ModemManager \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1001_HUAWEI_DEVICE \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Network.Register string:21401
     method return sender=:1.193 -> dest=:1.193 reply_serial=2
 
@@ -112,12 +114,12 @@ It is also possible to pass an empty string, and that will register to the
 home network::
 
     dbus-send --system --dest=org.freedesktop.ModemManager --print-reply \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Network.Register string:
     method return sender=:1.193 -> dest=:1.195 reply_serial=2
 
     dbus-send --system --dest=org.freedesktop.ModemManager --print-reply \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Network.GetRegistrationInfo
     method return sender=:1.193 -> dest=:1.196 reply_serial=2
        struct {
@@ -131,7 +133,7 @@ provider. If I try to connect to Telefonica's :term:`MNC` ``21407``, the
 operation will probably horribly fail::
 
     dbus-send --type=method_call --print-reply --dest=org.freedesktop.ModemManager \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1001_HUAWEI_DEVICE \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Network.Register string:21407
     method return sender=:1.193 -> dest=:1.197 reply_serial=2
 
@@ -188,7 +190,7 @@ Adding/Reading a Contact
 Adding a contact to the SIM and getting the index where it was stored::
 
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Contacts.Add string:Pablo string:+34545665655
     method return sender=:1.54 -> dest=:1.57 reply_serial=2
        uint32 1
@@ -196,7 +198,7 @@ Adding a contact to the SIM and getting the index where it was stored::
 And reading it again::
 
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Contacts.Get uint32:1
     method return sender=:1.54 -> dest=:1.58 reply_serial=2
        struct {
@@ -208,12 +210,12 @@ And reading it again::
 Now lets add another contact and read all the contacts in the SIM card::
 
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Contacts.Add string:John string:+33546657784
     method return sender=:1.54 -> dest=:1.60 reply_serial=2
        uint32 2
     dbus-send --system --print-reply --dest=org.freedesktop.ModemManager \
-        /org/freedesktop/Hal/devices/usb_device_12d1_1003_noserial \
+        /org/freedesktop/ModemManager/Devices/0 \
         org.freedesktop.ModemManager.Modem.Gsm.Contacts.List
     method return sender=:1.54 -> dest=:1.61 reply_serial=2
        array [
@@ -232,19 +234,20 @@ Now lets add another contact and read all the contacts in the SIM card::
 Data calls
 ==========
 
-Connecting to the Internet just requires knowing the UDI of a device with
-modem capabilities and a profile. While the former is obtained through
-a ``FindDeviceByCapability("modem")``, the latter requires to create it
-explicitly. Be it through Wader or :term:`NetworkManager`, a profile is
-required.
+Connecting to the Internet just requires knowing the object path of a
+device with dialup capabilities and a profile. While the former is
+obtained through a ``EnumerateDevices``, the latter requires to create it
+explicitly. Be it through Wader (plain backend) or :term:`NetworkManager`
+(NM backend), a profile is required to connect.
 
 Profile creation
 ++++++++++++++++
 
 Profiles in Wader, known as connections in :term:`NetworkManager` lingo, are
-stored using the `GConf`_ configuration system. When a new profile is
-written to gconf, a new profile -or connection- is created and exported
-on :term:`DBus`. When the profile is ready to be used, a ``NewConnection``
+stored using the `GConf`_ configuration system (whilst using the NM backend)
+or serialized to the hard drive (with the plain backend). When a new profile
+is written, a new profile -or connection- is created and exported on
+:term:`DBus`. When the profile is ready to be used, a ``NewConnection``
 signal is emitted with the profile object path as its only argument.
 
 .. _GConf: http://projects.gnome.org/gconf/
@@ -258,22 +261,19 @@ need to pass this two arguments to
 hood this method will perform the following:
 
 - Get a :class:`~wader.common.dialer.Dialer` instance for this device. If
-  :term:`NetworkManager` 0.7.1+ is present, it will use
-  :class:`~wader.common.dialers.nm_dialer.NMDialer`, if the device happens
-  to be an HSO device it will use
-  :class:`~wader.common.dialers.hsolink.HSODialer`, otherwise it will just
-  use :class:`~wader.common.dialers.wvdial.WVDialDialer`.
-- Configure the given device with the profile settings. If the profile
-  specifies a band or a network mode, the band or network mode will be set
-  through ``SetBand`` and ``SetNetworkMode``. After waiting a couple of
-  seconds so the device can settle, the actual connection process will be
-  started.
+  :term:`NetworkManager` 0.8+ is present, it will use the NM backend and thus
+  it will use :class:`~wader.common.dialers.nm_dialer.NMDialer`. If we are
+  using the plain backend, then depending on the device, Wader will use either
+  :class:`~wader.common.dialers.hsolink.HSODialer`, or
+  :class:`~wader.common.dialers.wvdial.WVDialDialer`.
 - The dialer will obtain from the profile the needed settings to connect:
   apn, username, whether DNS should be static or not, etc. Obtaining the
-  password associated with a profile is a different story though. Passwords
-  are stored in `gnome-keyring-daemon` through the :class:`gnomekeyring`
-  module, every profile has an :term:`UUID` that identifies it uniquely. All
-  this is abstracted in the module :class:`~wader.gtk.secrets`.
+  password associated with a profile is a different story though. With the
+  NM backend, passwords (secrets in NM lingo) are stored in
+  `gnome-keyring-daemon`. If the plain backend is in use, then it will use
+  its own keyring backend (encrypted with AES). Every profile has an
+  :term:`UUID` that identifies it uniquely. The connection secrets are
+  associated by the UUID.
 
 If ``ActivateConnection`` succeeds, it will return the object path of the
 connection, connections are identified by it and its required to save
