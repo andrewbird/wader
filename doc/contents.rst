@@ -6,7 +6,7 @@ Wader documentation contents
 
 .. toctree::
    :maxdepth: 2
-   
+
    user/index
    devel/index
    glossary
@@ -25,7 +25,7 @@ Indices, glossary and tables
    :glob:
 
    modules/*
-   modules/dialers/*
+   modules/backends/*
    modules/hardware/*
    modules/oses/*
 

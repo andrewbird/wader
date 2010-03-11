@@ -6,9 +6,6 @@
 Classes
 --------
 
-.. autoclass:: DBusComponent
-   :members:
-
 .. autoclass:: DBusExporterHelper
    :members:
 

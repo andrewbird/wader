@@ -14,8 +14,3 @@ Classes
    :members:
    :show-inheritance:
    :undoc-members:
-
-Functions
----------
-
-.. autofunction:: extract_info(props)
