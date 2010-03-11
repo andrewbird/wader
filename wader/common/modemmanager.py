@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+"""A simple wrapper to access the devices on a hassle-free way"""
 
 import dbus
 
 from wader.common import consts
 
 class ModemManager(object):
-    """A simple wrapper to access the devices on a hassle-free way"""
+    """I provide an easy to use interface to interact with ModemManager"""
 
     def __init__(self):
         super(ModemManager, self).__init__()
@@ -38,6 +39,7 @@ class ModemManager(object):
             raise RuntimeException("No devices found")
 
     def get_devices(self):
+        """Returns a list with the devices present in the system"""
         devices = [self.bus.get_object(consts.WADER_SERVICE, opath)
                             for opath in self._opaths]
         return devices
