@@ -33,6 +33,7 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
 from wader.common.statem.simple import SimpleStateMachine
+from wader.common.utils import revert_dict
 
 
 MAX_RETRIES = 6
@@ -73,9 +74,6 @@ ERICSSON_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
                 )                  # end of group
                 \s*\r\n
                 """, re.VERBOSE))
-# *ERINFO: 0,0,2
-ERICSSON_CMD_DICT['get_network_mode'] = build_cmd_dict(
-                '\r\n\*ERINFO:\s(?P<mode>\d),(?P<gsm>\d),(?P<umts>\d)\r\n')
 
 
 class EricssonSIMClass(SIMBaseClass):
@@ -220,24 +218,15 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def get_network_mode(self):
+        ERICSSON_CONN_DICT_REV = revert_dict(ERICSSON_CONN_DICT)
 
-        def get_network_mode_cb(resp):
-            gsm = int(resp[0].group('gsm'))
-            umts = int(resp[0].group('umts'))
+        def get_network_mode_cb(mode):
+            if mode in ERICSSON_CONN_DICT_REV:
+                return ERICSSON_CONN_DICT_REV[mode]
 
-            if gsm == ERINFO_2G_GPRS:
-                return consts.MM_NETWORK_MODE_GPRS
-            elif gsm == ERINFO_2G_EGPRS:
-                return consts.MM_NETWORK_MODE_EDGE
-            elif umts == ERINFO_3G_UMTS:
-                return consts.MM_NETWORK_MODE_UMTS
-            elif umts == ERINFO_3G_HSDPA:
-                return consts.MM_NETWORK_MODE_HSDPA
+            raise E.GenericError("unknown network mode: %d" % mode)
 
-            raise E.GenericError("unknown network mode: %d, %d" % (gsm, umts))
-
-        cmd = ATCmd('AT*ERINFO?', name='get_network_mode')
-        d = self.queue_at_cmd(cmd)
+        d = self.get_radio_status()
         d.addCallback(get_network_mode_cb)
         return d
 
