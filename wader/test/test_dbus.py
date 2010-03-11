@@ -169,14 +169,11 @@ class DBusTestCase(unittest.TestCase):
 
         def check_if_valid_device(device):
             # Huawei, Novatel, ZTE, Old options, etc.
-            if 'tty' in device:
-                return True
-            # HSO devices
-            if 'hso' in device:
-                return True
-            # MBM devices
-            if 'usb' in device:
-                return True
+            for name in ['tty', 'hso', 'usb']:
+                if name in device:
+                    return True
+
+            return False
 
         device = self.device.Get(MDM_INTFACE, 'Device',
                                  dbus_interface=dbus.PROPERTIES_IFACE)
