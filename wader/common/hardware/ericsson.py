@@ -193,13 +193,7 @@ class EricssonWrapper(WCDMAWrapper):
 
     def get_charset(self):
         d = super(EricssonWrapper, self).get_charset()
-
-        def get_charset_cb(charset):
-            if check_if_ucs2(charset):
-                charset = from_ucs2(charset)
-            return charset
-
-        d.addCallback(get_charset_cb)
+        d.addCallback(from_ucs2)
         return d
 
     def get_charsets(self):

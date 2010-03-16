@@ -105,6 +105,12 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(get_next_id_cb)
         return d
 
+    def cancel_ussd(self):
+        """Cancels an ongoing USSD session"""
+        d = super(WCDMAWrapper, self).cancel_ussd()
+        d.addCallback(lambda result: result[0].group('resp'))
+        return d
+
     def change_pin(self, oldpin, newpin):
         """Changes PIN from ``oldpin`` to ``newpin``"""
         d = super(WCDMAWrapper, self).change_pin(oldpin, newpin)
@@ -685,6 +691,21 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda response: int(response[0].group('index')))
         return d
 
+    def send_ussd(self, ussd):
+        """Sends the ussd command ``ussd``"""
+
+        def convert_response(response):
+            resp = response[0].group('resp')
+            index = response[0].group('index')
+            return from_ucs2(resp)
+
+        if 'UCS2' in self.device.sim.charset:
+            ussd = pack_ucs2_bytes(ussd)
+
+        d = super(WCDMAWrapper, self).send_ussd(str(ussd))
+        d.addCallback(convert_response)
+        return d
+
     def set_apn(self, apn):
         """Sets the APN to ``apn``"""
 
@@ -926,10 +947,7 @@ class BasicNetworkOperator(object):
 
     def __init__(self, netid):
         super(BasicNetworkOperator, self).__init__()
-        if check_if_ucs2(netid):
-            self.netid = from_ucs2(netid)
-        else:
-            self.netid = netid
+        self.netid = from_ucs2(netid)
 
     def __repr__(self):
         return '<BasicNetworkOperator: %s>' % self.netid

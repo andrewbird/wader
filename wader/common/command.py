@@ -53,6 +53,8 @@ CMD_DICT = {
 
     'add_contact': build_cmd_dict(),
 
+    'cancel_ussd': build_cmd_dict(),
+
     'change_pin': build_cmd_dict(),
 
     'check_pin': build_cmd_dict(re.compile(r"""
@@ -222,6 +224,14 @@ CMD_DICT = {
     'send_pin': build_cmd_dict(),
 
     'send_puk': build_cmd_dict(),
+
+    'send_ussd': build_cmd_dict(re.compile("""
+                              \r\n\+CUSD:\s
+                              (?P<index>\d),
+                              "(?P<resp>.*)",?
+                              (?P<code>\d+)?
+                              \r\n""", re.X),
+                              re.compile('\r\n\+CUSD:\s\d,".*",?(\d+)?\r\n')),
 
     'set_apn': build_cmd_dict(),
 

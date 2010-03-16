@@ -24,7 +24,7 @@ from twisted.python import log
 
 from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
-                                 HSO_INTFACE, SPL_INTFACE)
+                                 HSO_INTFACE, SPL_INTFACE, USD_INTFACE)
 from wader.common.sms import Message
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
@@ -509,7 +509,40 @@ class NetworkExporter(CardExporter):
         log.msg("emitting SignalQuality(%d)" % rssi)
 
 
-class SMSExporter(NetworkExporter):
+class UssdExporter(NetworkExporter):
+    """I export the org.freedesktop.ModemManager.Modem.Gsm.Ussd interface"""
+
+    @method(USD_INTFACE, in_signature='', out_signature='',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Cancel(self, ussd, async_cb, async_eb):
+        """Cancels an ongoing USSD session"""
+        d = self.sconn.cancel_ussd()
+        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
+
+    @method(USD_INTFACE, in_signature='s', out_signature='s',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Initiate(self, command, async_cb, async_eb):
+        """Sends the USSD command ``command``"""
+        d = self.sconn.send_ussd(command)
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(USD_INTFACE, in_signature='s', out_signature='s',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Respond(self, reply, async_cb, async_eb):
+        """Sends ``reply`` to the network"""
+        d = self.sconn.send_ussd(reply)
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @signal(dbus_interface=USD_INTFACE, signature='s')
+    def NotificationReceived(self, message):
+        log.msg("emitting NotificationReceived(%s)" % message)
+
+    @signal(dbus_interface=USD_INTFACE, signature='s')
+    def RequestReceived(self, message):
+        log.msg("emitting RequestReceived(%s)" % message)
+
+
+class SMSExporter(UssdExporter):
     """I export the org.freedesktop.ModemManager.Modem.Gsm.Sms interface"""
 
     @method(SMS_INTFACE, in_signature='u', out_signature='',

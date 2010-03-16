@@ -437,6 +437,11 @@ class WCDMAProtocol(SerialProtocol):
         cmd = ATCmd('AT+CPBW=%d,"%s",%d,"%s"' % args, name='add_contact')
         return self.queue_at_cmd(cmd)
 
+    def cancel_ussd(self):
+        """Cancels an ongoing USSD session"""
+        cmd = ATCmd("AT+CUSD=2", name='cancel_ussd')
+        return self.queue_at_cmd(cmd)
+
     def change_pin(self, oldpin, newpin):
         """
         Changes ``oldpin`` to ``newpin`` in the SIM card
@@ -746,6 +751,12 @@ class WCDMAProtocol(SerialProtocol):
     def send_sms_from_storage(self, index):
         """Sends the SMS stored at ``index`` and returns the new index"""
         cmd = ATCmd('AT+CMSS=%d' % index, name='send_sms_from_storage')
+        return self.queue_at_cmd(cmd)
+
+    def send_ussd(self, ussd):
+        """Sends the USSD command ``ussd``"""
+        dcs = 15
+        cmd = ATCmd('AT+CUSD=1,"%s",%d' % (ussd, dcs), name='send_ussd')
         return self.queue_at_cmd(cmd)
 
     def set_apn(self, index, apn):
