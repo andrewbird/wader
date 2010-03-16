@@ -693,6 +693,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def send_ussd(self, ussd):
         """Sends the ussd command ``ussd``"""
+        print "middleware.py: send_ussd being run - message is:" + ussd
 
         def convert_response(response):
             resp = response[0].group('resp')
@@ -701,7 +702,9 @@ class WCDMAWrapper(WCDMAProtocol):
 
         if 'UCS2' in self.device.sim.charset:
             ussd = pack_ucs2_bytes(ussd)
+            print "middleware.py: send_ussd - ussd message has been packed" + ussd
 
+        print "middleware.py: send_ussd - message is being sent:" + ussd
         d = super(WCDMAWrapper, self).send_ussd(str(ussd))
         d.addCallback(convert_response)
         return d
