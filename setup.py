@@ -38,8 +38,6 @@ DBUS_SYSTEMD = '/etc/dbus-1/system.d'
 DBUS_SYSTEM_SERVICES = '/usr/share/dbus-1/system-services'
 UDEV_RULESD = '/etc/udev/rules.d'
 
-FDI_THIRDPARTY = '/usr/share/hal/fdi/information/20thirdparty'
-
 
 def list_files(path, exclude=None):
     result = []
@@ -75,7 +73,6 @@ if sys.platform == 'linux2':
     append((DBUS_SYSTEM_SERVICES,
             ['resources/dbus/org.freedesktop.ModemManager.service']))
     append((UDEV_RULESD, list_files('resources/udev')))
-    append((FDI_THIRDPARTY, ['resources/config/10-wader-modems.fdi']))
 
 elif sys.platform == 'darwin':
     osxserialports = Extension('osxserialports',

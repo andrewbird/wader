@@ -5,10 +5,10 @@ Wader's target audience are developers. If you would like your application to
 interact with a UMTS device, such as a mobile data card or a mobile phone,
 then stop searching! Features:
 
-    * Built upon modern technologies such as dbus and hal
+    * Built upon modern technologies such as dbus and udev
     * Service invoked via DBus
     * A single process handles n devices
-    * Dialup via NM 0.7+ (if present) or Wvdial on systems with NM < 0.7
+    * Dialup via NM 0.8 or Wvdial/NDIS dialup on systems with an older NM
     * Extensible AT Engine
     * Pluggable support for devices: Adding support for a new device is
     usually a matter of copying an skeleton, changing the device IDs and

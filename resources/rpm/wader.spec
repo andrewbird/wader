@@ -149,8 +149,6 @@ fi
 
 %{_sysconfdir}/ppp/ip-down.d/95wader-down
 %{_sysconfdir}/ppp/ip-up.d/95wader-up
-%dir %{_datadir}/hal/fdi/information/20thirdparty
-%{_datadir}/hal/fdi/information/20thirdparty/10-wader-modems.fdi
 
 %{_bindir}/wader-core-ctl
 
