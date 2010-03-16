@@ -19,54 +19,25 @@
 """Ubuntu OSPlugin"""
 
 from os.path import exists
-import tempfile
 
-from twisted.internet import reactor
 from twisted.internet.utils import getProcessValue
 
 from wader.common.oses.linux import LinuxPlugin
-from wader.common.utils import save_file, get_file_data, create_dns_lock
-from wader.common.consts import APP_NAME, WADER_DNS_LOCK
-
-
-resolvconf_present = exists('/sbin/resolvconf')
-
-
-dns_template = """
-nameserver\t%s
-nameserver\t%s
-"""
+from wader.common.utils import get_file_data
 
 
 class UbuntuBasedDistro(LinuxPlugin):
     """A plugin to be used on Ubuntu systems"""
-
-    def add_dns_info(self, (dns1, dns2), iface=None):
-        if not resolvconf_present:
-            # resolvconf package is not present, we will resort to
-            # using pppd's ip-{up,down}.d infrastructure. 95vmc-up
-            # will handle this for us.
-            create_dns_lock(dns1, dns2, WADER_DNS_LOCK)
-        else:
-            path = tempfile.mkstemp('resolv.conf', APP_NAME)[1]
-            save_file(path, dns_template % (dns1, dns2))
-
-            args = [iface, path]
-            return getProcessValue('/usr/bin/wader-resolvconf-helper',
-                                   args, reactor=reactor)
-
-    def delete_dns_info(self, dnsinfo, iface=None):
-        if not resolvconf_present:
-            # 95vmc-down will handle this for us
-            return
-
-        args = ['-d', iface]
-        return getProcessValue('/sbin/resolvconf', args, reactor=reactor)
 
     def is_valid(self):
         if not exists('/etc/lsb-release'):
             return False
 
         return 'Ubuntu' in get_file_data('/etc/lsb-release')
+
+    def update_dns_cache(self):
+        if exists("/usr/sbin/nscd"):
+            return getProcessValue("/usr/sbin/nscd", ["-i", "hosts"])
+
 
 ubuntu = UbuntuBasedDistro()

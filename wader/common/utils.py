@@ -178,18 +178,6 @@ def is_bogus_ip(ip):
     return ip in ["10.11.12.13", "10.11.12.14"]
 
 
-def create_dns_lock(dns1, dns2, path):
-    """
-    Creates a DNS lock for wvdial calls
-
-    :param dns1: Primary nameserver
-    :param dns2: Secondary nameserver
-    :param path: Where will be written to
-    """
-    text = """DNS1 %s\nDNS2 %s\n""" % (dns1, dns2)
-    save_file(path, text)
-
-
 def get_value_and_pop(kw, name, d=None):
     """kw.pop[name] if name in kw, else d. d defaults to None"""
     return (kw.pop(name) if name in kw else d)

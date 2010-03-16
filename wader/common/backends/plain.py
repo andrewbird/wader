@@ -326,6 +326,12 @@ class WVDialProtocol(protocol.ProcessProtocol):
             self.dns.append(dns_ip)
 
             if len(self.dns) == 2:
+                if not self.dialer.conf.staticdns:
+                    # if static DNS is not set, then we should use the
+                    # DNS returned by the network
+                    osobj = get_os_object()
+                    osobj.add_dns_info(self.dns, self.dialer.iface)
+
                 self._set_connected()
 
                 # check if they're valid DNS ips

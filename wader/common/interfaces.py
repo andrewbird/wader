@@ -216,6 +216,9 @@ class IOSPlugin(IWaderPlugin):
     def is_valid():
         """Returns True if we are on the given OS/Distro"""
 
+    def update_dns_cache():
+        """Updates the OS DNS cache"""
+
 
 class IHardwareManager(Interface):
 

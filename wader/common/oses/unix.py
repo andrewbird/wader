@@ -19,6 +19,7 @@
 """OSPlugin for Unix-based OSes"""
 
 from wader.common.plugin import OSPlugin
+from wader.common.resolvconf import NamedManager
 from wader.common.utils import get_file_data
 
 
@@ -27,12 +28,26 @@ class UnixPlugin(OSPlugin):
 
     def __init__(self):
         super(UnixPlugin, self).__init__()
+        self.named_manager = NamedManager()
+
+    def add_dns_info(self, dns, iface=None):
+        """See :meth:`wader.common.interfaces.IOSPlugin.add_dns_info`"""
+        self.named_manager.add_dns_info(dns)
+        self.update_dns_cache()
+
+    def delete_dns_info(self, dns, iface=None):
+        """See :meth:`wader.common.interfaces.IOSPlugin.delete_dns_info`"""
+        self.named_manager.delete_dns_info(dns)
+        self.update_dns_cache()
 
     def is_valid(self):
         return False
 
     def get_iface_stats(self, iface):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def get_timezone(self):
         return get_file_data('/etc/timezone').replace('\n', '')
+
+    def update_dns_cache(self):
+        raise NotImplementedError()

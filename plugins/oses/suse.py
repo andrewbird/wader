@@ -21,6 +21,8 @@
 from os.path import exists
 import re
 
+from twisted.internet.utils import getProcessValue
+
 from wader.common.oses.linux import LinuxPlugin
 from wader.common.utils import get_file_data
 
@@ -36,5 +38,10 @@ class SUSEDistro(LinuxPlugin):
 
     def is_valid(self):
         return exists('/etc/SuSE-release')
+
+    def update_dns_cache(self):
+        if exists("/usr/sbin/nscd"):
+            getProcessValue("/usr/sbin/nscd", ["-i", "hosts"])
+
 
 susedistro = SUSEDistro()

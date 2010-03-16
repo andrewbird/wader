@@ -422,18 +422,6 @@ class LinuxPlugin(UnixPlugin):
         args = ['delete', 'default', 'dev', iface]
         return utils.getProcessValue('/sbin/route', args, reactor=reactor)
 
-    def add_dns_info(self, (dns1, dns2), iface=None):
-        """See :meth:`wader.common.interfaces.IOSPlugin.add_dns_info`"""
-        name = self.__class__.__name__
-        log.err(NotImplementedError,
-                "add_dns_info not implemented in plugin %s" % name)
-
-    def delete_dns_info(self, (dns1, dns2), iface=None):
-        """See :meth:`wader.common.interfaces.IOSPlugin.delete_dns_info`"""
-        name = self.__class__.__name__
-        log.err(NotImplementedError,
-                "delete_dns_info not implemented in plugin %s" % name)
-
     def configure_iface(self, iface, ip='', action='up'):
         """See :meth:`wader.common.interfaces.IOSPlugin.configure_iface`"""
         assert action in ['up', 'down']

@@ -43,7 +43,7 @@ class ModemManager(object):
                                           consts.WADER_OBJPATH)
         self._opaths = self.mm_obj.EnumerateDevices()
         if not self._opaths:
-            raise RuntimeException("No devices found")
+            raise RuntimeError("No devices found")
 
     def get_devices(self):
         """Returns a list with the devices present in the system"""

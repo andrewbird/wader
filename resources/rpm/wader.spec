@@ -58,12 +58,6 @@ CFLAGS="%{optflags}" %{__python} setup-gtk.py build
 %{__mkdir_p} %{buildroot}%{_datadir}
 %{__cp} -R resources/po/locale %{buildroot}%{_datadir}
 
-# ppp-ip scripts
-%{__mkdir_p} %{buildroot}%{_sysconfdir}/ppp/ip-up.d
-%{__mkdir_p} %{buildroot}%{_sysconfdir}/ppp/ip-down.d
-%{__install} -m0755 resources/config/95wader-up %{buildroot}%{_sysconfdir}/ppp/ip-up.d/95wader-up
-%{__install} -m0755 resources/config/95wader-down %{buildroot}%{_sysconfdir}/ppp/ip-down.d/95wader-down
-
 %if 0%{?suse_version}
 %suse_update_desktop_file wader-gtk
 %endif
@@ -146,9 +140,6 @@ fi
 %config %{_sysconfdir}/udev/rules.d/99-novatel-mc950d.rules
 %config %{_sysconfdir}/udev/rules.d/99-novatel-mc990d.rules
 %config %{_sysconfdir}/udev/rules.d/99-option-icon-225.rules
-
-%{_sysconfdir}/ppp/ip-down.d/95wader-down
-%{_sysconfdir}/ppp/ip-up.d/95wader-up
 
 %{_bindir}/wader-core-ctl
 

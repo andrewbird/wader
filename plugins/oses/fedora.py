@@ -21,6 +21,8 @@
 from os.path import exists
 import re
 
+from twisted.internet.utils import getProcessValue
+
 from wader.common.oses.linux import LinuxPlugin
 from wader.common.utils import get_file_data
 
@@ -40,5 +42,11 @@ class FedoraBasedDistro(LinuxPlugin):
     def is_valid(self):
         paths = ['/etc/redhat-release', '/etc/fedora-release']
         return any(map(exists, paths))
+
+    def update_dns_cache(self):
+        if exists("/usr/sbin/nscd"):
+            getProcessValue("/etc/init.d/nscd", ["condrestart"])
+            getProcessValue("/etc/init.d/nscd", ["-i", "hosts"])
+
 
 fedora = FedoraBasedDistro()

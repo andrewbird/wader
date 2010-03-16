@@ -153,8 +153,5 @@ PLUGINS_DIR = [PLUGINS_DIR,
                join(PLUGINS_DIR, 'contacts'),
                join(PLUGINS_DIR, 'devices')]
 
-# static dns stuff
-WADER_DNS_LOCK = join('/tmp', 'wader-conn.lock')
-
 PID_PATH = '/var/run/wader.pid'
 LOG_PATH = '/var/log/wader.log'

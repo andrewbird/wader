@@ -29,7 +29,3 @@ Functions
 .. autofunction:: save_file(path, data)
 
 .. autofunction:: is_bogus_ip(ip)
-
-.. autofunction:: create_dns_lock(dns1, dns2, path)
-
-
