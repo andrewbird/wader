@@ -28,7 +28,8 @@ from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
 from wader.common.sms import Message
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
-from wader.common.utils import convert_ip_to_int
+from wader.common.utils import (convert_ip_to_int,
+                                convert_network_mode_to_access_technology)
 
 # welcome to the multiple inheritance madness!
 # python-dbus currently lacks an "export_as" keyword for use cases like
@@ -333,7 +334,120 @@ class CardExporter(SimpleExporter):
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
 
-class NetworkExporter(CardExporter):
+class ContactsExporter(CardExporter):
+    """
+    I export the org.freedesktop.ModemManager.Modem.Gsm.Contacts interface
+    """
+
+    @method(CTS_INTFACE, in_signature='ss', out_signature='u',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Add(self, name, number, async_cb, async_eb):
+        """
+        Adds a contact and returns the index
+
+        :param name: The contact name
+        :param number: The contact number
+        :rtype: int
+        """
+        d = self.sconn.add_contact(Contact(name, number))
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='u', out_signature='',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Delete(self, index, async_cb, async_eb):
+        """
+        Deletes the contact at ``index``
+
+        :param index: The index of the contact to be deleted
+        """
+        d = self.sconn.delete_contact(index)
+        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='uss', out_signature='u',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Edit(self, index, name, number, async_cb, async_eb):
+        """
+        Edits the contact at ``index``
+
+        :param name: The new name of the contact to be edited
+        :param number: The new number of the contact to be edited
+        :param index: The index of the contact to be edited
+        """
+        d = self.sconn.add_contact(Contact(name, number, index=index))
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='s', out_signature='a(uss)',
+            async_callbacks=('async_cb', 'async_eb'))
+    def FindByName(self, pattern, async_cb, async_eb):
+        """
+        Returns list of contacts whose name match ``pattern``
+
+        :param pattern: The pattern to match contacts against
+        :rtype: list
+        """
+        d = self.sconn.find_contacts(pattern)
+        d.addCallback(lambda contacts:
+                      [(c.index, c.name, c.number) for c in contacts])
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='s', out_signature='a(uss)',
+            async_callbacks=('async_cb', 'async_eb'))
+    def FindByNumber(self, number, async_cb, async_eb):
+        """
+        Returns list of contacts whose number match ``number``
+
+        :param number: The number to match contacts against
+        :rtype: list
+        """
+        d = self.sconn.list_contacts()
+        d.addCallback(lambda contacts:
+                      [(c.index, c.name, c.number) for c in contacts
+                            if c.number.endswith(number)])
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='u', out_signature='(uss)',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Get(self, index, async_cb, async_eb):
+        """
+        Returns the contact at ``index``
+
+        :param index: The index of the contact to get
+        :rtype: tuple
+        """
+        d = self.sconn.get_contact(index)
+        d.addCallback(lambda c: (c.index, c.name, c.number))
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='', out_signature='u',
+            async_callbacks=('async_cb', 'async_eb'))
+    def GetCount(self, async_cb, async_eb):
+        """Returns the number of contacts in the SIM"""
+        d = self.sconn.list_contacts()
+        d.addCallback(lambda contacts: len(contacts))
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='', out_signature='i',
+            async_callbacks=('async_cb', 'async_eb'))
+    def GetPhonebookSize(self, async_cb, async_eb):
+        """Returns the phonebook size"""
+        d = self.sconn.get_phonebook_size()
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CTS_INTFACE, in_signature='', out_signature='a(uss)',
+            async_callbacks=('async_cb', 'async_eb'))
+    def List(self, async_cb, async_eb):
+        """
+        Returns all the contacts in the SIM
+
+        :rtype: list of tuples
+        """
+        d = self.sconn.list_contacts()
+        d.addCallback(lambda contacts:
+                      [(c.index, c.name, c.number) for c in contacts])
+        return self.add_callbacks(d, async_cb, async_eb)
+
+
+class NetworkExporter(ContactsExporter):
     """I export the org.freedesktop.ModemManager.Modem.Gsm.Network interface"""
 
     @method(NET_INTFACE, in_signature='', out_signature='s',
@@ -413,6 +527,18 @@ class NetworkExporter(CardExporter):
 
         d.addCallback(process_netnames)
         return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(NET_INTFACE, in_signature='u', out_signature='',
+            async_callbacks=('async_cb', 'async_eb'))
+    def SetAllowedMode(self, mode, async_cb, async_eb):
+        """
+        Set the access technologies a device is allowed to use when connecting
+
+        :param mode: The allowed mode. Device may not support all modes.
+        :type mode: int
+        """
+        d = self.sconn.set_allowed_mode(mode)
+        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(NET_INTFACE, in_signature='s', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
@@ -499,6 +625,9 @@ class NetworkExporter(CardExporter):
     @signal(dbus_interface=NET_INTFACE, signature='u')
     def NetworkMode(self, mode):
         log.msg("emitting NetworkMode(%d)" % mode)
+        # we will update AccessTechnology from here
+        tech = convert_network_mode_to_access_technology(mode)
+        self.device.set_property(NET_INTFACE, 'AccessTechnology', tech)
 
     @signal(dbus_interface=NET_INTFACE, signature='u')
     def CregReceived(self, status):
@@ -509,40 +638,7 @@ class NetworkExporter(CardExporter):
         log.msg("emitting SignalQuality(%d)" % rssi)
 
 
-class UssdExporter(NetworkExporter):
-    """I export the org.freedesktop.ModemManager.Modem.Gsm.Ussd interface"""
-
-    @method(USD_INTFACE, in_signature='', out_signature='',
-            async_callbacks=('async_cb', 'async_eb'))
-    def Cancel(self, ussd, async_cb, async_eb):
-        """Cancels an ongoing USSD session"""
-        d = self.sconn.cancel_ussd()
-        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
-
-    @method(USD_INTFACE, in_signature='s', out_signature='s',
-            async_callbacks=('async_cb', 'async_eb'))
-    def Initiate(self, command, async_cb, async_eb):
-        """Sends the USSD command ``command``"""
-        d = self.sconn.send_ussd(command)
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(USD_INTFACE, in_signature='s', out_signature='s',
-            async_callbacks=('async_cb', 'async_eb'))
-    def Respond(self, reply, async_cb, async_eb):
-        """Sends ``reply`` to the network"""
-        d = self.sconn.send_ussd(reply)
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @signal(dbus_interface=USD_INTFACE, signature='s')
-    def NotificationReceived(self, message):
-        log.msg("emitting NotificationReceived(%s)" % message)
-
-    @signal(dbus_interface=USD_INTFACE, signature='s')
-    def RequestReceived(self, message):
-        log.msg("emitting RequestReceived(%s)" % message)
-
-
-class SMSExporter(UssdExporter):
+class SmsExporter(NetworkExporter):
     """I export the org.freedesktop.ModemManager.Modem.Gsm.Sms interface"""
 
     @method(SMS_INTFACE, in_signature='u', out_signature='',
@@ -666,121 +762,40 @@ class SMSExporter(UssdExporter):
         log.msg('emitting Delivered(%d)' % reference)
 
 
+class UssdExporter(SmsExporter):
+    """I export the org.freedesktop.ModemManager.Modem.Gsm.Ussd interface"""
 
-class ContactsExporter(SMSExporter):
-    """
-    I export the org.freedesktop.ModemManager.Modem.Gsm.Contacts interface
-    """
-
-    @method(CTS_INTFACE, in_signature='ss', out_signature='u',
+    @method(USD_INTFACE, in_signature='', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
-    def Add(self, name, number, async_cb, async_eb):
-        """
-        Adds a contact and returns the index
-
-        :param name: The contact name
-        :param number: The contact number
-        :rtype: int
-        """
-        d = self.sconn.add_contact(Contact(name, number))
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(CTS_INTFACE, in_signature='u', out_signature='',
-            async_callbacks=('async_cb', 'async_eb'))
-    def Delete(self, index, async_cb, async_eb):
-        """
-        Deletes the contact at ``index``
-
-        :param index: The index of the contact to be deleted
-        """
-        d = self.sconn.delete_contact(index)
+    def Cancel(self, ussd, async_cb, async_eb):
+        """Cancels an ongoing USSD session"""
+        d = self.sconn.cancel_ussd()
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
-    @method(CTS_INTFACE, in_signature='uss', out_signature='u',
+    @method(USD_INTFACE, in_signature='s', out_signature='s',
             async_callbacks=('async_cb', 'async_eb'))
-    def Edit(self, index, name, number, async_cb, async_eb):
-        """
-        Edits the contact at ``index``
-
-        :param name: The new name of the contact to be edited
-        :param number: The new number of the contact to be edited
-        :param index: The index of the contact to be edited
-        """
-        d = self.sconn.add_contact(Contact(name, number, index=index))
+    def Initiate(self, command, async_cb, async_eb):
+        """Sends the USSD command ``command``"""
+        d = self.sconn.send_ussd(command)
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(CTS_INTFACE, in_signature='s', out_signature='a(uss)',
+    @method(USD_INTFACE, in_signature='s', out_signature='s',
             async_callbacks=('async_cb', 'async_eb'))
-    def FindByName(self, pattern, async_cb, async_eb):
-        """
-        Returns list of contacts whose name match ``pattern``
-
-        :param pattern: The pattern to match contacts against
-        :rtype: list
-        """
-        d = self.sconn.find_contacts(pattern)
-        d.addCallback(lambda contacts:
-                      [(c.index, c.name, c.number) for c in contacts])
+    def Respond(self, reply, async_cb, async_eb):
+        """Sends ``reply`` to the network"""
+        d = self.sconn.send_ussd(reply)
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(CTS_INTFACE, in_signature='s', out_signature='a(uss)',
-            async_callbacks=('async_cb', 'async_eb'))
-    def FindByNumber(self, number, async_cb, async_eb):
-        """
-        Returns list of contacts whose number match ``number``
+    @signal(dbus_interface=USD_INTFACE, signature='s')
+    def NotificationReceived(self, message):
+        log.msg("emitting NotificationReceived(%s)" % message)
 
-        :param number: The number to match contacts against
-        :rtype: list
-        """
-        d = self.sconn.list_contacts()
-        d.addCallback(lambda contacts:
-                      [(c.index, c.name, c.number) for c in contacts
-                            if c.number.endswith(number)])
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(CTS_INTFACE, in_signature='u', out_signature='(uss)',
-            async_callbacks=('async_cb', 'async_eb'))
-    def Get(self, index, async_cb, async_eb):
-        """
-        Returns the contact at ``index``
-
-        :param index: The index of the contact to get
-        :rtype: tuple
-        """
-        d = self.sconn.get_contact(index)
-        d.addCallback(lambda c: (c.index, c.name, c.number))
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(CTS_INTFACE, in_signature='', out_signature='u',
-            async_callbacks=('async_cb', 'async_eb'))
-    def GetCount(self, async_cb, async_eb):
-        """Returns the number of contacts in the SIM"""
-        d = self.sconn.list_contacts()
-        d.addCallback(lambda contacts: len(contacts))
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(CTS_INTFACE, in_signature='', out_signature='i',
-            async_callbacks=('async_cb', 'async_eb'))
-    def GetPhonebookSize(self, async_cb, async_eb):
-        """Returns the phonebook size"""
-        d = self.sconn.get_phonebook_size()
-        return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(CTS_INTFACE, in_signature='', out_signature='a(uss)',
-            async_callbacks=('async_cb', 'async_eb'))
-    def List(self, async_cb, async_eb):
-        """
-        Returns all the contacts in the SIM
-
-        :rtype: list of tuples
-        """
-        d = self.sconn.list_contacts()
-        d.addCallback(lambda contacts:
-                      [(c.index, c.name, c.number) for c in contacts])
-        return self.add_callbacks(d, async_cb, async_eb)
+    @signal(dbus_interface=USD_INTFACE, signature='s')
+    def RequestReceived(self, message):
+        log.msg("emitting RequestReceived(%s)" % message)
 
 
-class WCDMAExporter(ContactsExporter):
+class WCDMAExporter(UssdExporter):
     """I export the org.freedesktop.ModemManager.Modem* interface"""
 
     def __str__(self):

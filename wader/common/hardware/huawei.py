@@ -42,15 +42,19 @@ import wader.common.aterrors as E
 NETINFO_REGEXP = re.compile('[^a-zA-Z0-9.\-\s]*')
 BADOPER_REGEXP = re.compile('FFF*')
 
+HUAWEI_ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: (2, 0),
+    consts.MM_ALLOWED_MODE_2G_ONLY: (13, 1),
+    consts.MM_ALLOWED_MODE_3G_ONLY: (14, 2),
+    consts.MM_ALLOWED_MODE_2G_PREFERRED: (2, 1),
+    consts.MM_ALLOWED_MODE_3G_PREFERRED: (2, 2),
+}
+
 HUAWEI_CONN_DICT = {
     consts.MM_NETWORK_MODE_ANY: (2, 0),
-
     consts.MM_NETWORK_MODE_2G_ONLY: (13, 1),
-
     consts.MM_NETWORK_MODE_3G_ONLY: (14, 2),
-
     consts.MM_NETWORK_MODE_2G_PREFERRED: (2, 1),
-
     consts.MM_NETWORK_MODE_3G_PREFERRED: (2, 2),
 }
 
@@ -158,7 +162,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             # band
             if band == 0x3FFFFFFF:
                 ret['band'] = consts.MM_NETWORK_BAND_ANY
-                # bands are not combinable by firmware spec
+                # this band is not combinable by firmware spec
                 return ret
 
             for key, value in self.custom.band_dict.items():
@@ -360,6 +364,37 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         d.addCallback(get_syscfg_cb)
         return d
 
+    def set_allowed_mode(self, mode):
+        """Sets the allowed mode to ``mode``"""
+
+        def get_syscfg_cb(info):
+            if mode not in self.custom.allowed_dict:
+                # NOOP
+                return "OK"
+
+            _mode = self.device.get_property(consts.NET_INTFACE, "AllowedMode")
+            if _mode == mode:
+                # NOOP
+                return "OK"
+
+            _mode, acqorder = self.custom.allowed_dict[mode]
+            band, roam, srv = info['theband'], info['roam'], info['srv']
+            band = 0x3FFFFFFF
+            at_str = 'AT^SYSCFG=%d,%d,%X,%d,%d'
+
+            def set_allowed_mode_cb(ign=None):
+                self.device.set_property(consts.NET_INTFACE, "AllowedMode",
+                                         mode)
+                return ign
+
+            return self.send_at(at_str % (_mode, acqorder, band, roam, srv),
+                                callback=set_allowed_mode_cb)
+
+        d = self._get_syscfg()
+        d.addCallback(get_syscfg_cb)
+        d.addErrback(log.err)
+        return d
+
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
 
@@ -367,11 +402,14 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             _mode, acqorder = info['modea'], info['modeb']
             band, roam, srv = info['theband'], info['roam'], info['srv']
 
-            if mode in HUAWEI_CONN_DICT:
-                _mode, acqorder = HUAWEI_CONN_DICT[mode]
+            if mode not in self.custom.conn_dict:
+                # NOOP
+                return "OK"
 
+            _mode, acqorder = self.custom.conn_dict[mode]
             band = 0x3FFFFFFF
             at_str = 'AT^SYSCFG=%d,%d,%X,%d,%d'
+
             return self.send_at(at_str % (_mode, acqorder, band, roam, srv))
 
         d = self._get_syscfg()
@@ -395,6 +433,7 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
     """WCDMA Customizer class for Huawei cards"""
     wrapper_klass = HuaweiWCDMAWrapper
     async_regexp = re.compile('\r\n(?P<signal>\^[A-Z]{3,9}):(?P<args>.*)\r\n')
+    allowed_dict = HUAWEI_ALLOWED_DICT
     band_dict = HUAWEI_BAND_DICT
     conn_dict = HUAWEI_CONN_DICT
     cmd_dict = HUAWEI_CMD_DICT

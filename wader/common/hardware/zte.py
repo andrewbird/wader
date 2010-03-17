@@ -19,6 +19,7 @@
 """Common stuff for all zte's cards"""
 
 import re
+
 from twisted.internet import defer
 
 from wader.common import consts
@@ -28,6 +29,15 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.utils import revert_dict
 import wader.common.signals as S
+
+
+ZTE_ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: (0, 0),
+    consts.MM_ALLOWED_MODE_2G_ONLY: (1, 0),
+    consts.MM_ALLOWED_MODE_3G_ONLY: (2, 0),
+    consts.MM_ALLOWED_MODE_2G_PREFERRED: (0, 1),
+    consts.MM_ALLOWED_MODE_3G_PREFERRED: (0, 2),
+}
 
 ZTE_MODE_DICT = {
     consts.MM_NETWORK_MODE_ANY: (0, 0),
@@ -117,7 +127,7 @@ class ZTEWrapper(WCDMAWrapper):
 
         def get_band_cb(resp):
             band = int(resp[0].group('band'))
-            return revert_dict(ZTE_BAND_DICT)[band]
+            return revert_dict(self.custom.band_dict)[band]
 
         return self.send_at("AT+ZBANDI?", name='get_band',
                             callback=get_band_cb)
@@ -128,7 +138,7 @@ class ZTEWrapper(WCDMAWrapper):
         def get_network_mode_cb(resp):
             only = int(resp[0].group('only'))
             order = int(resp[0].group('order'))
-            return revert_dict(ZTE_MODE_DICT)[(only, order)]
+            return revert_dict(self.custom.conn_dict)[(only, order)]
 
         return self.send_at("AT+ZSNT?", name='get_network_mode',
                             callback=get_network_mode_cb)
@@ -146,6 +156,22 @@ class ZTEWrapper(WCDMAWrapper):
                 return self.send_at("AT+ZBANDI=%d" % value)
 
         raise KeyError("Unsupported band %d" % band)
+
+    def set_allowed_mode(self, mode):
+        """Sets the allowed mode to ``mode``"""
+        if mode not in self.custom.allowed_dict:
+            raise KeyError("Mode %s not found" % mode)
+
+        if self.device.get_property(consts.NET_INTFACE, "AllowedMode") == mode:
+            # NOOP
+            return defer.succeed("OK")
+
+        def set_allowed_mode_cb(ign=None):
+            self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
+            return ign
+
+        return self.send_at("AT+ZSNT=%d,0,%d" % self.custom.allowed_dict[mode],
+                            callback=set_allowed_mode_cb)
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""

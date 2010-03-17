@@ -20,6 +20,7 @@
 
 from wader.common.hardware.base import WCDMACustomizer
 
+SONYERICSSON_ALLOWED_DICT = {}
 SONYERICSSON_CONN_DICT = {}
 SONYERICSSON_BAND_DICT = {}
 
@@ -27,5 +28,6 @@ SONYERICSSON_BAND_DICT = {}
 class SonyEricssonCustomizer(WCDMACustomizer):
     """WCDMA customizer for sonny ericsson devices"""
     async_regexp = None
+    allowed_dict = SONYERICSSON_ALLOWED_DICT
     conn_dict = SONYERICSSON_CONN_DICT
     band_dict = SONYERICSSON_BAND_DICT

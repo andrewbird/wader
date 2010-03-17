@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Linux-based OS plugin"""
 
+from functools import partial
 from os.path import join, exists
 import re
 
@@ -306,17 +307,23 @@ class HardwareManager(object):
         if plugin:
             plugin.sysfs_path = sysfs_path
             plugin.opath = self._generate_opath()
+            set_property = partial(plugin.set_property, emit=False)
             # set DBus properties (Modem interface)
-            plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
-                                consts.MM_IP_METHOD_PPP)
-            plugin.set_property(consts.MDM_INTFACE, 'MasterDevice',
-                                'udev:%s' % sysfs_path)
+            set_property(consts.MDM_INTFACE, 'IpMethod',
+                         consts.MM_IP_METHOD_PPP)
+            set_property(consts.MDM_INTFACE, 'MasterDevice',
+                         'udev:%s' % sysfs_path)
             # XXX: Fix CDMA
-            plugin.set_property(consts.MDM_INTFACE, 'Type',
-                                consts.MM_MODEM_TYPE_REV['GSM'])
-            plugin.set_property(consts.MDM_INTFACE, 'Driver', info[DRIVER])
-            plugin.set_property(consts.MDM_INTFACE, 'Enabled', False)
-            plugin.set_property(consts.MDM_INTFACE, 'UnlockRequired', "")
+            set_property(consts.MDM_INTFACE, 'Type',
+                         consts.MM_MODEM_TYPE_REV['GSM'])
+            set_property(consts.MDM_INTFACE, 'Driver', info[DRIVER])
+            set_property(consts.MDM_INTFACE, 'Enabled', False)
+            set_property(consts.MDM_INTFACE, 'UnlockRequired', "")
+
+            # set to unknown
+            set_property(consts.NET_INTFACE, 'AccessTechnology', 0)
+            # set to -1 so any comparison will fail and will update it
+            set_property(consts.NET_INTFACE, 'AllowedMode', -1)
 
             # preprobe stuff
             if hasattr(plugin, 'preprobe_init'):
@@ -339,20 +346,20 @@ class HardwareManager(object):
                 #      network info, else we need to implement a DHCP client
                 # set DBus properties (Modem.Gsm.Hso interface)
                 hso_device = self._get_hso_device(sysfs_path)
-                plugin.set_property(consts.MDM_INTFACE, 'Device', hso_device)
+                set_property(consts.MDM_INTFACE, 'Device', hso_device)
 
-                plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
-                                    consts.MM_IP_METHOD_DHCP)
+                set_property(consts.MDM_INTFACE, 'IpMethod',
+                             consts.MM_IP_METHOD_DHCP)
 
             if plugin.dialer in 'hso':
                 # set DBus properties (Modem.Gsm.Hso interface)
                 hso_device = self._get_hso_device(sysfs_path)
-                plugin.set_property(consts.MDM_INTFACE, 'Device', hso_device)
+                set_property(consts.MDM_INTFACE, 'Device', hso_device)
 
                 if hasattr(plugin, 'ipmethod'):
                     # allows us to specify a method in a driver independant way
-                    plugin.set_property(consts.MDM_INTFACE, 'IpMethod',
-                                        plugin.ipmethod)
+                    set_property(consts.MDM_INTFACE, 'IpMethod',
+                                 plugin.ipmethod)
 
             # if this two properties are present, use them right away and
             # do not probe
@@ -383,7 +390,7 @@ class HardwareManager(object):
             if 'Device' not in plugin.get_properties(consts.MDM_INTFACE):
                 # do not set it again
                 device = dport.split('/')[-1]
-                plugin.set_property(consts.MDM_INTFACE, 'Device', device)
+                set_property(consts.MDM_INTFACE, 'Device', device)
 
             plugin.ports = Ports(dport, cport)
             return plugin

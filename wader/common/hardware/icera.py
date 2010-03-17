@@ -20,7 +20,7 @@ Common stuff for all ZTE's Icera based cards
 """
 
 import re
-from epsilon.modal import mode
+from epsilon.modal import mode as Mode
 from twisted.internet import defer, reactor
 from twisted.python import log
 
@@ -38,6 +38,14 @@ import wader.common.signals as S
 
 HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
+
+ICERA_ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: 5,
+    consts.MM_ALLOWED_MODE_2G_ONLY: 0,
+    consts.MM_ALLOWED_MODE_3G_ONLY: 1,
+    consts.MM_ALLOWED_MODE_2G_PREFERRED: 2,
+    consts.MM_ALLOWED_MODE_3G_PREFERRED: 3,
+}
 
 ICERA_MODE_DICT = {
     consts.MM_NETWORK_MODE_ANY: 5,
@@ -171,12 +179,12 @@ class IceraWrapper(WCDMAWrapper):
         """Returns the current network mode"""
 
         def get_network_mode_cb(resp):
-            _mode = int(resp[0].group('mode'))
+            mode = int(resp[0].group('mode'))
             ICERA_MODE_DICT_REV = revert_dict(ICERA_MODE_DICT)
-            if _mode in ICERA_MODE_DICT_REV:
-                return ICERA_MODE_DICT_REV[_mode]
+            if mode in ICERA_MODE_DICT_REV:
+                return ICERA_MODE_DICT_REV[mode]
 
-            raise KeyError("Unknown network mode %s" % _mode)
+            raise KeyError("Unknown network mode %s" % mode)
 
         d = self.send_at('AT%IPSYS?', name='get_network_mode',
                          callback=get_network_mode_cb)
@@ -187,6 +195,21 @@ class IceraWrapper(WCDMAWrapper):
             return defer.succeed('OK')
 
         raise KeyError("Unsupported band %d" % band)
+
+    def set_allowed_mode(self, mode):
+        if mode not in ICERA_ALLOWED_DICT:
+            raise KeyError("Mode %s not found" % mode)
+
+        if self.device.get_property(consts.NET_INTFACE, "AllowedMode") == mode:
+            # NOOP
+            return defer.succeed("OK")
+
+        def set_allowed_mode_cb(orig=None):
+            self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
+            return orig
+
+        return self.send_at("AT%%IPSYS=%d" % ICERA_ALLOWED_DICT[mode],
+                            callback=set_allowed_mode_cb)
 
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
@@ -301,7 +324,7 @@ class IceraSimpleStateMachine(SimpleStateMachine):
     set_network_mode = SimpleStateMachine.set_network_mode
     done = SimpleStateMachine.done
 
-    class connect(mode):
+    class connect(Mode):
 
         def __enter__(self):
             log.msg("Icera Simple SM: connect entered")
@@ -310,7 +333,6 @@ class IceraSimpleStateMachine(SimpleStateMachine):
             log.msg("Icera Simple SM: connect exited")
 
         def do_next(self):
-
             username = self.settings['username']
             password = self.settings['password']
             # XXX: One day Connect.Simple will receive auth too

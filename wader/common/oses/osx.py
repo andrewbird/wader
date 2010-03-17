@@ -17,6 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """DevicePlugin for OSX"""
 
+from functools import partial
 import sys
 
 from twisted.internet import defer
@@ -24,7 +25,7 @@ from twisted.python import log
 from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, MM_MODEM_TYPE_REV,
-                                 MM_IP_METHOD_PPP)
+                                 NET_INTFACE, MM_IP_METHOD_PPP)
 from wader.common.hardware.base import _identify_device
 from wader.common.interfaces import IHardwareManager
 from wader.common.oses.unix import UnixPlugin
@@ -90,16 +91,23 @@ class HardwareManager(object):
         plugin = PluginManager.get_plugin_by_remote_name(model)
         if plugin:
             device = dev_info['callout'].split('/')[-1]
-            plugin.set_property(MDM_INTFACE, 'Device', device)
+            set_property = partial(plugin.set_property, emit=True)
+            set_property(MDM_INTFACE, 'Device', device)
             # XXX: Fix MasterDevice
-            plugin.set_property(MDM_INTFACE, 'MasterDevice',
-                                'iokit:com.vodafone.BMC.NotImplemented')
+            set_property(MDM_INTFACE, 'MasterDevice',
+                        'iokit:com.vodafone.BMC.NotImplemented')
             # XXX: Fix CDMA
-            plugin.set_property(MDM_INTFACE, 'Type', MM_MODEM_TYPE_REV['GSM'])
-            plugin.set_property(MDM_INTFACE, 'Driver', 'notimplemented')
-            plugin.set_property(MDM_INTFACE, 'IpMethod', MM_IP_METHOD_PPP)
-            plugin.set_property(MDM_INTFACE, 'Enabled', False)
-            plugin.set_property(MDM_INTFACE, 'UnlockRequired', "")
+            set_property(MDM_INTFACE, 'Type', MM_MODEM_TYPE_REV['GSM'])
+            set_property(MDM_INTFACE, 'Driver', 'notimplemented')
+            set_property(MDM_INTFACE, 'IpMethod', MM_IP_METHOD_PPP)
+            set_property(MDM_INTFACE, 'Enabled', False)
+            set_property(MDM_INTFACE, 'UnlockRequired', "")
+
+            # set to unknown
+            set_property(NET_INTFACE, 'AccessTechnology', 0)
+            # set to -1 so any comparison will fail and will update it
+            set_property(NET_INTFACE, 'AllowedMode', -1)
+
             plugin.opath = self._generate_opath()
             plugin.ports = Ports(dev_info['callout'], dev_info['dialin'])
 

@@ -40,8 +40,11 @@ import gconf
 from twisted.internet import defer
 from twisted.trial import unittest
 
-from wader.common.utils import get_bands, get_network_modes
-from wader.common.consts import MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY
+from wader.common.utils import (get_bands, get_network_modes,
+                                convert_network_mode_to_allowed_mode)
+from wader.common.consts import (MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
+                                 MM_ALLOWED_MODE_ANY,
+                                 MM_GSM_ACCESS_TECHNOLOGIES)
 
 MM_SERVICE = 'org.freedesktop.ModemManager'
 MM_OBJPATH = '/org/freedesktop/ModemManager'
@@ -551,13 +554,33 @@ class DBusTestCase(unittest.TestCase):
 
         while bands:
             band = bands.pop()
-            self.device.SetBand(band,
-                                dbus_interface=NET_INTFACE)
-            _band = self.device.GetBand(dbus_interface=NET_INTFACE)
+            self.device.SetBand(band)
+            _band = self.device.GetBand()
             self.failUnless(band & _band)
 
         # leave it in BAND_ANY and give it some seconds to settle
         self.device.SetBand(MM_NETWORK_BAND_ANY)
+        time.sleep(5)
+
+    def test_NetworkSetAllowedMode(self):
+        modes = self.device.Get(CRD_INTFACE, 'SupportedModes',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+        if not modes:
+            raise unittest.SkipTest("Cannot be tested")
+
+        for net_mode in get_network_modes(modes):
+            mode = convert_network_mode_to_allowed_mode(net_mode)
+            if mode is None:
+                # could not convert it to allowed_mode
+                continue
+
+            self.device.SetAllowedMode(mode)
+            allowed_mode = self.device.Get(NET_INTFACE, 'AllowedMode',
+                                        dbus_interface=dbus.PROPERTIES_IFACE)
+            self.assertEqual(mode, allowed_mode)
+
+        # leave it in MODE_ANY and give it some seconds to settle
+        self.device.SetAllowedMode(MM_ALLOWED_MODE_ANY)
         time.sleep(5)
 
     def test_NetworkSetNetworkMode(self):
@@ -567,18 +590,13 @@ class DBusTestCase(unittest.TestCase):
         if not modes:
             raise unittest.SkipTest("Cannot be tested")
 
-        modes = get_network_modes(modes)
-
-        while modes:
-            mode = modes.pop()
-            self.device.SetNetworkMode(mode,
-                                       dbus_interface=NET_INTFACE)
-            _mode = self.device.GetNetworkMode(dbus_interface=NET_INTFACE)
+        for mode in get_network_modes(modes):
+            self.device.SetNetworkMode(mode)
+            _mode = self.device.GetNetworkMode()
             self.assertEqual(mode, _mode)
 
         # leave it in MODE_ANY and give it some seconds to settle
-        self.device.SetNetworkMode(MM_NETWORK_MODE_ANY,
-                                   dbus_interface=NET_INTFACE)
+        self.device.SetNetworkMode(MM_NETWORK_MODE_ANY)
         time.sleep(5)
 
     def test_NetworkSetRegistrationNotification(self):
@@ -592,6 +610,17 @@ class DBusTestCase(unittest.TestCase):
     def test_NetworkRegister(self):
         """Test for Network.Register"""
         raise unittest.SkipTest("Untested")
+
+    def test_NetworkAccessTechnologyProperty(self):
+        """Test for Modem.Gsm.AccessTechnology property"""
+        access_tech = self.device.Get(NET_INTFACE, "AccessTechnology",
+                            dbus_interface=dbus.PROPERTIES_IFACE)
+        self.failUnlessIn(access_tech, MM_GSM_ACCESS_TECHNOLOGIES)
+
+    def test_NetworkAllowedModeProperty(self):
+        """Test for Modem.Gsm.AllowedMode property"""
+        # tested in NetworkSetAllowedMode
+        pass
 
     # org.freedesktop.ModemManager.Modem.Gsm.Simple tests
     def test_SimpleConnect(self):

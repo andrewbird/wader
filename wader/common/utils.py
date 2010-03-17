@@ -28,6 +28,28 @@ from dbus import Array, UInt32
 from wader.common import consts
 
 
+def convert_network_mode_to_access_technology(mode):
+    trans_table = {
+        consts.MM_NETWORK_MODE_GPRS: consts.MM_GSM_ACCESS_TECH_GPRS,
+        consts.MM_NETWORK_MODE_EDGE: consts.MM_GSM_ACCESS_TECH_EDGE,
+        consts.MM_NETWORK_MODE_UMTS: consts.MM_GSM_ACCESS_TECH_UMTS,
+        consts.MM_NETWORK_MODE_HSDPA: consts.MM_GSM_ACCESS_TECH_HSDPA,
+        consts.MM_NETWORK_MODE_HSUPA: consts.MM_GSM_ACCESS_TECH_HSUPA,
+    }
+    return trans_table.get(mode, consts.MM_GSM_ACCESS_TECH_UNKNOWN)
+
+
+def convert_network_mode_to_allowed_mode(mode):
+    trans_table = {
+        consts.MM_NETWORK_MODE_ANY: consts.MM_ALLOWED_MODE_ANY,
+        consts.MM_NETWORK_MODE_2G_PREFERRED: consts.MM_ALLOWED_MODE_2G_PREFERRED,
+        consts.MM_NETWORK_MODE_3G_PREFERRED: consts.MM_ALLOWED_MODE_3G_PREFERRED,
+        consts.MM_NETWORK_MODE_2G_ONLY: consts.MM_ALLOWED_MODE_2G_ONLY,
+        consts.MM_NETWORK_MODE_3G_ONLY: consts.MM_ALLOWED_MODE_3G_ONLY,
+    }
+    return trans_table.get(mode)
+
+
 def get_bands(bitwised_band):
     """
     Returns all the bitwised bands in ``bitwised_band``

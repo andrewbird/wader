@@ -706,6 +706,9 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(convert_response)
         return d
 
+    def set_allowed_mode(self, mode):
+        raise NotImplementedError("Implement it in the device family wrapper")
+
     def set_apn(self, apn):
         """Sets the APN to ``apn``"""
 

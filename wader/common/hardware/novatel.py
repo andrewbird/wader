@@ -29,6 +29,14 @@ from wader.common.plugin import DevicePlugin
 from wader.common.utils import revert_dict
 from wader.common.sim import SIMBaseClass
 
+
+NOVATEL_ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: '0,2',
+    consts.MM_ALLOWED_MODE_2G_ONLY: '1,2',
+    consts.MM_ALLOWED_MODE_3G_ONLY: '2,2',
+    consts.MM_ALLOWED_MODE_3G_PREFERRED: '0,2',
+}
+
 NOVATEL_MODE_DICT = {
     consts.MM_NETWORK_MODE_ANY: '0,2',
     consts.MM_NETWORK_MODE_2G_ONLY: '1,2',
@@ -221,6 +229,18 @@ class NovatelWrapper(WCDMAWrapper):
         d.addCallback(delay_result)
         return deferred
 
+    def set_allowed_mode(self, mode):
+        """Sets the allowed mode to ``mode``"""
+        if mode not in self.custom.allowed_dict:
+            raise KeyError("Unknown network mode %d" % mode)
+
+        def set_allowed_mode_cb(ign=None):
+            self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
+            return ign
+
+        return self.send_at("AT$NWRAT=%s" % self.custom.allowed_dict[mode],
+                            callback=set_allowed_mode_cb)
+
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
         if mode not in self.custom.conn_dict:
@@ -232,10 +252,11 @@ class NovatelWrapper(WCDMAWrapper):
 class NovatelWCDMACustomizer(WCDMACustomizer):
     """WCDMA customizer for Novatel cards"""
     async_regexp = None
-    conn_dict = NOVATEL_MODE_DICT
+    allowed_dict = NOVATEL_ALLOWED_DICT
     band_dict = {}  # let the cards that support band switching define
                     # the bands they support
     cmd_dict = NOVATEL_CMD_DICT
+    conn_dict = NOVATEL_MODE_DICT
     wrapper_klass = NovatelWrapper
 
 

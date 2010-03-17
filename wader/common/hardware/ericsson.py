@@ -19,7 +19,7 @@
 
 import re
 
-from epsilon.modal import mode
+from epsilon.modal import mode as Mode
 from twisted.internet import defer, reactor
 from twisted.python import log
 
@@ -42,6 +42,12 @@ RETRY_TIMEOUT = 4
 ERICSSON_BAND_DICT = {
     consts.MM_NETWORK_BAND_UNKNOWN: None,
     consts.MM_NETWORK_BAND_ANY: None,
+}
+
+ERICSSON_ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: 1,
+    consts.MM_ALLOWED_MODE_2G_ONLY: 5,
+    consts.MM_ALLOWED_MODE_3G_ONLY: 6,
 }
 
 ERICSSON_CONN_DICT = {
@@ -86,8 +92,6 @@ class EricssonSIMClass(SIMBaseClass):
         self.sconn.reset_settings()
         self.sconn.disable_echo()
 
-        d = super(EricssonSIMClass, self).initialize(set_encoding=set_encoding)
-
         def init_callback(size):
             # setup SIM storage defaults
             d = self.sconn.send_at('AT+CPMS="SM","SM","SM"')
@@ -95,6 +99,7 @@ class EricssonSIMClass(SIMBaseClass):
             d.addCallback(lambda _: size)
             return d
 
+        d = super(EricssonSIMClass, self).initialize(set_encoding=set_encoding)
         d.addCallback(init_callback)
         return d
 
@@ -230,15 +235,15 @@ class EricssonWrapper(WCDMAWrapper):
 
         def get_it(auxdef=None):
 
-            def get_netreg_status_cb((_mode, status)):
+            def get_netreg_status_cb((mode, status)):
                 self.state_dict['creg_retries'] += 1
                 if self.state_dict['creg_retries'] > MAX_RETRIES:
-                    return auxdef.callback((_mode, status))
+                    return auxdef.callback((mode, status))
 
                 if status == 4:
                     reactor.callLater(RETRY_TIMEOUT, get_it, auxdef)
                 else:
-                    return auxdef.callback((_mode, status))
+                    return auxdef.callback((mode, status))
 
             d = super(EricssonWrapper, self).get_netreg_status()
             d.addCallback(get_netreg_status_cb)
@@ -342,11 +347,26 @@ class EricssonWrapper(WCDMAWrapper):
         d = super(EricssonWrapper, self).set_charset(charset)
         return d
 
-    def set_network_mode(self, _mode):
-        if _mode not in self.custom.conn_dict:
-            raise KeyError("Mode %d not found" % _mode)
+    def set_allowed_mode(self, mode):
+        if mode not in self.custom.allowed_dict:
+            raise KeyError("Mode %d not found" % mode)
 
-        return self.send_at("AT+CFUN=%d" % self.custom.conn_dict[_mode])
+        if self.device.get_property(consts.NET_INTFACE, "AllowedMode") == mode:
+            # NOOP
+            return defer.succeed("OK")
+
+        def set_allowed_mode_cb(ign=None):
+            self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
+            return ign
+
+        return self.send_at("AT+CFUN=%d" % self.custom.allowed_dict[mode],
+                            callback=set_allowed_mode_cb)
+
+    def set_network_mode(self, mode):
+        if mode not in self.custom.conn_dict:
+            raise KeyError("Mode %d not found" % mode)
+
+        return self.send_at("AT+CFUN=%d" % self.custom.conn_dict[mode])
 
     def reset_settings(self):
         cmd = ATCmd('AT&F', name='reset_settings')
@@ -358,7 +378,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
     check_pin = SimpleStateMachine.check_pin
     register = SimpleStateMachine.register
 
-    class set_apn(mode):
+    class set_apn(Mode):
 
         def __enter__(self):
             log.msg("EricssonSimpleStateMachine: set_apn entered")
@@ -374,7 +394,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
             else:
                 self.transition_to('connect')
 
-    class connect(mode):
+    class connect(Mode):
 
         def __enter__(self):
             log.msg("EricssonSimpleStateMachine: connect entered")
@@ -404,7 +424,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
                     self.device.set_status(consts.DEV_CONNECTED))
             d.addCallback(lambda _: self.transition_to('done'))
 
-    class done(mode):
+    class done(Mode):
 
         def __enter__(self):
             log.msg("EricssonSimpleStateMachine: done entered")
@@ -422,7 +442,7 @@ class EricssonCustomizer(WCDMACustomizer):
     # Multiline so we catch and remove the ESTKSMENU
     async_regexp = re.compile("\r\n(?P<signal>[*+][A-Z]{3,}):(?P<args>.*)\r\n",
                               re.MULTILINE)
-
+    allowed_dict = ERICSSON_ALLOWED_DICT
     band_dict = ERICSSON_BAND_DICT
     cmd_dict = ERICSSON_CMD_DICT
     conn_dict = ERICSSON_CONN_DICT

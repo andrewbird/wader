@@ -20,7 +20,7 @@
 
 import re
 
-from epsilon.modal import mode
+from epsilon.modal import mode as Mode
 from twisted.internet import defer, reactor
 from twisted.python import log
 
@@ -43,6 +43,16 @@ RETRY_TIMEOUT = 4
 HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
 
+OPTION_ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: 5,
+    consts.MM_ALLOWED_MODE_2G_PREFERRED: 2,
+    consts.MM_ALLOWED_MODE_3G_PREFERRED: 3,
+    consts.MM_ALLOWED_MODE_2G_ONLY: 0,
+    consts.MM_ALLOWED_MODE_3G_ONLY: 1,
+}
+
+# The option band dictionary does not need to be specified as we
+# modelled the band dict after it
 OPTION_BAND_MAP_DICT = {
     'ANY': consts.MM_NETWORK_BAND_ANY,
     'EGSM': consts.MM_NETWORK_BAND_EGSM,
@@ -66,9 +76,6 @@ OPTION_CONN_DICT = {
     consts.MM_NETWORK_MODE_3G_PREFERRED: 3,
     consts.MM_NETWORK_MODE_ANY: 5,
 }
-
-# The option band dictionary does not need to be specified as we
-# modelled the band dict after it
 
 # Option devices like to append its serial number after the IMEI, ignore it
 OPTION_CMD_DICT = get_cmd_dict_copy()
@@ -246,16 +253,15 @@ class OptionWrapper(WCDMAWrapper):
         """Returns the current network mode"""
 
         def get_network_mode_cb(resp):
-            _mode = int(resp[0].group('mode'))
+            mode = int(resp[0].group('mode'))
             OPTION_BAND_DICT_REV = revert_dict(OPTION_CONN_DICT)
-            if _mode in OPTION_BAND_DICT_REV:
-                return OPTION_BAND_DICT_REV[_mode]
+            if mode in OPTION_BAND_DICT_REV:
+                return OPTION_BAND_DICT_REV[mode]
 
-            raise KeyError("Unknown network mode %d" % _mode)
+            raise KeyError("Unknown network mode %d" % mode)
 
-        d = self.send_at('AT_OPSYS?', name='get_network_mode',
+        return self.send_at('AT_OPSYS?', name='get_network_mode',
                          callback=get_network_mode_cb)
-        return d
 
     def set_band(self, band):
         """Sets the band to ``band``"""
@@ -295,19 +301,35 @@ class OptionWrapper(WCDMAWrapper):
                 dlist.addCallback(lambda l: [x[1] for x in l])
                 return dlist
 
-            raise KeyError("OptionWrapper: Unknown band mode %d" % band)
+            raise KeyError("OptionWrapper: Unknown band %d" % band)
 
         # due to Option's band API, we'll start by obtaining the current bands
         d = self._get_band_dict()
         d.addCallback(get_band_dict_cb)
         return d
 
-    def set_network_mode(self, _mode):
-        """Sets the network mode to ``_mode``"""
-        if _mode not in OPTION_CONN_DICT:
-            raise KeyError("Unknown mode %d for set_network_mode" % _mode)
+    def set_allowed_mode(self, mode):
+        """Sets the allowed mode to ``_mode``"""
+        if mode not in self.custom.allowed_dict:
+            raise KeyError("Unknown mode %d for set_allowed_mode" % mode)
 
-        return self.send_at("AT_OPSYS=%d,2" % OPTION_CONN_DICT[_mode])
+        if self.device.get_property(consts.NET_INTFACE, "AllowedMode") == mode:
+            # NOOP
+            return defer.succeed("OK")
+
+        def set_allowed_mode_cb(orig=None):
+            self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
+            return orig
+
+        return self.send_at("AT_OPSYS=%d,2" % self.custom.allowed_dict[mode],
+                            callback=set_allowed_mode_cb)
+
+    def set_network_mode(self, mode):
+        """Sets the network mode to ``_mode``"""
+        if mode not in OPTION_CONN_DICT:
+            raise KeyError("Unknown mode %d for set_network_mode" % mode)
+
+        return self.send_at("AT_OPSYS=%d,2" % OPTION_CONN_DICT[mode])
 
 
 class OptionHSOWrapper(OptionWrapper):
@@ -403,7 +425,7 @@ class HSOSimpleStateMachine(SimpleStateMachine):
     set_network_mode = SimpleStateMachine.set_network_mode
     done = SimpleStateMachine.done
 
-    class connect(mode):
+    class connect(Mode):
 
         def __enter__(self):
             log.msg("HSO Simple SM: connect entered")
@@ -412,7 +434,6 @@ class HSOSimpleStateMachine(SimpleStateMachine):
             log.msg("HSO Simple SM: connect exited")
 
         def do_next(self):
-
             username = self.settings['username']
             password = self.settings['password']
             # XXX: One day Connect.Simple will receive auth too
@@ -433,6 +454,7 @@ class OptionWCDMACustomizer(WCDMACustomizer):
                 \r\n""", re.VERBOSE)
     # the dict is reverted as we are interested in the range of bands
     # that the device supports (get_bands)
+    allowed_dict = OPTION_ALLOWED_DICT
     band_dict = revert_dict(OPTION_BAND_MAP_DICT)
     conn_dict = OPTION_CONN_DICT
     cmd_dict = OPTION_CMD_DICT

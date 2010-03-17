@@ -43,6 +43,7 @@ class WCDMACustomizer(object):
     :cvar exporter_klass: DBus Exporter for the device
     :cvar async_regexp: regexp to parse asynchronous notifications emited
           by the device.
+    :cvar allowed_dict: Dictionary with the allowed modes
     :cvar band_dict: Dictionary with the supported bands
     :cvar conn_dict: Dictionary with the supported network modes
     :cvar cmd_dict: Dictionary with commands info
@@ -57,6 +58,7 @@ class WCDMACustomizer(object):
     wrapper_klass = WCDMAWrapper
     exporter_klass = WCDMAExporter
     async_regexp = None
+    allowed_dict = {}
     band_dict = {}
     conn_dict = {}
     cmd_dict = get_cmd_dict_copy()
