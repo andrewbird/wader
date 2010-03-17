@@ -180,7 +180,7 @@ class IceraWrapper(WCDMAWrapper):
 
         def get_network_mode_cb(resp):
             mode = int(resp[0].group('mode'))
-            ICERA_MODE_DICT_REV = revert_dict(ICERA_MODE_DICT)
+            ICERA_MODE_DICT_REV = revert_dict(self.custom.conn_dict)
             if mode in ICERA_MODE_DICT_REV:
                 return ICERA_MODE_DICT_REV[mode]
 
@@ -197,7 +197,7 @@ class IceraWrapper(WCDMAWrapper):
         raise KeyError("Unsupported band %d" % band)
 
     def set_allowed_mode(self, mode):
-        if mode not in ICERA_ALLOWED_DICT:
+        if mode not in self.custom.allowed_dict:
             raise KeyError("Mode %s not found" % mode)
 
         if self.device.get_property(consts.NET_INTFACE, "AllowedMode") == mode:
@@ -208,7 +208,7 @@ class IceraWrapper(WCDMAWrapper):
             self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
             return orig
 
-        return self.send_at("AT%%IPSYS=%d" % ICERA_ALLOWED_DICT[mode],
+        return self.send_at("AT%%IPSYS=%d" % self.custom.allowed_dict[mode],
                             callback=set_allowed_mode_cb)
 
     def set_network_mode(self, mode):
@@ -350,6 +350,7 @@ class IceraWCDMACustomizer(WCDMACustomizer):
                     \r\n
                     (?P<signal>%[A-Z]{3,}):\s*(?P<args>.*)
                     \r\n""", re.VERBOSE)
+    allowed_dict = ICERA_ALLOWED_DICT
     band_dict = ICERA_BAND_DICT
     conn_dict = ICERA_MODE_DICT
     cmd_dict = ICERA_CMD_DICT
