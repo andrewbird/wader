@@ -1,2 +1,1 @@
 debian/wader-core-restart-required.update-notifier /usr/share/wader-core/
-bin/wader-resolvconf-helper /usr/bin/
