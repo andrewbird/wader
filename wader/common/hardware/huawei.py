@@ -451,6 +451,7 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
         '^EARST': (None, None),
         '^STIN': (None, None),
         '^SMMEMFULL': (None, None),
+        '^CSNR': (None, None),
     }
 
 
