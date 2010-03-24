@@ -384,7 +384,11 @@ class NMProfileManager(Object):
     def _get_next_free_gpath(self):
         """Returns the next unused slot of /system/networking/connections"""
         all_dirs = list(self.helper.client.all_dirs(self.gpath))
-        max_index = max(map(int, [d.split('/')[-1] for d in all_dirs]))
+        try:
+            max_index = max(map(int, [d.split('/')[-1] for d in all_dirs]))
+        except ValueError:
+            # /system/networking/connections is empty
+            max_index = -1
 
         index = 0 if not all_dirs else max_index + 1
         return os.path.join(self.gpath, str(index))
