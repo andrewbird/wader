@@ -46,14 +46,14 @@ Project guidelines
 
  * Portability: A great deal of effort has been invested on making this
    code base as portable as possible (runs on OSX and Linux). As such, you
-   can not add a coupling in the code to any OS. All the troublesome methods
-   are abstracted out via the `wader.common.oal` module. Similarly, some
-   modules were designed with portability in mind in order to add new supported
-   platforms in the future. I am talking about modules such as
-   `wader.common.config`, `wader.common.profiles`, `wader.common.keyring`, etc.
+   can not add any coupling in the code to any OS. All the troublesome methods
+   are abstracted out via the `wader.common.oal` module. Similarly, there is
+   a backend system that contains all the modules required to deal with a given
+   environment. For example, if NetworkManager is present we will use its
+   profile system, while if we operate standalone, a custom one will be used.
+   Most of this abstractions are shown in `wader.common.interfaces`.
 
  * Translating: No strings should be marked for translation in the core, all
    the translated strings must be UI ones. The core and the UI will communicate
    via exceptions that the core will raise and the UI will catch. It is here
    where a localized dialog can be shown to the user.
-
