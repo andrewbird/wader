@@ -21,7 +21,6 @@
 import dbus
 from twisted.python import log
 from twisted.internet import defer, reactor
-from epsilon.modal import mode, Modal
 
 import wader.common.exceptions as ex
 import wader.common.aterrors as E
@@ -29,6 +28,7 @@ from wader.common.signals import SIG_CREG
 from wader.common.consts import (WADER_SERVICE, STATUS_IDLE, STATUS_HOME,
                                  STATUS_SEARCHING, STATUS_DENIED,
                                  STATUS_UNKNOWN, STATUS_ROAMING)
+from wader.contrib.modal import mode, Modal
 
 REGISTER_TIMEOUT = 15
 MAX_WAIT_TIMES = 6

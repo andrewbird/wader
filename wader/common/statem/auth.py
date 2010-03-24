@@ -21,8 +21,8 @@
 from twisted.internet import reactor, defer
 from twisted.python import log
 
-from epsilon.modal import mode, Modal
 import wader.common.aterrors as E
+from wader.contrib.modal import mode, Modal
 
 SIM_FAIL_DELAY = 15
 MAX_NUM_SIM_ERRORS = 3

@@ -23,12 +23,12 @@ DevicePlugin for Option Colt
 """
 
 from twisted.python import log
-from epsilon.modal import mode
 
 from wader.common.hardware.option import (OptionWCDMADevicePlugin,
                                         OptionWCDMACustomizer)
 from wader.common.sim import SIMBaseClass
 from wader.common.statem.auth import AuthStateMachine
+from wader.contrib.modal import mode
 
 
 class OptionColtAuthStateMachine(AuthStateMachine):

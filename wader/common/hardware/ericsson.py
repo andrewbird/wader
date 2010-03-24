@@ -19,7 +19,6 @@
 
 import re
 
-from epsilon.modal import mode as Mode
 from twisted.internet import defer, reactor
 from twisted.python import log
 
@@ -34,6 +33,7 @@ from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
 from wader.common.statem.simple import SimpleStateMachine
 from wader.common.utils import revert_dict
+from wader.contrib.modal import mode as Mode
 
 
 MAX_RETRIES = 6

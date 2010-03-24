@@ -20,7 +20,6 @@
 
 import re
 
-from epsilon.modal import mode as Mode
 from twisted.internet import defer, reactor
 from twisted.python import log
 
@@ -36,6 +35,7 @@ from wader.common.statem.simple import SimpleStateMachine
 from wader.common.plugin import DevicePlugin
 from wader.common.utils import rssi_to_percentage, revert_dict
 import wader.common.signals as S
+from wader.contrib.modal import mode as Mode
 
 NUM_RETRIES = 30
 RETRY_TIMEOUT = 4
