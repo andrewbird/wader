@@ -45,7 +45,6 @@ def debug(s):
         print s
 
 
-
 def should_fragment_be_assembled(sms, fragment):
     """Returns True if ``fragment`` can be assembled to ``sms``"""
     if sms.completed:
@@ -132,7 +131,8 @@ class MessageAssemblyLayer(object):
         debug("MAL::_add_sms: %s" % sms)
         if not sms.cnt:
             index = self._do_add_sms(sms)
-            debug("MAL::_add_sms  single part SMS added with logical index: %d" % index)
+            debug("MAL::_add_sms  single part SMS added with "
+                  "logical index: %d" % index)
             # being a single part sms, completed == True
             if emit:
                 for signal in [SIG_SMS, SIG_SMS_COMP]:
@@ -143,7 +143,8 @@ class MessageAssemblyLayer(object):
                 if should_fragment_be_assembled(value, sms):
                     # append the sms and emit the different signals
                     completed = self.sms_map[index].append_sms(sms)
-                    debug("MAL::_add_sms  multi part SMS with logical index %d, completed %s" % (index, completed))
+                    debug("MAL::_add_sms  multi part SMS with logical"
+                          "index %d, completed %s" % (index, completed))
 
                     if emit:
                         # only emit signals in runtime, not startup
@@ -161,7 +162,8 @@ class MessageAssemblyLayer(object):
             index = self._do_add_sms(sms)
             if emit:
                 self.wrappee.emit_signal(SIG_SMS, index, False)
-            debug("MAL::_add_sms first part of a multi part SMS added with logical index %d" % index)
+            debug("MAL::_add_sms first part of a multi part SMS added with"
+                  "logical index %d" % index)
             return index
 
     def delete_sms(self, index):
@@ -257,7 +259,8 @@ class MessageAssemblyLayer(object):
                                                     _sms.status_reference)
                 break
         else:
-            log.err("Received status report with unknown reference: %d" % sms.ref)
+            log.err("Received status report with "
+                    "unknown reference: %d" % sms.ref)
 
     def on_sms_notification(self, index):
         """Executed when a SMS notification is received"""
@@ -375,7 +378,6 @@ class Message(object):
                 _datetime = extract_datetime(ret['date'])
             except ValueError:
                 _datetime = datetime.now()
-
 
         m = cls(ret['number'], _datetime=_datetime, csca=ret['csca'],
                 ref=ret['ref'], cnt=ret['cnt'], seq=ret['seq'])

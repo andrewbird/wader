@@ -64,7 +64,7 @@ def unpack_ucs2_bytes_in_ts31101_80(s):
     try:
         t = unpack_ucs2_bytes(vs)
     except:
-        t = vs # show the invalid unicode
+        t = vs  # show the invalid unicode
 
     return t
 
@@ -94,7 +94,7 @@ def unpack_ucs2_bytes_in_ts31101_81(s):
     # example string '0602A46563746F72FF'
 
     num = ord(s[:2].decode('hex'))
-    base = (ord(s[2:4].decode('hex')) & 0x7f) << 7 # bits 15..8
+    base = (ord(s[2:4].decode('hex')) & 0x7f) << 7  # bits 15..8
     chars = s[4:4 + num * 2]
 
     t = ''
@@ -134,8 +134,8 @@ def unpack_ucs2_bytes_in_ts31101_82(s):
     # example string '0505302D82D32D31'
 
     num = ord(s[:2].decode('hex'))
-    base = ord(s[2:4].decode('hex')) << 8 # bits 16..9
-    base += ord(s[4:6].decode('hex'))     # bits  8..1
+    base = ord(s[2:4].decode('hex')) << 8  # bits 16..9
+    base += ord(s[4:6].decode('hex'))      # bits  8..1
     chars = s[6:6 + num * 2]
 
     t = ''

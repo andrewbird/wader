@@ -126,7 +126,7 @@ class HardwareManager(object):
 
         Will emit a DeviceAdded signal if emit is True
         """
-        log.msg("registering plugin %s using opath %s" % (plugin, plugin.opath))
+        log.msg("registering plugin %s with opath %s" % (plugin, plugin.opath))
         self.clients[plugin.opath] = setup_and_export_device(plugin)
         if emit:
             self.controller.DeviceAdded(plugin.opath)

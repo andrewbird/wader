@@ -86,7 +86,7 @@ def huawei_new_conn_mode(args):
         '5,5': consts.MM_NETWORK_MODE_HSDPA,
         '5,6': consts.MM_NETWORK_MODE_HSUPA,
         '5,7': consts.MM_NETWORK_MODE_HSPA,
-        '5,9': consts.MM_NETWORK_MODE_HSPA, # doc says HSPA+
+        '5,9': consts.MM_NETWORK_MODE_HSPA,  # doc says HSPA+
     }
     return mode_args_dict[args]
 
@@ -145,7 +145,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             ret['modea'] = mode_a
             ret['modeb'] = mode_b
             ret['theband'] = band
-            ret['band'] = 0 # populated later on
+            ret['band'] = 0  # populated later on
 
             # network mode
             if mode_a == 2 and mode_b == 1:
@@ -271,9 +271,9 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             hexbytes = match.group('name')[2:]
             if encoding == '80':   # example '80058300440586FF'
                 name = unpack_ucs2_bytes_in_ts31101_80(hexbytes)
-            elif encoding == '81': # example '810602A46563746F72FF'
+            elif encoding == '81':  # example '810602A46563746F72FF'
                 name = unpack_ucs2_bytes_in_ts31101_81(hexbytes)
-            elif encoding == '82': # example '820505302D82D32D31'
+            elif encoding == '82':  # example '820505302D82D32D31'
                 name = unpack_ucs2_bytes_in_ts31101_82(hexbytes)
             else:
                 name = "Unsupported encoding"

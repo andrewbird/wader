@@ -56,7 +56,7 @@ ZTE_BAND_DICT = {
 
     (consts.MM_NETWORK_BAND_U2100 |
      consts.MM_NETWORK_BAND_EGSM |
-     consts.MM_NETWORK_BAND_DCS): 2, # Europe
+     consts.MM_NETWORK_BAND_DCS): 2,  # Europe
 
     (consts.MM_NETWORK_BAND_U850 |
      consts.MM_NETWORK_BAND_U2100 |

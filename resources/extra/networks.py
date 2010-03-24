@@ -55,14 +55,14 @@ class MovistarSpain(NetworkOperator):
 
 
 class YoigoSpain(NetworkOperator):
-   netid = ["21403", "21404"]
-   name = "Yoigo"
-   country = "Spain"
-   apn = "internet"
-   username = "yoigo"
-   password = "yoigo"
-   dns1 = "10.8.0.20"
-   dns2 = "10.8.0.21"
+    netid = ["21403", "21404"]
+    name = "Yoigo"
+    country = "Spain"
+    apn = "internet"
+    username = "yoigo"
+    password = "yoigo"
+    dns1 = "10.8.0.20"
+    dns2 = "10.8.0.21"
 
 
 class SimyoSpain(NetworkOperator):

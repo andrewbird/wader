@@ -77,7 +77,8 @@ class HardwareManager(object):
         self.gudev_client.connect("uevent", self._on_uevent)
 
     def _on_uevent(self, client, action, device):
-        log.msg("UEVENT device: %s  action: %s" % (device.get_sysfs_path(), action))
+        msg = "UEVENT device: %s  action: %s"
+        log.msg(msg % (device.get_sysfs_path(), action))
         if action == 'remove':
             # handle remove
             for opath, plugin in self.clients.items():
@@ -254,7 +255,7 @@ class HardwareManager(object):
 
         Will emit a DeviceAdded signal if emit is True
         """
-        log.msg("registering plugin %s using opath %s" % (plugin, plugin.opath))
+        log.msg("registering plugin %s with opath %s" % (plugin, plugin.opath))
         self.clients[plugin.opath] = setup_and_export_device(plugin)
 
         if emit:
@@ -332,11 +333,11 @@ class HardwareManager(object):
 
             # now get the ports
             ports_need_probe = True
-            if plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'hso':
+            if info[DRIVER] == 'hso':
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
 
-            elif plugin.get_property(consts.MDM_INTFACE, 'Driver') == 'cdc_acm':
+            elif info[DRIVER] == 'cdc_acm':
                 # MBM device
                 # XXX: Not all CDC devices support DHCP, to override see
                 #      plugin attribute 'ipmethod'

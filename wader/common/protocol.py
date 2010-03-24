@@ -282,7 +282,7 @@ class BufferingStateMachine(object, protocol.Protocol):
             return self.transition_to_idle()
 
         match = cmdinfo['end'].search(self.waitbuf)
-        if match: # end of response
+        if match:  # end of response
             if cmdinfo['extract']:
                 # There's an regex to extract info from data
                 response = list(re.finditer(cmdinfo['extract'], self.waitbuf))

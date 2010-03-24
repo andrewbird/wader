@@ -27,7 +27,7 @@ class SierraWireless875(SierraWCDMADevicePlugin):
     version = "0.1"
     author = "anmsid, kgb0y"
 
-    __remote_name__ = "AC875"   #response from AT+CGMM
+    __remote_name__ = "AC875"
 
     __properties__ = {
         'ID_VENDOR_ID': [0x1199],

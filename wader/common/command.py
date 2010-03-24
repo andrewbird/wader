@@ -262,8 +262,8 @@ class ATCmd(object):
         self.splitcmd = None
         # command's deferred
         self.deferred = defer.Deferred()
-        self.timeout = 15  # default timeout
-        self.call_id = None # DelayedCall reference
+        self.timeout = 15    # default timeout
+        self.call_id = None  # DelayedCall reference
 
     def __repr__(self):
         args = (self.name, self.get_cmd(), self.timeout)

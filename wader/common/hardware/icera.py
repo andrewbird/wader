@@ -227,8 +227,8 @@ class IceraWrapper(WCDMAWrapper):
         def get_network_mode_cb(_mode):
             if _mode == mode:
                 return defer.succeed('OK')
-            else:
-                return self.send_at("AT%%IPSYS=%d" % self.custom.conn_dict[mode])
+
+            return self.send_at("AT%%IPSYS=%d" % self.custom.conn_dict[mode])
 
         d.addCallback(get_network_mode_cb)
         return d

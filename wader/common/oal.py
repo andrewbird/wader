@@ -25,6 +25,7 @@ won't affect Wader
 
 _os_obj = None
 
+
 def get_os_object():
     """
     Returns a ``OSPlugin`` instance corresponding to current OS used

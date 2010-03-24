@@ -46,13 +46,13 @@ SIERRA_MODE_DICT = {
 }
 
 SIERRA_BAND_DICT = {
-    consts.MM_NETWORK_BAND_EGSM: '03',  # EGSM (900MHz)
-    consts.MM_NETWORK_BAND_DCS: '03',   # DCS (1800MHz)
-    consts.MM_NETWORK_BAND_PCS: '04',   # PCS (1900MHz)
-    consts.MM_NETWORK_BAND_G850: '04',  # GSM (850 MHz)
-    consts.MM_NETWORK_BAND_U2100: '02', # WCDMA 2100Mhz         (Class I)
-    consts.MM_NETWORK_BAND_U800: '02',  # WCDMA 3GPP UMTS800   (Class VI)
-    consts.MM_NETWORK_BAND_ANY: '00',   # any band
+    consts.MM_NETWORK_BAND_EGSM: '03',   # EGSM (900MHz)
+    consts.MM_NETWORK_BAND_DCS: '03',    # DCS (1800MHz)
+    consts.MM_NETWORK_BAND_PCS: '04',    # PCS (1900MHz)
+    consts.MM_NETWORK_BAND_G850: '04',   # GSM (850 MHz)
+    consts.MM_NETWORK_BAND_U2100: '02',  # WCDMA 2100Mhz         (Class I)
+    consts.MM_NETWORK_BAND_U800: '02',   # WCDMA 3GPP UMTS800   (Class VI)
+    consts.MM_NETWORK_BAND_ANY: '00',    # any band
 }
 
 SIERRA_CMD_DICT = get_cmd_dict_copy()

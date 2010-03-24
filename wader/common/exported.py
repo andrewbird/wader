@@ -423,7 +423,7 @@ class ContactsExporter(CardExporter):
     def GetCount(self, async_cb, async_eb):
         """Returns the number of contacts in the SIM"""
         d = self.sconn.list_contacts()
-        d.addCallback(lambda contacts: len(contacts))
+        d.addCallback(len)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(CTS_INTFACE, in_signature='', out_signature='i',

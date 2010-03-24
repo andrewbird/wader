@@ -515,7 +515,7 @@ ERROR_DICT = {
     '+CME ERROR: 149': GprsUnspecified,
     '+CME ERROR: 150': GprsInvalidClass,
     # not implemented on ModemManager (yet)
-    '+CME ERROR: 134': ServiceTemporarilyOutOfOrder,
+    '+CME ERROR: 260': ServiceTemporarilyOutOfOrder,
     '+CME ERROR: 261': UnknownSubscriber,
     '+CME ERROR: 262': ServiceNotInUse,
     '+CME ERROR: 263': ServiceNotAvailable,

@@ -38,7 +38,6 @@ class IMessage(Interface):
     index = Attribute("""Contact's index""")
 
 
-
 class IBackend(Interface):
     """Interface that all the integration backends must implement"""
 

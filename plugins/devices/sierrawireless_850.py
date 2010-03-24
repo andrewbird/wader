@@ -27,7 +27,7 @@ class SierraWireless850(SierraWCDMADevicePlugin):
     version = "0.1"
     author = u"Pablo Martí"
 
-    __remote_name__ = "AC850"   #response from AT+CGMM
+    __remote_name__ = "AC850"
 
     __properties__ = {
         'ID_VENDOR_ID': [0x192],
