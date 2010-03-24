@@ -26,9 +26,11 @@ from twisted.internet import defer
 from twisted.python import log
 
 from wader.plugins.mm_provider import mm_provider, MMContact
-from wader.common.config import config
 from wader.common.consts import (WADER_SERVICE, WADER_INTFACE, WADER_OBJPATH,
                                  MDM_INTFACE, CRD_INTFACE)
+
+CARD_PIN = "0000"
+
 
 class TestModemManagerContactProvider(unittest.TestCase):
     """Test for the ModemManager IContactProvider"""
@@ -48,7 +50,7 @@ class TestModemManagerContactProvider(unittest.TestCase):
         def enable_device_eb(e):
             error = e.get_dbus_message()
             if 'SimPinRequired' in error:
-                pin = config.get('test', 'pin', '0000')
+                pin = CARD_PIN
                 self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
                                     reply_handler=enable_device_cb,
                                     error_handler=log.err)
