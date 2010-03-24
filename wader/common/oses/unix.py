@@ -41,6 +41,9 @@ class UnixPlugin(OSPlugin):
         self.update_dns_cache()
 
     def is_valid(self):
+        # DO NOT modify this unless you know what you are doing. This plugin
+        # is the parent class of LinuxPlugin/OSXPlugin/*BSDPlugin/etc. This
+        # is not a final implementation as there's no such thing as a Unix OS.
         return False
 
     def get_iface_stats(self, iface):
