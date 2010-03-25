@@ -18,6 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """OSPlugin for Unix-based OSes"""
 
+from twisted.python import log
+
 from wader.common.plugin import OSPlugin
 from wader.common.resolvconf import NamedManager
 from wader.common.utils import get_file_data
