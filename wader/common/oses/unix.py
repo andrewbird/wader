@@ -33,12 +33,20 @@ class UnixPlugin(OSPlugin):
     def add_dns_info(self, dns, iface=None):
         """See :meth:`wader.common.interfaces.IOSPlugin.add_dns_info`"""
         self.named_manager.add_dns_info(dns)
-        self.update_dns_cache()
+        try:
+            self.update_dns_cache()
+        except NotImplementedError:
+            klass = self.__class__.__name__
+            log.err("%s: update_dns_cache not implemented" % klass)
 
     def delete_dns_info(self, dns, iface=None):
         """See :meth:`wader.common.interfaces.IOSPlugin.delete_dns_info`"""
         self.named_manager.delete_dns_info(dns)
-        self.update_dns_cache()
+        try:
+            self.update_dns_cache()
+        except NotImplementedError:
+            klass = self.__class__.__name__
+            log.err("%s: update_dns_cache not implemented" % klass)
 
     def is_valid(self):
         # DO NOT modify this unless you know what you are doing. This plugin
