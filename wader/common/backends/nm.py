@@ -165,13 +165,14 @@ class GnomeKeyring(object):
         if not self.name:
             self._is_new = True
             self.name = 'login'
-            self.gk.set_default_keyring_sync(self.name)
 
             # if keyring does not exist, create it
             try:
                 self.gk.create_sync(self.name, None)
             except self.gk.AlreadyExistsError:
                 pass
+
+            self.gk.set_default_keyring_sync(self.name)
 
     def is_open(self):
         info = self.gk.get_info_sync(self.name)
