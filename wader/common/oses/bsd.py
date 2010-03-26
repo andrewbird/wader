@@ -27,12 +27,19 @@ class FreeBSDPlugin(UnixPlugin):
     def __init__(self):
         super(FreeBSDPlugin, self).__init__()
 
+    def get_iface_stats(self):
+        # XXX: implementation missing
+        return 0, 0
+
     def is_valid(self):
         try:
             __import__("freebsd")
             return True
         except ImportError:
             return False
+
+    def update_dns_cache(self):
+        raise NotImplementedError()
 
 
 class OpenBSDPlugin(UnixPlugin):
@@ -41,9 +48,16 @@ class OpenBSDPlugin(UnixPlugin):
     def __init__(self):
         super(OpenBSDPlugin, self).__init__()
 
+    def get_iface_stats(self):
+        # XXX: implementation missing
+        return 0, 0
+
     def is_valid(self):
         try:
             __import__("openbsd")
             return True
         except ImportError:
             return False
+
+    def update_dns_cache(self):
+        raise NotImplementedError()

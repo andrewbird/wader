@@ -45,12 +45,16 @@ class OSXPlugin(UnixPlugin):
 
     def get_iface_stats(self, iface):
         """See :meth:`wader.common.interfaces.IOSPlugin.get_iface_stats`"""
-        # TODO: implement
+        # XXX: implementation missing
         return 0, 0
 
     def is_valid(self):
         """See :meth:`wader.common.interfaces.IOSPlugin.is_valid`"""
         return sys.platform == 'darwin'
+
+    def update_dns_cache(self):
+        # XXX: implementation missing
+        pass
 
 
 class HardwareManager(object):
