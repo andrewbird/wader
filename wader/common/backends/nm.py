@@ -165,12 +165,11 @@ class GnomeKeyring(object):
             self.name = 'login'
             gk.set_default_keyring_sync(self.name)
 
-        # XXX: I had to disable this bit, otherwise it'd try to create
-        # a new keyring for every created profile
-        #try:
-        #    gk.create_sync(self.name, None)
-        #except gnomekeyring.AlreadyExistsError:
-        #    pass
+            # if keyring does not exist, create it
+            try:
+                gk.create_sync(self.name, None)
+            except gnomekeyring.AlreadyExistsError:
+                pass
 
     def is_open(self):
         info = self.gk.get_info_sync(self.name)
