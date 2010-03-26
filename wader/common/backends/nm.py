@@ -151,6 +151,8 @@ class GnomeKeyring(object):
     def __init__(self):
         super(GnomeKeyring, self).__init__()
         self._is_new = False
+        self.gk = None
+        self.name = None
         self._setup_keyring()
 
     def _setup_keyring(self):
@@ -158,17 +160,17 @@ class GnomeKeyring(object):
         # system doesn't fails
         import gnomekeyring as gk
         self.gk = gk
-        self.name = gk.get_default_keyring_sync()
+        self.name = self.gk.get_default_keyring_sync()
 
         if not self.name:
             self._is_new = True
             self.name = 'login'
-            gk.set_default_keyring_sync(self.name)
+            self.gk.set_default_keyring_sync(self.name)
 
             # if keyring does not exist, create it
             try:
-                gk.create_sync(self.name, None)
-            except gnomekeyring.AlreadyExistsError:
+                self.gk.create_sync(self.name, None)
+            except self.gk.AlreadyExistsError:
                 pass
 
     def is_open(self):
