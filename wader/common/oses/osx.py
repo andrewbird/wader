@@ -21,7 +21,7 @@ from functools import partial
 import sys
 
 from twisted.internet import defer
-from twisted.python import log
+from twisted.python import log, reflect
 from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, MM_MODEM_TYPE_REV,
@@ -77,8 +77,7 @@ class HardwareManager(object):
     def get_devices(self):
         """See :meth:`wader.common.interfaces.IHardwareManager.get_devices`"""
         # so pylint does not complain on Linux
-        from twisted.python.reflect import namedAny
-        osxserialports = namedAny('wader.common.oses.osxserialports')
+        osxserialports = reflect.namedAny('wader.common.oses.osxserialports')
         devs_info = [d for d in osxserialports.modems()
                         if 'Modem' in d['suffix']]
         deferreds = []
