@@ -77,7 +77,8 @@ class HardwareManager(object):
     def get_devices(self):
         """See :meth:`wader.common.interfaces.IHardwareManager.get_devices`"""
         # so pylint does not complain on Linux
-        osxserialports = __import__('osxserialports')
+        from twisted.python.reflect import namedAny
+        osxserialports = namedAny('wader.common.oses.osxserialports')
         devs_info = [d for d in osxserialports.modems()
                         if 'Modem' in d['suffix']]
         deferreds = []

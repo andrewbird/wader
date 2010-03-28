@@ -29,14 +29,15 @@ from distutils.core import Extension
 from setuptools import setup
 
 from wader.common.consts import (APP_VERSION, APP_NAME,
-                                 APP_SLUG_NAME)
+                                 APP_SLUG_NAME, BASE_DIR)
 
-DATA_DIR = '/usr/share/%s' % APP_SLUG_NAME
-BIN_DIR = '/usr/bin'
+DATA_DIR = join(BASE_DIR, 'usr', 'share', APP_SLUG_NAME)
+BIN_DIR = join(BASE_DIR, 'usr', 'bin')
 RESOURCES = join(DATA_DIR, 'resources')
-DBUS_SYSTEMD = '/etc/dbus-1/system.d'
-DBUS_SYSTEM_SERVICES = '/usr/share/dbus-1/system-services'
-UDEV_RULESD = '/etc/udev/rules.d'
+DBUS_SYSTEMD = join(BASE_DIR, 'etc', 'dbus-1', 'system.d')
+DBUS_SYSTEM_SERVICES = join(BASE_DIR, 'usr', 'share', 'dbus-1',
+                            'system-services')
+UDEV_RULESD = join(BASE_DIR, 'etc', 'udev', 'rules.d')
 
 
 def list_files(path, exclude=None):
@@ -75,8 +76,8 @@ if sys.platform == 'linux2':
     append((UDEV_RULESD, list_files('resources/udev')))
 
 elif sys.platform == 'darwin':
-    osxserialports = Extension('osxserialports',
-                            sources=['contrib/osxserialports/osxserialportsmodule.c'],
+    osxserialports = Extension('wader.common.oses.osxserialports',
+                            sources=['wader/common/oses/_osxserialports.c'],
                             extra_link_args=['-framework', 'CoreFoundation',
                                              '-framework', 'IOKit'])
     ext_modules.append(osxserialports)

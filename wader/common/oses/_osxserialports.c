@@ -195,6 +195,6 @@ osxserialportsMethods[] = {
 void
 initosxserialports(void)
 {
-    (void) Py_InitModule("osxserialports", osxserialportsMethods);
+    (void) Py_InitModule("wader.common.oses.osxserialports", osxserialportsMethods);
 }
 

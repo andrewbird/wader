@@ -19,8 +19,12 @@
 """Wader global variables"""
 
 from os.path import join
+from os import environ
 
-from dbus import UInt32
+try:
+    from dbus import UInt32
+except:
+    UInt32 = int
 
 # app name
 APP_NAME = 'Wader'
@@ -171,8 +175,15 @@ MM_IP_METHOD_DHCP = UInt32(2)
 
 MM_SYSTEM_SETTINGS_PATH = '/org/freedesktop/ModemManager/Settings'
 
-DATA_DIR = join('/usr', 'share', '%s' % APP_SLUG_NAME)
-WADER_DOC = join('/usr', 'share', 'doc', '%s' % APP_SLUG_NAME, 'guide')
+# necessary for relocatable bundling on OSX
+try:
+    BASE_DIR = environ['WADER_PREFIX']
+except KeyError:
+    # will work as before
+    BASE_DIR = '/'
+
+DATA_DIR = join(BASE_DIR, 'usr', 'share', APP_SLUG_NAME)
+WADER_DOC = join(BASE_DIR, 'usr', 'share', 'doc', APP_SLUG_NAME, 'guide')
 
 # paths
 RESOURCES_DIR = join(DATA_DIR, 'resources')
@@ -190,5 +201,5 @@ PLUGINS_DIR = [PLUGINS_DIR,
                join(PLUGINS_DIR, 'contacts'),
                join(PLUGINS_DIR, 'devices')]
 
-PID_PATH = '/var/run/wader.pid'
-LOG_PATH = '/var/log/wader.log'
+PID_PATH = join(BASE_DIR, 'var', 'run', 'wader.pid')
+LOG_PATH = join(BASE_DIR, 'var', 'log', 'wader.log')
