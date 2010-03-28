@@ -18,13 +18,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Wader global variables"""
 
-from os.path import join
 from os import environ
+from os.path import join
 
-try:
-    from dbus import UInt32
-except:
-    UInt32 = int
+from dbus import UInt32
 
 # app name
 APP_NAME = 'Wader'
@@ -176,11 +173,7 @@ MM_IP_METHOD_DHCP = UInt32(2)
 MM_SYSTEM_SETTINGS_PATH = '/org/freedesktop/ModemManager/Settings'
 
 # necessary for relocatable bundling on OSX
-try:
-    BASE_DIR = environ['WADER_PREFIX']
-except KeyError:
-    # will work as before
-    BASE_DIR = '/'
+BASE_DIR = environ.get('WADER_PREFIX', '/')
 
 DATA_DIR = join(BASE_DIR, 'usr', 'share', APP_SLUG_NAME)
 WADER_DOC = join(BASE_DIR, 'usr', 'share', 'doc', APP_SLUG_NAME, 'guide')
