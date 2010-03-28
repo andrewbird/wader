@@ -4,7 +4,8 @@ import os
 from optparse import OptionParser
 import sys
 
-from wader.common.consts import APP_VERSION, LOG_PATH, DATA_DIR, PID_PATH
+from wader.common.consts import (APP_VERSION, LOG_PATH, DATA_DIR, PID_PATH,
+                                 BASE_DIR)
 
 from twisted.python.release import sh
 
