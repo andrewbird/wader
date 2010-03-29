@@ -22,10 +22,9 @@ from functools import partial
 from os.path import join, exists
 import re
 
-import gudev
 from zope.interface import implements
 from twisted.internet import defer, reactor, utils
-from twisted.python import log
+from twisted.python import log, reflect
 
 from wader.common.interfaces import IHardwareManager
 from wader.common.hardware.base import identify_device, probe_ports
@@ -66,6 +65,7 @@ class HardwareManager(object):
         self._waiting_deferred = None
         # remember the total client count for opath generation
         self._client_count = -1
+        gudev = reflect.namedAny("gudev")
         self.gudev_client = gudev.Client(SUBSYSTEMS)
         # temporary place to store hotplugged devices to process
         self._hotplugged_devices = []
