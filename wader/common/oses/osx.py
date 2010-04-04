@@ -65,7 +65,7 @@ class HardwareManager(object):
     def __init__(self):
         super(HardwareManager, self).__init__()
         self.controller = None
-        self._device_count = 0
+        self._device_count = -1
         self.clients = {}
 
     def register_controller(self, controller):
