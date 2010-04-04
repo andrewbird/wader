@@ -63,17 +63,15 @@ data_files = [
    (join(DATA_DIR, 'plugins'), list_files('plugins')),
    (DATA_DIR, ['core-tap.py']),
    (BIN_DIR, ['bin/wader-core-ctl']),
+   (DBUS_SYSTEMD, ['resources/dbus/org.freedesktop.ModemManager.conf']),
+   (DBUS_SYSTEM_SERVICES,
+                ['resources/dbus/org.freedesktop.ModemManager.service']),
 ]
 
 ext_modules = []
 
 if sys.platform == 'linux2':
-    append = data_files.append
-    append((DBUS_SYSTEMD,
-            ['resources/dbus/org.freedesktop.ModemManager.conf']))
-    append((DBUS_SYSTEM_SERVICES,
-            ['resources/dbus/org.freedesktop.ModemManager.service']))
-    append((UDEV_RULESD, list_files('resources/udev')))
+    data_files.append((UDEV_RULESD, list_files('resources/udev')))
 
 elif sys.platform == 'darwin':
     osxserialports = Extension('wader.common.oses.osxserialports',
@@ -85,7 +83,7 @@ elif sys.platform == 'darwin':
 packages = [
     'wader', 'wader.common', 'wader.common.oses', 'wader.common.backends',
     'wader.common.statem', 'wader.common.hardware', 'wader.contrib',
-    'wader.test', 'wader.plugins'
+    'wader.test', 'wader.plugins',
 ]
 
 setup(name=APP_NAME,
@@ -113,5 +111,5 @@ setup(name=APP_NAME,
         'Programming Language :: Python :: 2.5',
         'Programming Language :: Python :: 2.6',
         'Topic :: Communications :: Telephony',
-      ]
+      ],
 )
