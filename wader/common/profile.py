@@ -56,10 +56,8 @@ class Profile(DelayableDBusObject):
         DelayableDBusObject.__init__(self, bus_name, opath)
 
         self.opath = opath
-        if props is not None:
-            self.props = props
-        else:
-            self.props = {}
+        self.secrets = None
+        self.props = {} if props is None else props
 
     def get_settings(self):
         """Returns the profile settings"""

@@ -27,7 +27,7 @@ class FreeBSDPlugin(UnixPlugin):
     def __init__(self):
         super(FreeBSDPlugin, self).__init__()
 
-    def get_iface_stats(self):
+    def get_iface_stats(self, iface):
         # XXX: implementation missing
         return 0, 0
 
@@ -48,7 +48,7 @@ class OpenBSDPlugin(UnixPlugin):
     def __init__(self):
         super(OpenBSDPlugin, self).__init__()
 
-    def get_iface_stats(self):
+    def get_iface_stats(self, iface):
         # XXX: implementation missing
         return 0, 0
 

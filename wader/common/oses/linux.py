@@ -179,13 +179,13 @@ class HardwareManager(object):
         for device in devices:
             props = {}
 
-            for property in REQUIRED_PROPS:
-                value = device.get_property(property)
+            for prop in REQUIRED_PROPS:
+                value = device.get_property(prop)
                 # values are either string or hex
                 try:
-                    props[property] = int(value, 16)
+                    props[prop] = int(value, 16)
                 except ValueError:
-                    props[property] = value
+                    props[prop] = value
 
             # if this properties are present, we should use them as
             # data port and control port
