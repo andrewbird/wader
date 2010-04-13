@@ -24,7 +24,7 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1411", ENV{.MM_USBIFNUM}=="02", ENV{
 
 # K4505
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # K3765
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1465", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
