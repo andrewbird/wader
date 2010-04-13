@@ -1,6 +1,0 @@
-# Flip the Sony Ericsson MD300 device again
-ACTION!="add", GOTO="3G_End"
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="0fce", ATTRS{idProduct}=="d0cf", RUN+="/bin/sh -c 'echo 3 > /sys/$env{DEVPATH}/bConfigurationValue'"
-LABEL="3G_End"
-
-

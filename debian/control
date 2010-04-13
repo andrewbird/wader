@@ -11,7 +11,7 @@ XS-Python-Version: current
 Package: wader-core
 Architecture: all
 Replaces: wader-core, vmc-core, modemmanager
-Depends: ${python:Depends}, python-twisted-core, python-serial, python-dbus, python-tz, python-messaging, usb-modeswitch, ozerocdoff, eject, python-gudev, wvdial | network-manager (>=0.8)
+Depends: ${python:Depends}, python-twisted-core, python-serial, python-dbus, python-tz, python-messaging, usb-modeswitch (>= 1.1.0), usb-modeswitch-data (>= 20100322), python-gudev, wvdial | network-manager (>=0.8)
 Recommends: python-twisted-conch
 Conflicts: modemmanager
 Provides: modemmanager

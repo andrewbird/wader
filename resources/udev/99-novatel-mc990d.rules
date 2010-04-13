@@ -1,1 +1,0 @@
-ACTION=="add", SYSFS{idVendor}=="1410", SYSFS{idProduct}=="5020", RUN:="/usr/bin/eject %k"
