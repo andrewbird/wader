@@ -80,13 +80,20 @@ class NetworkRegistrationStateMachine(Modal):
 
     def notify_success(self, ignored=True):
         """Notifies the caller that we have succeed"""
-        self.deferred.callback(ignored)
+        try:
+            self.deferred.callback(ignored)
+        except defer.AlreadyCalledError:
+            pass
+
         self.cancel_counter()
         self.clean_signals()
 
     def notify_failure(self, failure):
         """Notifies the caller that we have failed"""
-        self.deferred.errback(failure)
+        try:
+            self.deferred.errback(failure)
+        except defer.AlreadyCalledError:
+            pass
 
         self.cancel_counter()
         self.clean_signals()
