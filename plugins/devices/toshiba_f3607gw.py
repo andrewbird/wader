@@ -35,4 +35,4 @@ class ToshibaF3607gw(EricssonDevicePlugin):
     }
 
 
-toshibaF3607gw = toshibaF3607gw()
+toshibaF3607gw = ToshibaF3607gw()
