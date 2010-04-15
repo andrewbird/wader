@@ -81,6 +81,15 @@ ERICSSON_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
                 \s*\r\n
                 """, re.VERBOSE))
 
+# +CPBR: (1-200),80,14,20,80,128
+ERICSSON_CMD_DICT['get_phonebook_size'] = build_cmd_dict(re.compile(r"""
+                \r\n
+                \+CPBR:\s
+                \(\d\-(?P<size>\d+)\)
+                (?P<ignored>,.*)?
+                \r\n
+                """, re.VERBOSE))
+
 
 class EricssonSIMClass(SIMBaseClass):
     """Ericsson SIM Class"""
@@ -91,6 +100,7 @@ class EricssonSIMClass(SIMBaseClass):
     def initialize(self, set_encoding=True):
         self.sconn.reset_settings()
         self.sconn.disable_echo()
+        self.sconn.send_at('AT+CPBS="SM"') # So that phonebook size is returned
 
         def init_callback(size):
             # setup SIM storage defaults
@@ -373,6 +383,17 @@ class EricssonWrapper(WCDMAWrapper):
         return self.queue_at_cmd(cmd)
 
 
+class EricssonF3607gwWrapper(EricssonWrapper):
+    """Wrapper for F3307 / F3607gw Ericsson cards"""
+
+    def find_contacts(self, pattern):
+        d = self.list_contacts()
+        d.addCallback(lambda contacts:
+                [c for c in contacts
+                       if c.name.lower().startswith(pattern.lower())])
+        return d
+
+
 class EricssonSimpleStateMachine(SimpleStateMachine):
     begin = SimpleStateMachine.begin
     check_pin = SimpleStateMachine.check_pin
@@ -457,6 +478,10 @@ class EricssonCustomizer(WCDMACustomizer):
 
     wrapper_klass = EricssonWrapper
     simp_klass = EricssonSimpleStateMachine
+
+
+class EricssonF3607gwCustomizer(EricssonCustomizer):
+    wrapper_klass = EricssonF3607gwWrapper
 
 
 class EricssonDevicePlugin(DevicePlugin):
