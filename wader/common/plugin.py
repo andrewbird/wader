@@ -131,7 +131,9 @@ class DevicePlugin(object):
 
         d = defer.succeed(True)
 
-        if self.status == DEV_ENABLED and not removed:
+        if removed:
+            d.addCallback(lambda _: self.set_status(DEV_DISABLED))
+        elif self.status == DEV_ENABLED:
             d.addCallback(lambda _: self.sconn.enable_radio(False))
             d.addCallback(lambda _: self.set_status(DEV_AUTHENTICATED))
 
