@@ -979,3 +979,18 @@ class DBusTestCase(unittest.TestCase):
         self.assertEqual(bad_smsc, _bad_smsc)
         # leave everything as found
         self.device.SetSmsc(smsc, dbus_interface=SMS_INTFACE)
+
+    def test_Ussd(self):
+        """Test for working ussd implementation"""
+        # get the IMSI and check if we have a suitable ussd request/regex
+        imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+        if imsi.startswith("21401"):
+            request, regex = ('*118#', '^Spain.*$')
+        elif imsi.startswith("23415"):
+            request, regex = ('*#100#', '^07\d{9}$')
+        else:
+            raise unittest.SkipTest("Untested")
+
+        response = self.device.Initiate(request)
+
+        self.failUnless(re.compile(regex).match(response))
