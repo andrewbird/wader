@@ -105,18 +105,33 @@ config = Config(GCONF_BASE)
 #
 # edit the GCONF_BASE variable above, to change the '/apps/wader-core'
 
+device = None
+numtests = None
+
 
 class DBusTestCase(unittest.TestCase):
     """Test-suite for ModemManager DBus exported methods"""
 
-    def setUpClass(self):
-        # setUpClass is meant to be deprecated, and setUp should be
-        # used instead, however setUp's behaviour doesn't replicates
-        # setUpClass' one, so for now we're going to use this
-        # Twisted deprecated function
-        d = defer.Deferred()
-        self.device = None
+    def setUp(self):
+        return self.setUpOnce()
 
+    def setUpOnce(self):
+        # setUpClass has been removed in twisted 10.0, and setUp should be
+        # used instead, however setUp's behaviour doesn't replicate
+        # setUpClass' one, so for now we're going to live with this horrid
+        # hack
+        global device, numtests
+
+        if device:
+            self.device = device
+            return defer.succeed(True)
+
+        if numtests is None:
+            numtests = len([m for m in dir(self) if m.startswith('test_')])
+
+        d = defer.Deferred()
+
+        self.device = None
         loop = dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
         bus = dbus.SystemBus(mainloop=loop)
 
@@ -146,10 +161,12 @@ class DBusTestCase(unittest.TestCase):
                 raise unittest.SkipTest("Cannot handle error %s" % e)
 
         def get_device_from_opath(opaths):
+            global device
+
             if not len(opaths):
                 raise unittest.SkipTest("Can't run this test without devices")
 
-            self.device = bus.get_object(MM_SERVICE, opaths[0])
+            self.device = device = bus.get_object(MM_SERVICE, opaths[0])
             # enable the device
             self.device.Enable(True, dbus_interface=MDM_INTFACE,
                                reply_handler=enable_device_cb,
@@ -161,9 +178,21 @@ class DBusTestCase(unittest.TestCase):
                              error_handler=d.errback)
         return d
 
-    def tearDownClass(self):
+    def tearDown(self):
+        global numtests
+
+        if numtests == 1:
+            numtests = None
+            return self.tearDownOnce()
+        else:
+            numtests -= 1
+            return defer.succeed(True)
+
+    def tearDownOnce(self):
+        global device
         # disable device at the end of the test
         self.device.Enable(False, dbus_interface=MDM_INTFACE)
+        self.device = device = None
 
     # org.freedesktop.ModemManager.Modem tests
     def test_ModemDeviceProperty(self):
