@@ -18,6 +18,7 @@
 """Unittests for the contact module"""
 
 from twisted.trial import unittest
+from twisted.internet import defer
 
 from wader.common.contact import ContactStore
 
@@ -30,17 +31,45 @@ except ImportError:
     SKIP_TEST = True
 
 
+store = None
+numtests = None
+executed = None
+
+
 class TestContactStore(unittest.TestCase):
     """Tests for wader.common.contact.ContactStore"""
     skip = "No contact providers found" if SKIP_TEST else None
 
-    def setUpClass(self):
-        self.store = ContactStore()
-        for provider in providers:
-            self.store.add_provider(provider)
+    def setUpOnce(self):
+        global store, numtests
+        if store is None:
+            store = ContactStore()
+            map(store.add_provider, providers)
 
-    def tearDownClass(self):
-        self.store.close()
+        if numtests is None:
+            numtests = len([m for m in dir(self) if m.startswith('test_')])
+
+        self.store = store
+        return defer.succeed(True)
+
+    def tearDownOnce(self):
+        global store
+        return defer.maybeDeferred(store.close)
+
+    def setUp(self):
+        return self.setUpOnce()
+
+    def tearDown(self):
+        global numtests, executed
+        if executed is None:
+            executed = 1
+        else:
+            executed += 1
+
+        if numtests == executed:
+            return self.tearDownOnce()
+
+        return defer.succeed(True)
 
     def test_add_contact(self):
         c = SQLContact("John", "+433333223", email="john@mail.net")
