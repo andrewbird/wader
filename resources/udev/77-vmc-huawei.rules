@@ -18,6 +18,10 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1001", ENV{.MM_USBIFNUM}=="02", ENV{
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1003", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1003", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
+# E1692
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="140c", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="140c", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
 # E510
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1411", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1411", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_AUX}="1"
