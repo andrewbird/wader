@@ -28,6 +28,7 @@ from messaging import PDU
 
 from wader.common.interfaces import IMessage
 from wader.common.signals import SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
+from wader.common.utils import get_tz_aware_now
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 # XXX: What should this threshold be?
@@ -377,7 +378,7 @@ class Message(object):
             try:
                 _datetime = extract_datetime(ret['date'])
             except ValueError:
-                _datetime = datetime.now()
+                _datetime = get_tz_aware_now()
 
         m = cls(ret['number'], _datetime=_datetime, csca=ret['csca'],
                 ref=ret['ref'], cnt=ret['cnt'], seq=ret['seq'])

@@ -19,6 +19,7 @@
 """Unittests for the provider layer """
 
 from datetime import datetime, timedelta, date
+from pytz import timezone
 import sqlite3
 from time import time
 
@@ -30,6 +31,7 @@ from wader.common.provider import (SMS_SCHEMA, SmsProvider, Message, Folder,
                                    message_read, NETWORKS_SCHEMA, TYPE_PREPAID,
                                    TYPE_CONTRACT, NetworkProvider,
                                    NetworkOperator, UsageProvider)
+from wader.common.utils import get_tz_aware_now
 
 
 class TestNetworkDBTriggers(unittest.TestCase):
@@ -477,7 +479,7 @@ class TestSmsProvider(unittest.TestCase):
 
     def test_add_sms(self):
         sms = Message('+3243243223', 'hey how are you?',
-                      _datetime=datetime.now())
+                      _datetime=get_tz_aware_now())
         sms = self.provider.add_sms(sms)
         self.assertIn(sms, list(self.provider.list_sms()))
         # leave everything as found
@@ -526,9 +528,9 @@ class TestSmsProvider(unittest.TestCase):
         self.assertIn(folder, list(self.provider.list_folders()))
         # attach a couple of threads to the folder
         t1 = self.provider.add_thread(
-                Thread(datetime.now(), '+322323233', index=5, folder=folder))
+            Thread(get_tz_aware_now(), '+322323233', index=5, folder=folder))
         t2 = self.provider.add_thread(
-                Thread(datetime.now(), '+322323233', index=6, folder=folder))
+            Thread(get_tz_aware_now(), '+322323233', index=6, folder=folder))
         # make sure they appear
         self.assertIn(t1, list(self.provider.list_threads()))
         self.assertIn(t2, list(self.provider.list_threads()))
@@ -541,7 +543,8 @@ class TestSmsProvider(unittest.TestCase):
     def test_delete_thread(self):
         # add a thread to inbox and make sure its there
         t = self.provider.add_thread(
-           Thread(datetime.now(), '+3443545333', index=3, folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3443545333', index=3,
+                   folder=inbox_folder))
         self.assertIn(t, list(self.provider.list_threads()))
         # delete it and make sure its gone
         self.provider.delete_thread(t)
@@ -550,11 +553,11 @@ class TestSmsProvider(unittest.TestCase):
     def test_delete_thread_with_sms_attached(self):
         # add a thread to inbox
         t = self.provider.add_thread(
-            Thread(datetime.now(), '+3443545332', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3443545332', folder=inbox_folder))
         # add a message attached to that thread and make sure its present
         sms = self.provider.add_sms(
             Message(number='+3443545332', text='how is it going then?',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         self.assertIn(sms, list(self.provider.list_sms()))
         # delete the thread and both the thread and SMS should be gone
         self.provider.delete_thread(t)
@@ -563,11 +566,11 @@ class TestSmsProvider(unittest.TestCase):
     def test_delete_sms(self):
         # add a thread to inbox
         t = self.provider.add_thread(
-            Thread(datetime.now(), '+3443545333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3443545333', folder=inbox_folder))
         # add a message attached to that thread and make sure its present
         sms = self.provider.add_sms(
             Message(number='+3443545333', text='how is it going then?',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         self.assertIn(sms, list(self.provider.list_sms()))
         # delete it and make sure its gone
         self.provider.delete_sms(sms)
@@ -584,10 +587,10 @@ class TestSmsProvider(unittest.TestCase):
         # add a folder and attach a thread to it
         folder = self.provider.add_folder(Folder("Test 3"))
         t = self.provider.add_thread(
-            Thread(datetime.now(), '+3443545333', folder=folder))
+            Thread(get_tz_aware_now(), '+3443545333', folder=folder))
         # add a thread attached to inbox
         t2 = self.provider.add_thread(
-            Thread(datetime.now(), '+3443545333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3443545333', folder=inbox_folder))
         # t should be present in threads, but not t2
         threads = list(self.provider.list_from_folder(folder))
         self.assertIn(t, threads)
@@ -598,7 +601,7 @@ class TestSmsProvider(unittest.TestCase):
 
     def test_list_from_folder_and_the_results_order(self):
         """test that list_from_folder returns a correctly ordered result"""
-        now = datetime.now()
+        now = get_tz_aware_now()
         five_min_ago = now - timedelta(minutes=5)
         # add a couple of threads to inbox_folder, one of them
         # just got updated/created and the other five minuts ago
@@ -617,13 +620,13 @@ class TestSmsProvider(unittest.TestCase):
     def test_list_from_thread(self):
         """test for list_from_thread"""
         t = self.provider.add_thread(
-            Thread(datetime.now(), '+3443545333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3443545333', folder=inbox_folder))
         sms1 = self.provider.add_sms(
             Message(number='+3443545333', text='test_list_from_thread sms1',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         sms2 = self.provider.add_sms(
             Message(number='+3443545333', text='test_list_from_thread sms2',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         # sms1 and sms2 should be present in messages
         messages = list(self.provider.list_from_thread(t))
         self.assertIn(sms1, messages)
@@ -634,7 +637,7 @@ class TestSmsProvider(unittest.TestCase):
     def test_list_from_thread_and_the_results_order(self):
         """test that list_from_thread returns a correctly ordered result"""
         number = '+3443545333'
-        now = datetime.now()
+        now = get_tz_aware_now()
         five_min_ago = now - timedelta(minutes=5)
         # add a thread and attach two messages to it, one just sent
         # and the other is five minutes older
@@ -656,13 +659,13 @@ class TestSmsProvider(unittest.TestCase):
     def test_list_sms(self):
         # add a thread to inbox and attach a couple of messages to it
         t = self.provider.add_thread(
-            Thread(datetime.now(), '+3443545333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3443545333', folder=inbox_folder))
         sms1 = self.provider.add_sms(
             Message(number='+3443545333', text='test_list_sms',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         sms2 = self.provider.add_sms(
             Message(number='+3443545333', text='test_list_sms',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         # sms1 and sms2 should be present in messages
         messages = list(self.provider.list_sms())
         self.assertIn(sms1, messages)
@@ -673,9 +676,9 @@ class TestSmsProvider(unittest.TestCase):
     def test_list_threads(self):
         # add two threads to the inbox folder
         t1 = self.provider.add_thread(
-            Thread(datetime.now(), '+3643445333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3643445333', folder=inbox_folder))
         t2 = self.provider.add_thread(
-            Thread(datetime.now(), '+3443545333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3443545333', folder=inbox_folder))
         # make sure they are present if we list them
         threads = list(self.provider.list_threads())
         self.assertIn(t1, threads)
@@ -687,7 +690,7 @@ class TestSmsProvider(unittest.TestCase):
     def test_move_thread_from_folder_to_folder(self):
         # add a thread to inbox_folder and check its present
         t1 = self.provider.add_thread(
-            Thread(datetime.now(), '+3643445333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3643445333', folder=inbox_folder))
         threads = list(self.provider.list_from_folder(inbox_folder))
         self.assertIn(t1, threads)
         # create a new folder, move t1 to it and check its there
@@ -703,14 +706,14 @@ class TestSmsProvider(unittest.TestCase):
     def test_move_sms_from_folder_to_folder(self):
         # add a thread to inbox_folder
         t = self.provider.add_thread(
-            Thread(datetime.now(), '+3643445333', folder=inbox_folder))
+            Thread(get_tz_aware_now(), '+3643445333', folder=inbox_folder))
         # add two sms to t1
         sms1 = self.provider.add_sms(
             Message(number='+3443545333', text='test_list_sms',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         sms2 = self.provider.add_sms(
             Message(number='+3443545333', text='test_list_sms 2',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         # sms1 and sms2 should be present in thread
         messages = list(self.provider.list_from_thread(t))
         self.assertIn(sms1, messages)
@@ -736,11 +739,11 @@ class TestSmsProvider(unittest.TestCase):
         # add a thread to inbox_folder
         number = '+3243242323'
         t = self.provider.add_thread(
-            Thread(datetime.now(), number, folder=inbox_folder))
+            Thread(get_tz_aware_now(), number, folder=inbox_folder))
         # add one sms to t1
         sms1 = self.provider.add_sms(
             Message(number=number, text='test_update_sms_flags',
-                    _datetime=datetime.now(), thread=t))
+                    _datetime=get_tz_aware_now(), thread=t))
         self.assertEqual(sms1.flags, READ)
         # now mark sms1 as unread
         sms1 = self.provider.update_sms_flags(sms1, UNREAD)
@@ -757,7 +760,7 @@ class TestUsageProvider(unittest.TestCase):
         self.provider.close()
 
     def test_add_usage_item(self):
-        now = datetime.now()
+        now = get_tz_aware_now()
         later = now + timedelta(minutes=30)
         umts, bytes_recv, bytes_sent = True, 12345460, 12333211
         item = self.provider.add_usage_item(now, later, bytes_recv,
@@ -767,7 +770,7 @@ class TestUsageProvider(unittest.TestCase):
         self.provider.delete_usage_item(item)
 
     def test_delete_usage_item(self):
-        now = datetime.now()
+        now = get_tz_aware_now()
         later = now + timedelta(minutes=60)
         umts, bytes_recv, bytes_sent = True, 12345470, 12333212
         item = self.provider.add_usage_item(now, later, bytes_recv,
@@ -781,20 +784,20 @@ class TestUsageProvider(unittest.TestCase):
 
     def test_get_usage_for_day(self):
         # add one usage item for today (45m)
-        now1 = datetime.now()
+        now1 = get_tz_aware_now()
         later1 = now1 + timedelta(minutes=45)
         umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
         item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
                                              bytes_sent1, umts1)
         # add another usage item for today (17m)  55 minutes later
-        now2 = datetime.now() + timedelta(minutes=55)
+        now2 = get_tz_aware_now() + timedelta(minutes=55)
         later2 = now1 + timedelta(minutes=17)
         umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
         item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
                                              bytes_sent2, umts2)
 
         # add another usage item for tomorrow (25m)
-        now3 = datetime.now() + timedelta(days=1)
+        now3 = get_tz_aware_now() + timedelta(days=1)
         later3 = now3 + timedelta(minutes=25)
         umts3, bytes_recv3, bytes_sent3 = True, 14000, 1785
         item3 = self.provider.add_usage_item(now3, later3, bytes_recv3,
@@ -820,13 +823,15 @@ class TestUsageProvider(unittest.TestCase):
         current_month = date.today().month
         current_year = date.today().year
         # add one usage item for day 12 of this month (45m)
-        now1 = datetime(date.today().year, current_month, 12, 13, 10)
+        now1 = datetime(date.today().year, current_month, 12, 13, 10,
+                        tzinfo=timezone('UTC'))
         later1 = now1 + timedelta(minutes=45)
         umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
         item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
                                              bytes_sent1, umts1)
         # add another usage item for day 13 of this month (17m)
-        now2 = datetime(date.today().year, current_month, 13, 15, 10)
+        now2 = datetime(date.today().year, current_month, 13, 15, 10,
+                        tzinfo=timezone('UTC'))
         later2 = now1 + timedelta(minutes=17)
         umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
         item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
@@ -840,7 +845,7 @@ class TestUsageProvider(unittest.TestCase):
             year = current_year + 1
 
         # next month at 6.50am (25m)
-        now3 = datetime(year, month, 2, 6, 50)
+        now3 = datetime(year, month, 2, 6, 50, tzinfo=timezone('UTC'))
         later3 = now3 + timedelta(minutes=25)
         umts3, bytes_recv3, bytes_sent3 = True, 14000, 1785
         item3 = self.provider.add_usage_item(now3, later3, bytes_recv3,
@@ -863,13 +868,15 @@ class TestUsageProvider(unittest.TestCase):
         current_month = date.today().month
         current_year = date.today().year
         # add one usage item for day 12 of this month (45m)
-        now1 = datetime(current_year, current_month, 12, 13, 10)
+        now1 = datetime(current_year, current_month, 12, 13, 10,
+                        tzinfo=timezone('UTC'))
         later1 = now1 + timedelta(minutes=45)
         umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
         item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
                                              bytes_sent1, umts1)
         # add another usage item for day 13 of this month (17m), one year ago
-        now2 = datetime(current_year - 1, current_month, 13, 15, 10)
+        now2 = datetime(current_year - 1, current_month, 13, 15, 10,
+                        tzinfo=timezone('UTC'))
         later2 = now1 + timedelta(minutes=17)
         umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
         item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
@@ -886,13 +893,15 @@ class TestUsageProvider(unittest.TestCase):
         current_month = date.today().month
         current_year = date.today().year
         # add one usage item for day 12 of this month (45m)
-        now1 = datetime(current_year, current_month, 12, 13, 10)
+        now1 = datetime(current_year, current_month, 12, 13, 10,
+                        tzinfo=timezone('UTC'))
         later1 = now1 + timedelta(minutes=45)
         umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
         item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
                                              bytes_sent1, umts1)
         # add another usage item for day 13 of this month (17m), one year ago
-        now2 = datetime(current_year - 1, current_month, 13, 15, 10)
+        now2 = datetime(current_year - 1, current_month, 13, 15, 10,
+                        tzinfo=timezone('UTC'))
         later2 = now1 + timedelta(minutes=17)
         umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
         item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,

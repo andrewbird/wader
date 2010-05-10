@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2010  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -24,6 +24,8 @@ import socket
 import struct
 
 from dbus import Array, UInt32
+from datetime import datetime
+from pytz import timezone
 
 from wader.common import consts
 
@@ -203,3 +205,6 @@ def is_bogus_ip(ip):
 def get_value_and_pop(kw, name, d=None):
     """kw.pop[name] if name in kw, else d. d defaults to None"""
     return (kw.pop(name) if name in kw else d)
+
+def get_tz_aware_now():
+    return datetime.now(timezone('UTC'))

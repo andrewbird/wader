@@ -22,13 +22,15 @@ tests for the wader.common.utils module
 
 import os
 from random import shuffle, randint
+from datetime import datetime
+from pytz import timezone
 
 from twisted.trial import unittest
 
 from wader.common.utils import (get_file_data, save_file, natsort,
                                 convert_ip_to_int, convert_int_to_ip,
                                 rssi_to_percentage, flatten_list,
-                                revert_dict)
+                                revert_dict, get_tz_aware_now)
 
 
 def ip_generator(n):
@@ -105,3 +107,10 @@ class TestUtilities(unittest.TestCase):
     def test_revert_dict(self):
         self.assertEqual(revert_dict({'a': 'b'}), {'b': 'a'})
         self.assertEqual(revert_dict(dict(foo='bar')), dict(bar='foo'))
+
+    def test_get_tz_aware_now(self):
+        now1 = get_tz_aware_now()
+        now2 = datetime.now(timezone('Europe/Paris'))
+        diff = now2 - now1
+        self.assertNotEqual(now1.tzinfo, None)
+        self.failIf(abs(now2 - now1).seconds > 5)

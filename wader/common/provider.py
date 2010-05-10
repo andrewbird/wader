@@ -20,12 +20,13 @@
 import datetime
 import sqlite3
 from time import mktime
+from calendar import timegm
 
 from pytz import timezone
 
 from wader.common.consts import NETWORKS_DB
 from wader.common.sms import Message as _Message
-from wader.common.utils import get_value_and_pop
+from wader.common.utils import get_value_and_pop, get_tz_aware_now
 
 if sqlite3.version_info >= (2, 4, 1):
     # Starting in 2.4.1, the str type is not accepted anymore, therefore,
@@ -279,12 +280,19 @@ def message_read(flags):
     return (int(flags) & READ) >> 1
 
 
-def adapt_datetime(ts):
-    return mktime(ts.utctimetuple())
+def adapt_datetime(_datetime):
+    if _datetime.tzinfo is None:
+        # Naive object - Force to UTC, previous behaviour was to use mktime to
+        #                localize. We should raise an exception, but the problem
+        #                is that if done in the adapter, the error seen is very
+        #                obscure and I expect difficult to relate to the cause.
+        return timegm(_datetime.timetuple())
+
+    return timegm(_datetime.astimezone(timezone('UTC')).timetuple())
 
 
 def convert_datetime(ts):
-    return datetime.datetime.utcfromtimestamp(float(ts))
+    return datetime.datetime.fromtimestamp(float(ts), timezone('UTC'))
 
 
 sqlite3.register_adapter(datetime.datetime, adapt_datetime)
@@ -292,7 +300,9 @@ sqlite3.register_converter("datetime", convert_datetime)
 
 
 def date_to_datetime(date):
-    return datetime.datetime.fromtimestamp(mktime(date.timetuple()))
+    # takes a date which is in local time and returns a timezone aware datetime
+    timestamp = mktime(date.timetuple())
+    return datetime.datetime.fromtimestamp(timestamp, timezone('UTC'))
 
 
 # common classes
@@ -505,7 +515,7 @@ class NetworkProvider(DBProvider):
         for row in c.fetchall():
             attrs = dict(netid=[netid], name=row[0], country=row[1], apn=row[2],
                          username=row[3], password=row[4], dns1=row[5],
-                         dns2=row[6], type=row[7],  smsc=row[8],  mmsc=row[9])
+                         dns2=row[6], type=row[7], smsc=row[8], mmsc=row[9])
             ret.append(NetworkOperator(**attrs))
 
         return ret
@@ -606,13 +616,14 @@ class Message(_Message):
 
     def to_row(self):
         """Returns a tuple ready to be added to the provider DB"""
-        return (self.index, mktime(self.datetime.timetuple()), self.number,
+        return (self.index, self.datetime, self.number,
                 self.text, self.flags, self.thread.index)
 
     @classmethod
     def from_row(cls, row, thread=None):
+        # XXX: calling converter manually as DB 'date' type is integer
         return cls(row[2], row[3], index=row[0], flags=row[4],
-                   _datetime=datetime.datetime.fromtimestamp(row[1], timezone('UTC')),
+                   _datetime=convert_datetime(row[1]),
                    thread=thread)
 
 
@@ -642,13 +653,15 @@ class Thread(object):
     @classmethod
     def from_row(cls, row, folder=None):
         """Returns a :class:`Thread` out of ``row``"""
-        return cls(datetime.datetime.fromtimestamp(row[1]), row[2], index=row[0],
+        # XXX: calling converter manually as DB 'date' type is integer
+        return cls(convert_datetime(row[1]),
+                   row[2], index=row[0],
                    message_count=row[3], snippet=row[4], read=row[5],
                    folder=folder)
 
     def to_row(self):
         """Returns a tuple ready to be inserted in the DB"""
-        return (self.index, mktime(self.datetime.timetuple()), self.number,
+        return (self.index, self.datetime, self.number,
                 self.message_count, self.snippet, self.read, self.folder.index)
 
 
@@ -748,7 +761,7 @@ class SmsProvider(DBProvider):
             return Thread.from_row(c.fetchone())
         elif c.rowcount < 1:
             # create thread for this number
-            thread = Thread(datetime.datetime.now(), number, folder=folder)
+            thread = Thread(get_tz_aware_now(), number, folder=folder)
             return self.add_thread(thread)
         elif c.rowcount > 1:
             raise DBError("Too many threads associated to number %s" % number)
