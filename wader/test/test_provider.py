@@ -489,25 +489,29 @@ class TestSmsProvider(unittest.TestCase):
     def test_sms_time_storage(self):
         from pytz import timezone
 
-        tzstring = 'Europe/Paris' # != UTC
-        tz = timezone(tzstring)
+        zones = ['Europe/London', # UTC+0(without DST), UTC+1(with DST)
+                 'Europe/Paris',  # UTC+1(without DST), UTC+2(with DST)
+                 'Asia/Jakarta']  # UTC+7(no DST adjustment in 2010)
 
-        # db resolution is secs
-        now = datetime.now(tz).replace(microsecond=0)
+        for tzstring in zones:
+            tz = timezone(tzstring)
 
-        sms = Message('+447917267410', tzstring, _datetime=now)
-        sms = self.provider.add_sms(sms)
+            # db resolution is secs
+            now = datetime.now(tz).replace(microsecond=0)
 
-        for dbsms in self.provider.list_sms():
-            if dbsms.text == tzstring:
-                break
+            sms = Message('+447917267410', tzstring, _datetime=now)
+            sms = self.provider.add_sms(sms)
 
-        dbnow = dbsms.datetime.astimezone(tz)
-        self.assertEqual(now, dbnow)
+            for dbsms in self.provider.list_sms():
+                if dbsms.text == tzstring:
+                    break
 
-        # leave everything as found
-        self.provider.delete_sms(sms)
-        self.assertNotIn(sms, list(self.provider.list_sms()))
+            dbnow = dbsms.datetime.astimezone(tz)
+            self.assertEqual(now, dbnow)
+
+            # leave everything as found
+            self.provider.delete_sms(sms)
+            self.assertNotIn(sms, list(self.provider.list_sms()))
 
     def test_delete_folder(self):
         # add a folder and make sure it is there
