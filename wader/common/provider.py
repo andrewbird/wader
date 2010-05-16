@@ -29,7 +29,8 @@ from xml.dom.minidom import parse
 
 from wader.common.consts import EXTRA_DIR, MBPI, NETWORKS_DB
 from wader.common.sms import Message as _Message
-from wader.common.utils import get_value_and_pop, get_tz_aware_now
+from wader.common.utils import (get_value_and_pop, get_tz_aware_now,
+                                get_tz_aware_mtime)
 
 if sqlite3.version_info >= (2, 4, 1):
     # Starting in 2.4.1, the str type is not accepted anymore, therefore,
@@ -187,6 +188,10 @@ create table message_information(
     type integer,
     network_id integer not null
         constraint fk_mi_network_id references network_info(id) on delete cascade);
+
+create table sources_info (
+    objs integer default 0,
+    mbpi integer default 0);
 
 create table version (
     version integer default 1);
@@ -486,6 +491,24 @@ class NetworkProvider(DBProvider):
     def __init__(self, path=NETWORKS_DB):
         super(NetworkProvider, self).__init__(path, NETWORKS_SCHEMA)
 
+    def is_current(self):
+        c = self.conn.cursor()
+        try:
+            c.execute("select * from sources_info")
+            row = c.fetchone()
+            objs_mtime = convert_datetime(row[0])
+            mbpi_mtime = convert_datetime(row[1])
+
+            objs = os.path.join(EXTRA_DIR, 'networks.py')
+            if ((objs_mtime != get_tz_aware_mtime(objs)) or
+                (mbpi_mtime != get_tz_aware_mtime(MBPI))):
+                return False
+        except (TypeError, sqlite3.OperationalError):
+            # it does not exist
+            return False
+
+        return True
+
     def get_network_by_id(self, imsi):
         """
         Returns all the :class:`NetworkOperator` registered for ``imsi``
@@ -543,12 +566,18 @@ class NetworkProvider(DBProvider):
         def is_valid(item):
             return not item.startswith(("__", "Base", "NetworkOperator"))
 
+        # turn off autocommit
         self.conn.isolation_level = 'DEFERRED'
 
         self.populate_networks_from_objs([getattr(networks, item)()
                 for item in dir(networks) if is_valid(item)])
 
         self.populate_networks_from_mbpi()
+
+        # update timestamps
+        objs = os.path.join(EXTRA_DIR, 'networks.py')
+        args = (get_tz_aware_mtime(objs), get_tz_aware_mtime(MBPI))
+        self.conn.cursor().execute("insert into sources_info values (?,?)", args)
 
         self.conn.commit()
         self.conn.isolation_level = None

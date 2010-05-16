@@ -173,12 +173,20 @@ def create_skeleton_and_do_initial_setup():
 
     if os.path.exists(consts.NETWORKS_DB):
         # new way to signal that the setup is complete
-        return
+        provider = NetworkProvider()
+        if provider.is_current():
+            provider.close()
+            log.msg("Networks DB was built from current sources")
+            return
+        provider.close()
+        log.msg("Networks DB requires rebuild")
+        os.remove(consts.NETWORKS_DB)
 
     # regenerate plugin cache
     import wader.plugins
     list(getPlugins(IPlugin, package=wader.plugins))
 
+    # create new DB
     provider = NetworkProvider()
     try:
         provider.populate_networks()
