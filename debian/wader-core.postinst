@@ -59,11 +59,19 @@ clear_plugin_cache()
     python -c "from twisted.plugin import IPlugin, getPlugins;import wader.plugins; list(getPlugins(IPlugin, package=wader.plugins))"
 }
 
+tidyup_modem_manager()
+{
+    # when modem-manager has been removed it leaves its process running
+    pkill modem-manager || true
+    pkill -9 modem-manager || true
+}
+
 case "$1" in
     (configure)
        fix_peers
        fix_pap
        fix_chap
+       tidyup_modem_manager
        kill -HUP `cat /var/run/dbus/pid`
        [ -n "$2" ] && clear_plugin_cache && show_update
     ;;
