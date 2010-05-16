@@ -19,6 +19,7 @@
 """Misc utilities"""
 
 from __future__ import with_statement
+import os
 import re
 import socket
 import struct
@@ -206,5 +207,15 @@ def get_value_and_pop(kw, name, d=None):
     """kw.pop[name] if name in kw, else d. d defaults to None"""
     return (kw.pop(name) if name in kw else d)
 
+
 def get_tz_aware_now():
     return datetime.now(timezone('UTC'))
+
+
+def get_tz_aware_mtime(f):
+    """
+    Gets the mtime on file ``f`` and returns a timezone aware datetime
+    :rtype: datetime.datetime
+    """
+    dt = datetime.utcfromtimestamp(os.stat(f).st_mtime)
+    return dt.replace(tzinfo=timezone('UTC'))

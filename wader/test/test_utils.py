@@ -30,7 +30,8 @@ from twisted.trial import unittest
 from wader.common.utils import (get_file_data, save_file, natsort,
                                 convert_ip_to_int, convert_int_to_ip,
                                 rssi_to_percentage, flatten_list,
-                                revert_dict, get_tz_aware_now)
+                                revert_dict, get_tz_aware_now,
+                                get_tz_aware_mtime)
 
 
 def ip_generator(n):
@@ -111,6 +112,21 @@ class TestUtilities(unittest.TestCase):
     def test_get_tz_aware_now(self):
         now1 = get_tz_aware_now()
         now2 = datetime.now(timezone('Europe/Paris'))
-        diff = now2 - now1
         self.assertNotEqual(now1.tzinfo, None)
         self.failIf(abs(now2 - now1).seconds > 5)
+
+    def test_get_tz_aware_mtime(self):
+        text = os.urandom(2000)
+        path = 'mtime.test'
+        fobj = open(path, 'w')
+        fobj.write(text)
+        fobj.close()
+
+        now1 = get_tz_aware_now()
+        now2 = get_tz_aware_mtime(path)
+
+        self.assertNotEqual(now2.tzinfo, None)
+        self.failIf(abs(now2 - now1).seconds > 5)
+
+        # tidy up
+        os.remove(path)
