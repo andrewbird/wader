@@ -19,12 +19,15 @@
 
 import datetime
 import sqlite3
+import os
+import sys
 from time import mktime
 from calendar import timegm
 
-from pytz import timezone
+from pytz import timezone, country_names
+from xml.dom.minidom import parse
 
-from wader.common.consts import NETWORKS_DB
+from wader.common.consts import EXTRA_DIR, MBPI, NETWORKS_DB
 from wader.common.sms import Message as _Message
 from wader.common.utils import get_value_and_pop, get_tz_aware_now
 
@@ -173,7 +176,7 @@ create table apn(
     password text,
     dns1 text,
     dns2 text,
-    type integer,
+    type text,
     network_id integer not null
         constraint fk_apn_network_id references network_info(id) on delete cascade);
 
@@ -268,7 +271,7 @@ UNREAD, READ = 0x01, 0x02
 # 3 - Sent message that has been stored
 # 4 - Any message
 
-TYPE_CONTRACT, TYPE_PREPAID = 1, 2
+TYPE_CONTRACT, TYPE_PREPAID = 'Contract', 'Prepaid'
 
 
 # functions
@@ -474,7 +477,7 @@ class NetworkOperator(object):
     def __repr__(self):
         args = (self.name.capitalize(), self.country.capitalize(),
                 self.netid, str(self.type))
-        return "<NetworkOperator %s%s, %s %s>" % args
+        return "<NetworkOperator %s %s, %s %s>" % args
 
 
 class NetworkProvider(DBProvider):
@@ -520,7 +523,37 @@ class NetworkProvider(DBProvider):
 
         return ret
 
-    def populate_networks(self, networks):
+    def populate_networks(self):
+        """
+        Populates the networks database using default methods (currently
+        a list of network objects, and from the mobile-broadband-provider-info).
+        It turns off autocommit during import for speed
+        """
+        try:
+            # only will succeed on development
+            networks = __import__('resources/extra/networks')
+        except ImportError:
+            try:
+                # this fails on feisty but not on gutsy
+                networks = __import__(os.path.join(EXTRA_DIR, 'networks'))
+            except ImportError:
+                sys.path.insert(0, EXTRA_DIR)
+                import networks
+
+        def is_valid(item):
+            return not item.startswith(("__", "Base", "NetworkOperator"))
+
+        self.conn.isolation_level = 'DEFERRED'
+
+        self.populate_networks_from_objs([getattr(networks, item)()
+                for item in dir(networks) if is_valid(item)])
+
+        self.populate_networks_from_mbpi()
+
+        self.conn.commit()
+        self.conn.isolation_level = None
+
+    def populate_networks_from_objs(self, networks):
         """
         Populate the network database with ``networks``
 
@@ -528,6 +561,7 @@ class NetworkProvider(DBProvider):
         :type networks: iter
         """
         c = self.conn.cursor()
+
         for network in networks:
             for netid in network.netid:
 
@@ -537,7 +571,7 @@ class NetworkProvider(DBProvider):
                     c.fetchone()[0]
                 except TypeError:
                     # it does not exist
-                    args = (netid, network.name, network.country.capitalize())
+                    args = (netid, network.name, network.country)
                     c.execute("insert into network_info values (?,?,?)", args)
 
                 # check if the APN info exists in the database
@@ -568,9 +602,125 @@ class NetworkProvider(DBProvider):
                     c.execute("insert into message_information values "
                               "(?,?,?,?,?)", args)
 
+    def populate_networks_from_mbpi(self, xmlfile=MBPI):
+        """
+        Populate the network database with info from``xmlfile``
+
+        :param xmlfile: the path to the mobile-broadband-provider-info xml file
+        """
+
+        def getAttributeValue(element, name):
+            if element is None or not hasattr(element, 'attributes'):
+                return ''
+            attr = element.attributes[name]
+            if not attr:
+                return ''
+            return attr.value.strip()
+
+        def getElementsByTagNameNoDescend(parent, name):
+            ret = []
+            for node in parent.childNodes:
+                if node.nodeType == node.ELEMENT_NODE and \
+                    (name == "*" or node.tagName == name):
+                    ret.append(node)
+            return ret
+
+        def getValue(elementlist, index=0):
+            if elementlist is None or index >= len(elementlist):
+                return ''
+            if not elementlist[index].firstChild:
+                return ''
+            return elementlist[index].firstChild.data.strip()
+
+        root = parse(xmlfile)
+        svcs = getElementsByTagNameNoDescend(root, "serviceproviders")[0]
+
+        version = getAttributeValue(svcs, "format")
+        if version != '2.0':
+            raise(TypeError)
+
+        c = self.conn.cursor()
+
+        for gsm in svcs.getElementsByTagName("gsm"):
+
+            provider = gsm.parentNode
+            country = provider.parentNode
+
+            countrycode = getAttributeValue(country, "code")
+            if countrycode == '':
+                continue
+            elif countrycode == 'gb': # TZ DB is just plain wrong
+                countryname = 'United Kingdom'
+            else:
+                countryname = country_names[countrycode]
+
+            # we need to be more specific about path to 'provider/name'
+            # as apn also has a subtag called 'name'
+            tag = getElementsByTagNameNoDescend(provider, "name")
+            provname = getValue(tag)
+
+            for networkid in getElementsByTagNameNoDescend(gsm, "network-id"):
+                mcc = getAttributeValue(networkid, "mcc")
+                mnc = getAttributeValue(networkid, "mnc")
+                netid = mcc + mnc
+
+                # check if this network object exists in the database
+                c.execute("select 1 from network_info where id=?", (netid,))
+                try:
+                    c.fetchone()[0]
+                except TypeError:
+                    # it does not exist
+                    args = (netid, provname, countryname)
+                    c.execute("insert into network_info values (?,?,?)", args)
+
+                for apn in getElementsByTagNameNoDescend(gsm, "apn"):
+                    apnname = getAttributeValue(apn, "value")
+                    if apnname == '':
+                        continue
+
+                    tag = getElementsByTagNameNoDescend(apn, "name")
+                    _type = getValue(tag)
+                    if len(_type):
+                        typename = u'MBPI - ' + _type
+                    else:
+                        typename = u'MBPI - ' + provname
+
+                    tag = getElementsByTagNameNoDescend(apn, "username")
+                    username = getValue(tag)
+
+                    tag = getElementsByTagNameNoDescend(apn, "password")
+                    password = getValue(tag)
+
+                    tag = getElementsByTagNameNoDescend(apn, "dns")
+                    dns1 = getValue(tag, 0)
+                    dns2 = getValue(tag, 1)
+
+                    # check if info exists in the database for this network,
+                    # we are authorititive for VF Networks, and we don't want
+                    # duplicates of the others either
+                    args = (netid, apnname, username, password, dns1, dns2, typename)
+                    c.execute("select id from apn where network_id=? and "
+                              "("
+                                   "(not type like 'MBPI%')"
+                                   " or "
+                                   "(apn=? and username=? and password=? and"
+                                   " dns1=? and dns2=? and type=?)"
+                              ")", args)
+                    try:
+                        c.fetchone()[0]
+                    except TypeError:
+                        # it does not exist
+                        args = (None, apnname, username, password, dns1, dns2,
+                                typename, netid)
+                        c.execute("insert into apn values (?,?,?,?,?,?,?,?)", args)
+
+                        # MBPI doesn't have this info yet
+                        args = (None, None, None, typename, netid)
+                        c.execute("insert into message_information values "
+                              "(?,?,?,?,?)", args)
+
 
 # SMS
-
 class Folder(object):
     """I am a container for threads and messages"""
 

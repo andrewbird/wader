@@ -19,8 +19,10 @@
 """Unittests for the provider layer """
 
 from datetime import datetime, timedelta, date
+import os
 from pytz import timezone
 import sqlite3
+import sys
 from time import time
 
 from twisted.trial import unittest
@@ -165,7 +167,73 @@ class TestNetworkProvider(unittest.TestCase):
     def tearDown(self):
         self.provider.close()
 
-    def test_populate_dbs(self):
+    def create_test_mbpi(self):
+        self.mbpi = 'mbpi'
+
+        f = open(self.mbpi, 'w')
+        xml = """<?xml version="1.0"?>
+<!-- -*- Mode: XML; tab-width: 4; indent-tabs-mode: t; c-basic-offset: 4 -*- -->
+<!DOCTYPE serviceproviders SYSTEM "serviceproviders.2.dtd">
+
+<serviceproviders format="2.0">
+
+<!-- United Arab Emirates -->
+<country code="ae">
+        <provider>
+                <name>Etisalat</name>
+                <gsm>
+                        <network-id mcc="424" mnc="02"/>
+                        <apn value="mnet">
+                                <name>Etisalat</name>
+                                <username>mnet</username>
+                                <password>mnet</password>
+                                <dns>194.170.1.6</dns>
+                                <dns>194.170.1.7</dns>
+                        </apn>
+                        <apn value="etisalat.ae">
+                                <name>Etisalat 3G</name>
+                                <username>etisalat.ae</username>
+                                <password>etisalat.ae</password>
+                        </apn>
+                </gsm>
+        </provider>
+</country>
+
+<!-- Germany -->
+<country code="de">
+        <provider>
+                <name>Vodafone (D2)</name>
+                <gsm>
+                        <network-id mcc="262" mnc="02"/>
+                        <network-id mcc="262" mnc="04"/>
+                        <network-id mcc="262" mnc="09"/>
+
+                        <apn value="web.vodafone.de">
+                                <username>vodafone</username>
+                                <password>vodafone</password>
+                                <dns>139.7.30.125</dns>
+                                <dns>139.7.30.126</dns>
+                        </apn>
+                        <apn value="event.vodafone.de">
+                                <name>WebSessions</name>
+                                <username>vodafone</username>
+                                <password>vodafone</password>
+                                <dns>139.7.30.125</dns>
+                                <dns>139.7.30.126</dns>
+                        </apn>
+                </gsm>
+        </provider>
+</country>
+
+</serviceproviders>
+"""
+        f.write(xml)
+        f.close
+
+    def test_populate_networks(self):
+        self.provider.populate_networks()
+
+    def test_populate_db_from_objs(self):
         networks = [NetworkOperator(["21401"], "prepaid.vodafone.es",
                         "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
                         TYPE_PREPAID, '+23323232', '+23423232', "Spain",
@@ -174,7 +242,8 @@ class TestNetworkProvider(unittest.TestCase):
                         "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
                         TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
                         "Vodafone")]
-        self.provider.populate_networks(networks)
+
+        self.provider.populate_networks_from_objs(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("214013241213122")
         self.assertEqual(len(response), 2)
@@ -183,6 +252,136 @@ class TestNetworkProvider(unittest.TestCase):
         c.execute("delete from network_info where id='21401'")
         response = self.provider.get_network_by_id("214013241213122")
         self.assertEqual(len(response), 0)
+
+    def test_populate_db_from_mbpi_real(self):
+        mbpi = '/usr/share/mobile-broadband-provider-info/serviceproviders.xml'
+        if not os.path.exists(mbpi):
+            raise unittest.SkipTest("No MBPI installed")
+
+        self.provider.populate_networks_from_mbpi(mbpi)
+
+        c = self.provider.conn.cursor()
+        c.execute("select * from network_info")
+        response = c.fetchall()
+        self.failUnless(len(response) >= 1)
+
+        # leave it as we found it
+        c.execute("delete from network_info")
+
+    def test_populate_db_from_networks_py_real(self):
+        extra = '../../../resources/extra'
+        if not os.path.exists(extra):
+            raise unittest.SkipTest('Path to "networks.py" not valid')
+
+        sys.path.insert(0, extra)
+        import networks
+
+        def is_valid(item):
+            return not item.startswith(("__", "Base", "NetworkOperator"))
+
+        self.provider.populate_networks_from_objs([getattr(networks, item)()
+                          for item in dir(networks) if is_valid(item)])
+
+        c = self.provider.conn.cursor()
+
+        c.execute("select country from network_info where id = '23415'")
+        self.assertEqual(c.fetchone()[0], 'United Kingdom')
+
+        # leave it as we found it
+        c.execute("delete from network_info")
+
+    def test_populate_db_from_mbpi_merge_network_no_clash(self):
+        networks = [NetworkOperator(["21401"], "Preloaded",
+                        "Preloaded", "Preloaded", "10.0.0.1", "10.0.0.2",
+                        TYPE_PREPAID, '+23323232', '+23423232', "Spain",
+                        "Preloaded")]
+
+        self.provider.populate_networks_from_objs(networks)
+
+        self.create_test_mbpi()
+        self.provider.populate_networks_from_mbpi(self.mbpi)
+
+        c = self.provider.conn.cursor()
+        c.execute("select * from network_info")
+        response = c.fetchall()
+        self.assertEqual(len(response), 5)
+
+        # leave it as we found it
+        c.execute("delete from network_info")
+
+    def test_populate_db_from_mbpi_merge_network_conflict(self):
+        networks = [NetworkOperator(["26202"], "Preloaded",
+                        "Preloaded", "Preloaded", "10.0.0.1", "10.0.0.2",
+                        TYPE_PREPAID, '+23323232', '+23423232', "Germany",
+                        "Preloaded")]
+
+        self.provider.populate_networks_from_objs(networks)
+
+        self.create_test_mbpi()
+        self.provider.populate_networks_from_mbpi(self.mbpi)
+
+        c = self.provider.conn.cursor()
+
+        # make sure we merged
+        c.execute("select * from network_info")
+        response = c.fetchall()
+        self.assertEqual(len(response), 4)
+
+        # make sure we didn't overwrite the original
+        c.execute("select name from network_info where id = '26202'")
+        self.assertEqual(c.fetchone()[0], 'Preloaded')
+
+        # leave it as we found it
+        c.execute("delete from network_info")
+
+    def test_populate_db_from_mbpi_merge_apn_no_clash(self):
+        networks = [NetworkOperator(["21401"], "Preloaded",
+                        "Preloaded", "Preloaded", "10.0.0.1", "10.0.0.2",
+                        TYPE_PREPAID, '+23323232', '+23423232', "Spain",
+                        "Preloaded")]
+
+        self.provider.populate_networks_from_objs(networks)
+
+        self.create_test_mbpi()
+        self.provider.populate_networks_from_mbpi(self.mbpi)
+
+        c = self.provider.conn.cursor()
+
+        c.execute("select * from apn")
+        response = c.fetchall()
+        self.assertEqual(len(response), 9)
+
+        # make sure we prefixed the foreign entry
+        c.execute("select type from apn where network_id = '26202'")
+        self.assertEqual(c.fetchone()[0][:4], 'MBPI')
+
+        # leave it as we found it
+        c.execute("delete from network_info")
+
+    def test_populate_db_from_mbpi_merge_apn_conflict(self):
+        networks = [NetworkOperator(["26202"], "Preloaded",
+                        "Preloaded", "Preloaded", "10.0.0.1", "10.0.0.2",
+                        "Preloaded", '+23323232', '+23423232', "Germany",
+                        "Preloaded")]
+
+        self.provider.populate_networks_from_objs(networks)
+
+        self.create_test_mbpi()
+        self.provider.populate_networks_from_mbpi(self.mbpi)
+
+        c = self.provider.conn.cursor()
+
+        # make sure we merged and didn't load any apns for the existing nets
+        c.execute("select * from apn")
+        response = c.fetchall()
+        self.assertEqual(len(response), 7)
+
+        # make sure we didn't overwrite the original
+        c.execute("select type from apn where network_id = '26202'")
+        self.assertEqual(c.fetchone()[0], 'Preloaded')
+
+        # leave it as we found it
+        c.execute("delete from network_info")
 
     def test_assert_passing_netid_raises_exception(self):
         self.assertRaises(ValueError, self.provider.get_network_by_id, "21401")
@@ -196,7 +395,8 @@ class TestNetworkProvider(unittest.TestCase):
                         "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
                         TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
                         "Vodafone")]
-        self.provider.populate_networks(networks)
+
+        self.provider.populate_networks_from_objs(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("2140153241213122")
         self.assertEqual(len(response), 2)
@@ -213,7 +413,8 @@ class TestNetworkProvider(unittest.TestCase):
                         "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
                         TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
                         "Vodafone")]
-        self.provider.populate_networks(networks)
+
+        self.provider.populate_networks_from_objs(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("2140153241213122")
         self.assertEqual(len(response), 1)
@@ -231,7 +432,8 @@ class TestNetworkProvider(unittest.TestCase):
                         "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
                         TYPE_CONTRACT, '+23123121', '+2132121', "Spain",
                         "Vodafone")]
-        self.provider.populate_networks(networks)
+
+        self.provider.populate_networks_from_objs(networks)
         # we should get just two objects
         response = self.provider.get_network_by_id("2140161213322323")
         self.assertEqual(response[0].apn, "prepaid.vodafone.es")
@@ -487,8 +689,6 @@ class TestSmsProvider(unittest.TestCase):
         self.assertNotIn(sms, list(self.provider.list_sms()))
 
     def test_sms_time_storage(self):
-        from pytz import timezone
-
         zones = ['Europe/London', # UTC+0(without DST), UTC+1(with DST)
                  'Europe/Paris',  # UTC+1(without DST), UTC+2(with DST)
                  'Asia/Jakarta']  # UTC+7(no DST adjustment in 2010)

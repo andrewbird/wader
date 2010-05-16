@@ -184,6 +184,7 @@ TEMPLATES_DIR = join(RESOURCES_DIR, 'config')
 EXTRA_DIR = join(RESOURCES_DIR, 'extra')
 
 # databases
+MBPI = '/usr/share/mobile-broadband-provider-info/serviceproviders.xml'
 NETWORKS_DB = join(DATA_DIR, 'networks.db')
 USAGE_DB = join(DATA_DIR, 'usage.db')
 

@@ -19,7 +19,6 @@
 """Utilities used at startup"""
 
 import os
-import sys
 
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
@@ -182,34 +181,8 @@ def create_skeleton_and_do_initial_setup():
 
     provider = NetworkProvider()
     try:
-        populate_dbs(provider.populate_networks)
+        provider.populate_networks()
     except:
         log.err()
     finally:
         provider.close()
-
-
-def populate_dbs(f):
-    """
-    Populates the networks database using ``f``
-
-    ``f`` is a callable that accepts a list of NetworkOperators and
-    populates the database
-
-    :type f: callable
-    """
-    try:
-        # only will succeed on development
-        networks = __import__('resources/extra/networks')
-    except ImportError:
-        try:
-            # this fails on feisty but not on gutsy
-            networks = __import__(os.path.join(consts.EXTRA_DIR, 'networks'))
-        except ImportError:
-            sys.path.insert(0, consts.EXTRA_DIR)
-            import networks
-
-    def is_valid(item):
-        return not item.startswith(("__", "Base", "NetworkOperator"))
-
-    f([getattr(networks, item)() for item in dir(networks) if is_valid(item)])
