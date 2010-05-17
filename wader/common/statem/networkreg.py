@@ -114,7 +114,7 @@ class NetworkRegistrationStateMachine(Modal):
             self.do_next()
         else:
             # we have already tried to register manually and it failed
-            self.notify_failure()
+            self.notify_failure(E.Unknown())
 
     def register_with_netid(self, netid):
         self.tried_manual_registration = True
