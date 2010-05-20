@@ -50,4 +50,3 @@ elif options.should_start:
                 rundir=BASE_DIR)
     sh("%(twistd)s --python=%(tap)s --logfile=%(log)s "
        "--pidfile=%(pid)s --rundir=%(rundir)s --reactor=glib2" % args)
-
