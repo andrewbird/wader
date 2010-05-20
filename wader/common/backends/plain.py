@@ -432,9 +432,10 @@ class HSODialer(Dialer):
 class PlainProfile(Profile):
     """I am a group of settings required to dial up"""
 
-    def __init__(self, opath, path, props=None):
+    def __init__(self, opath, path, secrets_path, props=None):
         super(PlainProfile, self).__init__(opath)
         self.path = path
+        self.secrets_path = secrets_path
         self.props = props
         self.secrets = None
         self._init()
@@ -448,7 +449,7 @@ class PlainProfile(Profile):
             self._write()
 
         from wader.common.backends import get_backend
-        keyring = get_backend().get_keyring()
+        keyring = get_backend().get_keyring(self.secrets_path)
         self.secrets = ProfileSecrets(self, keyring)
 
     def _write(self):
@@ -456,8 +457,8 @@ class PlainProfile(Profile):
             pickle.dump(self.props, configfile, pickle.HIGHEST_PROTOCOL)
 
     @classmethod
-    def from_path(cls, opath, path):
-        return cls(opath, path)
+    def from_path(cls, opath, path, secrets_path):
+        return cls(opath, path, secrets_path)
 
     def get_settings(self):
         """Returns the profile settings"""
@@ -529,6 +530,7 @@ class PlainProfileManager(Object):
         self.index = -1
         self.base_path = base_path
         self.profiles_path = os.path.join(base_path, 'profiles')
+        self.secrets_path = os.path.join(base_path, 'secrets')
         self._init()
 
     def _init(self):
@@ -539,7 +541,8 @@ class PlainProfileManager(Object):
         # now load the profiles
         for uuid in os.listdir(self.profiles_path):
             path = os.path.join(self.profiles_path, uuid)
-            profile = PlainProfile.from_path(self.get_next_dbus_opath(), path)
+            profile = PlainProfile.from_path(self.get_next_dbus_opath(),
+                                             path, self.secrets_path)
             self.profiles[uuid] = profile
 
     def get_next_dbus_opath(self):
@@ -553,7 +556,8 @@ class PlainProfileManager(Object):
         if os.path.exists(path):
             raise ValueError("Profile with uuid %s already exists" % uuid)
 
-        profile = PlainProfile(self.get_next_dbus_opath(), path, props)
+        profile = PlainProfile(self.get_next_dbus_opath(), path,
+                               self.secrets_path, props=props)
         self.profiles[uuid] = profile
 
         self.NewConnection(profile.opath)
@@ -612,18 +616,18 @@ def transform_passwd(passwd):
 
 class PlainKeyring(object):
 
-    def __init__(self, base_path):
-        self.base_path = base_path
+    def __init__(self, secrets_path):
+        self.secrets_path = secrets_path
         self.key = None
         self._is_open = False
         self._is_new = True
         self._init()
 
     def _init(self):
-        if os.path.exists(self.base_path):
+        if os.path.exists(self.secrets_path):
             self._is_new = False
         else:
-            os.makedirs(self.base_path, 0700)
+            os.makedirs(self.secrets_path, 0700)
 
     def is_open(self):
         return self._is_open
@@ -645,7 +649,7 @@ class PlainKeyring(object):
 
     def get(self, uuid):
         try:
-            data = open(os.path.join(self.base_path, uuid)).read()
+            data = open(os.path.join(self.secrets_path, uuid)).read()
         except IOError:
             raise KeyringNoMatchError("No secrets for uuid %s" % uuid)
 
@@ -656,13 +660,13 @@ class PlainKeyring(object):
             raise KeyringNoMatchError("bad password")
 
     def update(self, uuid, conn_id, secrets, update=True):
-        path = os.path.join(self.base_path, uuid)
+        path = os.path.join(self.secrets_path, uuid)
         with open(path, 'w') as f:
             data = aes.encryptData(self.key, pickle.dumps(secrets))
             f.write(data)
 
     def delete(self, uuid):
-        path = os.path.join(self.base_path, uuid)
+        path = os.path.join(self.secrets_path, uuid)
         if not os.path.exists(path):
             raise KeyringNoMatchError("No secrets for uuid %s" % uuid)
 
@@ -690,11 +694,9 @@ class PlainBackend(object):
 
         return WVDialDialer
 
-    def get_keyring(self):
+    def get_keyring(self, secrets_path):
         if self._keyring is None:
-            base_path = os.path.join(os.path.expanduser('~'),
-                                     '.gnome2', 'wader', 'secrets')
-            self._keyring = KeyringManager(PlainKeyring(base_path))
+            self._keyring = KeyringManager(PlainKeyring(secrets_path))
 
         return self._keyring
 

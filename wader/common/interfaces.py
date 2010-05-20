@@ -52,7 +52,7 @@ class IBackend(Interface):
         initialization argument.
         """
 
-    def get_keyring():
+    def get_keyring(arg=None):
         """Returns an instance of the keyring manager for this platform"""
 
     def should_be_used():
