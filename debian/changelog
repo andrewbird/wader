@@ -1,3 +1,9 @@
+wader-core (0.5.1) lucid; urgency=low
+
+  * New upstream version
+
+ -- Andrew Bird <ajb@spheresystems.co.uk>  Fri, 21 May 2010 16:54:01 +0100
+
 wader-core (0.5.0) karmic; urgency=low
 
   * New upstream version
