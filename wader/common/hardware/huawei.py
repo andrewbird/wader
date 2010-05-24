@@ -432,7 +432,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 class HuaweiWCDMACustomizer(WCDMACustomizer):
     """WCDMA Customizer class for Huawei cards"""
     wrapper_klass = HuaweiWCDMAWrapper
-    async_regexp = re.compile('\r\n(?P<signal>\^[A-Z]{3,9}):(?P<args>.*)\r\n')
+    async_regexp = re.compile('\r\n(?P<signal>\^[A-Z]{3,9}):\s*(?P<args>.*?)\r\n')
     allowed_dict = HUAWEI_ALLOWED_DICT
     band_dict = HUAWEI_BAND_DICT
     conn_dict = HUAWEI_CONN_DICT
