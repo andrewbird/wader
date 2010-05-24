@@ -22,10 +22,13 @@ from operator import itemgetter
 from time import mktime
 
 from zope.interface import implements
-from twisted.internet.defer import  succeed, gatherResults
+from twisted.internet import reactor
+from twisted.internet.defer import  succeed, gatherResults, Deferred
 from twisted.python import log
 from messaging import PDU
 
+from wader.common.aterrors import (CMSError314, SimBusy, SimNotStarted,
+                                   SimFailure)
 from wader.common.interfaces import IMessage
 from wader.common.signals import SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
 from wader.common.utils import get_tz_aware_now
@@ -35,6 +38,8 @@ STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 SMS_DATE_THRESHOLD = 5
 
 SMS_STATUS_REPORT = 0x03
+MAX_MAL_RETRIES = 3
+MAL_RETRY_TIMEOUT = 3
 
 
 p = PDU()
@@ -104,7 +109,30 @@ class MessageAssemblyLayer(object):
         self.sms_pending = []
         self.cached = False
         # populate sms cache
-        self.list_sms()
+        return self._do_initialize()
+
+    def _do_initialize(self):
+        # init counter
+        self.wrappee.state_dict['mal_init_retries'] = 0
+
+        deferred = Deferred()
+
+        def list_sms(auxdef):
+
+            def sim_busy_eb(failure):
+                failure.trap(SimBusy, SimNotStarted, CMSError314)
+                self.wrappee.state_dict['mal_init_retries'] += 1
+                if self.wrappee.state_dict['mal_init_retries'] > MAX_MAL_RETRIES:
+                    raise SimFailure("Could not initialize MAL")
+
+                reactor.callLater(MAL_RETRY_TIMEOUT, list_sms, auxdef)
+
+            d = self.list_sms()
+            d.addCallback(lambda ret: auxdef.callback(ret))
+            d.addErrback(sim_busy_eb)
+            return auxdef
+
+        return list_sms(deferred)
 
     def _do_add_sms(self, sms, indexes=None):
         """
