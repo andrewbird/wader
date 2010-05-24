@@ -146,8 +146,11 @@ class NetworkRegistrationStateMachine(Modal):
 
             self.restart_counter_or_transition()
 
-        elif status == STATUS_SEARCHING:
-            # we are looking for a network, give it some time
+        elif status in [STATUS_SEARCHING, STATUS_UNKNOWN]:
+            # we are looking for a network, give it some time.
+            # +CREG: 4 is officially unknown, but it's been seen during
+            # Ericsson F3507g radio power up, and with Huawei E173 immediately
+            # before registration; in neither case is it fatal.
             if not _mode:
                 self.sconn.set_netreg_notification(1)
 
@@ -160,9 +163,8 @@ class NetworkRegistrationStateMachine(Modal):
             self.transitionTo('check_constraints')
             self.do_next()
 
-        elif status in [STATUS_DENIED, STATUS_UNKNOWN]:
-            # Network registration has been either denied or failed
-            # because of an unspecified reason.
+        elif status == STATUS_DENIED:
+            # Network registration has been denied
             self.registering = False
             msg = 'Net registration failed: +CREG: %d,%d' % (_mode, status)
             self.notify_failure(ex.NetworkRegistrationError(msg))
