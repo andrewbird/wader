@@ -155,14 +155,8 @@ class DevicePlugin(object):
             return d
 
         def initialize_sim(_):
-            if self.sim is None or self.sim.size is None:
-                self.sim = self.sim_klass(self.sconn)
-                d = self.sim.initialize()
-            else:
-                d = defer.succeed(self.sim.size)
-
-            d.addCallback(on_init)
-            return d
+            self.sim = self.sim_klass(self.sconn)
+            return self.sim.initialize()
 
         # initialize method is always called right after authentication
         # is OK, be it right after a successful SendP{in,uk,uk2} or
