@@ -375,6 +375,11 @@ class CallStateError(dbus.DBusException):
     _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'IncorrectPassword')
 
 
+class MalformedUssdPduError(dbus.DBusException):
+    """Exception raised when a malformed Ussd Pdu is received"""
+    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, "MalformedUssdPduError")
+
+
 class CMSError300(dbus.DBusException):
     """Phone failure"""
 

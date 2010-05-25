@@ -699,8 +699,13 @@ class WCDMAWrapper(WCDMAProtocol):
 
         def convert_response(response):
             resp = response[0].group('resp')
-            #index = response[0].group('index')
-            return from_ucs2(resp)
+            if 'UCS2' in self.device.sim.charset:
+                try:
+                    return from_ucs2(resp)
+                except (TypeError, UnicodeDecodeError):
+                    raise E.MalformedUssdPduError(resp)
+
+            return resp
 
         if 'UCS2' in self.device.sim.charset:
             ussd = pack_ucs2_bytes(ussd)
