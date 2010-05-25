@@ -701,7 +701,7 @@ class WCDMAWrapper(WCDMAProtocol):
             resp = response[0].group('resp')
             if 'UCS2' in self.device.sim.charset:
                 try:
-                    return from_ucs2(resp)
+                    return unpack_ucs2_bytes(resp)
                 except (TypeError, UnicodeDecodeError):
                     raise E.MalformedUssdPduError(resp)
 
