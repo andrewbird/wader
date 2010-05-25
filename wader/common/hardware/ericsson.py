@@ -25,6 +25,7 @@ from twisted.python import log
 import wader.common.aterrors as E
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common import consts
+from wader.common.contact import Contact
 from wader.common.encoding import (pack_ucs2_bytes, from_u, check_if_ucs2,
                                    from_ucs2)
 from wader.common.hardware.base import WCDMACustomizer
@@ -307,6 +308,21 @@ class EricssonWrapper(WCDMAWrapper):
         d.addErrback(pinreq_errback)
         d.addErrback(aterror_eb)
         return d
+
+    def _regexp_to_contact(self, match):
+        """
+        Returns a :class:`wader.common.contact.Contact` out of ``match``
+
+        :type match: ``re.MatchObject``
+        """
+        name = match.group('name')
+        number = match.group('number')
+        if self.device.sim.charset == 'UCS2':
+            name = from_ucs2(name)
+            number = from_ucs2(number)
+
+        index = int(match.group('id'))
+        return Contact(name, number, index=index)
 
     def mbm_authenticate(self, user, passwd):
         conn_id = self.state_dict['conn_id']

@@ -278,7 +278,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             else:
                 name = "Unsupported encoding"
 
-        number = from_ucs2(match.group('number'))
+        number = match.group('number')
         index = int(match.group('id'))
 
         return Contact(name, number, index=index)

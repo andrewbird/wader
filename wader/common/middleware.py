@@ -43,17 +43,6 @@ from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
 
 
-def regexp_to_contact(match):
-    """
-    Returns a :class:`wader.common.contact.Contact` out of ``match``
-
-    :type match: ``re.MatchObject``
-    """
-    name = from_ucs2(match.group('name'))
-    number = from_ucs2(match.group('number'))
-    index = int(match.group('id'))
-    return Contact(name, number, index=index)
-
 
 class WCDMAWrapper(WCDMAProtocol):
     """
@@ -197,7 +186,7 @@ class WCDMAWrapper(WCDMAProtocol):
             pattern = pack_ucs2_bytes(pattern)
 
         d = super(WCDMAWrapper, self).find_contacts(pattern)
-        d.addCallback(lambda matches: map(regexp_to_contact, matches))
+        d.addCallback(lambda matches: map(self._regexp_to_contact, matches))
         return d
 
     def get_apns(self):
@@ -259,7 +248,7 @@ class WCDMAWrapper(WCDMAProtocol):
     def get_contact(self, index):
         """Returns the contact at ``index``"""
         d = super(WCDMAWrapper, self).get_contact(index)
-        d.addCallback(lambda match: regexp_to_contact(match[0]))
+        d.addCallback(lambda match: self._regexp_to_contact(match[0]))
         return d
 
     def get_hardware_info(self):
@@ -571,7 +560,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         def get_them(ignored=None):
             d = super(WCDMAWrapper, self).list_contacts()
-            d.addCallback(lambda matches: map(regexp_to_contact, matches))
+            d.addCallback(lambda matches: map(self._regexp_to_contact, matches))
             d.addErrback(not_found_eb)
             return d
 
@@ -581,6 +570,20 @@ class WCDMAWrapper(WCDMAProtocol):
             d = self._get_next_contact_id()
             d.addCallback(get_them)
             return d
+
+    def _regexp_to_contact(self, match):
+        """
+        Returns a :class:`wader.common.contact.Contact` out of ``match``
+
+        :type match: ``re.MatchObject``
+        """
+        name = match.group('name')
+        if self.device.sim.charset == 'UCS2':
+            name = from_ucs2(name)
+
+        number = match.group('number')
+        index = int(match.group('id'))
+        return Contact(name, number, index=index)
 
     def list_sms(self):
         return self.mal.list_sms()
