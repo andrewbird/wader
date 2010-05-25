@@ -26,11 +26,10 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common.contact import Contact
 from wader.common import consts
-from wader.common.encoding import (from_ucs2, from_u,
+from wader.common.encoding import (from_u, pack_ucs2_bytes,
                                    unpack_ucs2_bytes_in_ts31101_80,
                                    unpack_ucs2_bytes_in_ts31101_81,
-                                   unpack_ucs2_bytes_in_ts31101_82,
-                                   pack_ucs2_bytes)
+                                   unpack_ucs2_bytes_in_ts31101_82)
 
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.plugin import DevicePlugin
