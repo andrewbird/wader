@@ -41,6 +41,7 @@ import wader.common.exceptions as ex
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
+from wader.common.utils import rssi_to_percentage
 
 
 
@@ -496,6 +497,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """Returns the signal level quality"""
         d = super(WCDMAWrapper, self).get_signal_quality()
         d.addCallback(lambda response: int(response[0].group('rssi')))
+        d.addCallback(rssi_to_percentage)
         return d
 
     def get_sms(self, index):
