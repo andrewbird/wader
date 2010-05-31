@@ -74,20 +74,21 @@ HUAWEI_BAND_DICT = {
 def huawei_new_conn_mode(args):
     """Translates `args` to Wader's internal representation"""
     mode_args_dict = {
-        '0,0': consts.MM_NETWORK_MODE_UNKNOWN,
-        '0,2': consts.MM_NETWORK_MODE_UNKNOWN,
         '3,0': consts.MM_NETWORK_MODE_GPRS,
         '3,1': consts.MM_NETWORK_MODE_GPRS,
         '3,2': consts.MM_NETWORK_MODE_GPRS,
         '3,3': consts.MM_NETWORK_MODE_GPRS,
-        '5,0': consts.MM_NETWORK_MODE_UNKNOWN,
         '5,4': consts.MM_NETWORK_MODE_UMTS,
         '5,5': consts.MM_NETWORK_MODE_HSDPA,
         '5,6': consts.MM_NETWORK_MODE_HSUPA,
         '5,7': consts.MM_NETWORK_MODE_HSPA,
         '5,9': consts.MM_NETWORK_MODE_HSPA,  # doc says HSPA+
     }
-    return mode_args_dict[args]
+    try:
+        return mode_args_dict[args]
+    except KeyError:
+        return consts.MM_NETWORK_MODE_UNKNOWN
+
 
 HUAWEI_CMD_DICT = get_cmd_dict_copy()
 HUAWEI_CMD_DICT['get_syscfg'] = build_cmd_dict(re.compile(r"""
