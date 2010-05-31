@@ -994,3 +994,33 @@ class DBusTestCase(unittest.TestCase):
         response = self.device.Initiate(request)
 
         self.failUnless(re.compile(regex).match(response))
+
+    def test_ZDisableReEnable(self):
+        """Test last for disable device and reenable"""
+
+        self.device.Enable(False, dbus_interface=MDM_INTFACE)
+
+        d = defer.Deferred()
+
+        def enable_device_cb():
+            # if we don't sleep for a sec, the test will start too soon
+            # and Enable won't be finished yet, yielding spurious results.
+            time.sleep(1)
+            d.callback(True)
+
+        def enable_device_eb(e):
+            if 'SimPinRequired' in get_dbus_error(e):
+                pin = config.get('test', 'pin', '0000')
+                self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
+                                    reply_handler=enable_device_cb,
+                                    error_handler=d.errback)
+            else:
+                raise unittest.SkipTest("Cannot handle error %s" % e)
+
+        self.device.Enable(True, dbus_interface=MDM_INTFACE, timeout=45,
+                           reply_handler=enable_device_cb,
+                           error_handler=enable_device_eb)
+
+        return d
+
+    test_ZDisableReEnable.timeout = 60
