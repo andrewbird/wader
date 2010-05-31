@@ -52,6 +52,8 @@ class DevicePlugin(object):
     exporter = None
     # dialer
     dialer = 'default'
+    # Whether SIM authentication persists over disable / re-enable
+    auth_persists_over_disable = True
 
     def __init__(self):
         super(DevicePlugin, self).__init__()
@@ -135,7 +137,10 @@ class DevicePlugin(object):
             d.addCallback(lambda _: self.set_status(DEV_DISABLED))
         elif self.status == DEV_ENABLED:
             d.addCallback(lambda _: self.sconn.enable_radio(False))
-            d.addCallback(lambda _: self.set_status(DEV_AUTHENTICATED))
+            if self.auth_persists_over_disable:
+                d.addCallback(lambda _: self.set_status(DEV_AUTHENTICATED))
+            else:
+                d.addCallback(lambda _: self.set_status(DEV_DISABLED))
 
         d.addCallback(free_resources)
         return d

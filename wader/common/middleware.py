@@ -914,8 +914,9 @@ class WCDMAWrapper(WCDMAProtocol):
 
         from wader.common.startup import attach_to_serial_port
         if self.device.status == DEV_AUTHENTICATED:
-            # if a device was enabled and then disabled, there's no
-            # need to check the authentication again
+            # if a device was enabled and then disabled, there's no need to
+            # check the authentication again if it persists, but this behaviour
+            # is device specific
             d = attach_to_serial_port(self.device)
             d.addCallback(self.device.initialize)
             return d
