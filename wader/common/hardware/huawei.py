@@ -245,21 +245,32 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         return d
 
     def list_contacts(self):
-        """Returns a list with all the contacts in the SIM"""
-        cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size,
-                    name='list_contacts')
-        d = self.queue_at_cmd(cmd)
+        """
+        Returns all the contacts in the SIM
+
+        :rtype: list
+        """
 
         def not_found_eb(failure):
-            failure.trap(E.NotFound, E.GenericError)
+            failure.trap(E.NotFound, E.InvalidIndex, E.GenericError)
             return []
 
-        d.addCallback(lambda matches:
-                        [self._hw_process_contact_match(m) for m in matches])
-        d.addErrback(not_found_eb)
-        return d
+        def get_them(ignored=None):
+            cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size,
+                        name='list_contacts')
+            d = self.queue_at_cmd(cmd)
+            d.addCallback(lambda matches: map(self._regexp_to_contact, matches))
+            d.addErrback(not_found_eb)
+            return d
 
-    def _hw_process_contact_match(self, match):
+        if self.device.sim.size:
+            return get_them()
+        else:
+            d = self._get_next_contact_id()
+            d.addCallback(get_them)
+            return d
+
+    def _regexp_to_contact(self, match):
         """
         I process a contact match and return a `Contact` object out of it
         """
@@ -286,7 +297,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
     def get_contact(self, index):
         cmd = ATCmd('AT^CPBR=%d' % index, name='get_contact')
         d = self.queue_at_cmd(cmd)
-        d.addCallback(lambda match: self._hw_process_contact_match(match[0]))
+        d.addCallback(lambda match: self._regexp_to_contact(match[0]))
         return d
 
     def get_network_info(self):
