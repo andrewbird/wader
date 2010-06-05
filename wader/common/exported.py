@@ -495,7 +495,6 @@ class NetworkExporter(ContactsExporter):
     def GetSignalQuality(self, async_cb, async_eb):
         """Returns the signal quality"""
         d = self.sconn.get_signal_quality()
-        d.addCallback(lambda rssi: (rssi * 100) / 31)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(NET_INTFACE, in_signature='', out_signature='aa{ss}',

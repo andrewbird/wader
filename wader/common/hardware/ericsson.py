@@ -142,6 +142,7 @@ class EricssonWrapper(WCDMAWrapper):
 
         # contact.index is not set, this means that we need to obtain the
         # first slot free on the phonebook and then add the contact
+
         def get_next_id_cb(index):
             args.append(index)
             d2 = super(WCDMAWrapper, self).add_contact(*args)
@@ -266,14 +267,14 @@ class EricssonWrapper(WCDMAWrapper):
         # On Ericsson, AT+CSQ only returns valid data in GPRS mode
         # So we need to override and provide an alternative. +CIND
         # returns an indication between 0-5 so let's just multiply
-        # that by 6 to get a RSSI between 0-30
+        # that by 20 to get a RSSI between 0-100%
 
         def get_signal_quality_cb(response):
             try:
-                return int(response[0].group('sig')) * 6
+                return int(response[0].group('sig')) * 20
             except IndexError:
                 # Sometimes it won't reply to a +CIND? command
-                # we'll assume that we don't have RSSI rigth now
+                # we'll assume that we don't have RSSI right now
                 return 0
 
         cmd = ATCmd('AT+CIND?', name='get_signal_quality')

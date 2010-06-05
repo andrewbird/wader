@@ -21,7 +21,6 @@
 from gobject import timeout_add_seconds, source_remove
 from twisted.python import log
 
-from wader.common.utils import rssi_to_percentage
 import wader.common.signals as S
 
 SIG_REG_INFO_FREQ = 120
@@ -79,7 +78,6 @@ class SignalQualityDaemon(WaderDaemon):
     def function(self):
         """Executes `get_signal_quality` periodically"""
         d = self.device.sconn.get_signal_quality()
-        d.addCallback(rssi_to_percentage)
         d.addCallback(self.device.exporter.SignalQuality)
 
         return True
