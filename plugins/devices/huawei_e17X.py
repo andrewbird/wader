@@ -57,7 +57,7 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
                 return defer.succeed([])
 
             def results_cb(matches):
-                return [self._hw_process_contact_match(m) for m in matches]
+                return [self._regexp_to_contact(m) for m in matches]
 
             return self.send_at('AT^CPBR=1,%d' % _max, name='list_contacts',
                                 callback=results_cb)
