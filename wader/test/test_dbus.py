@@ -550,7 +550,7 @@ class DBusTestCase(unittest.TestCase):
         """Test for Network.GetSignalQuality"""
         quality = self.device.GetSignalQuality(dbus_interface=NET_INTFACE)
         self.failUnlessIsInstance(quality, (dbus.UInt32, int))
-        self.failUnless(quality >= 1 and quality <= 100)
+        self.failUnlessIn(quality, range(1, 101))
 
     def test_NetworkScan(self):
         """Test for Network.Scan"""
