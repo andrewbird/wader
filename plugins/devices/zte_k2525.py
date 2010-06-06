@@ -32,15 +32,19 @@ from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWrapper,
                                        ZTE_CMD_DICT)
 
-
-ZTEK2525_BAND_DICT = {
-    consts.MM_NETWORK_BAND_UNKNOWN: None,
-    consts.MM_NETWORK_BAND_ANY: None,
+ZTEK2525_ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: None,
+    consts.MM_ALLOWED_MODE_2G_ONLY: None,
 }
 
 ZTEK2525_CONN_DICT = {
     consts.MM_NETWORK_MODE_ANY: None,
     consts.MM_NETWORK_MODE_2G_ONLY: None,
+}
+
+ZTEK2525_BAND_DICT = {
+    consts.MM_NETWORK_BAND_UNKNOWN: None,
+    consts.MM_NETWORK_BAND_ANY: None,
 }
 
 ZTEK2525_CMD_DICT = ZTE_CMD_DICT.copy()
@@ -167,15 +171,28 @@ class ZTEK2525Wrapper(ZTEWrapper):
         d.addCallback(get_network_names_cb)
         return d
 
+    def get_network_mode(self):
+        """Returns the current network mode preference"""
+        return defer.succeed(consts.MM_NETWORK_MODE_2G_ONLY)
+
+    def set_allowed_mode(self, mode):
+        """Sets the allowed mode to ``mode``"""
+        if mode in self.custom.allowed_dict:
+            self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
+            return defer.succeed("OK")
+        else:
+            raise KeyError("Mode %s not found" % mode)
+
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
-        if mode == consts.MM_NETWORK_MODE_ANY:
-            return defer.succeed('')
+        if mode in self.custom.conn_dict:
+            return defer.succeed("OK")
         else:
             raise KeyError("Unsupported mode %d" % mode)
 
 
 class ZTEK2525Customizer(ZTEWCDMACustomizer):
+    allowed_dict = ZTEK2525_ALLOWED_DICT
     band_dict = ZTEK2525_BAND_DICT
     conn_dict = ZTEK2525_CONN_DICT
     cmd_dict = ZTEK2525_CMD_DICT
