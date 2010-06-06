@@ -185,6 +185,13 @@ class ZTEK2525Wrapper(ZTEWrapper):
         else:
             raise KeyError("Unsupported mode %d" % mode)
 
+    def set_smsc(self, smsc):
+        """Sets the SIM's SMSC number to ``smsc``"""
+        # K2525 never requires UCS2
+        d = super(WCDMAWrapper, self).set_smsc(smsc)
+        d.addCallback(lambda response: response[0].group('resp'))
+        return d
+
 
 class ZTEK2525Customizer(ZTEWCDMACustomizer):
     allowed_dict = ZTEK2525_ALLOWED_DICT
