@@ -1003,9 +1003,9 @@ class DBusTestCase(unittest.TestCase):
         d = defer.Deferred()
 
         def enable_device_cb():
-            # if we don't sleep for a sec, the test will start too soon
-            # and Enable won't be finished yet, yielding spurious results.
-            time.sleep(1)
+            # Don't sleep here - it isn't real life and if the card needs it,
+            # it should be in the core/plugin not the test suite
+            # time.sleep(1)
             d.callback(True)
 
         def enable_device_eb(e):
