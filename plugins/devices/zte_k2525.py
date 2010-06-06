@@ -42,11 +42,6 @@ ZTEK2525_CONN_DICT = {
     consts.MM_NETWORK_MODE_2G_ONLY: None,
 }
 
-ZTEK2525_BAND_DICT = {
-    consts.MM_NETWORK_BAND_UNKNOWN: None,
-    consts.MM_NETWORK_BAND_ANY: None,
-}
-
 ZTEK2525_CMD_DICT = ZTE_CMD_DICT.copy()
 
 ZTEK2525_CMD_DICT['get_network_info'] = build_cmd_dict(re.compile(r"""
@@ -193,7 +188,7 @@ class ZTEK2525Wrapper(ZTEWrapper):
 
 class ZTEK2525Customizer(ZTEWCDMACustomizer):
     allowed_dict = ZTEK2525_ALLOWED_DICT
-    band_dict = ZTEK2525_BAND_DICT
+    band_dict = {}
     conn_dict = ZTEK2525_CONN_DICT
     cmd_dict = ZTEK2525_CMD_DICT
     wrapper_klass = ZTEK2525Wrapper
