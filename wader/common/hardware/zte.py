@@ -187,6 +187,7 @@ class ZTEWCDMACustomizer(WCDMACustomizer):
                     \r\n
                     (?P<signal>\+Z[A-Z]{3,}):\s*(?P<args>.*)
                     \r\n""", re.VERBOSE)
+    allowed_dict = ZTE_ALLOWED_DICT
     band_dict = {}
     conn_dict = ZTE_MODE_DICT
     cmd_dict = ZTE_CMD_DICT
