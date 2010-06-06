@@ -18,7 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import re
-from twisted.internet import defer
+from twisted.internet import defer, reactor
+from twisted.internet.task import deferLater
 
 from wader.common import consts
 import wader.common.aterrors as E
@@ -96,6 +97,28 @@ ZTEK2525_CMD_DICT['list_sms'] = build_cmd_dict(re.compile(r"""
 
 
 class ZTEK2525Wrapper(ZTEWrapper):
+
+    def enable_radio(self, enable):
+        # It's really difficult to bring device back from +cfun=0, so let's
+        # just turn the radio off instead
+        d = self.get_radio_status()
+
+        def get_radio_status_cb(status):
+            if status in [0, 4] and enable:
+                d = self.send_at('AT+CFUN=1')
+
+                def cb(arg):
+                    # delay here 5 secs
+                    return deferLater(reactor, 5, lambda: arg)
+
+                d.addCallback(cb)
+                return d
+
+            elif status == 1 and not enable:
+                return self.send_at('AT+CFUN=4')
+
+        d.addCallback(get_radio_status_cb)
+        return d
 
     def get_network_info(self):
         """
