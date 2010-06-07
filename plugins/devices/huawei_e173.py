@@ -16,17 +16,31 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from twisted.internet import defer
 from wader.common import consts
 from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
+                                          HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
+
+
+class HuaweiE173Wrapper(HuaweiWCDMAWrapper):
+    """
+    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the E173
+    """
+
+    def get_manufacturer_name(self):
+        """Returns the manufacturer name"""
+        # Seems Huawei didn't implement +GMI
+        return defer.succeed('Huawei')
 
 
 class HuaweiE173Customizer(HuaweiWCDMACustomizer):
     """
     :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E173
     """
+    wrapper_klass = HuaweiE173Wrapper
 
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
     # HSDPA/UMTS 2100/900 MHz
@@ -57,7 +71,7 @@ class HuaweiE173(HuaweiWCDMADevicePlugin):
 
     __properties__ = {
         'ID_VENDOR_ID': [0x12d1],
-        'ID_MODEL_ID': [0x1451, 0x14a5],
+        'ID_MODEL_ID': [0x14a5],
     }
 
 
