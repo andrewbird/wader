@@ -530,8 +530,8 @@ class NetworkManagerBackend(object):
 
     def _is_nm08_present(self):
         if self._nm08_present is None:
-            obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)
             try:
+                obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)
                 devices = obj.GetDevices()
                 if len(devices):
                     self._nm08_present = 'NetworkManager' in devices[0]
