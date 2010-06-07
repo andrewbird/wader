@@ -37,7 +37,8 @@ import time
 import dbus
 import dbus.mainloop.glib
 import gconf
-from twisted.internet import defer
+from twisted.internet import defer, reactor
+from twisted.internet.task import deferLater
 from twisted.trial import unittest
 
 from wader.common.utils import (get_bands, get_network_modes,
@@ -193,6 +194,31 @@ class DBusTestCase(unittest.TestCase):
         # disable device at the end of the test
         self.device.Enable(False, dbus_interface=MDM_INTFACE)
         self.device = device = None
+
+    def do_when_registered(self, callback, errback=None):
+        """
+        Waits for registration then fires callback
+        Many prior tests can leave the card unregistered, use this if you need
+        registration for your test to be successful
+        """
+        reply = self.device.GetRegistrationInfo(dbus_interface=NET_INTFACE)
+        status, numeric_oper = reply[:2]
+        # we must be registered to our home network or roaming
+        if status in [1, 5]:
+            d = defer.succeed(status)
+            d.addCallback(callback)
+            return d
+        elif status == 2:
+            return deferLater(reactor, 5, self.do_when_registered,
+                                          callback, errback)
+        else:
+            if errback is None:
+                raise unittest.FailTest("Device is neither registered or"
+                                        " trying: status == %d" % status)
+            else:
+                d = defer.fail(status)
+                d.addErrback(errback)
+                return d
 
     # org.freedesktop.ModemManager.Modem tests
     def test_ModemDeviceProperty(self):
@@ -548,9 +574,12 @@ class DBusTestCase(unittest.TestCase):
 
     def test_NetworkGetSignalQuality(self):
         """Test for Network.GetSignalQuality"""
-        quality = self.device.GetSignalQuality(dbus_interface=NET_INTFACE)
-        self.failUnlessIsInstance(quality, (dbus.UInt32, int))
-        self.failUnlessIn(quality, range(1, 101))
+        def cb(*args):
+            quality = self.device.GetSignalQuality(dbus_interface=NET_INTFACE)
+            self.failUnlessIsInstance(quality, (dbus.UInt32, int))
+            self.failUnlessIn(quality, range(1, 101))
+
+        return self.do_when_registered(cb)
 
     def test_NetworkScan(self):
         """Test for Network.Scan"""
@@ -982,18 +1011,23 @@ class DBusTestCase(unittest.TestCase):
 
     def test_Ussd(self):
         """Test for working ussd implementation"""
-        # get the IMSI and check if we have a suitable ussd request/regex
-        imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
-        if imsi.startswith("21401"):
-            request, regex = ('*118#', '^Spain.*$')
-        elif imsi.startswith("23415"):
-            request, regex = ('*#100#', '^07\d{9}$')
-        else:
-            raise unittest.SkipTest("Untested")
+        def cb(*args):
+            # get the IMSI and check if we have a suitable ussd request/regex
+            imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+            if imsi.startswith("21401"):
+                request, regex = ('*118#', '^Spain.*$')
+            elif imsi.startswith("23415"):
+                request, regex = ('*#100#', '^07\d{9}$')
+            else:
+                raise unittest.SkipTest("Untested")
 
-        response = self.device.Initiate(request)
+            response = self.device.Initiate(request)
 
-        self.failUnless(re.compile(regex).match(response))
+            self.failUnless(re.compile(regex).match(response))
+
+        return self.do_when_registered(cb)
+
+    test_Ussd.timeout = 60
 
     def test_ZDisableReEnable(self):
         """Test last for disable device and reenable"""
