@@ -17,7 +17,43 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import ZTEWCDMADevicePlugin
+from twisted.internet import reactor
+from twisted.internet.task import deferLater
+
+from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
+                                       ZTEWCDMACustomizer,
+                                       ZTEWrapper)
+
+
+class ZTEK3765Wrapper(ZTEWrapper):
+
+    def check_pin(self):
+        """
+        Returns the SIM's auth state
+
+        :raise SimPinRequired: Raised if SIM PIN is required
+        :raise SimPukRequired: Raised if SIM PUK is required
+        :raise SimPuk2Required: Raised if SIM PUK2 is required
+        """
+        # XXX: this device needs to be enabled before pin can be checked
+
+        d = self.get_radio_status()
+
+        def get_radio_status_cb(status):
+            if status != 1:
+                self.send_at('AT+CFUN=1')
+
+                # delay here 2 secs
+                return deferLater(reactor, 2, lambda: None)
+
+        d.addCallback(get_radio_status_cb)
+        d.addCallback(lambda x: super(ZTEK3765Wrapper, self).check_pin())
+
+        return d
+
+
+class ZTEK3765Customizer(ZTEWCDMACustomizer):
+    wrapper_klass = ZTEK3765Wrapper
 
 
 class ZTEK3765(ZTEWCDMADevicePlugin):
@@ -25,6 +61,10 @@ class ZTEK3765(ZTEWCDMADevicePlugin):
     name = "Vodafone K3765-Z"
     version = "0.1"
     author = "Andrew Bird"
+    custom = ZTEK3765Customizer()
+
+    # After disable / enable we must re-authenticate the SIM
+    auth_persists_over_disable = False
 
     __remote_name__ = "K3765-Z"
 
