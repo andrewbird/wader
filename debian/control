@@ -6,16 +6,16 @@ Build-Depends: debhelper (>= 5)
 Build-Depends-Indep: python-central (>= 0.5), python-setuptools, python-dbus, python-twisted-core
 Standards-Version: 3.8.0
 Homepage: http://www.wader-project.org
-XS-Python-Version: current
+XS-Python-Version: >= 2.5
 
 Package: wader-core
 Architecture: all
 Replaces: wader-core, vmc-core, modemmanager
-Depends: ${python:Depends}, python-twisted-core, python-serial, python-dbus, python-tz, python-messaging, usb-modeswitch (>= 1.1.0), usb-modeswitch-data (>= 20100322), python-gudev, wvdial | network-manager (>=0.8), mobile-broadband-provider-info
+Depends: python (>= 2.5), ${python:Depends}, python-twisted-core, python-serial, python-dbus, python-tz, python-messaging, usb-modeswitch (>= 1.1.0), usb-modeswitch-data (>= 20100322), python-gudev, wvdial | network-manager (>=0.8), mobile-broadband-provider-info
 Recommends: python-twisted-conch
 Conflicts: modemmanager
 Provides: modemmanager
-XB-Python-Version: ${python:Versions}
+XB-Python-Version: >= 2.5
 Description: Internet connection assistant for mobile devices.
   Wader is a tool that manages 3G devices and mobile phones offering a dbus
   interface so other applications can use its services as connecting to the
