@@ -71,6 +71,19 @@ def get_network_modes(bitwised_mode):
     return [mode for mode in consts.MM_NETWORK_MODES if mode & bitwised_mode]
 
 
+def get_allowed_modes(bitwised_mode):
+    """
+    Returns all the allowed_modes present in ``bitwised_mode``
+
+    :rtype: list
+    """
+    ret = []
+    for mode in get_network_modes(bitwised_mode):
+        ret.append(convert_network_mode_to_allowed_mode(mode))
+
+    return ret
+
+
 def rssi_to_percentage(rssi):
     """
     Converts ``rssi`` to a percentage value
