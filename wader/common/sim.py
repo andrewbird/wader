@@ -22,6 +22,7 @@ from twisted.python import log
 from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
+from wader.common.encoding import from_ucs2
 
 RETRY_ATTEMPTS = 3
 RETRY_TIMEOUT = 3
@@ -47,7 +48,10 @@ class SIMBaseClass(object):
         self.size = size
 
     def set_charset(self, charset):
-        self.charset = charset
+        try:
+            self.charset = from_ucs2(charset)
+        except (UnicodeDecodeError, TypeError):
+            self.charset = charset
         return charset
 
     def setup_sms(self):
