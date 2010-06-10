@@ -21,6 +21,7 @@ import datetime
 import sqlite3
 import os
 import sys
+from wader.bcm.logger import logger
 from time import mktime
 from calendar import timegm
 
@@ -515,7 +516,9 @@ class NetworkProvider(DBProvider):
 
         :rtype: list
         """
+        logger.info("provider.py - get_network_by_id called. IMSI is: " + str(imsi))
         if not isinstance(imsi, basestring):
+            logger.info("provider.py - get_network_by_id: imsi and basestring number is: " + str(imsi) + str(basestring))
             raise TypeError("argument must be a string subclass")
 
         if len(imsi) < 14:

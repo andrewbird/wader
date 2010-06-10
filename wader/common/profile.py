@@ -33,6 +33,7 @@ import dbus
 from dbus.service import BusName, method, signal
 from zope.interface import implements
 from twisted.python import log
+from wader.bcm.logger import logger
 
 from wader.common._dbus import DelayableDBusObject, delayable
 from wader.common.interfaces import IProfile
@@ -199,6 +200,8 @@ class ProfileManager(object):
     def get_profile_options_from_imsi(self, imsi):
         """Generates a new :class:`Profile` from ``imsi``"""
         with closing(NetworkProvider()) as provider:
+            logger.info("profile.py - get_profile_option_from_imsi. IMSI is: " + str(imsi))
+
             network = provider.get_network_by_id(imsi)
             if network:
                 # XXX: use the first NetworkOperator object for now
