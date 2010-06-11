@@ -146,14 +146,7 @@ def patch_list_signature(props, signature='au'):
     for section in props:
         for key, val in props[section].iteritems():
             if val == []:
-                if key in ['dns']:
-                    props[section][key] = Array(val, signature='u')
-                else:
-                    props[section][key] = Array(val, signature=signature)
-            elif key in ['addresses', 'dns', 'routes']:
-                value = map(UInt32, map(convert_int_to_uint, val))
-                props[section][key] = Array(value, signature='u')
-
+                props[section][key] = Array(val, signature=signature)
     return props
 
 
