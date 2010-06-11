@@ -40,7 +40,7 @@ from wader.common.interfaces import IProfile
 from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  MM_NETWORK_BAND_ANY,
-                                 MM_NETWORK_MODE_ANY)
+                                 MM_ALLOWED_MODE_ANY)
 import wader.common.exceptions as ex
 from wader.common.provider import NetworkProvider
 from wader.common.utils import convert_ip_to_int
@@ -218,7 +218,7 @@ class ProfileManager(object):
         props['gsm'] = {'band': MM_NETWORK_BAND_ANY,
                         'username': network.username,
                         'password': network.password,
-                        'network-type': MM_NETWORK_MODE_ANY,
+                        'network-type': MM_ALLOWED_MODE_ANY,
                         'number': '*99#',
                         'apn': network.apn,
                         'name': 'gsm'}

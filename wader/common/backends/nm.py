@@ -1,6 +1,7 @@
 from collections import defaultdict
 import os
 
+import copy
 import dbus
 from dbus.service import method, signal, Object, BusName
 import gobject
@@ -13,7 +14,13 @@ from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH,
                                  APP_SLUG_NAME,
-                                 MM_SYSTEM_SETTINGS_PATH)
+                                 MM_SYSTEM_SETTINGS_PATH,
+                                 MM_ALLOWED_MODE_ANY,
+                                 MM_ALLOWED_MODE_2G_PREFERRED,
+                                 MM_ALLOWED_MODE_3G_PREFERRED,
+                                 MM_ALLOWED_MODE_2G_ONLY,
+                                 MM_ALLOWED_MODE_3G_ONLY)
+
 from wader.common.dialer import Dialer
 import wader.common.exceptions as ex
 from wader.common.interfaces import IBackend, IProfileManagerBackend
@@ -21,7 +28,8 @@ from wader.common.keyring import (KeyringManager, KeyringInvalidPassword,
                                   KeyringIsClosed, KeyringNoMatchError)
 from wader.common.profile import Profile
 from wader.common.secrets import ProfileSecrets
-from wader.common.utils import convert_int_to_uint, patch_list_signature
+from wader.common.utils import (convert_int_to_uint, patch_list_signature,
+                                revert_dict)
 
 
 # this line is required, otherwise gnomekeyring will complain about
@@ -44,6 +52,60 @@ NM_SYSTEM_SETTINGS_SECRETS = '%s.Secrets' % NM_SYSTEM_SETTINGS_CONNECTION
 GCONF_PROFILES_BASE = '/system/networking/connections'
 
 NM_CONNECTED, NM_DISCONNECTED = 8, 3
+
+NM_NETWORK_TYPE_MAP = {
+    MM_ALLOWED_MODE_ANY: -1,
+    MM_ALLOWED_MODE_2G_PREFERRED: 3,
+    MM_ALLOWED_MODE_3G_PREFERRED: 2,
+    MM_ALLOWED_MODE_2G_ONLY: 1,
+    MM_ALLOWED_MODE_3G_ONLY: 0,
+}
+NM_NETWORK_TYPE_MAP_REV = revert_dict(NM_NETWORK_TYPE_MAP)
+
+
+def transpose_from_NM(oldprops):
+    # call on read
+    props = copy.deepcopy(oldprops)
+
+    if 'gsm' in props:
+        # map to Modem manager constants, default to ANY
+        if not 'network-type' in props['gsm']:
+            props['gsm']['network-type'] = MM_ALLOWED_MODE_ANY
+        else:
+            nm_val = props['gsm'].get('network-type')
+            props['gsm']['network-type'] = NM_NETWORK_TYPE_MAP_REV[nm_val]
+
+    # XXX: shouldn't we be converting the DNS/Address/route integer values
+    #      received from NM
+    return props
+
+
+def transpose_to_NM(oldprops, new=True):
+    # call on write
+    props = copy.deepcopy(oldprops)
+
+    if 'gsm' in props:
+        mm_val = props['gsm'].get('network-type', MM_ALLOWED_MODE_ANY)
+        props['gsm']['network-type'] = NM_NETWORK_TYPE_MAP[mm_val]
+
+    # NM doesn't like us setting these on update
+    if not new:
+        for key in ['connection', 'gsm', 'ppp', 'serial', 'ipv4']:
+            if 'name' in props[key]:
+                del props[key]['name']
+
+    # convert the integer format
+    if 'ipv4' in props:
+        for key in ['addresses', 'dns', 'routes']:
+            if key in props['ipv4']:
+                val = props['ipv4'][key]
+                value = map(dbus.UInt32, map(convert_int_to_uint, val))
+                if key in ['dns']:
+                    props['ipv4'][key] = dbus.Array(value, signature='u')
+                else:
+                    props['ipv4'][key] = dbus.Array(value, signature='au')
+
+    return props
 
 
 class NMDialer(Dialer):
@@ -240,6 +302,10 @@ class NMProfile(Profile):
         self.secrets = ProfileSecrets(self, keyring)
 
     def _write(self, props):
+        self.props = props
+
+        props = transpose_to_NM(props)
+
         for key, value in props.iteritems():
             new_path = os.path.join(self.gpath, key)
             self.helper.set_value(new_path, value)
@@ -247,13 +313,12 @@ class NMProfile(Profile):
         self.helper.client.suggest_sync()
 
     def _load_info(self):
-        self.props = {}
+        props = {}
 
         if self.helper.client.dir_exists(self.gpath):
-            self._load_dir(self.gpath, self.props)
+            self._load_dir(self.gpath, props)
 
-        dns = self.props['ipv4'].get('dns', [])
-        self.props['ipv4']['dns'] = map(convert_int_to_uint, dns)
+        self.props = transpose_from_NM(props)
 
     def _load_dir(self, directory, info):
         for entry in self.helper.client.all_entries(directory):
@@ -311,7 +376,9 @@ class NMProfile(Profile):
     def update(self, props):
         """Updates the profile with settings ``props``"""
         self._write(props)
-        self._load_info()
+
+        # Don't read it back, as the suggest_sync may not have happened yet
+        #self._load_info()
 
         self.Updated(patch_list_signature(self.props))
 
@@ -414,9 +481,13 @@ class NMProfileManager(Object):
                 section, key = entry.get_key().split('/')[-2:]
                 props[section][key] = self.helper.get_value(entry.get_value())
 
+        props = transpose_from_NM(props)
+
         return NMProfile(self.get_next_dbus_opath(), gconf_path, dict(props))
 
     def _do_set_profile(self, path, props):
+        props = transpose_to_NM(props)
+
         if not props['ipv4'].get('ignore-auto-dns'):
             props['ipv4']['dns'] = []
 
@@ -496,6 +567,8 @@ class NMProfileManager(Object):
 
         _profile = self.profiles[uuid]
         _profile.update(props)
+
+        props = transpose_to_NM(props, new=False)
 
         if uuid in self.nm_profiles:
             obj = self.nm_profiles[uuid]

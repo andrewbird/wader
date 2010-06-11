@@ -505,7 +505,7 @@ class PlainProfile(Profile):
         self.props = props
         self._write()
         # emit the signal
-        self.Updated(props)
+        self.Updated(patch_list_signature(props))
 
     def remove(self):
         """Removes the profile"""
