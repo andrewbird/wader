@@ -14,6 +14,7 @@ from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH,
                                  APP_SLUG_NAME,
+                                 MDM_INTFACE, MM_IP_METHOD_PPP,
                                  MM_SYSTEM_SETTINGS_PATH,
                                  MM_ALLOWED_MODE_ANY,
                                  MM_ALLOWED_MODE_2G_PREFERRED,
@@ -116,7 +117,7 @@ class NMDialer(Dialer):
 
         self.int = None
         self.conn_obj = None
-        self.iface = 'ppp0'
+        self.iface = self._get_stats_iface()
         self.state = NM_DISCONNECTED
 
         self.nm_opath = None
@@ -141,6 +142,15 @@ class NMDialer(Dialer):
             udi = dev.Get('org.freedesktop.NetworkManager.Devices', 'Udi')
             if self.device.opath == udi:
                 return opath
+
+    def _get_stats_iface(self):
+        if self.device.get_property(MDM_INTFACE,
+                                    'IpMethod') == MM_IP_METHOD_PPP:
+            iface = 'ppp0' # XXX: shouldn't hardcode to first PPP instance
+        else:
+            iface = self.device.get_property(MDM_INTFACE, 'Device')
+
+        return iface
 
     def _on_properties_changed(self, changed):
         if 'State' not in changed:
