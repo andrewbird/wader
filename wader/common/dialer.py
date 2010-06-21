@@ -105,15 +105,10 @@ class DialerConf(object):
         # get the secrets
         try:
             self.password = self._get_profile_secrets(profile)
-        except:
-            log.err()
-        else:
-            if not self.password:
-                if self.username != '*':
-                    log.err("No password in profile, yet username is defined")
-                else:
-                    log.err("no password in profile, assuming '*' can be used")
-                    self.password = '*'
+        except Exception, e:
+            log.err("Error fetching profile password, "
+                    "setting password to ''. Reason: %s" % e)
+            self.password = ''
 
 
 class Dialer(Object):
