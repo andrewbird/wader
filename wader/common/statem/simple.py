@@ -183,7 +183,7 @@ class SimpleStateMachine(Modal):
             log.msg("Simple SM: connect exited")
 
         def do_next(self):
-            number = self.settings['number']
+            number = "*99***%d#" % self.sconn.state_dict.get('conn_id', 1)
             d = self.sconn.connect_to_internet(number)
             d.addCallback(lambda _: self.transition_to('done'))
 
