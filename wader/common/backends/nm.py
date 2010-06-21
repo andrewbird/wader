@@ -594,10 +594,8 @@ class NMProfileManager(Object):
     def GetNMObjectPath(self, uuid):
         """Returns the object path of the connection referred by ``uuid``"""
         if uuid not in self.nm_profiles:
-            raise KeyError("Unknown uuid: %s" % uuid)
             msg = "Could not find profile %s in %s"
             raise KeyError(msg % (uuid, self.nm_profiles))
-
 
         profile = self.nm_profiles[uuid]
         return profile.__dbus_object_path__
