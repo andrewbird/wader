@@ -132,8 +132,8 @@ def _generate_wvdial_conf(conf, sport):
     :param sport: The port to use
     :rtype: str
     """
-    user = conf.username
-    passwd = conf.password
+    user = conf.username if conf.username else '*'
+    passwd = conf.password if conf.password else '*'
     theapn = conf.apn
 
     # build template
