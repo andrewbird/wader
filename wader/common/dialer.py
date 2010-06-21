@@ -42,6 +42,7 @@ class DialerConf(object):
     """I contain all the necessary information to connect to Internet"""
     uuid = ""
     apn = None
+    context = None
     username = None
     password = None
     pin = None
@@ -85,7 +86,7 @@ class DialerConf(object):
 
         self.uuid = props['connection']['uuid']
         self.apn = props['gsm']['apn']
-        self.username = props['gsm'].get('username', '*')
+        self.username = props['gsm'].get('username', '')
         self.autoconnect = props['connection'].get('autoconnect', False)
         self.band = props['gsm'].get('band')
         self.network_type = props['gsm'].get('network-type')
@@ -284,6 +285,11 @@ class DialerManager(Object, DBusExporterHelper):
         Start a connection with device ``device_opath`` using ``profile_opath``
         """
         conf = DialerConf(profile_opath)
+        # set PDP context
+        device = self.ctrl.hm.clients[device_opath]
+        # use context #1 if not defined
+        conf.context = device.sconn.state_dict.get('conn_id', 1)
+        # build dialer
         opath = self.get_next_opath()
         dialer = self.get_dialer(device_opath, opath)
         self.connection_attempts[device_opath] = dialer

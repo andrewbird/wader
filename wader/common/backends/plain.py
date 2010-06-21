@@ -36,8 +36,7 @@ from zope.interface import implements
 from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH,
-                                 APP_NAME, MDM_INTFACE,
-                                 TEMPLATES_DIR, HSO_CHAP_AUTH,
+                                 APP_NAME, MDM_INTFACE, HSO_CHAP_AUTH,
                                  HSO_NO_AUTH, HSO_PAP_AUTH,
                                  MM_SYSTEM_SETTINGS_PATH)
 from wader.common.dialer import Dialer
@@ -48,14 +47,34 @@ from wader.common.keyring import (KeyringManager, KeyringInvalidPassword,
 from wader.common.oal import get_os_object
 from wader.common.profile import Profile
 from wader.common.secrets import ProfileSecrets
-from wader.common.utils import (save_file, get_file_data, is_bogus_ip,
-                                patch_list_signature)
+from wader.common.utils import save_file, is_bogus_ip, patch_list_signature
 from wader.contrib import aes
 
 
 WVDIAL_CONF = os.path.join('/etc', 'ppp', 'peers', 'wvdial')
-WVTEMPLATE = os.path.join(TEMPLATES_DIR, 'wvdial.conf.tpl')
 WVDIAL_RETRIES = 3
+WVTEMPLATE = """
+[Dialer Defaults]
+
+Phone = $phone
+Username = $username
+Password = $password
+Stupid Mode = 1
+Dial Command = ATDT
+New PPPD = yes
+Check Def Route = on
+Dial Attempts = 3
+
+[Dialer connect]
+
+Modem = $serialport
+Baud = 460800
+Init2 = ATZ
+Init3 = ATQ0 V1 E0 S0=0 &C1 &D2 +FCLASS=0
+Init4 = AT+CGDCONT=1,"IP","$apn"
+ISDN = 0
+Modem Type = Analog Modem
+"""
 
 CONNECTED_REGEXP = re.compile('Connected\.\.\.')
 PPPD_PID_REGEXP = re.compile('Pid of pppd: (?P<pid>\d+)')
@@ -137,11 +156,14 @@ def _generate_wvdial_conf(conf, sport):
     theapn = conf.apn
 
     # build template
-    data = StringIO(get_file_data(WVTEMPLATE))
+    data = StringIO(WVTEMPLATE)
     template = Template(data.getvalue())
     data.close()
+    # construct number
+    number = '*99***%d#' % conf.context
     # return template
-    props = dict(serialport=sport, username=user, password=passwd, apn=theapn)
+    props = dict(serialport=sport, username=user, password=passwd,
+                 apn=theapn, phone=number)
     return template.substitute(props)
 
 
