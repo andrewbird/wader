@@ -489,7 +489,9 @@ class NMProfileManager(Object):
         for path in self.helper.client.all_dirs(gconf_path):
             for entry in self.helper.client.all_entries(path):
                 section, key = entry.get_key().split('/')[-2:]
-                props[section][key] = self.helper.get_value(entry.get_value())
+                value = entry.get_value()
+                if value is not None:
+                    props[section][key] = self.helper.get_value(value)
 
         props = transpose_from_NM(props)
 
