@@ -300,16 +300,31 @@ class GnomeKeyring(object):
 class NMProfile(Profile):
     """I am a group of settings required to dial up"""
 
-    def __init__(self, opath, gpath, props):
+    def __init__(self, opath, nm_obj, gpath, props, manager):
         super(NMProfile, self).__init__(opath)
         self.helper = GConfHelper()
 
+        self.nm_obj = nm_obj
         self.gpath = gpath
         self.props = props
+        self.manager = manager
 
         from wader.common.backends import get_backend
         keyring = get_backend().get_keyring()
         self.secrets = ProfileSecrets(self, keyring)
+        self._connect_to_signals()
+
+    def _connect_to_signals(self):
+        self.nm_obj.connect_to_signal("Removed", self._on_removed)
+        self.nm_obj.connect_to_signal("Updated", self._on_updated)
+
+    def _on_removed(self):
+        log.msg("Profile %s has been removed externally" % self.opath)
+        self.manager.remove_profile(self)
+
+    def _on_updated(self, props):
+        log.msg("Profile %s has been updated" % self.opath)
+        self.update(props)
 
     def _write(self, props):
         self.props = props
@@ -386,10 +401,7 @@ class NMProfile(Profile):
     def update(self, props):
         """Updates the profile with settings ``props``"""
         self._write(props)
-
-        # Don't read it back, as the suggest_sync may not have happened yet
-        #self._load_info()
-
+        self._load_info()
         self.Updated(patch_list_signature(self.props))
 
     def remove(self):
@@ -494,8 +506,9 @@ class NMProfileManager(Object):
                     props[section][key] = self.helper.get_value(value)
 
         props = transpose_from_NM(props)
-
-        return NMProfile(self.get_next_dbus_opath(), gconf_path, dict(props))
+        nm_obj = self.nm_profiles[props['connection']['uuid']]
+        return NMProfile(self.get_next_dbus_opath(), nm_obj,
+                         gconf_path, dict(props), self)
 
     def _do_set_profile(self, path, props):
         props = transpose_to_NM(props)
