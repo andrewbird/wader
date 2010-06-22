@@ -441,7 +441,7 @@ class NMProfileManager(Object):
         obj = self.bus.get_object(NM_USER_SETTINGS, opath)
         props = obj.GetSettings(dbus_interface=NM_SYSTEM_SETTINGS_CONNECTION)
         # filter out non GSM profiles
-        if 'gsm' in props:
+        if props['connection']['type'] == 'gsm':
             self._add_nm_profile(obj, props)
 
     def _add_nm_profile(self, obj, props):
@@ -514,12 +514,7 @@ class NMProfileManager(Object):
         """Adds a profile with settings ``props``"""
         gconf_path = self._get_next_free_gpath()
         self._do_set_profile(gconf_path, props)
-
-        profile = NMProfile(self.get_next_dbus_opath(), gconf_path, props)
-        uuid = props['connection']['uuid']
-        self.profiles[uuid] = profile
-
-        self.NewConnection(profile.opath)
+        # the rest will be handled by _on_new_nm_profile
 
     def get_profile_by_uuid(self, uuid):
         """
