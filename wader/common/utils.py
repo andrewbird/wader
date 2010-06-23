@@ -24,7 +24,7 @@ import re
 import socket
 import struct
 
-from dbus import Array, UInt32
+from dbus import Array
 from datetime import datetime
 from pytz import timezone
 
