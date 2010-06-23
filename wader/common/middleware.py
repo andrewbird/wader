@@ -799,6 +799,9 @@ class WCDMAWrapper(WCDMAProtocol):
 
     # some high-level methods exported over DBus
     def init_properties(self):
+        # XXX: Implement UnlockRetries
+        self.device.set_property(MDM_INTFACE, 'UnlockRetries', 999)
+
         d = self.get_bands()
         d.addCallback(lambda bands:
                 self.device.set_property(CRD_INTFACE, 'SupportedBands', bands))
@@ -809,6 +812,10 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda active:
                 self.device.set_property(CRD_INTFACE, 'PinEnabled',
                                          bool(active)))
+        d.addCallback(lambda _: self.get_imei())
+        d.addCallback(lambda imei:
+                self.device.set_property(MDM_INTFACE, 'EquipmentIdentifier',
+                                         imei))
         return d
 
     def get_simple_status(self):

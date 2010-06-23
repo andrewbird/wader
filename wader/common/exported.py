@@ -134,6 +134,13 @@ class ModemExporter(Object, DBusExporterHelper):
         d.addCallback(lambda reply: map(convert_ip_to_int, reply))
         return self.add_callbacks(d, async_cb, async_eb)
 
+    @method(MDM_INTFACE, in_signature='', out_signature='',
+            async_callbacks=('async_cb', 'async_eb'))
+    def FactoryReset(self, async_cb, async_eb):
+        """Reset the modem to as close to factory state as possible"""
+        d = self.sconn.reset_settings()
+        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
+
     @signal(dbus_interface=MDM_INTFACE, signature='o')
     def DeviceEnabled(self, opath):
         log.msg("emitting DeviceEnabled('%s')" % opath)
@@ -272,13 +279,6 @@ class CardExporter(SimpleExporter):
         """Returns the IMSI"""
         d = self.sconn.get_imsi()
         return self.add_callbacks(d, async_cb, async_eb)
-
-    @method(CRD_INTFACE, in_signature='', out_signature='',
-            async_callbacks=('async_cb', 'async_eb'))
-    def ResetSettings(self, async_cb, async_eb):
-        """Resets the stored settings in SIM"""
-        d = self.sconn.reset_settings()
-        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(CRD_INTFACE, in_signature='s', out_signature='s',
             async_callbacks=('async_cb', 'async_eb'))

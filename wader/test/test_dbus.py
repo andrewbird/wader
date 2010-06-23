@@ -272,6 +272,10 @@ class DBusTestCase(unittest.TestCase):
         self.failUnlessIsInstance(info[1], basestring)
         self.failUnlessIsInstance(info[2], basestring)
 
+    def test_ModemFactoryReset(self):
+        """Test for Modem.FactoryReset"""
+        raise unittest.SkipTest("Untested")
+
     # org.freedesktop.ModemManager.Modem.Gsm.Card tests
     def test_CardChangePin(self):
         """Test for Card.ChangePin"""
