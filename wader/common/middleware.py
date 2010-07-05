@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2010  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -31,9 +31,15 @@ from twisted.python import log
 from twisted.internet import defer, reactor
 
 import wader.common.aterrors as E
-from wader.common.consts import (MDM_INTFACE, CRD_INTFACE, MM_NETWORK_BAND_ANY,
-                                 MM_NETWORK_MODE_ANY, DEV_AUTHENTICATED,
-                                 DEV_ENABLED, DEV_CONNECTED)
+from wader.common.consts import (MDM_INTFACE, CRD_INTFACE, NET_INTFACE,
+                                 MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
+                                 DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED,
+                                 MM_GSM_ACCESS_TECH_GPRS,
+                                 MM_GSM_ACCESS_TECH_EDGE,
+                                 MM_GSM_ACCESS_TECH_UMTS,
+                                 MM_GSM_ACCESS_TECH_HSDPA,
+                                 MM_GSM_ACCESS_TECH_HSUPA,
+                                 MM_GSM_ACCESS_TECH_HSPA)
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
@@ -287,11 +293,29 @@ class WCDMAWrapper(WCDMAProtocol):
         # Ugly but it works. The naive approach with DeferredList won't work
         # as the call order is not guaranteed
         resp = []
+
+        def get_netinfo_cb(info):
+            new = info[1]
+            cur = self.device.get_property(NET_INTFACE, 'AccessTechnology')
+
+            # Don't stamp on the value provided by a richer method
+            if new == 'GPRS' and cur != MM_GSM_ACCESS_TECH_EDGE:
+                self.device.set_property(NET_INTFACE, 'AccessTechnology',
+                                         MM_GSM_ACCESS_TECH_GPRS)
+
+            if new == '3G' and cur not in [MM_GSM_ACCESS_TECH_HSDPA,
+                                           MM_GSM_ACCESS_TECH_HSUPA,
+                                           MM_GSM_ACCESS_TECH_HSPA]:
+                self.device.set_property(NET_INTFACE, 'AccessTechnology',
+                                         MM_GSM_ACCESS_TECH_UMTS)
+
+            return resp.append(info[0])
+
         d = self.get_netreg_status()
         d.addCallback(lambda info: resp.append(info[1]))
         d.addCallback(lambda _: self.set_network_info_format(3, 2))
         d.addCallback(lambda _: self.get_network_info())
-        d.addCallback(lambda info: resp.append(info[0]))
+        d.addCallback(get_netinfo_cb)
 
         def get_netinfo_eb(failure):
             failure.trap(E.NoNetwork)
@@ -300,7 +324,7 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addErrback(get_netinfo_eb)
         d.addCallback(lambda _: self.set_network_info_format(3, 0))
         d.addCallback(lambda _: self.get_network_info())
-        d.addCallback(lambda info: resp.append(info[0]))
+        d.addCallback(get_netinfo_cb)
         d.addErrback(get_netinfo_eb)
         d.addCallback(lambda _: tuple(resp))
         return d
