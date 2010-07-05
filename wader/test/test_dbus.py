@@ -250,7 +250,8 @@ class DBusTestCase(unittest.TestCase):
         driver = self.device.Get(MDM_INTFACE, 'Driver',
                                  dbus_interface=dbus.PROPERTIES_IFACE)
         self.failUnlessIn(driver, ['hso', 'option', 'mbm', 'sierra',
-                                   'cdc_ether', 'cdc_wdm', 'cdc_acm'])
+                                   'cdc_ether', 'cdc_wdm', 'cdc_acm',
+                                   'qcserial'])
 
     def test_ModemTypeProperty(self):
         _type = self.device.Get(MDM_INTFACE, 'Type',
