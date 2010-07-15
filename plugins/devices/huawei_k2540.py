@@ -16,6 +16,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from twisted.internet import defer
+
 from wader.common import consts
 from wader.common.command import ATCmd
 from wader.common.encoding import pack_ucs2_bytes
@@ -24,6 +26,17 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
+
+
+ALLOWED_DICT = {
+    consts.MM_ALLOWED_MODE_ANY: None,
+    consts.MM_ALLOWED_MODE_2G_ONLY: None,
+}
+
+CONN_DICT = {
+    consts.MM_NETWORK_MODE_ANY: None,
+    consts.MM_NETWORK_MODE_2G_ONLY: None,
+}
 
 
 class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
@@ -50,6 +63,25 @@ class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
 
         return self.queue_at_cmd(cmd)
 
+    def get_network_mode(self):
+        """Returns the current network mode preference"""
+        return defer.succeed(consts.MM_NETWORK_MODE_2G_ONLY)
+
+    def set_allowed_mode(self, mode):
+        """Sets the allowed mode to ``mode``"""
+        if mode in self.custom.allowed_dict:
+            self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
+            return defer.succeed("OK")
+        else:
+            raise KeyError("Mode %s not found" % mode)
+
+    def set_network_mode(self, mode):
+        """Sets the network mode to ``mode``"""
+        if mode in self.custom.conn_dict:
+            return defer.succeed("OK")
+        else:
+            raise KeyError("Unsupported mode %d" % mode)
+
     def send_ussd(self, ussd):
         return self._send_ussd_old_mode(ussd)
 
@@ -70,7 +102,8 @@ class HuaweiK2540Customizer(HuaweiWCDMACustomizer):
                    consts.MM_NETWORK_BAND_DCS, # 1800
                    consts.MM_NETWORK_BAND_PCS])# 1900
 
-    conn_dict = {}
+    allowed_dict = ALLOWED_DICT
+    conn_dict = CONN_DICT
 
 
 class HuaweiK2540(HuaweiWCDMADevicePlugin):
