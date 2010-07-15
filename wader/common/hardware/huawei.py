@@ -282,6 +282,14 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         else:
             encoding = match.group('name')[:2]
             hexbytes = match.group('name')[2:]
+            if encoding != '82':
+                # E220 pads  '534E4E3AFFFFFFFFFFFFFFFFFF'
+                # K2540 pads '534E4E3AFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+                #            'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+                significant = hexbytes.find('FF')
+                if significant != -1:
+                    hexbytes = hexbytes[:significant + 2]
+
             if encoding == '80':   # example '80058300440586FF'
                 name = unpack_ucs2_bytes_in_ts31101_80(hexbytes)
             elif encoding == '81':  # example '810602A46563746F72FF'
