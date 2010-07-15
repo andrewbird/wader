@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2010  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -17,8 +17,29 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common import consts
+from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
-                                          HuaweiSIMClass)
+                                          HuaweiWCDMACustomizer,
+                                          HuaweiSIMClass,
+                                          HUAWEI_BAND_DICT)
+
+
+class HuaweiE220Customizer(HuaweiWCDMACustomizer):
+    """
+    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E220
+    """
+
+    # GSM/GPRS/EDGE 900/1800 MHz
+    # HSDPA/UMTS 2100 MHz
+    band_dict = build_band_dict(
+                  HUAWEI_BAND_DICT,
+                  [consts.MM_NETWORK_BAND_ANY,
+
+                   consts.MM_NETWORK_BAND_EGSM,#  900
+                   consts.MM_NETWORK_BAND_DCS, # 1800
+
+                   consts.MM_NETWORK_BAND_U2100])
 
 
 class HuaweiE220SIMClass(HuaweiSIMClass):
@@ -60,6 +81,7 @@ class HuaweiE220(HuaweiWCDMADevicePlugin):
     name = "Huawei E220"
     version = "0.1"
     author = u"Pablo Martí"
+    custom = HuaweiE220Customizer()
     sim_klass = HuaweiE220SIMClass
 
     __remote_name__ = "E220"
