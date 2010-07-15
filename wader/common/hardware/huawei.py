@@ -68,6 +68,8 @@ HUAWEI_BAND_DICT = {
     consts.MM_NETWORK_BAND_U2100: 0x00400000,
     consts.MM_NETWORK_BAND_U1900: 0x00800000,
     consts.MM_NETWORK_BAND_U850: 0x04000000,
+# XXX: check this works with bit operations and all cards before enabling
+#    consts.MM_NETWORK_BAND_U900: 0x0002000000000000,
 }
 
 
