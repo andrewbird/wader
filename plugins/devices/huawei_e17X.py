@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (C) 2010  Vodafone España, S.A.
 # Author:  Jaime Soriano
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,9 +19,12 @@
 from twisted.internet import defer
 
 import wader.common.aterrors as E
+from wader.common import consts
+from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
-                                          HuaweiWCDMAWrapper)
+                                          HuaweiWCDMAWrapper,
+                                          HUAWEI_BAND_DICT)
 
 
 class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
@@ -70,7 +74,22 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
 
 
 class HuaweiE17XCustomizer(HuaweiWCDMACustomizer):
+    """
+    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E17X
+    """
     wrapper_klass = HuaweiE17XWrapper
+
+    # GSM/GPRS/EDGE 850/900/1800 MHz
+    # HSDPA/UMTS 2100 MHz
+    band_dict = build_band_dict(
+                  HUAWEI_BAND_DICT,
+                  [consts.MM_NETWORK_BAND_ANY,
+
+                   consts.MM_NETWORK_BAND_G850,#  850
+                   consts.MM_NETWORK_BAND_EGSM,#  900
+                   consts.MM_NETWORK_BAND_DCS, # 1800
+
+                   consts.MM_NETWORK_BAND_U2100])
 
 
 class HuaweiE17X(HuaweiWCDMADevicePlugin):
