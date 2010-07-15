@@ -18,16 +18,42 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
+from wader.common.command import ATCmd
+from wader.common.encoding import pack_ucs2_bytes
 from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
+                                          HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
+
+
+class HuaweiE660aWrapper(HuaweiWCDMAWrapper):
+
+    def _add_contact(self, name, number, index):
+        """
+        Adds a contact to the SIM card
+        """
+        raw = 0
+        try:     # are all ascii chars
+            name.encode('ascii')
+        except:  # write in TS31.101 type 80 raw format
+            # K2540 doesn't need the "FF" suffix
+            # AT^CPBW=1,"28780808",129,"80534E4E3A",1
+            name = '80%s' % pack_ucs2_bytes(name)
+            raw = 1
+
+        category = 145 if number.startswith('+') else 129
+        args = (index, number, category, name, raw)
+        cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
+
+        return self.queue_at_cmd(cmd)
 
 
 class HuaweiE660aCustomizer(HuaweiWCDMACustomizer):
     """
     :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E660a
     """
+    wrapper_klass = HuaweiE660aWrapper
 
     # GSM/GPRS/EDGE 850/900/1800 MHz
     # HSDPA/UMTS 850/1900/2100 MHz
