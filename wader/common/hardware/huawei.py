@@ -182,30 +182,11 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         return d
 
     def add_contact(self, contact):
-
         """
         Adds ``contact`` to the SIM and returns the index where was stored
 
         :rtype: int
         """
-
-        def hw_add_contact(name, number, index):
-            """
-            Adds a contact to the SIM card
-            """
-            raw = 0
-            try:     # are all ascii chars
-                name.encode('ascii')
-            except:  # write in TS31.101 type 80 raw format
-                name = '80%sFF' % pack_ucs2_bytes(name)
-                raw = 1
-
-            category = 145 if number.startswith('+') else 129
-            args = (index, number, category, name, raw)
-            cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args,
-                        name='add_contact')
-            return self.queue_at_cmd(cmd)
-
         name = from_u(contact.name)
 
         # common arguments for both operations (name and number)
@@ -215,7 +196,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             # contact.index is set, user probably wants to overwrite an
             # existing contact
             args.append(contact.index)
-            d = hw_add_contact(*args)
+            d = self._add_contact(*args)
             d.addCallback(lambda _: contact.index)
             return d
 
@@ -223,7 +204,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         # first slot free on the phonebook and then add the contact
         def get_next_id_cb(index):
             args.append(index)
-            d2 = hw_add_contact(*args)
+            d2 = self._add_contact(*args)
             # now we just fake add_contact's response and we return the index
             d2.addCallback(lambda _: index)
             return d2
@@ -231,6 +212,22 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         d = self._get_next_contact_id()
         d.addCallback(get_next_id_cb)
         return d
+
+    def _add_contact(self, name, number, index):
+        """
+        Adds a contact to the SIM card
+        """
+        raw = 0
+        try:     # are all ascii chars
+            name.encode('ascii')
+        except:  # write in TS31.101 type 80 raw format
+            name = '80%sFF' % pack_ucs2_bytes(name)
+            raw = 1
+
+        category = 145 if number.startswith('+') else 129
+        args = (index, number, category, name, raw)
+        cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
+        return self.queue_at_cmd(cmd)
 
     def find_contacts(self, pattern):
         d = self.list_contacts()
