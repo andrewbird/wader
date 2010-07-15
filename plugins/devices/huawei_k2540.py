@@ -50,6 +50,9 @@ class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
 
         return self.queue_at_cmd(cmd)
 
+    def send_ussd(self, ussd):
+        return self._send_ussd_old_mode(ussd)
+
 
 class HuaweiK2540Customizer(HuaweiWCDMACustomizer):
     """
