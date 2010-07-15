@@ -562,37 +562,6 @@ class HuaweiSIMClass(SIMBaseClass):
         return d
 
 
-class HuaweiEMXXWrapper(HuaweiWCDMAWrapper):         # Modules have RFSWITCH
-    """
-    Wrapper for all Huawei embedded modules
-    """
-
-    def __init__(self, device):
-        super(HuaweiEMXXWrapper, self).__init__(device)
-
-    def get_signal_level(self):
-        """
-        Returns the signal level
-
-        Overloaded to poll the RFSWITCH status
-
-        :rtype: `Deferred`
-        """
-
-        cmd = ATCmd('AT^RFSWITCH?', name='get_radio')
-        d = self.queue_at_cmd(cmd)
-        d.addCallback(lambda _:
-                        super(HuaweiEMXXWrapper, self).get_signal_level())
-        return d
-
-
-class HuaweiEMXXCustomizer(HuaweiWCDMACustomizer):
-    """
-    Customizer for all Huawei embedded modules
-    """
-    adapter = HuaweiEMXXWrapper
-
-
 class HuaweiWCDMADevicePlugin(DevicePlugin):
     """DevicePlugin for Huawei"""
     sim_klass = HuaweiSIMClass

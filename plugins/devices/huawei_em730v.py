@@ -20,14 +20,25 @@
 from wader.common import consts
 from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
-                                          HuaweiEMXXCustomizer,
+                                          HuaweiWCDMAWrapper,
+                                          HuaweiWCDMACustomizer,
                                           HUAWEI_BAND_DICT)
 
 
-class HuaweiEM730VCustomizer(HuaweiEMXXCustomizer):
+class HuaweiEM730VWrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E220
+    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the EM730V
     """
+
+    def send_ussd(self, ussd):
+        return self._send_ussd_old_mode(ussd)
+
+
+class HuaweiEM730VCustomizer(HuaweiWCDMACustomizer):
+    """
+    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the EM730V
+    """
+    wrapper_klass = HuaweiEM730VWrapper
 
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
     # HSDPA/UMTS 900/1900/2100 MHz
