@@ -22,6 +22,9 @@ import re
 
 from twisted.python import log
 
+from messaging.gsm0338 import is_valid_gsm_text
+from messaging.utils import encode_str
+
 from wader.common.middleware import WCDMAWrapper
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common.contact import Contact
@@ -71,6 +74,26 @@ HUAWEI_BAND_DICT = {
 # XXX: check this works with bit operations and all cards before enabling
 #    consts.MM_NETWORK_BAND_U900: 0x0002000000000000,
 }
+
+
+# Hopefully this function will be exported from python-messaging in the future
+def compress_7_to_8_bit(txt):
+    txt += '\x00'
+    msgl = int(len(txt) * 7 / 8)
+    op = [-1] * msgl
+    c = shift = 0
+
+    for n in range(msgl):
+        if shift == 6:
+            c += 1
+
+        shift = n % 7
+        lb = ord(txt[c]) >> shift
+        hb = (ord(txt[c + 1]) << (7 - shift) & 255)
+        op[n] = lb + hb
+        c += 1
+
+    return ''.join(map(chr, op))
 
 
 def huawei_new_conn_mode(args):
@@ -444,6 +467,40 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         d = self.set_charset('IRA')
         d.addCallback(lambda _: super(HuaweiWCDMAWrapper, self).set_smsc(smsc))
         d.addCallback(lambda _: self.set_charset('UCS2'))
+        return d
+
+    def _send_ussd_old_mode(self, ussd):
+        """
+        Sends the USSD command ``ussd`` in Huawei old mode (^USSDMODE=0)
+
+        Sends GSM 7bit compressed text
+        Receives Hex encoded text
+        """
+        # AT+CUSD=1,"AA510C061B01",15
+        # (*#100#)
+
+        # +CUSD: 0,"3037373935353033333035",0
+        # (07795503305)
+
+        def send_request(ussd):
+            if not is_valid_gsm_text(ussd):
+                raise ValueError
+
+            gsm = ussd.encode("gsm0338")
+            ussd_enc = encode_str(compress_7_to_8_bit(gsm))
+
+            cmd = ATCmd('AT+CUSD=1,"%s",15' % ussd_enc, name='send_ussd')
+            return self.queue_at_cmd(cmd)
+
+        def convert_response(response):
+            resp = response[0].group('resp')
+            try:
+                return resp.decode('hex')
+            except TypeError:
+                raise E.MalformedUssdPduError(resp)
+
+        d = send_request(str(ussd))
+        d.addCallback(convert_response)
         return d
 
 
