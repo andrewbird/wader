@@ -25,7 +25,10 @@ from zope.interface import implements
 from twisted.internet import reactor
 from twisted.internet.defer import  succeed, gatherResults, Deferred
 from twisted.python import log
+
 from messaging.sms import SmsSubmit, SmsDeliver
+from messaging.sms.wap import (extract_push_notification,
+                               is_a_wap_push_notification)
 
 from wader.common.aterrors import (CMSError314, SimBusy, SimNotStarted,
                                    SimFailure)
@@ -90,8 +93,10 @@ class MessageAssemblyLayer(object):
 
     def __init__(self, wrappee):
         self.wrappee = wrappee
-        self.last_index = 0
+        self.last_sms_index = 0
+        self.last_wap_index = 0
         self.sms_map = {}
+        self.wap_map = {}
         self.sms_pending = []
         self.cached = False
 
@@ -101,7 +106,7 @@ class MessageAssemblyLayer(object):
             self.wrappee = obj
 
         # revert to initial state
-        self.last_index = 0
+        self.last_sms_index = self.last_wap_index = 0
         self.sms_map = {}
         self.sms_pending = []
         self.cached = False
@@ -142,11 +147,11 @@ class MessageAssemblyLayer(object):
         sms.real_indexes = [sms.index] if indexes is None else indexes
         debug("MAL::_do_add_sms sms.real_indexes %s" % sms.real_indexes)
         # assign a new logical index
-        self.last_index += 1
-        sms.index = self.last_index
+        self.last_sms_index += 1
+        sms.index = self.last_sms_index
         # reference the sms by this logical index
-        self.sms_map[self.last_index] = sms
-        return self.last_index
+        self.sms_map[self.last_sms_index] = sms
+        return self.last_sms_index
 
     def _add_sms(self, sms, emit=False):
         """
@@ -171,6 +176,11 @@ class MessageAssemblyLayer(object):
                     completed = self.sms_map[index].append_sms(sms)
                     debug("MAL::_add_sms  multi part SMS with logical"
                           "index %d, completed %s" % (index, completed))
+
+                    # check if we have just assembled a WAP push notification
+                    if completed:
+                        if self._is_a_wap_push_notification(self.sms_map[index]):
+                            return self._process_wap_push_notification(index)
 
                     if emit:
                         # only emit signals in runtime, not startup
@@ -211,6 +221,10 @@ class MessageAssemblyLayer(object):
 
         error = "SMS with logical index %d does not exist"
         raise CacheIncoherenceError(error % index)
+
+    def list_available_mms_notifications(self):
+        """Returns all the lingering sms wap push notifications"""
+        return self.wap_map.keys()
 
     def list_sms(self):
         """Returns all the sms"""
@@ -295,6 +309,32 @@ class MessageAssemblyLayer(object):
         d.addCallback(self._add_sms, emit=True)
         return d
 
+    def _is_a_wap_push_notification(self, sms):
+        """Returns True if ``sms`` is a WAP push notification"""
+        if sms.fmt != 0x04:
+            return False
+
+        return is_a_wap_push_notification(sms.text)
+
+    def _wap_push_notification_is_processed(self, notification, trans_id):
+        for _trans_id, n in self.wap_map.values():
+            if trans_id != _trans_id:
+                continue
+
+            if notification.headers['From'] == n.headers['From']:
+                return True
+
+        return False
+
+    def _process_wap_push_notification(self, sms_index):
+        wap_push = self.sms_map.pop(sms_index)
+        sms_notification, tx_id = extract_push_notification(wap_push.text)
+        if self._wap_push_notification_is_processed(sms_notification, tx_id):
+            index = self.last_wap_index
+            self.wap_map[index] = (tx_id, sms_notification)
+            self.last_wap_index += 1
+            return index
+
 
 class Message(object):
     """I am a Message in the system"""
@@ -302,13 +342,15 @@ class Message(object):
     implements(IMessage)
 
     def __init__(self, number=None, text=None, index=None, where=None,
-                 csca=None, _datetime=None, ref=None, cnt=None, seq=None):
+                 fmt=None, csca=None, _datetime=None, ref=None, cnt=None,
+                 seq=None):
         self.number = number
         self.index = index
         self.real_indexes = []
         self.where = where
         self.csca = csca
         self.datetime = _datetime
+        self.fmt = fmt
         self.ref = ref  # Multipart SMS reference number
         self.cnt = cnt  # Total number of fragments
         self.seq = seq  # fragment number
@@ -370,6 +412,7 @@ class Message(object):
         m.index = d.get('index')
         m.where = d.get('where')
         m.csca = d.get('smsc')
+        m.fmt = d.get('fmt')
         m.ref = d.get('ref')
         m.status_request = d.get('status_request', False)
         m.cnt = d.get('cnt', 0)
@@ -402,7 +445,8 @@ class Message(object):
             ret['date'] = get_tz_aware_now()
 
         m = cls(ret['number'], _datetime=ret['date'], csca=ret['csca'],
-                ref=ret.get('ref'), cnt=ret.get('cnt'), seq=ret.get('seq', 0))
+                ref=ret.get('ref'), cnt=ret.get('cnt'), seq=ret.get('seq', 0),
+                fmt=ret.get('fmt'))
         m.type = ret.get('type')
         m.add_text_fragment(ret['text'], ret.get('seq', 0))
 
@@ -434,9 +478,7 @@ class Message(object):
         """Returns the PDU representation of this message"""
         sms = SmsSubmit(self.number, self.text)
 
-        if self.csca:
-            sms.csca = self.csca
-
+        sms.csca = self.csca
         sms.status_request = self.status_request
 
         if store:
