@@ -24,7 +24,8 @@ from twisted.python import log
 
 from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  CRD_INTFACE, MDM_INTFACE, WADER_SERVICE,
-                                 HSO_INTFACE, SPL_INTFACE, USD_INTFACE)
+                                 HSO_INTFACE, SPL_INTFACE, USD_INTFACE,
+                                 MMS_INTFACE)
 from wader.common.sms import Message
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
@@ -637,7 +638,52 @@ class NetworkExporter(ContactsExporter):
         log.msg("emitting SignalQuality(%d)" % rssi)
 
 
-class SmsExporter(NetworkExporter):
+class MmsExporter(NetworkExporter):
+    """I export the org.freedesktop.ModemManager.Modem.Gsm.Mms interface"""
+
+    @method(MMS_INTFACE, in_signature='u', out_signature='',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Acknowledge(self, index, async_cb, async_eb):
+        """
+        Acknowledges reception of the MMS identified by ``index``
+
+        :param index: The MMS index
+        """
+        d = self.sconn.acknowledge_mms(index)
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(MMS_INTFACE, in_signature='u', out_signature='a{sa{sv}}',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Download(self, index, async_cb, async_eb):
+        """
+        Retrieves the MMS identified by ``index``
+
+        :param index: The MMS index
+        """
+        d = self.sconn.download_mms(index)
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(MMS_INTFACE, in_signature='a{sa{sv}}', out_signature='s',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Send(self, mms_data, async_cb, async_eb):
+        """
+        Sends ``mms_data`` and returns the Message-Id
+
+        :param index: The MMS index
+        """
+        d = self.sconn.send_mms(mms_data)
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @signal(dbus_interface=MMS_INTFACE, signature='s')
+    def Delivered(self, message_id):
+        log.msg('Emitting Delivered(%s)' % message_id)
+
+    @signal(dbus_interface=MMS_INTFACE, signature='ua{sv}')
+    def MMSReceived(self, index, headers):
+        log.msg('Emitting MMSReceived(%d, %s)' % (index, headers))
+
+
+class SmsExporter(MmsExporter):
     """I export the org.freedesktop.ModemManager.Modem.Gsm.Sms interface"""
 
     @method(SMS_INTFACE, in_signature='u', out_signature='',

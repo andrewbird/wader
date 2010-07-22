@@ -70,6 +70,9 @@ class WCDMAWrapper(WCDMAProtocol):
     def __str__(self):
         return self.device.__remote_name__
 
+    def acknowledge_mms(self, index):
+        """Acknowledges the Mms identified by ``index``"""
+
     def add_contact(self, contact):
         """
         Adds ``contact`` to the SIM and returns the index where was stored
@@ -153,6 +156,9 @@ class WCDMAWrapper(WCDMAProtocol):
         d = super(WCDMAWrapper, self).delete_sms(index)
         d.addCallback(lambda result: result[0].group('resp'))
         return d
+
+    def download_mms(self, index):
+        """Downloads the Mms identified by ``index``"""
 
     def disable_echo(self):
         """Disables echo"""
@@ -689,6 +695,9 @@ class WCDMAWrapper(WCDMAProtocol):
         d = super(WCDMAWrapper, self).send_puk(puk, pin)
         d.addCallback(lambda response: response[0].group('resp'))
         return d
+
+    def send_mms(self, mms):
+        """Send ``mms`` and returns the Message-Id"""
 
     def send_sms(self, sms):
         """
