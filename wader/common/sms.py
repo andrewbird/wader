@@ -33,7 +33,7 @@ from messaging.sms.wap import (extract_push_notification,
 from wader.common.aterrors import (CMSError314, SimBusy, SimNotStarted,
                                    SimFailure)
 from wader.common.interfaces import IMessage
-from wader.common.signals import SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
+from wader.common.signals import SIG_MMS, SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
 from wader.common.utils import get_tz_aware_now
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
@@ -179,8 +179,13 @@ class MessageAssemblyLayer(object):
 
                     # check if we have just assembled a WAP push notification
                     if completed:
-                        if self._is_a_wap_push_notification(self.sms_map[index]):
-                            return self._process_wap_push_notification(index)
+                        notification = self.sms_map[index]
+                        if self._is_a_wap_push_notification(notification):
+                            self._process_wap_push_notification(index, emit)
+                            # there's no need to return an index here as we
+                            # have been called by gen_cache and mms have a
+                            # different index scheme than mms.
+                            return
 
                     if emit:
                         # only emit signals in runtime, not startup
@@ -316,24 +321,49 @@ class MessageAssemblyLayer(object):
 
         return is_a_wap_push_notification(sms.text)
 
-    def _wap_push_notification_is_processed(self, notification, trans_id):
-        for _trans_id, n in self.wap_map.values():
-            if trans_id != _trans_id:
-                continue
+    def _get_wap_push_insertion_index(self, wap_push, notification, tx_id):
+        """
+        Returns the index where the information should be stored
 
-            if notification.headers['From'] == n.headers['From']:
-                return True
+        """
+        _from = notification.headers['From']
+        for index, value in self.wap_map.items():
+            _wap_push, _tx_id, noti = value
 
-        return False
+            if _tx_id == tx_id and _from == noti.headers['From']:
+                # we are dealing with the same notification,
+                # use the newest and discard the previous
+                if wap_push.datetime > _wap_push.datetime:
+                    return index
 
-    def _process_wap_push_notification(self, sms_index):
+                # we are dealing with an older notification, discard
+                return None
+
+        index = self.last_wap_index
+        self.last_wap_index += 1
+        return index
+
+    def _process_wap_push_notification(self, sms_index, emit):
         wap_push = self.sms_map.pop(sms_index)
-        sms_notification, tx_id = extract_push_notification(wap_push.text)
-        if self._wap_push_notification_is_processed(sms_notification, tx_id):
-            index = self.last_wap_index
-            self.wap_map[index] = (tx_id, sms_notification)
-            self.last_wap_index += 1
-            return index
+        notification, tx_id = extract_push_notification(wap_push.text)
+
+        i = self._get_wap_push_insertion_index(wap_push, notification, tx_id)
+        if i is not None:
+            # if index is not None, that means that this is the first time
+            # we have seen this notification and should be added
+            self.wap_map[i] = wap_push, tx_id, notification
+
+            if emit:
+                # emit the signal
+                headers = self._clean_notification_headers(
+                                            notification.headers)
+                self.wrappee.emit_signal(SIG_MMS, i, headers)
+
+    def _clean_notification_headers(self, headers):
+        """Clean ``headers`` so its safe to send the dict via DBus"""
+        hdrs = headers.copy()
+        hdrs['Content-Type'] = headers['Content-Type'][0]
+        return hdrs
 
 
 class Message(object):
