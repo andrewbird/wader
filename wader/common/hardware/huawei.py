@@ -22,7 +22,7 @@ import re
 
 from twisted.python import log
 
-from messaging.gsm0338 import is_valid_gsm_text
+from messaging.sms import is_gsm_text
 from messaging.utils import encode_str
 
 from wader.common.middleware import WCDMAWrapper
@@ -483,7 +483,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         # (07795503305)
 
         def send_request(ussd):
-            if not is_valid_gsm_text(ussd):
+            if not is_gsm_text(ussd):
                 raise ValueError
 
             gsm = ussd.encode("gsm0338")

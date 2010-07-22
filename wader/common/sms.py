@@ -25,7 +25,7 @@ from zope.interface import implements
 from twisted.internet import reactor
 from twisted.internet.defer import  succeed, gatherResults, Deferred
 from twisted.python import log
-from messaging import PDU
+from messaging.sms import SmsSubmit, SmsDeliver
 
 from wader.common.aterrors import (CMSError314, SimBusy, SimNotStarted,
                                    SimFailure)
@@ -40,9 +40,6 @@ SMS_DATE_THRESHOLD = 5
 SMS_STATUS_REPORT = 0x03
 MAX_MAL_RETRIES = 3
 MAL_RETRY_TIMEOUT = 3
-
-
-p = PDU()
 
 
 def debug(s):
@@ -272,8 +269,8 @@ class MessageAssemblyLayer(object):
 
     def on_sms_delivery_report(self, pdu):
         """Executed when a SMS delivery report is received"""
-        report = p.decode_pdu(pdu)
-        sms = Message.from_dict(report)
+        data = SmsDeliver(pdu).data
+        sms = Message.from_dict(data)
         assert sms.is_status_report(), "SMS IS NOT STATUS REPORT"
         # XXX: O(N) here
         for _sms in self.sms_pending:
@@ -323,7 +320,6 @@ class Message(object):
         self._fragments = []
 
         if text is not None:
-            # SmsSubmit
             self.add_text_fragment(text)
             self.completed = True
 
@@ -399,19 +395,16 @@ class Message(object):
         :rtype: ``Message``
         """
         debug("Message::from_pdu: %s" % pdu)
-        ret = p.decode_pdu(pdu)
+        ret = SmsDeliver(pdu).data
 
-        _datetime = None
-        if 'date' in ret:
-            try:
-                _datetime = extract_datetime(ret['date'])
-            except ValueError:
-                _datetime = get_tz_aware_now()
+        if 'date' not in ret:
+            # XXX: Should we really fake a date?
+            ret['date'] = get_tz_aware_now()
 
-        m = cls(ret['number'], _datetime=_datetime, csca=ret['csca'],
-                ref=ret['ref'], cnt=ret['cnt'], seq=ret['seq'])
+        m = cls(ret['number'], _datetime=ret['date'], csca=ret['csca'],
+                ref=ret.get('ref'), cnt=ret.get('cnt'), seq=ret.get('seq', 0))
         m.type = ret.get('type')
-        m.add_text_fragment(ret['text'], ret['seq'])
+        m.add_text_fragment(ret['text'], ret.get('seq', 0))
 
         debug("Message::from_pdu returning: %s" % m)
         return m
@@ -439,10 +432,17 @@ class Message(object):
 
     def to_pdu(self, store=False):
         """Returns the PDU representation of this message"""
-        csca = self.csca if self.csca is not None else ""
+        sms = SmsSubmit(self.number, self.text)
 
-        return p.encode_pdu(self.number, self.text, csca=csca, store=store,
-                            request_status=self.status_request)
+        if self.csca:
+            sms.csca = self.csca
+
+        sms.status_request = self.status_request
+
+        if store:
+            sms.validity = None
+
+        return sms.to_pdu()
 
     def add_fragment(self, sms):
         self.add_text_fragment(sms.text, sms.seq)

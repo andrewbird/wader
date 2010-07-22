@@ -648,7 +648,7 @@ class WCDMAWrapper(WCDMAProtocol):
         ``sms`` might span several messages if it is a multipart SMS
         """
         save_sms = super(WCDMAWrapper, self).save_sms
-        ret = [save_sms(pdu, p_len) for p_len, pdu in sms.to_pdu(store=True)]
+        ret = [save_sms(p.pdu, p.length) for p in sms.to_pdu(store=True)]
         d = defer.gatherResults(ret)
         # the order is important! You need to run gatherResults and add
         # the callback to its result, not the other way around!
@@ -704,8 +704,8 @@ class WCDMAWrapper(WCDMAProtocol):
             return int(response[0].group('index'))
 
         ret = []
-        for pdu_len, pdu in sms.to_pdu():
-            d = super(WCDMAWrapper, self).send_sms(pdu, pdu_len)
+        for pdu in sms.to_pdu():
+            d = super(WCDMAWrapper, self).send_sms(pdu.pdu, pdu.length)
             d.addCallback(send_sms_cb)
             ret.append(d)
 
