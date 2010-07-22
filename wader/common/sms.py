@@ -174,7 +174,7 @@ class MessageAssemblyLayer(object):
                 if should_fragment_be_assembled(value, sms):
                     # append the sms and emit the different signals
                     completed = self.sms_map[index].append_sms(sms)
-                    debug("MAL::_add_sms  multi part SMS with logical"
+                    debug("MAL::_add_sms  multi part SMS with logical "
                           "index %d, completed %s" % (index, completed))
 
                     # check if we have just assembled a WAP push notification
@@ -426,7 +426,6 @@ class Message(object):
         if 'timestamp' in d:
             m.datetime = datetime.fromtimestamp(d['timestamp'], tz)
 
-        debug("Message::from_dict returning: %s" % m)
         return m
 
     @classmethod
@@ -450,7 +449,6 @@ class Message(object):
         m.type = ret.get('type')
         m.add_text_fragment(ret['text'], ret.get('seq', 0))
 
-        debug("Message::from_pdu returning: %s" % m)
         return m
 
     def to_dict(self):
