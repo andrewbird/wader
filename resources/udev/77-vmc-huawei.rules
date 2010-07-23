@@ -7,6 +7,9 @@ ACTION!="add", GOTO="vmc_huawei_end"
 SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", \
    ENV{.MM_USBIFNUM}="$attr{bInterfaceNumber}"
 
+SUBSYSTEMS=="usb", ATTRS{bNumInterfaces}=="?*", \
+   ENV{.MM_USBNUMIFS}="$attr{bNumInterfaces}"
+
 # Tag the interface with type
 SUBSYSTEM!="tty", GOTO="vmc_huawei_tty_end"
 
@@ -32,11 +35,13 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="141b", ENV{.MM_USBIFNUM}=="01", ENV{
 
 # K4505
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="03", ENV{.MM_USBNUMIFS}==" 6", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="04", ENV{.MM_USBNUMIFS}==" 7", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # K3765
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1465", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1465", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1465", ENV{.MM_USBIFNUM}=="03", ENV{.MM_USBNUMIFS}==" 6", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1465", ENV{.MM_USBIFNUM}=="04", ENV{.MM_USBNUMIFS}==" 7", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # E173
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14a5", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
