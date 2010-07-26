@@ -6,12 +6,8 @@
 Classes
 --------
 
-.. autoclass:: Message
-   :show-inheritance:
+.. autoclass:: MessageAssemblyLayer
    :members:
 
-Functions
----------
-
-.. autofunction:: extract_datetime
-
+.. autoclass:: Message
+   :members:

@@ -40,7 +40,6 @@ STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 # XXX: What should this threshold be?
 SMS_DATE_THRESHOLD = 5
 
-SMS_STATUS_REPORT = 0x03
 MAX_MAL_RETRIES = 3
 MAL_RETRY_TIMEOUT = 3
 
@@ -130,8 +129,8 @@ class MessageAssemblyLayer(object):
                 reactor.callLater(MAL_RETRY_TIMEOUT, list_sms, auxdef)
 
             d = self.list_sms()
-            d.addCallback(lambda ret: auxdef.callback(ret))
             d.addErrback(sim_busy_eb)
+            d.chainDeferred(auxdef)
             return auxdef
 
         return list_sms(deferred)
@@ -325,6 +324,7 @@ class MessageAssemblyLayer(object):
         """
         Returns the index where the information should be stored
 
+        It will return None if the notification should be discarded
         """
         _from = notification.headers['From']
         for index, value in self.wap_map.items():
@@ -343,8 +343,14 @@ class MessageAssemblyLayer(object):
         self.last_wap_index += 1
         return index
 
-    def _process_wap_push_notification(self, sms_index, emit):
-        wap_push = self.sms_map.pop(sms_index)
+    def _process_wap_push_notification(self, index, emit):
+        """
+        Processes WAP push notification identified by ``index``
+
+        If ``emit`` is True, it will emit a MMSReceived signal
+        if this the first time we see this notification.
+        """
+        wap_push = self.sms_map.pop(index)
         notification, tx_id = extract_push_notification(wap_push.text)
 
         i = self._get_wap_push_insertion_index(wap_push, notification, tx_id)
@@ -543,21 +549,4 @@ class Message(object):
         if self.type is None:
             return False
 
-        return bool(self.type & SMS_STATUS_REPORT)
-
-
-def extract_datetime(datestr):
-    """
-    Returns a ``datetime`` instance out of ``datestr``
-
-    :param datestr: Date string like YY/MM/DD HH:MM:SS
-    :rtype: :class:`datetime.datetime`
-    """
-    #datestr comes like "YY/MM/DD HH:MM:SS"
-    date, time = datestr.split(' ')
-    year, month, day = map(int, date.split('/'))
-    if year < 68:
-        year += 2000
-    hour, mins, seconds = map(int, time.split(':'))
-
-    return datetime(year, month, day, hour, mins, seconds, tzinfo=None)
+        return bool(self.type & 0x03)
