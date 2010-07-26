@@ -652,6 +652,13 @@ class MmsExporter(NetworkExporter):
         d = self.sconn.acknowledge_mms(index)
         return self.add_callbacks(d, async_cb, async_eb)
 
+    @method(MMS_INTFACE, in_signature='', out_signature='a(ua{sv})',
+            async_callbacks=('async_cb', 'async_eb'))
+    def Available(self, async_cb, async_eb):
+        """Lists all the available m-notification.ind"""
+        d = self.sconn.list_available_mms()
+        return self.add_callbacks(d, async_cb, async_eb)
+
     @method(MMS_INTFACE, in_signature='u', out_signature='a{sa{sv}}',
             async_callbacks=('async_cb', 'async_eb'))
     def Download(self, index, async_cb, async_eb):

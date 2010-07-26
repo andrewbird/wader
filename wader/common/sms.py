@@ -88,7 +88,7 @@ class CacheIncoherenceError(Exception):
 
 
 class MessageAssemblyLayer(object):
-    """I am a transparent layer to perform operations on concatenated SMS'"""
+    """I am a transparent layer to perform operations on concatenated SMS"""
 
     def __init__(self, wrappee):
         self.wrappee = wrappee
@@ -228,7 +228,12 @@ class MessageAssemblyLayer(object):
 
     def list_available_mms_notifications(self):
         """Returns all the lingering sms wap push notifications"""
-        return self.wap_map.keys()
+        ret = []
+        for index, value in self.wap_map.items():
+            _, _, notification, _ = value
+            ret.append((index, self._clean_headers(notification.headers)))
+
+        return succeed(ret)
 
     def list_sms(self):
         """Returns all the sms"""
@@ -328,7 +333,7 @@ class MessageAssemblyLayer(object):
         """
         _from = notification.headers['From']
         for index, value in self.wap_map.items():
-            _wap_push, _tx_id, noti = value
+            _wap_push, _tx_id, noti, _ = value
 
             if _tx_id == tx_id and _from == noti.headers['From']:
                 # we are dealing with the same notification,
@@ -357,15 +362,20 @@ class MessageAssemblyLayer(object):
         if i is not None:
             # if index is not None, that means that this is the first time
             # we have seen this notification and should be added
-            self.wap_map[i] = wap_push, tx_id, notification
+            try:
+                _, _, _, notifications = self.wap_map[i]
+            except:
+                notifications = set()
+
+            notifications.add(notification)
+            self.wap_map[i] = wap_push, tx_id, notification, notifications
 
             if emit:
                 # emit the signal
-                headers = self._clean_notification_headers(
-                                            notification.headers)
+                headers = self._clean_headers(notification.headers)
                 self.wrappee.emit_signal(SIG_MMS, i, headers)
 
-    def _clean_notification_headers(self, headers):
+    def _clean_headers(self, headers):
         """Clean ``headers`` so its safe to send the dict via DBus"""
         hdrs = headers.copy()
         hdrs['Content-Type'] = headers['Content-Type'][0]

@@ -579,6 +579,9 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(get_smsc_cb)
         return d
 
+    def list_available_mms(self):
+        return self.mal.list_available_mms_notifications()
+
     def list_contacts(self):
         """
         Returns all the contacts in the SIM
