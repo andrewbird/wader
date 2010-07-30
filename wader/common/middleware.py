@@ -44,10 +44,11 @@ from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
+from wader.common.mal import MessageAssemblyLayer
 from wader.common.mms import send_m_send_req, send_m_notifyresp_ind
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
-from wader.common.sms import Message, MessageAssemblyLayer
+from wader.common.sms import Message
 from wader.common.utils import rssi_to_percentage
 
 
