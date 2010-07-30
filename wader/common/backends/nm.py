@@ -78,7 +78,7 @@ def transpose_from_NM(oldprops):
 
     # XXX: shouldn't we be converting the DNS/Address/route integer values
     #      received from NM
-    return props
+    return dict(props)
 
 
 def transpose_to_NM(oldprops, new=True):
@@ -442,8 +442,6 @@ class NMProfileManager(Object):
     def _init_nm_manager(self):
         obj = self.bus.get_object(NM_USER_SETTINGS, NM_SYSTEM_SETTINGS_OBJ)
         self.nm_manager = dbus.Interface(obj, NM_SYSTEM_SETTINGS)
-        # cache existing profiles
-        map(self._on_new_nm_profile, self.nm_manager.ListConnections())
 
     def _connect_to_signals(self):
         self.nm_manager.connect_to_signal("NewConnection",
@@ -506,9 +504,14 @@ class NMProfileManager(Object):
                     props[section][key] = self.helper.get_value(value)
 
         props = transpose_from_NM(props)
-        nm_obj = self.nm_profiles[props['connection']['uuid']]
-        return NMProfile(self.get_next_dbus_opath(), nm_obj,
-                         gconf_path, dict(props), self)
+        uuid = props['connection']['uuid']
+        try:
+            return NMProfile(self.get_next_dbus_opath(),
+                             self.nm_profiles[uuid],
+                             gconf_path, props, self)
+        except KeyError:
+            raise ex.ProfileNotFoundError("Profile '%s' could not "
+                                          "be found" % uuid)
 
     def _do_set_profile(self, path, props):
         props = transpose_to_NM(props)
@@ -557,6 +560,10 @@ class NMProfileManager(Object):
 
     def get_profiles(self):
         """Returns all the profiles in the system"""
+        if not self.nm_profiles:
+            # cache existing profiles
+            map(self._on_new_nm_profile, self.nm_manager.ListConnections())
+
         if not self.profiles:
             for path in self.helper.client.all_dirs(self.gpath):
                 # filter out wlan connections
