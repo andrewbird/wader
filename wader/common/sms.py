@@ -35,12 +35,13 @@ from wader.common.aterrors import (CMSError314, SimBusy, SimNotStarted,
 from wader.common.interfaces import IMessage
 from wader.common.signals import SIG_MMS, SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
 from wader.common.utils import get_tz_aware_now
+from wader.common.mms import dbus_data_to_mms
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 # XXX: What should this threshold be?
 SMS_DATE_THRESHOLD = 5
 
-MAX_MAL_RETRIES = 3
+MAL_RETRIES = 3
 MAL_RETRY_TIMEOUT = 3
 
 
@@ -87,6 +88,30 @@ class CacheIncoherenceError(Exception):
     """Raised upon a cache incoherence error"""
 
 
+class NotificationContainer(object):
+    """
+    I am a WAP push notification container
+
+    I keep a list with all the wap_push notifications
+    and provide some operations on it
+    """
+
+    def __init__(self, tx_id=None):
+        self.notifications = []
+        self.tx_id = tx_id
+
+    def add_notification(self, wap_push, notification):
+        self.notifications.append((wap_push, notification))
+
+    def get_last_notification(self):
+        """Returns the last received notification"""
+        # comp function must return an int
+        ret = sorted(self.notifications,
+                     lambda _, n: int(mktime(n[0].datetime.timetuple())))
+        # return the last element
+        return ret[-1][1]
+
+
 class MessageAssemblyLayer(object):
     """I am a transparent layer to perform operations on concatenated SMS"""
 
@@ -123,7 +148,7 @@ class MessageAssemblyLayer(object):
             def sim_busy_eb(failure):
                 failure.trap(SimBusy, SimNotStarted, CMSError314)
                 self.wrappee.state_dict['mal_init_retries'] += 1
-                if self.wrappee.state_dict['mal_init_retries'] > MAX_MAL_RETRIES:
+                if self.wrappee.state_dict['mal_init_retries'] > MAL_RETRIES:
                     raise SimFailure("Could not initialize MAL")
 
                 reactor.callLater(MAL_RETRY_TIMEOUT, list_sms, auxdef)
@@ -206,6 +231,26 @@ class MessageAssemblyLayer(object):
                   "logical index %d" % index)
             return index
 
+    def _after_ack_delete_notifications(self, _, index):
+        try:
+            container = self.wap_map.pop(index)
+        except KeyError:
+            debug("MessageAssemblyLayer::_after_ack_delete_notifications"
+                  " NotificationContainer %d does not exist" % index)
+            return
+
+        indexes = []
+        for wap_push, _ in container.notifications:
+            indexes.extend(wap_push.real_indexes)
+
+        ret = map(self.wrappee.do_delete_sms, indexes)
+        return gatherResults(ret)
+
+    def acknowledge_mms(self, index, extra_info):
+        d = self.wrappee.do_acknowledge_mms(index, extra_info)
+        d.addCallback(self._after_ack_delete_notifications, index)
+        return d
+
     def delete_sms(self, index):
         """Deletes sms identified by ``index``"""
         debug("MAL::delete_sms: %d" % index)
@@ -229,9 +274,9 @@ class MessageAssemblyLayer(object):
     def list_available_mms_notifications(self):
         """Returns all the lingering sms wap push notifications"""
         ret = []
-        for index, value in self.wap_map.items():
-            _, _, notification, _ = value
-            ret.append((index, self._clean_headers(notification.headers)))
+        for index, container in self.wap_map.items():
+            notification = container.get_last_notification()
+            ret.append((index, self._clean_headers(notification)))
 
         return succeed(ret)
 
@@ -253,6 +298,11 @@ class MessageAssemblyLayer(object):
 
         d = self.wrappee.do_list_sms()
         d.addCallback(gen_cache)
+        return d
+
+    def send_mms(self, mms, extra_info):
+        debug("MAL::send_mms: %s" % mms)
+        d = self.wrappee.do_send_mms(dbus_data_to_mms(mms), extra_info)
         return d
 
     def send_sms(self, sms):
@@ -325,29 +375,6 @@ class MessageAssemblyLayer(object):
 
         return is_a_wap_push_notification(sms.text)
 
-    def _get_wap_push_insertion_index(self, wap_push, notification, tx_id):
-        """
-        Returns the index where the information should be stored
-
-        It will return None if the notification should be discarded
-        """
-        _from = notification.headers['From']
-        for index, value in self.wap_map.items():
-            _wap_push, _tx_id, noti, _ = value
-
-            if _tx_id == tx_id and _from == noti.headers['From']:
-                # we are dealing with the same notification,
-                # use the newest and discard the previous
-                if wap_push.datetime > _wap_push.datetime:
-                    return index
-
-                # we are dealing with an older notification, discard
-                return None
-
-        index = self.last_wap_index
-        self.last_wap_index += 1
-        return index
-
     def _process_wap_push_notification(self, index, emit):
         """
         Processes WAP push notification identified by ``index``
@@ -358,27 +385,34 @@ class MessageAssemblyLayer(object):
         wap_push = self.sms_map.pop(index)
         notification, tx_id = extract_push_notification(wap_push.text)
 
-        i = self._get_wap_push_insertion_index(wap_push, notification, tx_id)
-        if i is not None:
-            # if index is not None, that means that this is the first time
-            # we have seen this notification and should be added
-            try:
-                _, _, _, notifications = self.wap_map[i]
-            except:
-                notifications = set()
+        index = None
+        _from = notification.headers['From']
+        for i, container in self.wap_map.items():
+            if container.tx_id != tx_id:
+                continue
 
-            notifications.add(notification)
-            self.wap_map[i] = wap_push, tx_id, notification, notifications
+            noti = container.get_last_notification()
+            if _from == noti.headers['From']:
+                index = i
+                break
+        else:
+            index = self.last_wap_index
+            self.last_wap_index += 1
 
-            if emit:
-                # emit the signal
-                headers = self._clean_headers(notification.headers)
-                self.wrappee.emit_signal(SIG_MMS, i, headers)
+        container = self.wap_map.get(index, NotificationContainer(tx_id))
+        container.add_notification(wap_push, notification)
+        self.wap_map[index] = container
 
-    def _clean_headers(self, headers):
+        if emit:
+            # emit the signal
+            notification = container.get_last_notification()
+            headers = self._clean_headers(notification)
+            self.wrappee.emit_signal(SIG_MMS, index, headers)
+
+    def _clean_headers(self, notification):
         """Clean ``headers`` so its safe to send the dict via DBus"""
-        hdrs = headers.copy()
-        hdrs['Content-Type'] = headers['Content-Type'][0]
+        hdrs = notification.headers.copy()
+        hdrs['Content-Type'] = notification.content_type
         return hdrs
 
 

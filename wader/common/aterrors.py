@@ -26,6 +26,7 @@ from twisted.python import log
 CTS_ERROR = 'org.freedesktop.ModemManager.Error.Contacts'
 NET_ERROR = 'org.freedesktop.ModemManager.Error.Network'
 PIN_ERROR = 'org.freedesktop.ModemManager.Error.PIN'
+MMS_ERROR = 'org.freedesktop.ModemManager.Error.MMS'
 SMS_ERROR = 'org.freedesktop.ModemManager.Error.SMS'
 GEN_ERROR = 'org.freedesktop.ModemManager.Error'
 MM_MODEM_ERROR = 'org.freedesktop.ModemManager.Gsm'
@@ -378,6 +379,11 @@ class CallStateError(dbus.DBusException):
 class MalformedUssdPduError(dbus.DBusException):
     """Exception raised when a malformed Ussd Pdu is received"""
     _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, "MalformedUssdPduError")
+
+
+class ExpiredNotification(dbus.DBusException):
+    """Exception raised when a GET.req petition fails"""
+    _dbus_error_name = "%s.%s" % (MMS_ERROR, "ExpiredNotification")
 
 
 class CMSError300(dbus.DBusException):

@@ -44,6 +44,7 @@ from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
+from wader.common.mms import send_m_send_req, send_m_notifyresp_ind
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message, MessageAssemblyLayer
@@ -70,8 +71,24 @@ class WCDMAWrapper(WCDMAProtocol):
     def __str__(self):
         return self.device.__remote_name__
 
-    def acknowledge_mms(self, index):
-        """Acknowledges the Mms identified by ``index``"""
+    def acknowledge_mms(self, index, extra_info):
+        """
+        Acknowledges the Mms identified by ``index`` using ``extra_info``
+        """
+        return self.mal.acknowledge_mms(index, extra_info)
+
+    def do_acknowledge_mms(self, index, extra_info):
+        if 'gateway' in extra_info:
+            raise ValueError("WAP 1.0 is not supported yet")
+
+        if 'mmsc' not in extra_info:
+            raise ValueError("No mmsc key in %s" % extra_info)
+
+        url = "%s:%d" % (extra_info['mmsc'], extra_info.get('port', 9201))
+        notification = self.mal.wap_map[index].get_last_notification()
+
+        d = send_m_notifyresp_ind(url, notification.headers['Transaction-Id'])
+        return d
 
     def add_contact(self, contact):
         """
@@ -699,8 +716,19 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda response: response[0].group('resp'))
         return d
 
-    def send_mms(self, mms):
+    def send_mms(self, mms, extra_info):
         """Send ``mms`` and returns the Message-Id"""
+        return self.mal.send_mms(mms, extra_info)
+
+    def do_send_mms(self, mms, extra_info):
+        if 'gateway' in extra_info:
+            raise ValueError("WAP 1.0 is not supported yet")
+
+        if 'mmsc' not in extra_info:
+            raise ValueError("No mmsc key in %s" % extra_info)
+
+        url = "%s:%d" % (extra_info['mmsc'], extra_info.get('port', 9201))
+        return send_m_send_req(url, mms)
 
     def send_sms(self, sms):
         """

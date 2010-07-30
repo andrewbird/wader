@@ -17,8 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """MMS related classes and functions"""
 
+from array import array
 from cStringIO import StringIO
-from pprint import pformat
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, succeed
@@ -28,8 +28,12 @@ from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer
 from zope.interface import implements
 
+from messaging.mms.message import MMSMessage, DataPart
+import wader.common.aterrors as E
+
 
 class BinaryDataProducer(object):
+    """Binary data producer for HTTP POSTs"""
     implements(IBodyProducer)
 
     def __init__(self, data):
@@ -47,7 +51,9 @@ class BinaryDataProducer(object):
         pass
 
 
-class BinaryDataProtocol(Protocol):
+class BinaryDataConsumer(Protocol):
+    """Binary data consumer for HTTP GETs"""
+
     def __init__(self, finished):
         self.finished = finished
         self.received = StringIO()
@@ -61,35 +67,126 @@ class BinaryDataProtocol(Protocol):
         self.received.close()
 
 
-def callback_request(response):
-    print 'Response version:', response.version
-    print 'Response code:', response.code
-    print 'Response phrase:', response.phrase
-    print 'Response headers:'
-    print pformat(list(response.headers.getAllRawHeaders()))
+def mms_to_dbus_data(mms):
+    """Converts ``mms`` to a dict ready to be sent via DBus"""
+    dbus_data = {}
+    # Convert headers
+    for key, val in mms.headers.items():
+        if key == 'Content-Type':
+            dbus_data[key] = val[0]
+        else:
+            dbus_data[key] = val
+
+    # Set up data
+    dbus_data['data-parts'] = []
+    for data_part in mms.data_parts:
+        part = {'Content-Type': data_part.content_type, 'data': data_part.data}
+        if data_part.headers['Content-Type'][1]:
+            part['parameters'] = data_part.headers['Content-Type'][1]
+
+        dbus_data['data-parts'].append(part)
+
+    return dbus_data
+
+
+def dbus_data_to_mms(dbus_data):
+    """Returns a `MMSMessage` out of ``dbus_data``"""
+    mms = MMSMessage()
+
+    # add data parts
+    for data_part in dbus_data['data-parts']:
+        content_type = data_part['Content-Type']
+        data = array("B", data_part['data'])
+        parameters = data_part.get('parameters', {})
+
+        dp = DataPart()
+        dp.set_data(data, content_type, parameters)
+        # XXX: MMS message with no SMIL support
+
+        # Content-Type: application/vnd.wap.multipart.mixed
+        mms.add_data_part(dp)
+
+    return mms
+
+
+def response_callback(response):
+    """
+    generic callback for GET requests where we are interested in the result
+
+    It will raise an `ExpiredNotification` if the content is not available
+    """
+    if response.code != 200:
+        if response.code == 404:
+            raise E.ExpiredNotification("Notification expired")
+
+        args = (response.code, response.phrase)
+        raise E.ExpiredNotification("Unknown error (%d): %s" % args)
+
     finished = Deferred()
-    response.deliverBody(BinaryDataProtocol(finished))
+    response.deliverBody(BinaryDataConsumer(finished))
+    return finished
+
+
+def post_callback(response):
+    """
+    generic callback for POST request where we are interested in the result
+
+    """
+    if response.code != 200:
+        # XXX: Choose a good error name...
+        pass
+
+    finished = Deferred()
+    response.deliverBody(BinaryDataConsumer(finished))
     return finished
 
 
 def get_payload(uri, headers=None):
-    if headers is None:
-        headers = Headers({'User-Agent': ['Twisted Web Client']})
-    else:
+    if headers is not None:
         headers = Headers(headers)
 
     agent = Agent(reactor)
     d = agent.request('GET', uri, headers, None)
-    d.addCallback(callback_request)
+    d.addCallback(response_callback)
     return d
 
 
 def post_payload(uri, data, headers=None):
-    if headers is None:
-        headers = Headers({'User-Agent': ['Twisted Web Client']})
-    else:
+    if headers is not None:
         headers = Headers(headers)
 
     agent = Agent(reactor)
     body = BinaryDataProducer(data)
     return agent.request('POST', uri, headers, body)
+
+
+def send_m_notifyresp_ind(uri, tx_id, headers=None):
+    message = MMSMessage()
+    message.headers['Transaction-Id'] = tx_id
+    message.headers['Message-Type'] = 'm-notifyresp-ind'
+    message.headers['Status'] = 'Retrieved'
+
+    return post_payload(uri, message.encode(), headers)
+
+
+def send_m_send_req(uri, dbus_data):
+    # sanitize headers
+    headers = dbus_data['headers']
+    if 'To' not in headers:
+        raise ValueError("You need to provide a recipient 'To'")
+
+    if not headers['To'].endswith('/TYPE=PLMN'):
+        headers['To'] += '/TYPE=PLMN'
+
+    # set headers
+    mms = dbus_data_to_mms(dbus_data)
+    for key, val in headers.items():
+        mms.headers[key] = val
+
+    # set type the last one so is always the right type
+    mms.headers['Message-Type'] = 'm-send-req'
+
+    d = post_payload(uri, mms.encode(), headers)
+    d.addCallback(post_callback)
+    d.addCallback(MMSMessage.from_data)
+    return d

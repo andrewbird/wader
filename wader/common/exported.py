@@ -641,15 +641,16 @@ class NetworkExporter(ContactsExporter):
 class MmsExporter(NetworkExporter):
     """I export the org.freedesktop.ModemManager.Modem.Gsm.Mms interface"""
 
-    @method(MMS_INTFACE, in_signature='u', out_signature='',
+    @method(MMS_INTFACE, in_signature='ua{sv}', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
-    def Acknowledge(self, index, async_cb, async_eb):
+    def Acknowledge(self, index, extra_info, async_cb, async_eb):
         """
-        Acknowledges reception of the MMS identified by ``index``
+        Acknowledge reception of MMS identified by ``index``
 
         :param index: The MMS index
+        :param extra_info: Dict with MMSC url, port, etc.
         """
-        d = self.sconn.acknowledge_mms(index)
+        d = self.sconn.acknowledge_mms(index, extra_info)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(MMS_INTFACE, in_signature='', out_signature='a(ua{sv})',
@@ -659,26 +660,28 @@ class MmsExporter(NetworkExporter):
         d = self.sconn.list_available_mms()
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(MMS_INTFACE, in_signature='u', out_signature='a{sa{sv}}',
+    @method(MMS_INTFACE, in_signature='ua{sv}', out_signature='a{sa{sv}}',
             async_callbacks=('async_cb', 'async_eb'))
-    def Download(self, index, async_cb, async_eb):
+    def Download(self, index, extra_info, async_cb, async_eb):
         """
         Retrieves the MMS identified by ``index``
 
         :param index: The MMS index
+        :param extra_info: Dict with MMSC url, port, etc.
         """
-        d = self.sconn.download_mms(index)
+        d = self.sconn.download_mms(index, extra_info)
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(MMS_INTFACE, in_signature='a{sa{sv}}', out_signature='s',
+    @method(MMS_INTFACE, in_signature='a{sa{sv}}a{sv}', out_signature='s',
             async_callbacks=('async_cb', 'async_eb'))
-    def Send(self, mms_data, async_cb, async_eb):
+    def Send(self, mms_data, extra_info, async_cb, async_eb):
         """
         Sends ``mms_data`` and returns the Message-Id
 
         :param index: The MMS index
+        :param extra_info: Dict with MMSC url, port, etc.
         """
-        d = self.sconn.send_mms(mms_data)
+        d = self.sconn.send_mms(mms_data, extra_info)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @signal(dbus_interface=MMS_INTFACE, signature='s')
