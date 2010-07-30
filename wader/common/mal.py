@@ -121,7 +121,7 @@ class MessageAssemblyLayer(object):
         self.cached = False
 
     def initialize(self, obj=None):
-        debug("MAL::initialize  obj: %s" % obj)
+        debug("MAL::initialize obj: %s" % obj)
         if obj is not None:
             self.wrappee = obj
 
@@ -162,7 +162,7 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
-        debug("MAL::_do_add_sms  sms: %s  indexes: %s" % (sms, indexes))
+        debug("MAL::_do_add_sms sms: %s  indexes: %s" % (sms, indexes))
         # save the real index if indexes is None
         sms.real_indexes = [sms.index] if indexes is None else indexes
         debug("MAL::_do_add_sms sms.real_indexes %s" % sms.real_indexes)
@@ -189,33 +189,33 @@ class MessageAssemblyLayer(object):
                 for signal in [SIG_SMS, SIG_SMS_COMP]:
                     self.wrappee.emit_signal(signal, index, True)
             return index
-        else:
-            for index, value in self.sms_map.iteritems():
-                if should_fragment_be_assembled(value, sms):
-                    # append the sms and emit the different signals
-                    completed = self.sms_map[index].append_sms(sms)
-                    debug("MAL::_add_sms  multi part SMS with logical "
-                          "index %d, completed %s" % (index, completed))
 
-                    # check if we have just assembled a WAP push notification
+        for index, value in self.sms_map.iteritems():
+            if should_fragment_be_assembled(value, sms):
+                # append the sms and emit the different signals
+                completed = self.sms_map[index].append_sms(sms)
+                debug("MAL::_add_sms  multi part SMS with logical "
+                      "index %d, completed %s" % (index, completed))
+
+                # check if we have just assembled a WAP push notification
+                if completed:
+                    notification = self.sms_map[index]
+                    if self._is_a_wap_push_notification(notification):
+                        self._process_wap_push_notification(index, emit)
+                        # there's no need to return an index here as we
+                        # have been called by gen_cache and mms have a
+                        # different index scheme than mms.
+                        return
+
+                if emit:
+                    # only emit signals in runtime, not startup
+                    self.wrappee.emit_signal(SIG_SMS, index, completed)
                     if completed:
-                        notification = self.sms_map[index]
-                        if self._is_a_wap_push_notification(notification):
-                            self._process_wap_push_notification(index, emit)
-                            # there's no need to return an index here as we
-                            # have been called by gen_cache and mms have a
-                            # different index scheme than mms.
-                            return
+                        self.wrappee.emit_signal(SIG_SMS_COMP, index,
+                                                 completed)
 
-                    if emit:
-                        # only emit signals in runtime, not startup
-                        self.wrappee.emit_signal(SIG_SMS, index, completed)
-                        if completed:
-                            self.wrappee.emit_signal(SIG_SMS_COMP, index,
-                                                     completed)
-
-                    # return sms logical index
-                    return index
+                # return sms logical index
+                return index
 
             # this is the first fragment of this multipart sms, add it
             # to cache, emit signal and wait for the rest of fragments
