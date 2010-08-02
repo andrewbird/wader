@@ -27,6 +27,7 @@ from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  HSO_INTFACE, SPL_INTFACE, USD_INTFACE,
                                  MMS_INTFACE)
 from wader.common.sms import Message
+from wader.common.mms import mms_to_dbus_data
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import (convert_ip_to_int,
@@ -670,6 +671,7 @@ class MmsExporter(NetworkExporter):
         :param extra_info: Dict with MMSC url, port, etc.
         """
         d = self.sconn.download_mms(index, extra_info)
+        d.addCallback(mms_to_dbus_data)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(MMS_INTFACE, in_signature='a{sa{sv}}a{sv}', out_signature='s',

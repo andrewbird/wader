@@ -45,7 +45,7 @@ from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
 from wader.common.mal import MessageAssemblyLayer
-from wader.common.mms import send_m_send_req, send_m_notifyresp_ind
+from wader.common.mms import send_m_send_req, send_m_notifyresp_ind, get_payload
 from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message
@@ -85,7 +85,7 @@ class WCDMAWrapper(WCDMAProtocol):
         if 'mmsc' not in extra_info:
             raise ValueError("No mmsc key in %s" % extra_info)
 
-        url = "%s:%d" % (extra_info['mmsc'], extra_info.get('port', 9201))
+        url = "%s:%d" % (extra_info['mmsc'], extra_info['port'])
         notification = self.mal.wap_map[index].get_last_notification()
 
         d = send_m_notifyresp_ind(url, notification.headers['Transaction-Id'])
@@ -175,8 +175,13 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda result: result[0].group('resp'))
         return d
 
-    def download_mms(self, index):
+    def download_mms(self, index, extra_info):
         """Downloads the Mms identified by ``index``"""
+        return self.mal.download_mms(index, extra_info)
+
+    def do_download_mms(self, notification, extra_info):
+        uri = notification.headers['Content-Location']
+        return get_payload(uri, extra_info)
 
     def disable_echo(self):
         """Disables echo"""
@@ -728,7 +733,7 @@ class WCDMAWrapper(WCDMAProtocol):
         if 'mmsc' not in extra_info:
             raise ValueError("No mmsc key in %s" % extra_info)
 
-        url = "%s:%d" % (extra_info['mmsc'], extra_info.get('port', 9201))
+        url = "%s:%d" % (extra_info['mmsc'], extra_info['port'])
         return send_m_send_req(url, mms)
 
     def send_sms(self, sms):

@@ -19,6 +19,7 @@
 
 from array import array
 from cStringIO import StringIO
+from urlparse import urlparse
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, succeed
@@ -141,13 +142,25 @@ def post_callback(response):
     return finished
 
 
-def get_payload(uri, headers=None):
-    if headers is not None:
-        headers = Headers(headers)
+def get_payload(uri, extra_info):
+    # if gateway == 202.202.202.202:7899
+    # and url = http://promms/fooBAR
+    # then telnet 202.202.202.202 7899
+    # GET /fooBAR
+    # Host: promms
+    o = urlparse(uri)
+
+    header_data = {
+        'Host': [o.netloc],
+    }
+    headers = Headers(header_data)
+
+    get_url = "%s:%s%s" % (extra_info['gateway'], extra_info['port'], o.path)
 
     agent = Agent(reactor)
-    d = agent.request('GET', uri, headers, None)
+    d = agent.request('GET', get_url, headers, None)
     d.addCallback(response_callback)
+    d.addCallback(MMSMessage.from_data)
     return d
 
 

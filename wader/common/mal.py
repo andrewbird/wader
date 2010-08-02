@@ -259,6 +259,13 @@ class MessageAssemblyLayer(object):
         error = "SMS with logical index %d does not exist"
         raise CacheIncoherenceError(error % index)
 
+    def download_mms(self, index, extra_info):
+        container = self.wap_map[index]
+        d = self.wrappee.do_download_mms(container.get_last_notification(),
+                                         extra_info)
+        d.addCallback(self._on_mms_downloaded)
+        return d
+
     def get_sms(self, index):
         """Returns the sms identified by ``index``"""
         if index in self.sms_map:
@@ -362,6 +369,18 @@ class MessageAssemblyLayer(object):
         debug("MAL::on_sms_notification: %d" % index)
         d = self.wrappee.do_get_sms(index)
         d.addCallback(self._add_sms, emit=True)
+        return d
+
+    def _on_mms_downloaded(self, mms, index):
+        indexes = []
+
+        notification = self.wap_map.pop(index)
+        for wap_push, _ in notification.notifications:
+            indexes.extend(wap_push.real_indexes)
+
+        ret = map(self.wrappee.do_delete_sms, indexes)
+        d = gatherResults(ret)
+        d.addCallback(lambda _: mms)
         return d
 
     def _is_a_wap_push_notification(self, sms):
