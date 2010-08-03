@@ -55,7 +55,7 @@ class TestNetworkDBTriggers(unittest.TestCase):
                   "('21401', 'Vodafone', 'Spain')")
         c.execute("insert into apn values (NULL, 'ac.vodafone.es', 'vodafone',"
                   "'vodafone', '195.235.113.3', '10.0.0.1', 1, '+34324324342',"
-                  "NULL, NULL, NULL, '21401')")
+                  "NULL, NULL, NULL, NULL, NULL, NULL,'21401')")
         # make sure we have 1 apn now
         c.execute("select count(*) from apn")
         self.assertEqual(c.fetchone()[0], 1)
@@ -73,7 +73,7 @@ class TestNetworkDBTriggers(unittest.TestCase):
         self.assertRaises(sqlite3.IntegrityError, c.execute,
                   "insert into apn values (1, 'ac.vodafone.es', 'vodafone',"
                   "'vodafone', '195.235.113.3', '10.0.0.1', 1, NULL, NULL,"
-                  "NULL, NULL, '21402')")
+                  "NULL, NULL, NULL, NULL, NULL, '21402')")
         # leave it as we found it
         c.execute("delete from network_info where id='21401'")
 
@@ -84,7 +84,7 @@ class TestNetworkDBTriggers(unittest.TestCase):
                   "('21401', 'Vodafone', 'Spain')")
         c.execute("insert into apn values (NULL, 'ac.vodafone.es', 'vodafone',"
                   "'vodafone', '195.235.113.3', '10.0.0.1', 1, NULL, NULL,"
-                  "NULL, NULL, '21401')")
+                  "NULL, NULL, NULL, NULL, NULL, '21401')")
         # now update the netid
         self.assertRaises(sqlite3.IntegrityError, c.execute,
                           "update network_info set id='21402' "
@@ -99,7 +99,7 @@ class TestNetworkDBTriggers(unittest.TestCase):
                   "('21401', 'Vodafone', 'Spain')")
         c.execute("insert into apn values (1, 'ac.vodafone.es', 'vodafone',"
                   "'vodafone', '195.235.113.3', '10.0.0.1', 1, NULL, NULL,"
-                  "NULL, NULL, '21401')")
+                  "NULL, NULL, NULL, NULL, NULL, '21401')")
         # now update the netid
         self.assertRaises(sqlite3.IntegrityError, c.execute,
                           "update apn set network_id='21402' where id=1")

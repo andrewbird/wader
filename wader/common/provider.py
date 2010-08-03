@@ -182,6 +182,9 @@ create table apn(
     mmsc text,
     wap1 text,
     wap2 text,
+    wap_apn text,
+    wap_username text,
+    wap_password text,
     network_id integer not null
         constraint fk_mi_network_id references network_info(id) on delete cascade);
 
@@ -434,7 +437,8 @@ class NetworkOperator(object):
 
     def __init__(self, netid=None, apn=None, username=None, password=None,
                  dns1=None, dns2=None, type=None, smsc=None, mmsc=None,
-                 country=None, name=None, wap1=None, wap2=None):
+                 country=None, name=None, wap_apn=None, wap_username=None,
+                 wap_password=None, wap1=None, wap2=None):
         self.netid = netid
         self.apn = apn
         self.username = username
@@ -442,6 +446,9 @@ class NetworkOperator(object):
         self.dns1 = dns1
         self.dns2 = dns2
         self.type = type
+        self.wap_apn = wap_apn
+        self.wap_username = wap_username
+        self.wap_password = wap_password
         self.wap1 = wap1
         self.wap2 = wap2
         self.smsc = smsc
@@ -462,7 +469,8 @@ class NetworkOperator(object):
         return cls(netid=[netid], name=row[0], country=row[1], apn=row[2],
                      username=row[3], password=row[4], dns1=row[5],
                      dns2=row[6], type=row[7], smsc=row[8], mmsc=row[9],
-                     wap1=row[10], wap2=row[11])
+                     wap1=row[10], wap2=row[11], wap_apn=row[12],
+                     wap_username=row[13], wap_password=row[14])
 
 
 
@@ -513,7 +521,8 @@ class NetworkProvider(DBProvider):
         c = self.conn.cursor()
         c.execute("select n.name, n.country, a.apn, a.username,"
                   "a.password, a.dns1, a.dns2, a.type, a.smsc, "
-                  "a.mmsc, a.wap1, a.wap2 from network_info n "
+                  "a.mmsc, a.wap1, a.wap2, a.wap_apn, "
+                  "a.wap_username, a.wap_password from network_info n "
                   "inner join apn a on n.id = a.network_id "
                   "where n.id=?", (netid,))
 
@@ -579,11 +588,12 @@ class NetworkProvider(DBProvider):
                 # check if the APN info exists in the database
                 args = (network.apn, network.username, network.password,
                         network.dns1, network.dns2, network.type,
-                        network.smsc, network.mmsc, network.wap1, network.wap2)
+                        network.smsc, network.mmsc, network.wap1, network.wap2,
+                        network.wap_apn)
                 c.execute("select id from apn where apn=? and username=? "
                           "and password=? and dns1=? and dns2=? "
                           "and type=? and smsc=? and mmsc=? "
-                          "and wap1=? and wap2=?", args)
+                          "and wap1=? and wap2=? and wap_apn=?", args)
                 try:
                     c.fetchone()[0]
                 except TypeError:
@@ -591,9 +601,10 @@ class NetworkProvider(DBProvider):
                     args = (None, network.apn, network.username,
                             network.password, network.dns1, network.dns2,
                             network.type, network.smsc, network.mmsc,
-                            network.wap1, network.wap2, netid)
+                            network.wap1, network.wap2, network.wap_apn,
+                            network.wap_username, network.wap_password, netid)
                     c.execute("insert into apn values (?,?,?,?,?,?,?,?,?,"
-                              "?,?,?)", args)
+                              "?,?,?,?,?,?)", args)
 
     def populate_networks_from_mbpi(self, xmlfile=MBPI):
         """
@@ -704,9 +715,10 @@ class NetworkProvider(DBProvider):
                     except TypeError:
                         # it does not exist
                         args = (None, apnname, username, password, dns1, dns2,
-                                typename, None, None, None, None, netid)
+                                typename, None, None, None, None, None, None,
+                                None, netid)
                         c.execute("insert into apn values (?,?,?,?,?,?,?,?,"
-                                  "?,?,?,?)", args)
+                                  "?,?,?,?,?,?,?)", args)
 
 
 # SMS
