@@ -37,7 +37,6 @@ if sqlite3.version_info >= (2, 4, 1):
     # we convert all str objects to Unicode
     sqlite3.register_adapter(str, lambda s: s.decode('utf-8'))
 
-
 SMS_SCHEMA = """
 create table message (
     id integer primary key autoincrement,
@@ -241,6 +240,10 @@ create table version (
 # constants
 INBOX, OUTBOX, DRAFTS = 1, 2, 3
 UNREAD, READ = 0x01, 0x02
+
+# tmp log file location
+BCM_STARTUP_FILE = "/tmp/bcm-core-provider.output"
+
 # GSM spec
 # 0 - Unread message that has been received
 # 1 - Read message that has been received
@@ -537,6 +540,13 @@ class NetworkProvider(DBProvider):
         a list of network objects, and from the mobile-broadband-provider-info).
         It turns off autocommit during import for speed
         """
+        print "please work!"
+
+
+        with open(BCM_STARTUP_FILE, 'w', 0) as f:
+           f.write("provider.py - populate_networks \n")
+           f.close()
+
         try:
             # only will succeed on development
             networks = __import__('resources/extra/networks')
@@ -553,6 +563,10 @@ class NetworkProvider(DBProvider):
 
         # turn off autocommit
         self.conn.isolation_level = 'DEFERRED'
+
+        with open(BCM_STARTUP_FILE, 'a', 0) as f:
+           f.write("provider.py - populate_networks: conn.isolation_level =" + self.conn.isolation_level + "\n")
+           f.close()
 
         self.populate_networks_from_objs([getattr(networks, item)()
                 for item in dir(networks) if is_valid(item)])
@@ -574,6 +588,11 @@ class NetworkProvider(DBProvider):
         :param networks: NetworkOperator instances
         :type networks: iter
         """
+
+        with open(BCM_STARTUP_FILE, 'a', 0) as f:
+           f.write("provider.py - populate_networks_from_objs \n")
+           f.close()
+
         c = self.conn.cursor()
 
         for network in networks:
@@ -615,6 +634,11 @@ class NetworkProvider(DBProvider):
 
         :param xmlfile: the path to the mobile-broadband-provider-info xml file
         """
+        with open(BCM_STARTUP_FILE, 'a', 0) as f:
+           f.write("provider.py - populate_networks_from_mdpi \n")
+           f.write("provider.py - populate_networks_from_mdpi: xmlfile for  mbpi is:" + repr(xmlfile) + " \n")
+           f.close()
+
 
         def getAttributeValue(element, name):
             if element is None or not hasattr(element, 'attributes'):
