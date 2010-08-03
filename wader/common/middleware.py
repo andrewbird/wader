@@ -79,16 +79,16 @@ class WCDMAWrapper(WCDMAProtocol):
         return self.mal.acknowledge_mms(index, extra_info)
 
     def do_acknowledge_mms(self, index, extra_info):
-        if 'gateway' in extra_info:
-            raise ValueError("WAP 1.0 is not supported yet")
+        if 'wap2' not in extra_info:
+            raise ValueError("Only WAP2.0 is supported at the moment")
 
         if 'mmsc' not in extra_info:
             raise ValueError("No mmsc key in %s" % extra_info)
 
-        url = "%s:%d" % (extra_info['mmsc'], extra_info['port'])
         notification = self.mal.wap_map[index].get_last_notification()
 
-        d = send_m_notifyresp_ind(url, notification.headers['Transaction-Id'])
+        d = send_m_notifyresp_ind(extra_info,
+                                  notification.headers['Transaction-Id'])
         return d
 
     def add_contact(self, contact):
@@ -727,14 +727,13 @@ class WCDMAWrapper(WCDMAProtocol):
         return self.mal.send_mms(mms, extra_info)
 
     def do_send_mms(self, mms, extra_info):
-        if 'gateway' in extra_info:
-            raise ValueError("WAP 1.0 is not supported yet")
+        if 'wap2' not in extra_info:
+            raise ValueError("Only WAP2.0 is supported at the moment")
 
         if 'mmsc' not in extra_info:
             raise ValueError("No mmsc key in %s" % extra_info)
 
-        url = "%s:%d" % (extra_info['mmsc'], extra_info['port'])
-        return send_m_send_req(url, mms)
+        return send_m_send_req(extra_info, mms)
 
     def send_sms(self, sms):
         """

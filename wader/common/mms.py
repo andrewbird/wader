@@ -21,51 +21,9 @@ from array import array
 from cStringIO import StringIO
 import socket
 
-from twisted.internet import reactor
 from twisted.internet import threads
-from twisted.internet.defer import Deferred, succeed
-from twisted.internet.protocol import Protocol
-from twisted.web.client import Agent
-from twisted.web.http_headers import Headers
-from twisted.web.iweb import IBodyProducer
-from zope.interface import implements
 
 from messaging.mms.message import MMSMessage, DataPart
-
-
-class BinaryDataProducer(object):
-    """Binary data producer for HTTP POSTs"""
-    implements(IBodyProducer)
-
-    def __init__(self, data):
-        self.data = data
-        self.length = len(data)
-
-    def startProducing(self, consumer):
-        consumer.write(self.data)
-        return succeed(None)
-
-    def pauseProducing(self):
-        pass
-
-    def stopProducing(self):
-        pass
-
-
-class BinaryDataConsumer(Protocol):
-    """Binary data consumer for HTTP GETs"""
-
-    def __init__(self, finished):
-        self.finished = finished
-        self.received = StringIO()
-
-    def dataReceived(self, data):
-        self.received.write(data)
-
-    def connectionLost(self, reason):
-        print 'Finished receiving body:', reason.getErrorMessage()
-        self.finished.callback(self.received.getvalue())
-        self.received.close()
 
 
 def mms_to_dbus_data(mms):
@@ -124,20 +82,6 @@ def dbus_data_to_mms(headers, data_parts):
     return mms
 
 
-def post_callback(response):
-    """
-    generic callback for POST request where we are interested in the result
-
-    """
-    if response.code != 200:
-        # XXX: Choose a good error name...
-        pass
-
-    finished = Deferred()
-    response.deliverBody(BinaryDataConsumer(finished))
-    return finished
-
-
 def do_get_payload(url, extra_info):
     host, port = extra_info['wap2'].split(':')
 
@@ -171,25 +115,50 @@ def get_payload(uri, extra_info):
     return d
 
 
-def post_payload(uri, data, headers=None):
-    if headers is not None:
-        headers = Headers(headers)
+def do_post_payload(extra_info, payload):
+    host, port = extra_info['wap2'].split(':')
+    mmsc = extra_info['mmsc']
 
-    agent = Agent(reactor)
-    body = BinaryDataProducer(data)
-    return agent.request('POST', uri, headers, body)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, int(port)))
+    s.send("POST %s HTTP/1.0\r\n\r\n" % mmsc)
+    s.send("Content-type: application/vnd.wap.mms-message\r\n")
+    s.send("Content-Length: %d\r\n" % len(payload))
+    s.send("\r\n")
+
+    s.sendall(payload)
+
+    buf = StringIO()
+
+    while True:
+        data = s.recv(4096)
+        if not data:
+            break
+
+        buf.write(data)
+
+    s.close()
+    ret = buf.getvalue().split('\r\n\r\n')[1]
+    buf.close()
+    return array("B", ret)
 
 
-def send_m_notifyresp_ind(uri, tx_id, headers=None):
+def post_payload(extra_info, data):
+    d = threads.deferToThread(do_post_payload, extra_info, data)
+    d.addCallback(MMSMessage.from_data)
+    return d
+
+
+def send_m_notifyresp_ind(extra_info, tx_id):
     message = MMSMessage()
     message.headers['Transaction-Id'] = tx_id
     message.headers['Message-Type'] = 'm-notifyresp-ind'
     message.headers['Status'] = 'Retrieved'
 
-    return post_payload(uri, message.encode(), headers)
+    return post_payload(extra_info, message.encode())
 
 
-def send_m_send_req(uri, dbus_data):
+def send_m_send_req(extra_info, dbus_data):
     # sanitize headers
     headers = dbus_data['headers']
     if 'To' not in headers:
@@ -206,7 +175,6 @@ def send_m_send_req(uri, dbus_data):
     # set type the last one so is always the right type
     mms.headers['Message-Type'] = 'm-send-req'
 
-    d = post_payload(uri, mms.encode(), headers)
-    d.addCallback(post_callback)
+    d = post_payload(extra_info, mms.encode())
     d.addCallback(MMSMessage.from_data)
     return d
