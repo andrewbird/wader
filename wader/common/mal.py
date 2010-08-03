@@ -263,7 +263,6 @@ class MessageAssemblyLayer(object):
         container = self.wap_map[index]
         d = self.wrappee.do_download_mms(container.get_last_notification(),
                                          extra_info)
-        d.addCallback(self._on_mms_downloaded)
         return d
 
     def get_sms(self, index):
@@ -283,6 +282,14 @@ class MessageAssemblyLayer(object):
 
         return succeed(ret)
 
+    def _list_sms(self):
+        ret = []
+        for sms in self.sms_map.values():
+            if sms.fmt != 0x04:
+                ret.append(sms.to_dict())
+
+        return ret
+
     def list_sms(self):
         """Returns all the sms"""
         debug("MAL::list_sms")
@@ -293,11 +300,11 @@ class MessageAssemblyLayer(object):
                 self._add_sms(sms)
 
             self.cached = True
-            return [sms.to_dict() for sms in self.sms_map.values()]
+            return self._list_sms()
 
         if self.cached:
             debug("MAL::list_sms::cached path")
-            return succeed([sms.to_dict() for sms in self.sms_map.values()])
+            return succeed(self._list_sms())
 
         d = self.wrappee.do_list_sms()
         d.addCallback(gen_cache)
@@ -369,18 +376,6 @@ class MessageAssemblyLayer(object):
         debug("MAL::on_sms_notification: %d" % index)
         d = self.wrappee.do_get_sms(index)
         d.addCallback(self._add_sms, emit=True)
-        return d
-
-    def _on_mms_downloaded(self, mms, index):
-        indexes = []
-
-        notification = self.wap_map.pop(index)
-        for wap_push, _ in notification.notifications:
-            indexes.extend(wap_push.real_indexes)
-
-        ret = map(self.wrappee.do_delete_sms, indexes)
-        d = gatherResults(ret)
-        d.addCallback(lambda _: mms)
         return d
 
     def _is_a_wap_push_notification(self, sms):

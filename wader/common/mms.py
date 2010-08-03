@@ -19,9 +19,10 @@
 
 from array import array
 from cStringIO import StringIO
-from urlparse import urlparse
+import socket
 
 from twisted.internet import reactor
+from twisted.internet import threads
 from twisted.internet.defer import Deferred, succeed
 from twisted.internet.protocol import Protocol
 from twisted.web.client import Agent
@@ -30,7 +31,6 @@ from twisted.web.iweb import IBodyProducer
 from zope.interface import implements
 
 from messaging.mms.message import MMSMessage, DataPart
-import wader.common.aterrors as E
 
 
 class BinaryDataProducer(object):
@@ -69,33 +69,47 @@ class BinaryDataConsumer(Protocol):
 
 
 def mms_to_dbus_data(mms):
-    """Converts ``mms`` to a dict ready to be sent via DBus"""
-    dbus_data = {}
+    import dbus
+    """Converts ``mms`` to a tuple ready to be sent via DBus"""
+
+    headers = {}
+    data_parts = []
     # Convert headers
     for key, val in mms.headers.items():
         if key == 'Content-Type':
-            dbus_data[key] = val[0]
+            headers[key] = val[0]
         else:
-            dbus_data[key] = val
+            headers[key] = val
+
+    del headers['Date']
 
     # Set up data
-    dbus_data['data-parts'] = []
     for data_part in mms.data_parts:
-        part = {'Content-Type': data_part.content_type, 'data': data_part.data}
+        part = {'Content-Type': data_part.content_type,
+                'data': dbus.ByteArray(data_part.data)}
         if data_part.headers['Content-Type'][1]:
             part['parameters'] = data_part.headers['Content-Type'][1]
 
-        dbus_data['data-parts'].append(part)
+        data_parts.append(part)
 
-    return dbus_data
+    return headers, data_parts
 
 
-def dbus_data_to_mms(dbus_data):
+def dbus_data_to_mms(headers, data_parts):
     """Returns a `MMSMessage` out of ``dbus_data``"""
     mms = MMSMessage()
+    content_type = ''
+
+    for key, val in headers:
+        if key == 'Content-Type':
+            content_type = val
+        else:
+            mms.headers[key] = val
+
+    mms.content_type = content_type
 
     # add data parts
-    for data_part in dbus_data['data-parts']:
+    for data_part in data_parts:
         content_type = data_part['Content-Type']
         data = array("B", data_part['data'])
         parameters = data_part.get('parameters', {})
@@ -108,24 +122,6 @@ def dbus_data_to_mms(dbus_data):
         mms.add_data_part(dp)
 
     return mms
-
-
-def response_callback(response):
-    """
-    generic callback for GET requests where we are interested in the result
-
-    It will raise an `ExpiredNotification` if the content is not available
-    """
-    if response.code != 200:
-        if response.code == 404:
-            raise E.ExpiredNotification("Notification expired")
-
-        args = (response.code, response.phrase)
-        raise E.ExpiredNotification("Unknown error (%d): %s" % args)
-
-    finished = Deferred()
-    response.deliverBody(BinaryDataConsumer(finished))
-    return finished
 
 
 def post_callback(response):
@@ -142,24 +138,35 @@ def post_callback(response):
     return finished
 
 
+def do_get_payload(url, extra_info):
+    host, port = extra_info['wap2'].split(':')
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, int(port)))
+    s.send("GET %s HTTP/1.0\r\n\r\n" % url)
+
+    buf = StringIO()
+
+    while True:
+        data = s.recv(4096)
+        if not data:
+            break
+
+        buf.write(data)
+
+    s.close()
+    ret = buf.getvalue().split('\r\n\r\n')[1]
+    buf.close()
+    return array("B", ret)
+
+
 def get_payload(uri, extra_info):
-    # if gateway == 202.202.202.202:7899
-    # and url = http://promms/fooBAR
-    # then telnet 202.202.202.202 7899
-    # GET /fooBAR
-    # Host: promms
-    o = urlparse(uri)
+    """
+    Downloads ``uri`` and returns a `MMSMessage` from it
 
-    header_data = {
-        'Host': [o.netloc],
-    }
-    headers = Headers(header_data)
-
-    get_url = "%s:%s%s" % (extra_info['gateway'], extra_info['port'], o.path)
-
-    agent = Agent(reactor)
-    d = agent.request('GET', get_url, headers, None)
-    d.addCallback(response_callback)
+    :param extra_info: dict with connection information
+    """
+    d = threads.deferToThread(do_get_payload, uri, extra_info)
     d.addCallback(MMSMessage.from_data)
     return d
 

@@ -27,7 +27,7 @@ from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  HSO_INTFACE, SPL_INTFACE, USD_INTFACE,
                                  MMS_INTFACE)
 from wader.common.sms import Message
-from wader.common.mms import mms_to_dbus_data
+from wader.common.mms import mms_to_dbus_data, dbus_data_to_mms
 from wader.common.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import (convert_ip_to_int,
@@ -661,7 +661,7 @@ class MmsExporter(NetworkExporter):
         d = self.sconn.list_available_mms()
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(MMS_INTFACE, in_signature='ua{sv}', out_signature='a{sa{sv}}',
+    @method(MMS_INTFACE, in_signature='ua{sv}', out_signature='(a{sv}aa{sv})',
             async_callbacks=('async_cb', 'async_eb'))
     def Download(self, index, extra_info, async_cb, async_eb):
         """
@@ -674,16 +674,18 @@ class MmsExporter(NetworkExporter):
         d.addCallback(mms_to_dbus_data)
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(MMS_INTFACE, in_signature='a{sa{sv}}a{sv}', out_signature='s',
+    @method(MMS_INTFACE, in_signature='a{sv}aa{sv}a{sv}', out_signature='s',
             async_callbacks=('async_cb', 'async_eb'))
-    def Send(self, mms_data, extra_info, async_cb, async_eb):
+    def Send(self, headers, data_parts, extra_info, async_cb, async_eb):
         """
-        Sends ``mms_data`` and returns the Message-Id
+        Sends a MMS and returns the Message-Id
 
-        :param index: The MMS index
+        :param headers: MMS headers
+        :param data_parts: data parts of the MMS
         :param extra_info: Dict with MMSC url, port, etc.
         """
-        d = self.sconn.send_mms(mms_data, extra_info)
+        d = self.sconn.send_mms(dbus_data_to_mms(headers, data_parts),
+                                extra_info)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @signal(dbus_interface=MMS_INTFACE, signature='s')
