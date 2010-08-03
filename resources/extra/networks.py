@@ -15,6 +15,8 @@ class NetworkOperator(object):
     smsc = None
     mmsc = None
     type = None
+    wap1 = None
+    wap2 = None
 
     def __repr__(self):
         args = (self.name, self.country, self.netid[0])
@@ -359,6 +361,19 @@ class Vodafone_23415_Contract(NetworkOperator):
     dns2 = None
 
 
+class Vodafone_23415_Contract_WAP(NetworkOperator):
+    netid = ["23415"]
+    name = "Vodafone UK"
+    country = "United Kingdom"
+    type = "Contract"
+    smsc = "+447785016005"
+    mmsc = "http://mms.vodafone.co.uk/servlets/mms"
+    apn = "wap.vodafone.co.uk"
+    username = "wap"
+    password = "wap"
+    wap2 = "212.183.137.12:8799"
+
+
 class Vodafone_23415_Prepaid(NetworkOperator):
     netid = ["23415"]
     name = "Vodafone UK"
@@ -370,6 +385,21 @@ class Vodafone_23415_Prepaid(NetworkOperator):
     password = "web"
     dns1 = None
     dns2 = None
+
+
+class Vodafone_23415_Prepaid_WAP(NetworkOperator):
+    netid = ["23415"]
+    name = "Vodafone UK"
+    country = "United Kingdom"
+    type = "Prepaid"
+    smsc = "+447785016005"
+    apn = "pp.vodafone.co.uk"
+    mmsc = "http://mms.vodafone.co.uk/servlets/mms"
+    username = "web"
+    password = "web"
+    dns1 = None
+    dns2 = None
+    wap2 = "212.183.137.12:8799"
 
 
 class Vodafone_26202_Contract(NetworkOperator):

@@ -178,14 +178,10 @@ create table apn(
     dns1 text,
     dns2 text,
     type text,
-    network_id integer not null
-        constraint fk_apn_network_id references network_info(id) on delete cascade);
-
-create table message_information(
-    id integer primary key autoincrement,
     smsc text,
     mmsc text,
-    type integer,
+    wap1 text,
+    wap2 text,
     network_id integer not null
         constraint fk_mi_network_id references network_info(id) on delete cascade);
 
@@ -201,13 +197,6 @@ create trigger fkd_network_info_apn before delete on "network_info"
     when exists (select 1 from "apn" where old."id" == "network_id")
 begin
   delete from "apn" where "network_id" = old."id";
-end;
-
--- delete on cascade network_info -> nessage_information
-create trigger fkd_network_info_message_information before delete on "network_info"
-    when exists (select 1 from "message_information" where old."id" == "network_id")
-begin
-  delete from "message_information" where "network_id" = old."id";
 end;
 
 -- prevent insert on apn with unknown network_id
@@ -226,27 +215,6 @@ end;
 
 -- prevent update of apn.network_id if it does not exists
 create trigger fku_prevent_apn_network_id_bad_update before update of network_id on "apn"
-    when new."network_id" is not null and not exists (select 1 from "network_info" where new."network_id" == "id")
-begin
-  select raise(abort, 'constraint failed');
-end;
-
--- prevent insert in message_information if network_id does not exist
-create trigger fki_prevent_unknown_message_information_network_id before insert on "message_information"
-    when new."network_id" is not null and not exists (select 1 from "network_info" where new."network_id" == "id")
-begin
-  select raise(abort, 'constraint failed');
-end;
-
--- prevent update of network_info_id if there are message_information attached to old id
-create trigger fku_prevent_network_info_id_bad_update_mi_exists after update of id on "network_info"
-    when exists (select 1 from "message_information" where old."id" == "network_id")
-begin
-  select raise(abort, 'constraint failed');
-end;
-
--- prevent update of message_information_network_id with unknown network_id
-create trigger fku_prevent_message_information_network_id_bad_update before update of network_id on "message_information"
     when new."network_id" is not null and not exists (select 1 from "network_info" where new."network_id" == "id")
 begin
   select raise(abort, 'constraint failed');
@@ -466,7 +434,7 @@ class NetworkOperator(object):
 
     def __init__(self, netid=None, apn=None, username=None, password=None,
                  dns1=None, dns2=None, type=None, smsc=None, mmsc=None,
-                 country=None, name=None):
+                 country=None, name=None, wap1=None, wap2=None):
         self.netid = netid
         self.apn = apn
         self.username = username
@@ -474,6 +442,8 @@ class NetworkOperator(object):
         self.dns1 = dns1
         self.dns2 = dns2
         self.type = type
+        self.wap1 = wap1
+        self.wap2 = wap2
         self.smsc = smsc
         self.mmsc = mmsc
         self.country = country
@@ -482,7 +452,18 @@ class NetworkOperator(object):
     def __repr__(self):
         args = (self.name.capitalize(), self.country.capitalize(),
                 self.netid, str(self.type))
-        return "<NetworkOperator %s %s, %s %s>" % args
+        if self.wap2:
+            args += (self.wap2,)
+
+        return "<NetworkOperator %s>" % repr(args)
+
+    @classmethod
+    def from_row(cls, row, netid):
+        return cls(netid=[netid], name=row[0], country=row[1], apn=row[2],
+                     username=row[3], password=row[4], dns1=row[5],
+                     dns2=row[6], type=row[7], smsc=row[8], mmsc=row[9],
+                     wap1=row[10], wap2=row[11])
+
 
 
 class NetworkProvider(DBProvider):
@@ -531,19 +512,12 @@ class NetworkProvider(DBProvider):
     def _get_network_by_id(self, netid):
         c = self.conn.cursor()
         c.execute("select n.name, n.country, a.apn, a.username,"
-                  "a.password, a.dns1, a.dns2, a.type, m.smsc, m.mmsc from network_info n "
+                  "a.password, a.dns1, a.dns2, a.type, a.smsc, "
+                  "a.mmsc, a.wap1, a.wap2 from network_info n "
                   "inner join apn a on n.id = a.network_id "
-                  "inner join message_information m "
-                  "on n.id = m.network_id and a.type = m.type "
                   "where n.id=?", (netid,))
 
-        ret = []
-        for row in c.fetchall():
-            attrs = dict(netid=[netid], name=row[0], country=row[1], apn=row[2],
-                         username=row[3], password=row[4], dns1=row[5],
-                         dns2=row[6], type=row[7], smsc=row[8], mmsc=row[9])
-            ret.append(NetworkOperator(**attrs))
-
+        ret = [NetworkOperator.from_row(row, netid) for row in c.fetchall()]
         return ret
 
     def populate_networks(self):
@@ -593,7 +567,6 @@ class NetworkProvider(DBProvider):
 
         for network in networks:
             for netid in network.netid:
-
                 # check if this network object exists in the database
                 c.execute("select 1 from network_info where id=?", (netid,))
                 try:
@@ -605,31 +578,22 @@ class NetworkProvider(DBProvider):
 
                 # check if the APN info exists in the database
                 args = (network.apn, network.username, network.password,
-                        network.dns1, network.dns2, network.type)
+                        network.dns1, network.dns2, network.type,
+                        network.smsc, network.mmsc, network.wap1, network.wap2)
                 c.execute("select id from apn where apn=? and username=? "
                           "and password=? and dns1=? and dns2=? "
-                          "and type=?", args)
+                          "and type=? and smsc=? and mmsc=? "
+                          "and wap1=? and wap2=?", args)
                 try:
                     c.fetchone()[0]
                 except TypeError:
                     # it does not exist
                     args = (None, network.apn, network.username,
                             network.password, network.dns1, network.dns2,
-                            network.type, netid)
-                    c.execute("insert into apn values (?,?,?,?,?,?,?,?)", args)
-
-                # check if the message information exists in the database
-                args = (network.smsc, network.mmsc, netid, network.type)
-                c.execute("select id from message_information where smsc=? "
-                          "and mmsc=? and network_id=? and type=?", args)
-                try:
-                    c.fetchone()[0]
-                except TypeError:
-                    # it does not exist
-                    args = (None, network.smsc, network.mmsc, network.type,
-                            netid)
-                    c.execute("insert into message_information values "
-                              "(?,?,?,?,?)", args)
+                            network.type, network.smsc, network.mmsc,
+                            network.wap1, network.wap2, netid)
+                    c.execute("insert into apn values (?,?,?,?,?,?,?,?,?,"
+                              "?,?,?)", args)
 
     def populate_networks_from_mbpi(self, xmlfile=MBPI):
         """
@@ -740,13 +704,9 @@ class NetworkProvider(DBProvider):
                     except TypeError:
                         # it does not exist
                         args = (None, apnname, username, password, dns1, dns2,
-                                typename, netid)
-                        c.execute("insert into apn values (?,?,?,?,?,?,?,?)", args)
-
-                        # MBPI doesn't have this info yet
-                        args = (None, None, None, typename, netid)
-                        c.execute("insert into message_information values "
-                              "(?,?,?,?,?)", args)
+                                typename, None, None, None, None, netid)
+                        c.execute("insert into apn values (?,?,?,?,?,?,?,?,"
+                                  "?,?,?,?)", args)
 
 
 # SMS

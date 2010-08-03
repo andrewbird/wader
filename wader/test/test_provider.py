@@ -54,7 +54,8 @@ class TestNetworkDBTriggers(unittest.TestCase):
         c.execute("insert into network_info values "
                   "('21401', 'Vodafone', 'Spain')")
         c.execute("insert into apn values (NULL, 'ac.vodafone.es', 'vodafone',"
-                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21401')")
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '+34324324342',"
+                  "NULL, NULL, NULL, '21401')")
         # make sure we have 1 apn now
         c.execute("select count(*) from apn")
         self.assertEqual(c.fetchone()[0], 1)
@@ -64,22 +65,6 @@ class TestNetworkDBTriggers(unittest.TestCase):
         c.execute("select count(*) from apn")
         self.assertEqual(c.fetchone()[0], 0)
 
-    def test_deleting_on_cascade_message_information(self):
-        """test trigger fkd_network_info_message_information"""
-        c = self.conn.cursor()
-        c.execute("insert into network_info values "
-                  "('21401', 'Vodafone', 'Spain')")
-        c.execute("insert into message_information values "
-                  "(1, '+432323232', '+213232323', 1, '21401')")
-        # make sure we have 1 message_information now
-        c.execute("select count(*) from message_information")
-        self.assertEqual(c.fetchone()[0], 1)
-        # now delete the only network_info
-        c.execute("delete from network_info where id='21401'")
-        # make sure we have 0 message_information now
-        c.execute("select count(*) from message_information")
-        self.assertEqual(c.fetchone()[0], 0)
-
     def test_insert_apn_with_unknown_network_id(self):
         """test trigger fki_apns_with_unknown_network_id"""
         c = self.conn.cursor()
@@ -87,7 +72,8 @@ class TestNetworkDBTriggers(unittest.TestCase):
                   "('21401', 'Vodafone', 'Spain')")
         self.assertRaises(sqlite3.IntegrityError, c.execute,
                   "insert into apn values (1, 'ac.vodafone.es', 'vodafone',"
-                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21402')")
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, NULL, NULL,"
+                  "NULL, NULL, '21402')")
         # leave it as we found it
         c.execute("delete from network_info where id='21401'")
 
@@ -97,7 +83,8 @@ class TestNetworkDBTriggers(unittest.TestCase):
         c.execute("insert into network_info values "
                   "('21401', 'Vodafone', 'Spain')")
         c.execute("insert into apn values (NULL, 'ac.vodafone.es', 'vodafone',"
-                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21401')")
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, NULL, NULL,"
+                  "NULL, NULL, '21401')")
         # now update the netid
         self.assertRaises(sqlite3.IntegrityError, c.execute,
                           "update network_info set id='21402' "
@@ -111,49 +98,11 @@ class TestNetworkDBTriggers(unittest.TestCase):
         c.execute("insert into network_info values "
                   "('21401', 'Vodafone', 'Spain')")
         c.execute("insert into apn values (1, 'ac.vodafone.es', 'vodafone',"
-                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, '21401')")
+                  "'vodafone', '195.235.113.3', '10.0.0.1', 1, NULL, NULL,"
+                  "NULL, NULL, '21401')")
         # now update the netid
         self.assertRaises(sqlite3.IntegrityError, c.execute,
                           "update apn set network_id='21402' where id=1")
-        # leave it as we found it
-        c.execute("delete from network_info where id='21401'")
-
-    def test_insert_message_information_with_unknown_netid(self):
-        """test fki_prevent_unknown_message_information_network_id trigger"""
-        c = self.conn.cursor()
-        c.execute("insert into network_info values "
-                  "('21401', 'Vodafone', 'Spain')")
-        self.assertRaises(sqlite3.IntegrityError, c.execute,
-                  "insert into message_information values "
-                  "(1, '+32432432', '+211211221', 2, '21402')")
-        # leave it as we found it
-        c.execute("delete from network_info where id='21401'")
-
-    def test_updating_network_info_id_with_mi_attached(self):
-        """test fku_prevent_network_info_id_bad_update_mi_exists trigger"""
-        c = self.conn.cursor()
-        c.execute("insert into network_info values "
-                  "('21401', 'Vodafone', 'Spain')")
-        c.execute("insert into message_information values "
-                  "(1, '+32432432', '+211211221', 2, '21401')")
-        # now update the netid
-        self.assertRaises(sqlite3.IntegrityError, c.execute,
-                "update network_info set id='21402' where name='Vodafone'")
-        # leave it as we found it
-        c.execute("delete from network_info where id='21401'")
-
-    def test_updating_message_information_network_id_with_unknown_netid(self):
-        """
-        test fku_prevent_message_information_network_id_bad_update trigger
-        """
-        c = self.conn.cursor()
-        c.execute("insert into network_info values "
-                  "('21401', 'Vodafone', 'Spain')")
-        c.execute("insert into message_information values "
-                  "(1, '+32432432', '+211211221', 2, '21401')")
-        # now update the netid
-        self.assertRaises(sqlite3.IntegrityError, c.execute,
-                "update message_information set network_id='21402' where id=1")
         # leave it as we found it
         c.execute("delete from network_info where id='21401'")
 
