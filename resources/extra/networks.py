@@ -15,6 +15,7 @@ class NetworkOperator(object):
     smsc = None
     mmsc = None
     type = None
+    auth = 'ANY'
     wap1 = None
     wap2 = None
     wap_apn = None

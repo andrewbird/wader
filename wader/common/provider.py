@@ -178,6 +178,7 @@ create table apn(
     dns1 text,
     dns2 text,
     type text,
+    auth text,
     smsc text,
     mmsc text,
     wap1 text,
@@ -436,9 +437,9 @@ class NetworkOperator(object):
     """I represent a network operator in the DB"""
 
     def __init__(self, netid=None, apn=None, username=None, password=None,
-                 dns1=None, dns2=None, type=None, smsc=None, mmsc=None,
-                 country=None, name=None, wap_apn=None, wap_username=None,
-                 wap_password=None, wap1=None, wap2=None):
+                 dns1=None, dns2=None, type=None, auth=None, smsc=None,
+                 mmsc=None, country=None, name=None, wap_apn=None,
+                 wap_username=None, wap_password=None, wap1=None, wap2=None):
         self.netid = netid
         self.apn = apn
         self.username = username
@@ -446,6 +447,7 @@ class NetworkOperator(object):
         self.dns1 = dns1
         self.dns2 = dns2
         self.type = type
+        self.auth = auth
         self.wap_apn = wap_apn
         self.wap_username = wap_username
         self.wap_password = wap_password
@@ -470,7 +472,7 @@ class NetworkOperator(object):
                      username=row[3], password=row[4], dns1=row[5],
                      dns2=row[6], type=row[7], smsc=row[8], mmsc=row[9],
                      wap1=row[10], wap2=row[11], wap_apn=row[12],
-                     wap_username=row[13], wap_password=row[14])
+                     wap_username=row[13], wap_password=row[14], auth=row[15])
 
 
 
@@ -522,9 +524,9 @@ class NetworkProvider(DBProvider):
         c.execute("select n.name, n.country, a.apn, a.username,"
                   "a.password, a.dns1, a.dns2, a.type, a.smsc, "
                   "a.mmsc, a.wap1, a.wap2, a.wap_apn, "
-                  "a.wap_username, a.wap_password from network_info n "
-                  "inner join apn a on n.id = a.network_id "
-                  "where n.id=?", (netid,))
+                  "a.wap_username, a.wap_password, a.auth "
+                  "from network_info n inner join apn a on "
+                  "n.id = a.network_id where n.id=?", (netid,))
 
         ret = [NetworkOperator.from_row(row, netid) for row in c.fetchall()]
         return ret
@@ -600,11 +602,12 @@ class NetworkProvider(DBProvider):
                     # it does not exist
                     args = (None, network.apn, network.username,
                             network.password, network.dns1, network.dns2,
-                            network.type, network.smsc, network.mmsc,
-                            network.wap1, network.wap2, network.wap_apn,
-                            network.wap_username, network.wap_password, netid)
+                            network.type, network.auth, network.smsc,
+                            network.mmsc, network.wap1, network.wap2,
+                            network.wap_apn, network.wap_username,
+                            network.wap_password, netid)
                     c.execute("insert into apn values (?,?,?,?,?,?,?,?,?,"
-                              "?,?,?,?,?,?)", args)
+                              "?,?,?,?,?,?,?)", args)
 
     def populate_networks_from_mbpi(self, xmlfile=MBPI):
         """
@@ -716,9 +719,9 @@ class NetworkProvider(DBProvider):
                         # it does not exist
                         args = (None, apnname, username, password, dns1, dns2,
                                 typename, None, None, None, None, None, None,
-                                None, netid)
+                                None, None, netid)
                         c.execute("insert into apn values (?,?,?,?,?,?,?,?,"
-                                  "?,?,?,?,?,?,?)", args)
+                                  "?,?,?,?,?,?,?,?)", args)
 
 
 # SMS
