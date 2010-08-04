@@ -255,6 +255,12 @@ TYPE_CONTRACT, TYPE_PREPAID = 'Contract', 'Prepaid'
 
 
 # functions
+def nick_debug(s):
+    if 0:
+        with open(BCM_STARTUP_FILE, 'w', 0) as f:
+            f.write("%s\n" % s)
+
+
 def message_read(flags):
     """
     Returns a bool indicating whether the message had been read or not
@@ -540,12 +546,7 @@ class NetworkProvider(DBProvider):
         a list of network objects, and from the mobile-broadband-provider-info).
         It turns off autocommit during import for speed
         """
-        print "please work!"
-
-
-        with open(BCM_STARTUP_FILE, 'w', 0) as f:
-           f.write("provider.py - populate_networks \n")
-           f.close()
+        nick_debug("provider.py - populate_networks")
 
         try:
             # only will succeed on development
@@ -564,9 +565,8 @@ class NetworkProvider(DBProvider):
         # turn off autocommit
         self.conn.isolation_level = 'DEFERRED'
 
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-           f.write("provider.py - populate_networks: conn.isolation_level =" + self.conn.isolation_level + "\n")
-           f.close()
+        nick_debug("provider.py - populate_networks: "
+                   "conn.isolation_level: %s" % self.conn.isolation_level)
 
         self.populate_networks_from_objs([getattr(networks, item)()
                 for item in dir(networks) if is_valid(item)])
@@ -589,9 +589,7 @@ class NetworkProvider(DBProvider):
         :type networks: iter
         """
 
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-           f.write("provider.py - populate_networks_from_objs \n")
-           f.close()
+        nick_debug("provider.py - populate_networks_from_objs")
 
         c = self.conn.cursor()
 
@@ -634,11 +632,9 @@ class NetworkProvider(DBProvider):
 
         :param xmlfile: the path to the mobile-broadband-provider-info xml file
         """
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-           f.write("provider.py - populate_networks_from_mdpi \n")
-           f.write("provider.py - populate_networks_from_mdpi: xmlfile for  mbpi is:" + repr(xmlfile) + " \n")
-           f.close()
-
+        nick_debug("provider.py - populate_networks_from_mdpi")
+        nick_debug("provider.py - populate_networks_from_mdpi: xmlfile for  "
+                   "mbpi is: %s" % repr(xmlfile))
 
         def getAttributeValue(element, name):
             if element is None or not hasattr(element, 'attributes'):
