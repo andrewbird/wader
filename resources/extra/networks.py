@@ -21,6 +21,7 @@ class NetworkOperator(object):
     wap_apn = None
     wap_username = None
     wap_password = None
+    wap_auth = 'ANY'
 
     def __repr__(self):
         args = (self.name, self.country, self.netid[0])
