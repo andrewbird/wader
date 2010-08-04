@@ -32,15 +32,13 @@ from twisted.python import log
 
 import wader.common.consts as consts
 from wader.common._dbus import DBusExporterHelper
-from wader.common.provider import NetworkProvider
+from wader.common.provider import NetworkProvider, nick_debug
 from wader.common.serialport import SerialPort
 
 DELAY = 10
 ATTACH_DELAY = 1
 
 OLDLOCK = os.path.join(consts.DATA_DIR, '.setup-done')
-
-BCM_STARTUP_FILE = "/tmp/bcm-core-startup.output"
 
 
 class WaderService(Service):
@@ -177,22 +175,17 @@ def create_skeleton_and_do_initial_setup():
         # new way to signal that the setup is complete
         provider = NetworkProvider()
         log.msg("startup.py - create_skeleton_and_do_initial_setup - Network.db exists and provider is:" + repr(provider) + "\n")
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-           f.write("startup.py - create_skeleton_and_do_initial_setup - Network.db exists and provider is:" + repr(provider) + "\n")
-           f.close()
+        nick_debug("startup.py - create_skeleton_and_do_initial_setup - Network.db exists and provider is: " + repr(provider))
 
         if provider.is_current():
             provider.close()
             log.msg("Networks DB was built from current sources")
-            with open(BCM_STARTUP_FILE, 'a', 0) as f:
-                 f.write("Networks DB was built from current sources \n")
-                 f.close()
+            nick_debug("Networks DB was built from current sources")
             return
+
         provider.close()
         log.msg("Networks DB requires rebuild")
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-                 f.write("startup.py - create_skeleton_and_do_initial_setup: Networks DB requires rebuild \n")
-                 f.close()
+        nick_debug("startup.py - create_skeleton_and_do_initial_setup: Networks DB requires rebuild")
         os.remove(consts.NETWORKS_DB)
 
     # regenerate plugin cache
@@ -202,13 +195,9 @@ def create_skeleton_and_do_initial_setup():
     # create new DB
     provider = NetworkProvider()
     try:
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-                 f.write("startup.py - create_skeleton_and_do_initial_setup - create new DB and provider is the object:" +  repr(provider) +"\n")
-                 f.close()
+        nick_debug("startup.py - create_skeleton_and_do_initial_setup - create new DB and provider is the object:" +  repr(provider))
         provider.populate_networks()
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-           f.write("startup.py - create_skeleton_and_do_initial_setup - populate_networks complete. \n")
-           f.close()
+        nick_debug("startup.py - create_skeleton_and_do_initial_setup - populate_networks complete.")
 
     except:
         log.err()
