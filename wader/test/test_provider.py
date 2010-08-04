@@ -43,7 +43,8 @@ class TestNetworkDBTriggers(unittest.TestCase):
         self.conn = sqlite3.connect(':memory:', isolation_level=None)
         c = self.conn.cursor()
         # create schema
-        c.executescript(NETWORKS_SCHEMA)
+        args = dict(version=NetworkProvider.version)
+        c.executescript(NETWORKS_SCHEMA % args)
 
     def tearDown(self):
         self.conn.close()
