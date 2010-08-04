@@ -195,7 +195,7 @@ create table sources_info (
     mbpi integer default 0);
 
 create table version (
-    version integer default 1);
+    version integer not null);
 
 -- delete on cascade network_info -> apn
 create trigger fkd_network_info_apn before delete on "network_info"
@@ -224,6 +224,9 @@ create trigger fku_prevent_apn_network_id_bad_update before update of network_id
 begin
   select raise(abort, 'constraint failed');
 end;
+
+-- populate apn version
+insert into version values (%(version)d);
 """
 
 USAGE_SCHEMA = """
@@ -236,7 +239,10 @@ create table usage(
     umts boolean);
 
 create table version (
-    version integer default 1);
+    version integer);
+
+-- populate usage version
+insert into version values (%(version)d);
 """
 
 # constants
@@ -364,8 +370,11 @@ class UsageItem(object):
 class UsageProvider(DBProvider):
     """DB usage provider"""
 
+    version = 1
+
     def __init__(self, path):
-        super(UsageProvider, self).__init__(path, USAGE_SCHEMA,
+        args = dict(version=self.version)
+        super(UsageProvider, self).__init__(path, USAGE_SCHEMA % args,
                                         detect_types=sqlite3.PARSE_DECLTYPES)
 
     def add_usage_item(self, start, end, bytes_recv, bytes_sent, umts):
@@ -493,11 +502,23 @@ class NetworkOperator(object):
 class NetworkProvider(DBProvider):
     """DB network provider"""
 
+    version = 2
+
     def __init__(self, path=NETWORKS_DB):
-        super(NetworkProvider, self).__init__(path, NETWORKS_SCHEMA)
+        args = dict(version=self.version)
+        super(NetworkProvider, self).__init__(path, NETWORKS_SCHEMA % args)
 
     def is_current(self):
         c = self.conn.cursor()
+        try:
+            c.execute("select version from version")
+            version = c.fetchone()[0]
+            if version < self.version:
+                return False
+        except (TypeError, sqlite3.OperationalError):
+            # version table wasn't populated in old DB
+            return False
+
         try:
             c.execute("select * from sources_info")
             row = c.fetchone()
