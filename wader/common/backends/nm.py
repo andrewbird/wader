@@ -31,7 +31,7 @@ from wader.common.profile import Profile
 from wader.common.secrets import ProfileSecrets
 from wader.common.utils import (convert_int_to_uint, patch_list_signature,
                                 revert_dict)
-
+from wader.bcm.logger import logger
 
 # this line is required, otherwise gnomekeyring will complain about
 # the application name not being set
@@ -568,9 +568,16 @@ class NMProfileManager(Object):
             for path in self.helper.client.all_dirs(self.gpath):
                 # filter out wlan connections
                 if self.helper.client.dir_exists(os.path.join(path, 'gsm')):
-                    profile = self._get_profile_from_gconf_path(path)
-                    uuid = profile.get_settings()['connection']['uuid']
-                    self.profiles[uuid] = profile
+                    # profile = self._get_profile_from_gconf_path(path)
+                    # uuid = profile.get_settings()['connection']['uuid']
+                    # self.profiles[uuid] = profile
+                    try:
+                         profile = self._get_profile_from_gconf_path(path)
+                         uuid = profile.get_settings()['connection']['uuid']
+                         self.profiles[uuid] = profile
+
+                    except ex.ProfileNotFoundError:
+                         pass
 
         return self.profiles.values()
 

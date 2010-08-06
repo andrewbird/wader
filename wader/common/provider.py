@@ -264,7 +264,7 @@ TYPE_CONTRACT, TYPE_PREPAID = 'Contract', 'Prepaid'
 
 # functions
 def nick_debug(s):
-    if 0:
+    if 1:
         with open(BCM_STARTUP_FILE, 'a', 0) as f:
             f.write("%s\n" % s)
 

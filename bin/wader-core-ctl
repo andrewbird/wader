@@ -43,10 +43,12 @@ if options.should_restart:
 
     sh("dbus-send --system --dest=org.freedesktop.ModemManager /org/freedesktop/ModemManager org.freedesktop.ModemManager.EnumerateDevices")
 
+
 elif options.should_start:
+    if os.path.exists('/tmp/wader.err'):
+        sh("rm -f /tmp/wader.err")
+
     tap_path = os.path.join(DATA_DIR, 'core-tap.py')
-    twistd_path = os.path.join(BASE_DIR, 'usr', 'bin', 'twistd')
-    args = dict(twistd=twistd_path, tap=tap_path, log=LOG_PATH, pid=PID_PATH,
-                rundir=BASE_DIR)
-    sh("%(twistd)s --python=%(tap)s --logfile=%(log)s "
-       "--pidfile=%(pid)s --rundir=%(rundir)s --reactor=glib2" % args)
+    sh("/usr/bin/twistd --nodaemon --python=%s --logfile=%s "
+       "--pidfile=%s --reactor=glib2 2>/tmp/wader.err" % (tap_path, LOG_PATH, PID_PATH))
+

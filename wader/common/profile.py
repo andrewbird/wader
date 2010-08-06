@@ -43,6 +43,7 @@ from wader.common.consts import (WADER_PROFILES_SERVICE,
 import wader.common.exceptions as ex
 from wader.common.provider import NetworkProvider
 from wader.common.utils import convert_ip_to_int
+from wader.bcm.logger import logger
 
 
 class Profile(DelayableDBusObject):
@@ -191,6 +192,7 @@ class ProfileManager(object):
         :raise ProfileNotFoundError: If no profile was found
         """
         return self.backend.get_profile_by_uuid(uuid)
+        logger.debug("INFO profile.py: (wader.common) - get_profile_by_uuid: " + uuid)
 
     def get_profile_by_object_path(self, opath):
         """Returns a :class:`Profile` out of its object path ``opath``"""
