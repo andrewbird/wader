@@ -192,13 +192,14 @@ class ProfileManager(object):
         :raise ProfileNotFoundError: If no profile was found
         """
         return self.backend.get_profile_by_uuid(uuid)
-        logger.debug("INFO profile.py: (wader.common) - get_profile_by_uuid: " + uuid)
+        logger.debug("INFO profile.py: (wader.common) - get_profile_by_uuid: " + self.backend.get_profile_by_uuid(uuid) ) 
 
     def get_profile_by_object_path(self, opath):
         """Returns a :class:`Profile` out of its object path ``opath``"""
         return self.backend.get_profile_by_object_path(opath)
 
     def get_profile_options_from_imsi(self, imsi):
+        ogger.debug("INFO profile.py: (wader.common) - get_profile_options_from_imsi ")
         """Generates a new :class:`Profile` from ``imsi``"""
         with closing(NetworkProvider()) as provider:
             network = provider.get_network_by_id(imsi)
@@ -210,6 +211,7 @@ class ProfileManager(object):
             raise ex.ProfileNotFoundError("No profile for IMSI %s" % imsi)
 
     def get_profile_options_from_network(self, network):
+        logger.debug("INFO profile.py: (wader.common) - get_profile_options_from_network ")
         """Generates a new :class:`Profile` from ``network``"""
         props = {}
 
