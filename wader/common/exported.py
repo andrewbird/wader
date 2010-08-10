@@ -686,6 +686,7 @@ class MmsExporter(NetworkExporter):
         """
         mms = dbus_data_to_mms(headers, data_parts)
         d = self.sconn.send_mms(mms, extra_info)
+        d.addCallback(lambda mms: mms.headers['Message-Id'])
         return self.add_callbacks(d, async_cb, async_eb)
 
     @signal(dbus_interface=MMS_INTFACE, signature='s')
