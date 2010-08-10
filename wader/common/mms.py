@@ -27,6 +27,11 @@ from twisted.python import log
 from messaging.mms.message import MMSMessage, DataPart
 
 
+def remove_headers_and_convert_to_array(payload):
+    _, data = payload.split('\r\n\r\n')
+    return array("B", data)
+
+
 def mms_to_dbus_data(mms):
     import dbus
     """Converts ``mms`` to a tuple ready to be sent via DBus"""
@@ -100,9 +105,9 @@ def do_get_payload(url, extra_info):
         buf.write(data)
 
     s.close()
-    _, data = buf.getvalue().split('\r\n\r\n')
+    data = buf.getvalue()
     buf.close()
-    return array("B", data)
+    return data
 
 
 def get_payload(uri, extra_info):
@@ -112,6 +117,7 @@ def get_payload(uri, extra_info):
     :param extra_info: dict with connection information
     """
     d = threads.deferToThread(do_get_payload, uri, extra_info)
+    d.addCallback(remove_headers_and_convert_to_array)
     d.addCallback(MMSMessage.from_data)
     return d
 
@@ -175,5 +181,6 @@ def send_m_send_req(extra_info, dbus_data):
     mms.headers['Message-Type'] = 'm-send-req'
 
     d = post_payload(extra_info, mms.encode())
+    d.addCallback(remove_headers_and_convert_to_array)
     d.addCallback(MMSMessage.from_data)
     return d
