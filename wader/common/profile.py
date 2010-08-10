@@ -191,7 +191,7 @@ class ProfileManager(object):
         :raise ProfileNotFoundError: If no profile was found
         """
         profile = self.backend.get_profile_by_uuid(uuid)
-        log.msg("INFO profile.py: (wader.common) - get_profile_by_uuid: " + profile)
+        log.msg("INFO profile.py: (wader.common) - get_profile_by_uuid: %s" % profile)
         return self.backend.get_profile_by_uuid(uuid)
 
     def get_profile_by_object_path(self, opath):
