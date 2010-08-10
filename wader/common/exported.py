@@ -652,7 +652,7 @@ class MmsExporter(NetworkExporter):
         :param extra_info: Dict with MMSC url, port, etc.
         """
         d = self.sconn.acknowledge_mms(index, extra_info)
-        return self.add_callbacks(d, async_cb, async_eb)
+        return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(MMS_INTFACE, in_signature='', out_signature='a(ua{sv})',
             async_callbacks=('async_cb', 'async_eb'))
