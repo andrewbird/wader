@@ -43,7 +43,6 @@ from wader.common.consts import (WADER_PROFILES_SERVICE,
 import wader.common.exceptions as ex
 from wader.common.provider import NetworkProvider
 from wader.common.utils import convert_ip_to_int
-from wader.bcm.logger import logger
 
 
 class Profile(DelayableDBusObject):
@@ -191,15 +190,16 @@ class ProfileManager(object):
         :param uuid: The uuid of the profile
         :raise ProfileNotFoundError: If no profile was found
         """
+        profile = self.backend.get_profile_by_uuid(uuid)
+        log.msg("INFO profile.py: (wader.common) - get_profile_by_uuid: " + profile)
         return self.backend.get_profile_by_uuid(uuid)
-        logger.debug("INFO profile.py: (wader.common) - get_profile_by_uuid: " + self.backend.get_profile_by_uuid(uuid) ) 
 
     def get_profile_by_object_path(self, opath):
         """Returns a :class:`Profile` out of its object path ``opath``"""
         return self.backend.get_profile_by_object_path(opath)
 
     def get_profile_options_from_imsi(self, imsi):
-        ogger.debug("INFO profile.py: (wader.common) - get_profile_options_from_imsi ")
+        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_imsi")
         """Generates a new :class:`Profile` from ``imsi``"""
         with closing(NetworkProvider()) as provider:
             network = provider.get_network_by_id(imsi)
@@ -211,7 +211,7 @@ class ProfileManager(object):
             raise ex.ProfileNotFoundError("No profile for IMSI %s" % imsi)
 
     def get_profile_options_from_network(self, network):
-        logger.debug("INFO profile.py: (wader.common) - get_profile_options_from_network ")
+        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_network")
         """Generates a new :class:`Profile` from ``network``"""
         props = {}
 

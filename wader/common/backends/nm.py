@@ -31,7 +31,6 @@ from wader.common.profile import Profile
 from wader.common.secrets import ProfileSecrets
 from wader.common.utils import (convert_int_to_uint, patch_list_signature,
                                 revert_dict)
-from wader.bcm.logger import logger
 
 # this line is required, otherwise gnomekeyring will complain about
 # the application name not being set
