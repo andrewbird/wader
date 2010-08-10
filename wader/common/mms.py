@@ -99,9 +99,9 @@ def do_get_payload(url, extra_info):
         buf.write(data)
 
     s.close()
-    ret = buf.getvalue().split('\r\n\r\n')[1]
+    _, data = buf.getvalue().split('\r\n\r\n')
     buf.close()
-    return array("B", ret)
+    return array("B", data)
 
 
 def get_payload(uri, extra_info):
@@ -138,9 +138,9 @@ def do_post_payload(extra_info, payload):
         buf.write(data)
 
     s.close()
-    ret = buf.getvalue().split('\r\n\r\n')[1]
+    _, data = buf.getvalue().split('\r\n\r\n')
     buf.close()
-    return array("B", ret)
+    return array("B", data)
 
 
 def post_payload(extra_info, data):
@@ -150,12 +150,12 @@ def post_payload(extra_info, data):
 
 
 def send_m_notifyresp_ind(extra_info, tx_id):
-    message = MMSMessage()
-    message.headers['Transaction-Id'] = tx_id
-    message.headers['Message-Type'] = 'm-notifyresp-ind'
-    message.headers['Status'] = 'Retrieved'
+    mms = MMSMessage()
+    mms.headers['Transaction-Id'] = tx_id
+    mms.headers['Message-Type'] = 'm-notifyresp-ind'
+    mms.headers['Status'] = 'Retrieved'
 
-    return post_payload(extra_info, message.encode())
+    return post_payload(extra_info, mms.encode())
 
 
 def send_m_send_req(extra_info, dbus_data):
