@@ -22,6 +22,7 @@ from cStringIO import StringIO
 import socket
 
 from twisted.internet import threads
+from twisted.python import log
 
 from messaging.mms.message import MMSMessage, DataPart
 
@@ -123,8 +124,7 @@ def do_post_payload(extra_info, payload):
     s.connect((host, int(port)))
     s.send("POST %s HTTP/1.0\r\n\r\n" % mmsc)
     s.send("Content-type: application/vnd.wap.mms-message\r\n")
-    s.send("Content-Length: %d\r\n" % len(payload))
-    s.send("\r\n")
+    s.send("Content-Length: %d\r\n\r\n" % len(payload))
 
     s.sendall(payload)
 
@@ -138,15 +138,14 @@ def do_post_payload(extra_info, payload):
         buf.write(data)
 
     s.close()
-    _, data = buf.getvalue().split('\r\n\r\n')
+    data = buf.getvalue()
     buf.close()
-    return array("B", data)
+    log.msg("do_post_payload: %r" % data)
+    return data
 
 
 def post_payload(extra_info, data):
-    d = threads.deferToThread(do_post_payload, extra_info, data)
-    d.addCallback(MMSMessage.from_data)
-    return d
+    return threads.deferToThread(do_post_payload, extra_info, data)
 
 
 def send_m_notifyresp_ind(extra_info, tx_id):
