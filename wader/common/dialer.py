@@ -26,6 +26,7 @@ import dbus
 from dbus.service import Object, BusName, method, signal
 from zope.interface import implements
 from twisted.python import log
+from twisted.internet import defer
 
 from wader.common._dbus import DBusExporterHelper
 import wader.common.consts as consts
@@ -56,20 +57,20 @@ class DialerConf(object):
     refuse_pap = True
     refuse_chap = True
 
-    def __init__(self, opath):
+    def __init__(self):
         super(DialerConf, self).__init__()
-        self.opath = opath
-        self._from_dbus_path(opath)
+        self.opath = None
 
     def __repr__(self):
-        msg = '<DialerConf instance apn: %s, user: %s, passwd: %s>'
+        msg = '<DialerConf apn: %s, user: %s, passwd: %s>'
         args = (self.apn, self.username, self.password)
         return msg % args
 
     def __str__(self):
         return self.__repr__()
 
-    def _get_profile_secrets(self, profile):
+    @staticmethod
+    def get_profile_secrets(profile):
         resp = profile.GetSecrets('gsm', ['password'], False,
                                   timeout=SECRETS_TIMEOUT)
         if not resp:
@@ -79,37 +80,53 @@ class DialerConf(object):
 
         return resp['gsm']['passwd']
 
-    def _from_dbus_path(self, opath):
+    @classmethod
+    def from_dict(cls, settings):
+        """Returns a new `:class:DialerConf` out of ``settings``"""
+        ret = cls()
+        # connection
+        ret.uuid = settings['connection']['uuid']
+        ret.autoconnect = settings['connection'].get('autoconnect', False)
+        # gsm
+        ret.apn = settings['gsm']['apn']
+        ret.username = settings['gsm'].get('username', '')
+        ret.password = settings['gsm'].get('password')
+        ret.band = settings['gsm'].get('band')
+        ret.network_type = settings['gsm'].get('network-type')
+        # ipv4 might not be present
+        if 'ipv4' in settings:
+            ret.staticdns = settings['ipv4'].get('ignore-auto-dns', False)
+            if settings['ipv4'].get('dns'):
+                dns1 = settings['ipv4']['dns'][0]
+                ret.dns1 = convert_int_to_ip(dns1)
+                if len(settings['ipv4']['dns']) > 1:
+                    dns2 = settings['ipv4']['dns'][1]
+                    ret.dns2 = convert_int_to_ip(dns2)
+        # ppp might not be present
+        if 'ppp' in settings:
+            # get authentication options
+            ret.refuse_pap = settings['ppp'].get('refuse-pap', True)
+            ret.refuse_chap = settings['ppp'].get('refuse-chap', True)
+
+        return ret
+
+    @classmethod
+    def from_dbus_path(cls, opath):
+        """Returns a new `:class:DialerConf` out of ``opath``"""
         profile = dbus.SystemBus().get_object(consts.WADER_PROFILES_SERVICE,
                                               opath)
-        props = profile.GetSettings()
-
-        self.uuid = props['connection']['uuid']
-        self.apn = props['gsm']['apn']
-        self.username = props['gsm'].get('username', '')
-        self.autoconnect = props['connection'].get('autoconnect', False)
-        self.band = props['gsm'].get('band')
-        self.network_type = props['gsm'].get('network-type')
-
-        self.staticdns = props['ipv4'].get('ignore-auto-dns', False)
-        if props['ipv4'].get('dns'):
-            dns1 = props['ipv4']['dns'][0]
-            self.dns1 = convert_int_to_ip(dns1)
-            if len(props['ipv4']['dns']) > 1:
-                dns2 = props['ipv4']['dns'][1]
-                self.dns2 = convert_int_to_ip(dns2)
-
-        # get authentication options
-        self.refuse_pap = props['ppp'].get('refuse-pap', True)
-        self.refuse_chap = props['ppp'].get('refuse-chap', True)
+        ret = DialerConf.from_dict(profile.GetSettings())
+        ret.opath = opath
 
         # get the secrets
         try:
-            self.password = self._get_profile_secrets(profile)
+            ret.password = DialerConf.get_profile_secrets(profile)
         except Exception, e:
             log.err("Error fetching profile password, "
                     "setting password to ''. Reason: %s" % e)
-            self.password = ''
+            ret.password = ''
+
+        return ret
 
 
 class Dialer(Object):
@@ -245,6 +262,10 @@ class DialerManager(Object, DBusExporterHelper):
         # is available from the first moment. It has the downer of only
         # being able to stop one connection attempt per device.
         self.connection_attempts = {}
+        # dict with the cached connections, key is the device path and the
+        # value is the used configuration. This is used to save the state
+        # of previous connections interrupted by a MMS connection.
+        self.connection_state = {}
         self.ctrl = ctrl
         self._connect_to_signals()
 
@@ -262,17 +283,21 @@ class DialerManager(Object, DBusExporterHelper):
                                      "DeviceRemoved",
                                      consts.WADER_INTFACE)
 
-    def get_dialer(self, dev_opath, opath):
+    def get_dialer(self, dev_opath, opath, plain=False):
         """
         Returns an instance of the dialer that will be used to connect
 
         :param dev_opath: DBus object path of the device to use
         :param opath: DBus object path of the dialer
         """
-        from wader.common.backends import get_backend
-
+        from wader.common.backends import get_backend, plain_backend
         device = self.ctrl.hm.clients[dev_opath]
-        dialer_klass = get_backend().get_dialer_klass(device)
+
+        if plain:
+            dialer_klass = plain_backend.get_dialer_klass(device)
+        else:
+            dialer_klass = get_backend().get_dialer_klass(device)
+
         return dialer_klass(device, opath, ctrl=self.ctrl)
 
     def get_next_opath(self):
@@ -284,43 +309,96 @@ class DialerManager(Object, DBusExporterHelper):
         """
         Start a connection with device ``device_opath`` using ``profile_opath``
         """
-        conf = DialerConf(profile_opath)
-        # set PDP context
+        conf = DialerConf.from_dbus_path(profile_opath)
+        # build dialer
+        dialer = self.get_dialer(device_opath, self.get_next_opath())
+        return self.do_activate_connection(conf, dialer)
+
+    def do_activate_connection(self, conf, dialer):
+        device_opath = dialer.device.opath
+        self.connection_attempts[device_opath] = dialer, conf
         device = self.ctrl.hm.clients[device_opath]
         # use context #1 if not defined
         conf.context = device.sconn.state_dict.get('conn_id', 1)
-        # build dialer
-        opath = self.get_next_opath()
-        dialer = self.get_dialer(device_opath, opath)
-        self.connection_attempts[device_opath] = dialer
 
-        def start_traffic_monitoring(opath):
+        def start_traffic_monitoring(conn_opath):
             dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
             # transfer the dialer from connection_attempts to connections dict
-            self.connections[opath] = dialer
+            self.connections[conn_opath] = dialer, conf
             if device_opath in self.connection_attempts:
                 self.connection_attempts.pop(device_opath)
-            return opath
+
+            # announce that a new connection is active
+            self.ConnectionChanged(conn_opath, True)
+            return conn_opath
 
         d = dialer.configure(conf)
         d.addCallback(lambda ign: dialer.connect())
         d.addCallback(start_traffic_monitoring)
         return d
 
-    def deactivate_connection(self, device_opath):
+    def activate_mms_connection(self, settings, device_opath):
+        """
+        Starts a MMS connection with device ``device_opath`` using ``settings``
+        """
+        if device_opath in self.connection_state:
+            # this should never happen
+            log.err("activate_mms_connection: internal error, "
+                    "device_opath is already stored")
+            # XXX: What exception should be used here?
+            return defer.fail()
+
+        # handle the case where a connection is already stablished
+        for conn_opath, (dialer, conf) in self.connections.items():
+            if dialer.device.opath == device_opath:
+                self.connection_state[device_opath] = conf
+                d = dialer.disconnect()
+                d.addCallback(dialer.close)
+                break
+        else:
+            # handle the case where a connection attempt is going on
+            if device_opath in self.connection_attempts:
+                dialer, conf = self.connection_attempts[device_opath]
+                self.connection_state[device_opath] = conf
+                d = dialer.disconnect()
+                d.addCallback(dialer.close)
+            else:
+                # if there was no connection/conn attempt, there's nothing to handle
+                d = defer.succeed(True)
+
+        def prepare_connection_and_activate(_):
+            conf = DialerConf.from_dict(settings)
+            # we want the plain dialer, pass True
+            dialer = self.get_dialer(device_opath, self.get_next_opath(), True)
+            return self.do_activate_connection(conf, dialer)
+
+        d.addCallback(prepare_connection_and_activate)
+        return d
+
+    def deactivate_connection(self, conn_opath):
         """Stops connection of device ``device_opath``"""
-        if device_opath in self.connections:
-            dialer = self.connections.pop(device_opath)
+        if conn_opath not in self.connections:
+            raise KeyError("Dialup %s not handled" % conn_opath)
 
-            d = dialer.disconnect()
-            d.addCallback(dialer.close)
-            return d
+        dialer, _ = self.connections.pop(conn_opath)
 
-        raise KeyError("Dialup %s not handled" % device_opath)
+        def on_disconnect(opath):
+            self.ConnectionChanged(conn_opath, False)
+            return dialer.close(opath)
+
+        d = dialer.disconnect()
+        d.addCallback(on_disconnect)
+
+        if conn_opath in self.connection_state:
+            # there was a connection going on before, restore it
+            dialer, conf = self.connection_state.pop(conn_opath)
+            d.addCallback(lambda _: self.do_activate_connection(conf, dialer))
+
+        return d
 
     def stop_connection(self, device_opath):
         """Stops connection attempt of device ``device_opath``"""
-        dialer = self.connection_attempts.pop(device_opath)
+        dialer, _ = self.connection_attempts.pop(device_opath)
         d = dialer.stop()
         d.addCallback(dialer.close)
         return d
@@ -331,6 +409,13 @@ class DialerManager(Object, DBusExporterHelper):
                             async_cb, async_eb):
         """See :meth:`DialerManager.activate_connection`"""
         d = self.activate_connection(profile_path, device_opath)
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(consts.WADER_DIALUP_INTFACE, in_signature='a{sv}o',
+            out_signature='o', async_callbacks=('async_cb', 'async_eb'))
+    def ActivateMmsConnection(self, settings, device_opath, async_cb, async_eb):
+        """See :meth:`DialerManager.activate_mms_connection`"""
+        d = self.activate_mms_connection(settings, device_opath)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(consts.WADER_DIALUP_INTFACE, in_signature='o', out_signature='',
@@ -346,3 +431,7 @@ class DialerManager(Object, DBusExporterHelper):
         """See :meth:`DialerManager.stop_connection`"""
         d = self.stop_connection(device_opath)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
+
+    @signal(consts.WADER_DIALUP_INTFACE, signature='ob')
+    def ConnectionChanged(self, conn_opath, active):
+        log.msg("ConnectionChanged(%s, %s)" % (conn_opath, active))

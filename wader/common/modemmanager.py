@@ -35,6 +35,7 @@ class ModemManager(object):
         super(ModemManager, self).__init__()
         self.bus = dbus.SystemBus()
         self.mm_obj = None
+        self.dial_obj = None
         self._opaths = []
         self._init_modemmanager()
 
@@ -50,3 +51,11 @@ class ModemManager(object):
         devices = [self.bus.get_object(consts.WADER_SERVICE, opath)
                             for opath in self._opaths]
         return devices
+
+    def get_dial_manager(self):
+        """Returns a proxy to DialerManager"""
+        if not self.dial_obj:
+            self.dial_obj = self.bus.get_object(consts.WADER_DIALUP_SERVICE,
+                                                consts.WADER_DIALUP_OBJECT)
+        return self.dial_obj
+

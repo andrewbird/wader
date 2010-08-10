@@ -684,8 +684,8 @@ class MmsExporter(NetworkExporter):
         :param data_parts: data parts of the MMS
         :param extra_info: Dict with MMSC url, port, etc.
         """
-        d = self.sconn.send_mms(dbus_data_to_mms(headers, data_parts),
-                                extra_info)
+        mms = dbus_data_to_mms(headers, data_parts)
+        d = self.sconn.send_mms(mms, extra_info)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @signal(dbus_interface=MMS_INTFACE, signature='s')
