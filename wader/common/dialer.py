@@ -26,6 +26,7 @@ import dbus
 from dbus.service import Object, BusName, method, signal
 from zope.interface import implements
 from twisted.python import log
+from twisted.internet import reactor, task
 from twisted.internet import defer
 
 from wader.common._dbus import DBusExporterHelper
@@ -351,7 +352,7 @@ class DialerManager(Object, DBusExporterHelper):
         # handle the case where a connection is already stablished
         for conn_opath, (dialer, conf) in self.connections.items():
             if dialer.device.opath == device_opath:
-                self.connection_state[device_opath] = conf
+                self.connection_state[device_opath] = dialer, conf
                 d = dialer.disconnect()
                 d.addCallback(dialer.close)
                 break
@@ -359,7 +360,7 @@ class DialerManager(Object, DBusExporterHelper):
             # handle the case where a connection attempt is going on
             if device_opath in self.connection_attempts:
                 dialer, conf = self.connection_attempts[device_opath]
-                self.connection_state[device_opath] = conf
+                self.connection_state[device_opath] = dialer, conf
                 d = dialer.disconnect()
                 d.addCallback(dialer.close)
             else:
@@ -370,7 +371,8 @@ class DialerManager(Object, DBusExporterHelper):
             conf = DialerConf.from_dict(settings)
             # we want the plain dialer, pass True
             dialer = self.get_dialer(device_opath, self.get_next_opath(), True)
-            return self.do_activate_connection(conf, dialer)
+            return task.deferLater(reactor, 2, self.do_activate_connection,
+                                   conf, dialer)
 
         d.addCallback(prepare_connection_and_activate)
         return d
@@ -389,12 +391,14 @@ class DialerManager(Object, DBusExporterHelper):
         d = dialer.disconnect()
         d.addCallback(on_disconnect)
 
-        if conn_opath in self.connection_state:
-            # there was a connection going on before, restore it
-            dialer, conf = self.connection_state.pop(conn_opath)
-            d.addCallback(lambda _: self.do_activate_connection(conf, dialer))
+        device_opath = dialer.device.opath
+        if device_opath not in self.connection_state:
+            return d
 
-        return d
+        # there was a connection going on before, restore it
+        dialer, conf = self.connection_state.pop(device_opath)
+        return task.deferLater(reactor, 2, self.do_activate_connection,
+                               conf, dialer)
 
     def stop_connection(self, device_opath):
         """Stops connection attempt of device ``device_opath``"""
