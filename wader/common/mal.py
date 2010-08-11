@@ -162,9 +162,12 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
-        debug("MAL::_do_add_sms sms: %s  indexes: %s" % (sms, indexes))
+        debug("MAL::_do_add_sms sms: %s indexes: %s" % (sms, indexes))
         # save the real index if indexes is None
-        sms.real_indexes = [sms.index] if indexes is None else indexes
+        if indexes:
+            map(sms.real_indexes.add, indexes)
+        else:
+            sms.real_indexes.add(sms.index)
         debug("MAL::_do_add_sms sms.real_indexes %s" % sms.real_indexes)
         # assign a new logical index
         self.last_sms_index += 1
@@ -223,7 +226,8 @@ class MessageAssemblyLayer(object):
             index = self._do_add_sms(sms)
             if emit:
                 self.wrappee.emit_signal(SIG_SMS, index, False)
-            debug("MAL::_add_sms first part of a multi part SMS added with"
+
+            debug("MAL::_add_sms first part of a multi part SMS added with "
                   "logical index %d" % index)
             return index
 

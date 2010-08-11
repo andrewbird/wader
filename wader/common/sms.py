@@ -38,7 +38,7 @@ class Message(object):
                  seq=None):
         self.number = number
         self.index = index
-        self.real_indexes = []
+        self.real_indexes = set()
         self.where = where
         self.csca = csca
         self.datetime = _datetime
@@ -191,9 +191,7 @@ class Message(object):
         # quick filtering to rule out unwanted fragments
         if self.ref == sms.ref and self.cnt == sms.cnt:
             self.add_fragment(sms)
-            self.real_indexes.extend(sms.real_indexes)
-            self.real_indexes.sort()
-
+            self.real_indexes.add(sms.index)
             self.completed = len(self._fragments) == sms.cnt
             return self.completed
         else:
