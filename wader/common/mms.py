@@ -21,6 +21,7 @@ from array import array
 from cStringIO import StringIO
 import socket
 
+import dbus
 from twisted.internet import threads
 from twisted.python import log
 
@@ -33,9 +34,7 @@ def remove_headers_and_convert_to_array(payload):
 
 
 def mms_to_dbus_data(mms):
-    import dbus
     """Converts ``mms`` to a tuple ready to be sent via DBus"""
-
     headers = {}
     data_parts = []
     # Convert headers
@@ -128,8 +127,8 @@ def do_post_payload(extra_info, payload):
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, int(port)))
-    s.send("POST %s HTTP/1.0\r\n\r\n" % mmsc)
-    s.send("Content-type: application/vnd.wap.mms-message\r\n")
+    s.send("POST %s HTTP/1.0\r\n" % mmsc)
+    s.send("Content-Type: application/vnd.wap.mms-message\r\n")
     s.send("Content-Length: %d\r\n\r\n" % len(payload))
 
     s.sendall(payload)
