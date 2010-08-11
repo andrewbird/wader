@@ -27,6 +27,8 @@ from twisted.python import log
 
 from messaging.mms.message import MMSMessage, DataPart
 
+from wader.common.aterrors import ExpiredNotification
+
 
 def remove_headers_and_convert_to_array(payload):
     _, data = payload.split('\r\n\r\n')
@@ -159,7 +161,19 @@ def send_m_notifyresp_ind(extra_info, tx_id):
     mms.headers['Message-Type'] = 'm-notifyresp-ind'
     mms.headers['Status'] = 'Retrieved'
 
-    return post_payload(extra_info, mms.encode())
+    def process_response(data):
+        if data.startswith("HTTP/1.0 404"):
+            # notification has expired
+            try:
+                text = data.split('\r\n')[0][13:]
+            except IndexError:
+                text = "Message not found in MMSC"
+
+            raise ExpiredNotification(text)
+
+    d = post_payload(extra_info, mms.encode())
+    d.addCallback(process_response)
+    return d
 
 
 def send_m_send_req(extra_info, dbus_data):
