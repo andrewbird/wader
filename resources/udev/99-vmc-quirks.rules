@@ -1,3 +1,6 @@
 
 # Vodafone (ZTE) K3805-Z
 ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1003", RUN="/sbin/ifconfig %k -arp"
+
+# Vodafone (ZTE) K3806-Z
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1015", RUN="/sbin/ifconfig %k -arp"
