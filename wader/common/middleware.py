@@ -909,6 +909,10 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def connect_simple(self, settings):
         """Connects with the given ``settings``"""
+        if self.device.status == DEV_CONNECTED:
+            # this cannot happen
+            raise E.Connected("we are already connected")
+
         simplesm = self.device.custom.simp_klass(self.device, settings)
         d = simplesm.start_simple()
         d.addCallback(lambda _: self.device.set_status(DEV_CONNECTED))
@@ -916,6 +920,10 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def connect_to_internet(self, number):
         """Opens data port and dials ``number`` in"""
+        if self.device.status == DEV_CONNECTED:
+            # this cannot happen
+            raise E.Connected("we are already connected")
+
         # open the data port
         port = self.device.ports.dport
         # this will raise a SerialException if port is busy
