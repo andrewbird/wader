@@ -36,7 +36,7 @@ from wader.common.oal import get_os_object
 from wader.common.utils import convert_int_to_ip
 
 
-CONFIG_DELAY = 3
+CONFIG_DELAY = RECONNECTION_DELAY = 3
 SECRETS_TIMEOUT = 3
 
 
@@ -171,8 +171,9 @@ class Dialer(Object):
         # remove from DBus bus
         try:
             self.remove_from_connection()
-        except LookupError, e:
-            log.err(e)
+        except LookupError:
+            # it's safe to ignore this exception
+            pass
 
         return path
 
@@ -371,8 +372,8 @@ class DialerManager(Object, DBusExporterHelper):
             conf = DialerConf.from_dict(settings)
             # we want the plain dialer, pass True
             dialer = self.get_dialer(device_opath, self.get_next_opath(), True)
-            return task.deferLater(reactor, 2, self.do_activate_connection,
-                                   conf, dialer)
+            return task.deferLater(reactor, RECONNECTION_DELAY,
+                                   self.do_activate_connection, conf, dialer)
 
         d.addCallback(prepare_connection_and_activate)
         return d
@@ -397,8 +398,8 @@ class DialerManager(Object, DBusExporterHelper):
 
         # there was a connection going on before, restore it
         dialer, conf = self.connection_state.pop(device_opath)
-        return task.deferLater(reactor, 2, self.do_activate_connection,
-                               conf, dialer)
+        return task.deferLater(reactor, RECONNECTION_DELAY,
+                               self.do_activate_connection, conf, dialer)
 
     def stop_connection(self, device_opath):
         """Stops connection attempt of device ``device_opath``"""
