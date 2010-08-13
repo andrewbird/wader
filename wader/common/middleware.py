@@ -85,7 +85,11 @@ class WCDMAWrapper(WCDMAProtocol):
         if 'mmsc' not in extra_info:
             raise ValueError("No mmsc key in %s" % extra_info)
 
-        notification = self.mal.wap_map[index].get_last_notification()
+        try:
+            notification = self.mal.wap_map[index].get_last_notification()
+        except IndexError:
+            raise E.ExpiredNotification("Could not find "
+                                        "notification %d" % index)
 
         d = send_m_notifyresp_ind(extra_info,
                                   notification.headers['Transaction-Id'])
