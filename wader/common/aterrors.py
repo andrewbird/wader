@@ -373,7 +373,7 @@ class CallIndexError(dbus.DBusException):
 
 class CallStateError(dbus.DBusException):
     """Exception raised upon call state error"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'IncorrectPassword')
+    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'CallStateError')
 
 
 class MalformedUssdPduError(dbus.DBusException):
