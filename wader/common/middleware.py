@@ -799,19 +799,18 @@ class WCDMAWrapper(WCDMAProtocol):
         """Sets the APN to ``apn``"""
 
         def process_apns(apns, the_apn):
-            state = self.state_dict
             for _index, _apn in apns:
                 if _apn == the_apn:
-                    state['conn_id'] = _index
+                    self.state_dict['conn_id'] = _index
                     return
 
             try:
-                max_cid = max([idx for idx, _apn in apns])
+                conn_id = max([idx for idx, _ in apns]) + 1
             except (ValueError, TypeError):
-                max_cid = 0
+                conn_id = 1
 
-            state['conn_id'] = max_cid + 1
-            d = super(WCDMAWrapper, self).set_apn(state['conn_id'], the_apn)
+            self.state_dict['conn_id'] = conn_id
+            d = super(WCDMAWrapper, self).set_apn(conn_id, the_apn)
             d.addCallback(lambda response: response[0].group('resp'))
             return d
 

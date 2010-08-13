@@ -30,6 +30,7 @@ from twisted.internet import reactor, task
 from twisted.internet import defer
 
 from wader.common._dbus import DBusExporterHelper
+from wader.common.aterrors import CallIndexError
 import wader.common.consts as consts
 from wader.common.interfaces import IDialer
 from wader.common.oal import get_os_object
@@ -320,8 +321,12 @@ class DialerManager(Object, DBusExporterHelper):
         device_opath = dialer.device.opath
         self.connection_attempts[device_opath] = dialer, conf
         device = self.ctrl.hm.clients[device_opath]
-        # use context #1 if not defined
-        conf.context = device.sconn.state_dict.get('conn_id', 1)
+
+        conn_id = device.sconn.state_dict.get('conn_id')
+        if conn_id is None:
+            raise CallIndexError("conn_id is None")
+
+        conf.context = conn_id
 
         def start_traffic_monitoring(conn_opath):
             dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)

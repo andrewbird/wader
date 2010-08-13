@@ -273,7 +273,10 @@ class IceraWrapper(WCDMAWrapper):
 
     def _get_ip4_config(self):
         """Returns the ip4 config on a Icera NDIS device"""
-        conn_id = self.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if conn_id is None:
+            raise E.CallIndexError("conn_id is None")
+
         cmd = ATCmd('AT%%IPDPADDR=%d' % conn_id, name='get_ip4_config')
         d = self.queue_at_cmd(cmd)
 
@@ -292,7 +295,10 @@ class IceraWrapper(WCDMAWrapper):
 
     def hso_authenticate(self, user, passwd, auth):
         """Authenticates using ``user`` and ``passwd`` on Icera NDIS devices"""
-        conn_id = self.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if conn_id is None:
+            raise E.CallIndexError("conn_id is None")
+
         args = (conn_id, auth, user, passwd)
         cmd = ATCmd('AT%%IPDPCFG=%d,0,%d,"%s","%s"' % args,
                     name='hso_authenticate')
@@ -301,14 +307,20 @@ class IceraWrapper(WCDMAWrapper):
         return d
 
     def hso_connect(self):
-        conn_id = self.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if conn_id is None:
+            raise E.CallIndexError("conn_id is None")
+
         return self.send_at('AT%%IPDPACT=%d,1' % conn_id)
 
     def disconnect_from_internet(self):
         """
         meth:`~wader.common.middleware.WCDMAWrapper.disconnect_from_internet`
         """
-        conn_id = self.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if conn_id is None:
+            raise E.CallIndexError("conn_id is None")
+
         d = self.send_at('AT%%IPDPACT=%d,0' % conn_id)
         d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
         return d

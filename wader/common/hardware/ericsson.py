@@ -326,7 +326,10 @@ class EricssonWrapper(WCDMAWrapper):
         return Contact(name, number, index=index)
 
     def mbm_authenticate(self, user, passwd):
-        conn_id = self.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if conn_id is None:
+            raise E.CallIndexError("conn_id is None")
+
         if self.device.sim.charset == 'UCS2':
             args = (conn_id, pack_ucs2_bytes(user), pack_ucs2_bytes(passwd))
         else:
@@ -340,17 +343,17 @@ class EricssonWrapper(WCDMAWrapper):
             return super(EricssonWrapper, self).set_apn(apn)
 
         def process_apns(apns, the_apn):
-            state = self.state_dict
             for _index, _apn in apns:
                 if _apn == the_apn:
-                    state['conn_id'] = _index
+                    self.state_dict['conn_id'] = _index
                     return
 
             try:
-                max_cid = max([idx for idx, _apn in apns])
+                conn_id = max([idx for idx, _ in apns]) + 1
             except (ValueError, TypeError):
-                max_cid = 0
-            conn_id = state['conn_id'] = max_cid + 1
+                conn_id = 1
+
+            self.state_dict['conn_id'] = conn_id
             args = tuple([conn_id] + map(pack_ucs2_bytes, ["IP", the_apn]))
             cmd = ATCmd('AT+CGDCONT=%d,"%s","%s"' % args, name='set_apn')
             d = self.queue_at_cmd(cmd)
@@ -448,7 +451,10 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
         def do_next(self):
 
             def on_e2nap_done(_):
-                conn_id = self.sconn.state_dict['conn_id']
+                conn_id = self.sconn.state_dict.get('conn_id')
+                if conn_id is None:
+                    raise E.CallIndexError("conn_id is None")
+
                 return self.sconn.send_at("AT*ENAP=1,%d" % conn_id)
 
             def on_mbm_authenticated(_):

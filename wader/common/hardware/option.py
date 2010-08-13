@@ -375,7 +375,10 @@ class OptionHSOWrapper(OptionWrapper):
 
     def _get_ip4_config(self):
         """Returns the ip4 config on a HSO device"""
-        conn_id = self.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if not conn_id:
+            raise E.CallIndexError("conn_id is None")
+
         cmd = ATCmd('AT_OWANDATA=%d' % conn_id, name='get_ip4_config')
         d = self.queue_at_cmd(cmd)
 
@@ -391,7 +394,10 @@ class OptionHSOWrapper(OptionWrapper):
 
     def hso_authenticate(self, user, passwd, auth):
         """Authenticates using ``user`` and ``passwd`` on HSO devices"""
-        conn_id = self.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if not conn_id:
+            raise E.CallIndexError("conn_id is None")
+
         # XXX: I haven't been able to make NO_AUTH work, defaulting to PAP
         if auth == consts.HSO_NO_AUTH:
             auth = consts.HSO_PAP_AUTH
@@ -403,14 +409,20 @@ class OptionHSOWrapper(OptionWrapper):
         return d
 
     def hso_connect(self):
-        conn_id = self.device.sconn.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if not conn_id:
+            raise E.CallIndexError("conn_id is None")
+
         return self.device.sconn.send_at('AT_OWANCALL=%d,1,0' % conn_id)
 
     def disconnect_from_internet(self):
         """
         meth:`~wader.common.middleware.WCDMAWrapper.disconnect_from_internet`
         """
-        conn_id = self.device.sconn.state_dict['conn_id']
+        conn_id = self.state_dict.get('conn_id')
+        if not conn_id:
+            raise E.CallIndexError("conn_id is None")
+
         d = self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
         d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
         return d
