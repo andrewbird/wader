@@ -71,10 +71,7 @@ class ModemExporter(Object, DBusExporterHelper):
 
         :param number: number to dial
         """
-        assert 'conn_id' in self.sconn.state_dict, "Did you call SetApn?"
-        assert len(number) == 4, "bad number: %s" % number
-        assert number[-1] == '#', "bad number: %s" % number
-
+        # XXX: Use the passed number instead :/
         num = "%s***%d#" % (str(number[:-1]), self.sconn.state_dict['conn_id'])
         d = self.sconn.connect_to_internet(num)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
@@ -168,11 +165,6 @@ class SimpleExporter(ModemExporter):
         :type settings: dict
         :param settings: documented in ModemManager spec
         """
-        assert 'number' in settings, "No number in %s" % settings
-        number = settings['number']
-        assert len(number) == 4, "bad number: %s" % number
-        assert number[-1] == '#', "bad number: %s" % number
-
         d = self.sconn.connect_simple(settings)
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
