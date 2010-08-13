@@ -65,7 +65,7 @@ def dbus_data_to_mms(headers, data_parts):
     mms = MMSMessage()
     content_type = ''
 
-    for key, val in headers:
+    for key, val in headers.items():
         if key == 'Content-Type':
             content_type = val
         else:
