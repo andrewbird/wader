@@ -115,18 +115,6 @@ def get_wader_application():
     """
     service = WaderService()
     application = Application(consts.APP_NAME)
-
-    # XXX: restore
-    #if config.get('plugins/ssh_shell', 'active', False):
-    #    from wader.common import shell
-    #    # user = config.get('plugins', 'ssh_user')  not used right now
-    #    passwd = config.get('plugins/ssh_shell', 'ssh_pass', 'admin')
-    #    port = config.get('plugins/ssh_shell', 'ssh_port',
-    #                      'tcp:2222:interface=127.0.0.1')
-    #    factory = shell.get_manhole_factory(dict(service=service),
-    #                                        #admin=passwd)
-    #    #strports.service(port, factory).setServiceParent(application)
-
     service.setServiceParent(application)
     return application
 
