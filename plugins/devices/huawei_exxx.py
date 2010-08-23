@@ -91,12 +91,13 @@ class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
         self.mapping = {
             'E870': HuaweiE870,      # Expresscards
 
+            'E220': HuaweiE220,      # USB dongles
+            'E270': HuaweiE270,
+            'E272': HuaweiE272,
+
             'E160B': HuaweiE160B,    # USB Sticks
             'E17X': HuaweiE17X,
             'E180': HuaweiE180,
-            'E220': HuaweiE220,
-            'E270': HuaweiE270,
-            'E272': HuaweiE272,
             'K3565': HuaweiK3565,
 
             'B970': HuaweiB970,      # Routers
@@ -122,15 +123,17 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
         super(HuaweiEXXX1001, self).__init__()
 
         self.mapping = {
-            'E169': HuaweiE169,
-            'E510': HuaweiE510,      # Cardbus
-            'E620': HuaweiE620,
+            'E620': HuaweiE620,      # Cardbus
             'E660': HuaweiE660,
             'E660A': HuaweiE660A,
 
             'E3735': HuaweiE3735,    # Expresscards
 
-            'K2540': HuaweiK2540,    # USB Sticks
+            'E510': HuaweiE510,      # USB dongles
+
+            'E169': HuaweiE169,      # USB Sticks
+            'E1550': HuaweiE1550,
+            'K2540': HuaweiK2540,
             'K3520': HuaweiK3520,
             'K3565': HuaweiK3565,
             'K3715': HuaweiK3715,
