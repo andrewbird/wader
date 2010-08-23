@@ -94,8 +94,11 @@ def transpose_to_NM(oldprops, new=True):
             if 'name' in props[key]:
                 del props[key]['name']
 
-    # convert the integer format
     if 'ipv4' in props:
+        if not props['ipv4'].get('ignore-auto-dns'):
+            props['ipv4']['dns'] = []
+
+        # convert the integer format
         for key in ['addresses', 'dns', 'routes']:
             if key in props['ipv4']:
                 val = props['ipv4'][key]
@@ -514,9 +517,6 @@ class NMProfileManager(Object):
 
     def _do_set_profile(self, path, props):
         props = transpose_to_NM(props)
-
-        if not props['ipv4'].get('ignore-auto-dns'):
-            props['ipv4']['dns'] = []
 
         for key in props:
             for name in props[key]:
