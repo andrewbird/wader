@@ -35,6 +35,3 @@ class HuaweiE1692(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x140c],
     }
-
-
-huaweie1692 = HuaweiE1692()

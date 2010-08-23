@@ -27,11 +27,13 @@ from wader.plugins.huawei_e220 import HuaweiE220
 from wader.plugins.huawei_e270 import HuaweiE270
 from wader.plugins.huawei_e272 import HuaweiE272
 from wader.plugins.huawei_e510 import HuaweiE510
-#from wader.plugins.huawei_e618 import HuaweiE618
 from wader.plugins.huawei_e620 import HuaweiE620
 from wader.plugins.huawei_e660 import HuaweiE660
 from wader.plugins.huawei_e660a import HuaweiE660A
 from wader.plugins.huawei_e870 import HuaweiE870
+from wader.plugins.huawei_e1550 import HuaweiE1550
+from wader.plugins.huawei_e1692 import HuaweiE1692
+from wader.plugins.huawei_e1750 import HuaweiE1750
 from wader.plugins.huawei_e3735 import HuaweiE3735
 
 from wader.plugins.huawei_k2540 import HuaweiK2540
@@ -43,6 +45,31 @@ from wader.plugins.huawei_em730v import HuaweiEM730V
 from wader.plugins.huawei_em770 import HuaweiEM770
 
 from wader.plugins.huawei_b970 import HuaweiB970
+
+
+class HuaweiEXXX140c(HuaweiWCDMADevicePlugin):
+    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's 140c family"""
+    name = "Huawei EXXX"
+    version = "0.1"
+    author = u"Andrew Bird"
+
+    __remote_name__ = None
+
+    __properties__ = {
+        'ID_VENDOR_ID': [0x12d1],
+        'ID_MODEL_ID': [0x140c],
+    }
+
+    def __init__(self):
+        super(HuaweiEXXX140c, self).__init__()
+
+        self.mapping = {
+            'E1550': HuaweiE1550,
+            'E1692': HuaweiE1692,
+            'E1750': HuaweiE1750,
+
+            'default': HuaweiE1550,
+        }
 
 
 class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
@@ -96,13 +123,12 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
 
         self.mapping = {
             'E169': HuaweiE169,
-            'E510': HuaweiE510,     # Cardbus
-            #'183': HuaweiE618,
+            'E510': HuaweiE510,      # Cardbus
             'E620': HuaweiE620,
             'E660': HuaweiE660,
             'E660A': HuaweiE660A,
 
-            'E3735': HuaweiE3735,   # Expresscards
+            'E3735': HuaweiE3735,    # Expresscards
 
             'K2540': HuaweiK2540,    # USB Sticks
             'K3520': HuaweiK3520,
@@ -116,5 +142,6 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
         }
 
 
+huaweiexxx140c = HuaweiEXXX140c()
 huaweiexxx1003 = HuaweiEXXX1003()
 huaweiexxx1001 = HuaweiEXXX1001()
