@@ -337,6 +337,7 @@ class NMProfile(Profile):
             new_path = os.path.join(self.gpath, key)
             self.helper.set_value(new_path, value)
 
+        self.helper.client.notify(self.gpath)
         self.helper.client.suggest_sync()
 
     def _load_info(self):
@@ -525,6 +526,7 @@ class NMProfileManager(Object):
 
                 self.helper.set_value(_path, value)
 
+        self.helper.client.notify(path)
         self.helper.client.suggest_sync()
 
     def add_profile(self, props):
