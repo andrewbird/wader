@@ -400,6 +400,7 @@ class MessageAssemblyLayer(object):
         notification, _ = extract_push_notification(wap_push.text)
 
         index = None
+        new = False
         _from = notification.headers['From']
         tx_id = notification.headers['Transaction-Id']
         for i, container in self.wap_map.items():
@@ -411,15 +412,18 @@ class MessageAssemblyLayer(object):
                 index = i
                 break
         else:
+            # this is the first time we see this tx_id
             index = self.last_wap_index
             self.last_wap_index += 1
+            new = True
 
         container = self.wap_map.get(index, NotificationContainer(tx_id))
         container.add_notification(wap_push, notification)
         self.wap_map[index] = container
 
-        if emit:
-            # emit the signal
+        if emit and new:
+            # emit the signal if this is the first time we
+            # see this notification
             notification = container.get_last_notification()
             headers = self._clean_headers(notification)
             self.wrappee.emit_signal(SIG_MMS, index, headers)
