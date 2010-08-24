@@ -397,10 +397,11 @@ class MessageAssemblyLayer(object):
         if this the first time we see this notification.
         """
         wap_push = self.sms_map.pop(index)
-        notification, tx_id = extract_push_notification(wap_push.text)
+        notification, _ = extract_push_notification(wap_push.text)
 
         index = None
         _from = notification.headers['From']
+        tx_id = notification.headers['Transaction-Id']
         for i, container in self.wap_map.items():
             if container.tx_id != tx_id:
                 continue
