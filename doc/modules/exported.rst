@@ -24,7 +24,10 @@ Classes
 .. autoclass:: NetworkExporter
    :members:
 
-.. autoclass:: SMSExporter
+.. autoclass:: MmsExporter
+   :members:
+
+.. autoclass:: SmsExporter
    :members:
 
 .. autoclass:: ContactsExporter

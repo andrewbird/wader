@@ -6,8 +6,5 @@
 Classes
 --------
 
-.. autoclass:: MessageAssemblyLayer
-   :members:
-
 .. autoclass:: Message
    :members:

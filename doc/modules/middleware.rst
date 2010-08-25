@@ -8,9 +8,3 @@ Classes
 
 .. autoclass:: WCDMAWrapper
    :members:
-
-Functions
----------
-
-.. autofunction:: regexp_to_contact
-

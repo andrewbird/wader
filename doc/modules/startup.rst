@@ -23,6 +23,3 @@ Functions
 .. autofunction:: setup_and_export_device(device)
 
 .. autofunction:: create_skeleton_and_do_initial_setup()
-
-.. autofunction:: populate_dbs(f)
-
