@@ -28,4 +28,5 @@ Indices, glossary and tables
    modules/backends/*
    modules/hardware/*
    modules/oses/*
+   modules/statem/*
 
