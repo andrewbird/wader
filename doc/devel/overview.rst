@@ -65,18 +65,18 @@ argument. twistd is the application launcher provided by the Twisted
 framework.
 
 `core-tap.py` instantiates (singleton) `WaderService` via
-`get_wader_application()`.
+:func:`~wader.common.startup.get_wader_application`.
 
-:class:`wader.common.startup.WaderService` is a just a container for
+:class:`~wader.common.startup.WaderService` is a just a container for
 two other main classes:
 
- * :class:`wader.common.startup.StartupController`: Responsible for
+ * :class:`~wader.common.startup.StartupController`: Responsible for
    device management, it integrates with the underlying `OSPlugin`'s
    `HardwareManager` firing DBus signals when a 3G device is
    removed/added and maintaining a list with the devices available
    in the system. Internally, this devices use the `DevicePlugin` class.
 
- * :class:`wader.common.dialer.DialerManager`: Responsible for
+ * :class:`~wader.common.dialer.DialerManager`: Responsible for
    connection management, it integrates with the underlying backend in
    use, using its `ProfileManager` and the `Dialer` that the backend
    specifies.
@@ -128,21 +128,21 @@ layers of software that abstract as much as possible this differences.
 A DevicePlugin contains a `WCDMACustomizer` object with the following
 attributes:
 
- * `wrapper_klass`: Subclass of :class:`wader.common.middleware.WCDMAWrapper`.
+ * `wrapper_klass`: Subclass of :class:`~wader.common.middleware.WCDMAWrapper`.
    Used if a device requires a workaround for a particular operation (i.e.
    switching to `GSM` from `UCS2` before a particular operation.)
 
- * `exporter_klass`: Subclass of :class:`wader.common.exported.WCDMAExporter`.
+ * `exporter_klass`: Subclass of :class:`~wader.common.exported.WCDMAExporter`.
    Used if a device requires exporting more methods/signals over DBus (i.e.
    :class:`wader.common.exported.HSOExporter`.
 
- * `auth_klass`: Subclass of :class:`wader.common.statem.auth.AuthStateMachine`.
+ * `auth_klass`: Subclass of :class:`~wader.common.statem.auth.AuthStateMachine`.
    Used if a device has special needs for its initial authentication.
 
- * `netr_klass`: Subclass of :class:`wader.common.statem.networkreg.NetworkRegistrationStateMachine`.
+ * `netr_klass`: Subclass of :class:`~wader.common.statem.networkreg.NetworkRegistrationStateMachine`.
    Used if a device has special needs for registering with the network.
 
- * `simp_klass`: Subclass of :class:`wader.common.statem.simple.SimpleStateMachine`.
+ * `simp_klass`: Subclass of :class:`~wader.common.statem.simple.SimpleStateMachine`.
    Used if a device has special needs for its SimpleStateMachine. This class is
    used when the integration with NM is on.
 
@@ -154,9 +154,9 @@ OSPlugin
 
 Yet another layer of abstraction, it provides a uniform layer to perform
 OS-dependent operations. Every `OSPlugin` has a `HardwareManager` that ends
-up integrated in :class:`wader.common.startup.StartupController` so it can
+up integrated in :class:`~wader.common.startup.StartupController` so it can
 interact with the devices in the system. It is accessed via
-:func:`wader.common.oal.get_os_object` in runtime.
+:func:`~wader.common.oal.get_os_object` in runtime.
 
 
 Backends
