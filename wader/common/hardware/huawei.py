@@ -23,7 +23,7 @@ import re
 from twisted.python import log
 
 from messaging.sms import is_gsm_text
-from messaging.utils import encode_str
+from messaging.utils import encode_str, unpack_msg
 
 from wader.common.middleware import WCDMAWrapper
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
@@ -225,6 +225,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
         # contact.index is not set, this means that we need to obtain the
         # first slot free on the phonebook and then add the contact
+
         def get_next_id_cb(index):
             args.append(index)
             d2 = self._add_contact(*args)
@@ -281,7 +282,8 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size,
                         name='list_contacts')
             d = self.queue_at_cmd(cmd)
-            d.addCallback(lambda matches: map(self._regexp_to_contact, matches))
+            d.addCallback(
+                lambda matches: map(self._regexp_to_contact, matches))
             d.addErrback(not_found_eb)
             return d
 
@@ -474,13 +476,16 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         Sends the USSD command ``ussd`` in Huawei old mode (^USSDMODE=0)
 
         Sends GSM 7bit compressed text
-        Receives Hex encoded text
+        Receives Hex encoded or GSM 7bit compressed text
         """
         # AT+CUSD=1,"AA510C061B01",15
         # (*#100#)
 
         # +CUSD: 0,"3037373935353033333035",0
         # (07795503305)
+
+        # +CUSD: 0,"C2303BEC1E97413D90140473C162A0221E9E96E741E430BD0CD452816
+        #          "2B4574CF692C162301748F876D7E7A069737A9A837A20980B04",15
 
         def send_request(ussd):
             if not is_gsm_text(ussd):
@@ -494,6 +499,11 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
         def convert_response(response):
             resp = response[0].group('resp')
+            code = response[0].group('code')
+            if code == '15':
+                ret = unpack_msg(resp)
+                if is_gsm_text(ret):
+                    return ret
             try:
                 return resp.decode('hex')
             except TypeError:
@@ -507,7 +517,8 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 class HuaweiWCDMACustomizer(WCDMACustomizer):
     """WCDMA Customizer class for Huawei cards"""
     wrapper_klass = HuaweiWCDMAWrapper
-    async_regexp = re.compile('\r\n(?P<signal>\^[A-Z]{3,9}):\s*(?P<args>.*?)\r\n')
+    async_regexp = re.compile(
+                        '\r\n(?P<signal>\^[A-Z]{3,9}):\s*(?P<args>.*?)\r\n')
     allowed_dict = HUAWEI_ALLOWED_DICT
     band_dict = HUAWEI_BAND_DICT
     conn_dict = HUAWEI_CONN_DICT
