@@ -1,5 +1,5 @@
 """
-Automatically generated from a VMB Opco_Settings_9.4.6.20529_RC9
+Automatically generated from VMB Opco_Settings_10.0.302.24346_RC2
 """
 
 
@@ -415,19 +415,6 @@ class Vodafone_26202_WebSession(NetworkOperator):
     dns2 = None
 
 
-class Vodafone_26202_Corporate(NetworkOperator):
-    netid = ["26202"]
-    name = "Vodafone.de"
-    country = "Germany"
-    type = "Corporate"
-    smsc = "+491722270333"
-    apn = "event.vodafone.de"
-    username = ""
-    password = ""
-    dns1 = None
-    dns2 = None
-
-
 class Vodafone_26801_Contract(NetworkOperator):
     netid = ["26801"]
     name = "vodafone P"
@@ -443,7 +430,7 @@ class Vodafone_26801_Contract(NetworkOperator):
 
 class Vodafone_27201_Contract(NetworkOperator):
     netid = ["27201"]
-    name = "Vodafone IE"
+    name = "Vodafone Ireland"
     country = "Ireland"
     type = "Contract"
     smsc = "+35387699989"
@@ -456,7 +443,7 @@ class Vodafone_27201_Contract(NetworkOperator):
 
 class Vodafone_27201_Prepaid(NetworkOperator):
     netid = ["27201"]
-    name = "Vodafone IE"
+    name = "Vodafone Ireland"
     country = "Ireland"
     type = "Prepaid"
     smsc = "+35387699989"
@@ -811,8 +798,8 @@ class Vodafone_22601_Prepaid(NetworkOperator):
     country = "Romania"
     type = "Prepaid"
     smsc = "+40722004000"
-    apn = "internet.vodafone.ro"
-    username = "internet.vodafone.ro"
+    apn = "tobe.vodafone.ro"
+    username = "tobe.vodafone.ro"
     password = "vodafone"
     dns1 = None
     dns2 = None
@@ -888,19 +875,6 @@ class Vodafone_23003_Prepaid(NetworkOperator):
     name = "Vodafone CZ"
     country = "Czech Republic"
     type = "Prepaid"
-    smsc = "+420608005681"
-    apn = "internet"
-    username = ""
-    password = ""
-    dns1 = None
-    dns2 = None
-
-
-class Vodafone_23003_Corporate(NetworkOperator):
-    netid = ["23003"]
-    name = "Vodafone CZ"
-    country = "Czech Republic"
-    type = "Corporate"
     smsc = "+420608005681"
     apn = "internet"
     username = ""
@@ -1156,19 +1130,6 @@ class Vodafone_73001_WebSession(NetworkOperator):
     dns2 = None
 
 
-class Vodafone_73001_Corporate(NetworkOperator):
-    netid = ["73001"]
-    name = "Entel PCS"
-    country = "Chile"
-    type = "Corporate"
-    smsc = "+5698890005"
-    apn = "imovil.entelpcs.cl"
-    username = "entelpcs"
-    password = "entelpcs"
-    dns1 = None
-    dns2 = None
-
-
 class Vodafone_62002_Contract(NetworkOperator):
     netid = ["62002"]
     name = "Vodafone Ghana"
@@ -1266,32 +1227,6 @@ class Vodafone_64004_Prepaid(NetworkOperator):
     country = "Tanzania"
     type = "Prepaid"
     smsc = "+25575114"
-    apn = "internet"
-    username = ""
-    password = ""
-    dns1 = None
-    dns2 = None
-
-
-class Vodafone_64304_Contract(NetworkOperator):
-    netid = ["64304"]
-    name = "Vodacom Mozambique"
-    country = "Mozambique"
-    type = "Contract"
-    smsc = "+25884080011"
-    apn = "internet"
-    username = ""
-    password = ""
-    dns1 = None
-    dns2 = None
-
-
-class Vodafone_64304_Prepaid(NetworkOperator):
-    netid = ["64304"]
-    name = "Vodacom Mozambique"
-    country = "Mozambique"
-    type = "Prepaid"
-    smsc = "+25884080011"
     apn = "internet"
     username = ""
     password = ""
@@ -1899,7 +1834,7 @@ class Vodafone_405756_Prepaid(NetworkOperator):
 
 class Vodafone_42403_Contract(NetworkOperator):
     netid = ["42403"]
-    name = "du EITC"
+    name = "du"
     country = "Dubai"
     type = "Contract"
     smsc = "+971555515515"
@@ -1912,7 +1847,7 @@ class Vodafone_42403_Contract(NetworkOperator):
 
 class Vodafone_42403_Prepaid(NetworkOperator):
     netid = ["42403"]
-    name = "du EITC"
+    name = "du"
     country = "Dubai"
     type = "Prepaid"
     smsc = "+971555515515"
@@ -1928,6 +1863,58 @@ class Vodafone_64710_Contract(NetworkOperator):
     name = "SRR"
     country = "Reunion"
     type = "Contract"
+    smsc = "+262850909"
+    apn = "websfr"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_64710_SFR_slsfr(NetworkOperator):
+    netid = ["64710"]
+    name = "SRR"
+    country = "Reunion"
+    type = "SFR slsfr"
+    smsc = "+262850909"
+    apn = "slsfr"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_64710_SFR_internetpro(NetworkOperator):
+    netid = ["64710"]
+    name = "SRR"
+    country = "Reunion"
+    type = "SFR internetpro"
+    smsc = "+262850909"
+    apn = "internetpro"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_64710_SFR_ipnet(NetworkOperator):
+    netid = ["64710"]
+    name = "SRR"
+    country = "Reunion"
+    type = "SFR ipnet"
+    smsc = "+262850909"
+    apn = "ipnet"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_64710_Prepaid(NetworkOperator):
+    netid = ["64710"]
+    name = "SRR"
+    country = "Reunion"
+    type = "Prepaid"
     smsc = "+262850909"
     apn = "websfr"
     username = ""
@@ -1988,12 +1975,38 @@ class Vodafone_40004_Prepaid(NetworkOperator):
     dns2 = None
 
 
+class Vodafone_64304_Contract(NetworkOperator):
+    netid = ["64304"]
+    name = "Vodacom Mozambique"
+    country = "Mozambique"
+    type = "Contract"
+    smsc = "+25884080011"
+    apn = "internet"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_64304_Prepaid(NetworkOperator):
+    netid = ["64304"]
+    name = "Vodacom Mozambique"
+    country = "Mozambique"
+    type = "Prepaid"
+    smsc = "+25884080011"
+    apn = "internet"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+
 class Vodafone_63001_Contract(NetworkOperator):
     netid = ["63001"]
     name = "Vodacom Congo"
     country = "Congo (DRC)"
     type = "Contract"
-    smsc = "0811030"
+    smsc = "+243811030"
     apn = "vodanet"
     username = ""
     password = ""
@@ -2006,9 +2019,48 @@ class Vodafone_63001_Prepaid(NetworkOperator):
     name = "Vodacom Congo"
     country = "Congo (DRC)"
     type = "Prepaid"
-    smsc = "0811030"
+    smsc = "+243811030"
     apn = "vodanet"
     username = ""
     password = ""
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_46692_Contract(NetworkOperator):
+    netid = ["46692"]
+    name = "Chunghwa"
+    country = "Taiwan"
+    type = "Contract"
+    smsc = "+886932400821"
+    apn = "internet"
+    username = ""
+    password = ""
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_46692_Prepaid(NetworkOperator):
+    netid = ["46692"]
+    name = "Chunghwa"
+    country = "Taiwan"
+    type = "Prepaid"
+    smsc = "+886932400821"
+    apn = "emome"
+    username = "web"
+    password = "web"
+    dns1 = None
+    dns2 = None
+
+
+class Vodafone_29403_Contract(NetworkOperator):
+    netid = ["29403"]
+    name = "Vip operator"
+    country = "Macedonia"
+    type = "Contract"
+    smsc = "+38977000301"
+    apn = "vipoperator"
+    username = "vipoperator"
+    password = "vipoperator"
     dns1 = None
     dns2 = None
