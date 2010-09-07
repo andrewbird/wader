@@ -23,13 +23,9 @@ import re
 import dbus
 from twisted.python import log
 
-CTS_ERROR = 'org.freedesktop.ModemManager.Error.Contacts'
-NET_ERROR = 'org.freedesktop.ModemManager.Error.Network'
-PIN_ERROR = 'org.freedesktop.ModemManager.Error.PIN'
-MMS_ERROR = 'org.freedesktop.ModemManager.Error.MMS'
-SMS_ERROR = 'org.freedesktop.ModemManager.Error.SMS'
-GEN_ERROR = 'org.freedesktop.ModemManager.Error'
-MM_MODEM_ERROR = 'org.freedesktop.ModemManager.Gsm'
+GEN_ERROR = 'org.freedesktop.ModemManager.Modem'
+GSM_ERROR = 'org.freedesktop.ModemManager.Modem.Gsm'
+MMS_ERROR = 'org.freedesktop.ModemManager.Modem.Gsm.Mms'
 
 ERROR_REGEXP = re.compile(r"""
 # This regexp matches the following patterns:
@@ -52,333 +48,333 @@ ERROR                                 # Plain ERROR regexp
 
 class General(dbus.DBusException):
     """Exception raised when an ERROR has occurred"""
-    _dbus_error_name = GEN_ERROR
+    _dbus_error_name = "%s.%s" % (GEN_ERROR, 'General')
 
 
 class InputValueError(dbus.DBusException):
     """Exception raised when INPUT VALUE IS OUT OF RANGE is received"""
-    _dbus_error_name = GEN_ERROR
+    _dbus_error_name = "%s.%s" % (GEN_ERROR, 'InputValueError')
 
 
 class SerialResponseTimeout(dbus.DBusException):
     """Serial response timed out"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SerialResponseTimeout')
+    _dbus_error_name = "%s.%s" % (GEN_ERROR, 'SerialResponseTimeout')
 
 
 class Connected(dbus.DBusException):
     """Operation attempted whilst connected"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'Connected')
+    _dbus_error_name = "%s.%s" % (GEN_ERROR, 'Connected')
 
 
 class PhoneFailure(dbus.DBusException):
     """Phone failure"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'PhoneFailure')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'PhoneFailure')
 
 
 class NoConnection(dbus.DBusException):
     """No connection to phone"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NoConnection')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NoConnection')
 
 
 class LinkReserved(dbus.DBusException):
     """Phone-adaptor linkreserved"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'LinkReserved')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'LinkReserved')
 
 
 class OperationNotAllowed(dbus.DBusException):
     """Operation not allowed"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'OperationNotAllowed')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'OperationNotAllowed')
 
 
 class OperationNotSupported(dbus.DBusException):
     """Operation not supported"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'OperationNotSupported')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'OperationNotSupported')
 
 
 class PhSimPinRequired(dbus.DBusException):
     """PH-SIM PIN required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'PhSimPinRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'PhSimPinRequired')
 
 
 class PhFSimPinRequired(dbus.DBusException):
     """PH-FSIM PIN required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'PhFSimPinRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'PhFSimPinRequired')
 
 
 class PhFPukRequired(dbus.DBusException):
     """PH-FSIM PUK required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'PhFPukRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'PhFPukRequired')
 
 
 class SimNotInserted(dbus.DBusException):
     """PH-PUK required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimNotInserted')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimNotInserted')
 
 
 class SimPinRequired(dbus.DBusException):
     """SIM PIN required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimPinRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimPinRequired')
 
 
 class SimPukRequired(dbus.DBusException):
     """SIM PUK required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimPukRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimPukRequired')
 
 
 class SimFailure(dbus.DBusException):
     """SIM failure"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimFailure')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimFailure')
 
 
 class SimBusy(dbus.DBusException):
     """SIM busy"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimBusy')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimBusy')
 
 
 class SimWrong(dbus.DBusException):
     """SIM wrong"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimWrong')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimWrong')
 
 
 class SimNotStarted(dbus.DBusException):
     """SIM interface not started"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimNotStarted')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimNotStarted')
 
 
 class IncorrectPassword(dbus.DBusException):
     """Incorrect password"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'IncorrectPassword')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'IncorrectPassword')
 
 
 class SimPin2Required(dbus.DBusException):
     """SIM PIN2 required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimPin2Required')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimPin2Required')
 
 
 class SimPuk2Required(dbus.DBusException):
     """SIM PUK2 required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'SimPuk2Required')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'SimPuk2Required')
 
 
 class MemoryFull(dbus.DBusException):
     """Memory full"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'MemoryFull')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'MemoryFull')
 
 
 class InvalidIndex(dbus.DBusException):
     """Index invalid"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'InvalidIndex')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'InvalidIndex')
 
 
 class NotFound(dbus.DBusException):
     """Not found"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NotFound')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NotFound')
 
 
 class MemoryFailure(dbus.DBusException):
     """Memory failure"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'MemoryFailure')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'MemoryFailure')
 
 
 class TextTooLong(dbus.DBusException):
     """Text string too long"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'TextTooLong')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'TextTooLong')
 
 
 class InvalidChars(dbus.DBusException):
     """Invalid characters in text string"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'InvalidChars')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'InvalidChars')
 
 
 class DialStringTooLong(dbus.DBusException):
     """Invalid dial string"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'DialStringTooLong')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'DialStringTooLong')
 
 
 class InvalidDialString(dbus.DBusException):
     """Invalid dial string"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'InvalidDialString')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'InvalidDialString')
 
 
 class NoNetwork(dbus.DBusException):
     """No network service"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NoNetwork')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NoNetwork')
 
 
 class NetworkTimeout(dbus.DBusException):
     """Network timeout"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NetworkTimeout')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NetworkTimeout')
 
 
 class NetworkNotAllowed(dbus.DBusException):
     """Only emergency calls are allowed"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NetworkNotAllowed')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NetworkNotAllowed')
 
 
 class NetworkPinRequired(dbus.DBusException):
     """Network PIN required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NetworkPinRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NetworkPinRequired')
 
 
 class NetworkPukRequired(dbus.DBusException):
     """Network PUK required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NetworkPukRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NetworkPukRequired')
 
 
 class NetworkSubsetPinRequired(dbus.DBusException):
     """Network subset PIN required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NetworkSubsetPinRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NetworkSubsetPinRequired')
 
 
 class NetworkSubsetPukRequired(dbus.DBusException):
     """Network subset PUK required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'NetworkSubsetPukRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'NetworkSubsetPukRequired')
 
 
 class ServicePinRequired(dbus.DBusException):
     """Service PIN required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'ServicePinRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'ServicePinRequired')
 
 
 class ServicePukRequired(dbus.DBusException):
     """Service PUK required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'ServicePukRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'ServicePukRequired')
 
 
 class CharsetError(dbus.DBusException):
     """Raised when Wader can't find an appropriate charset at startup"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'CharsetError')
+    _dbus_error_name = "%s.%s" % (GEN_ERROR, 'CharsetError')
 
 
 class CorporatePinRequired(dbus.DBusException):
     """Corporate PIN required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'CorporatePinRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'CorporatePinRequired')
 
 
 class CorporatePukRequired(dbus.DBusException):
     """Corporate PUK required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'CorporatePukRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'CorporatePukRequired')
 
 
 class HiddenKeyRequired(dbus.DBusException):
     """Hidden key required"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'HiddenKeyRequired')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'HiddenKeyRequired')
 
 
 class EapMethodNotSupported(dbus.DBusException):
     """EAP method not supported"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'EapMethodNotSupported')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'EapMethodNotSupported')
 
 
 class IncorrectParams(dbus.DBusException):
     """Incorrect params received"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'IncorrectParams')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'IncorrectParams')
 
 
 class Unknown(dbus.DBusException):
     """Unknown error"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'Unknown')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'Unknown')
 
 
 class GprsIllegalMs(dbus.DBusException):
     """Illegal GPRS MS"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsIllegalMs')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsIllegalMs')
 
 
 class GprsIllegalMe(dbus.DBusException):
     """Illegal GPRS ME"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsIllegalMe')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsIllegalMe')
 
 
 class GprsServiceNotAllowed(dbus.DBusException):
     """GPRS service not allowed"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsServiceNotAllowed')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsServiceNotAllowed')
 
 
 class GprsPlmnNotAllowed(dbus.DBusException):
     """GPRS PLMN not allowed"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsPlmnNotAllowed')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsPlmnNotAllowed')
 
 
 class GprsLocationNotAllowed(dbus.DBusException):
     """GPRS location not allowed"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsLocationNotAllowed')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsLocationNotAllowed')
 
 
 class GprsRoamingNotAllowed(dbus.DBusException):
     """GPRS roaming not allowed"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsRoamingNotAllowed')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsRoamingNotAllowed')
 
 
 class GprsOptionNotSupported(dbus.DBusException):
     """GPRS used option not supported"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsOptionNotSupported')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsOptionNotSupported')
 
 
 class GprsNotSubscribed(dbus.DBusException):
     """GPRS not susbscribed"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsNotSubscribed')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsNotSubscribed')
 
 
 class GprsOutOfOrder(dbus.DBusException):
     """GPRS out of order"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsOutOfOrder')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsOutOfOrder')
 
 
 class GprsPdpAuthFailure(dbus.DBusException):
     """GPRS PDP authentication failure"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsPdpAuthFailure')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsPdpAuthFailure')
 
 
 class GprsUnspecified(dbus.DBusException):
     """Unspecified GPRS error"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsUnspecified')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsUnspecified')
 
 
 class GprsInvalidClass(dbus.DBusException):
     """Invalid GPRS class"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'GprsInvalidClass')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'GprsInvalidClass')
 
 
 class ServiceTemporarilyOutOfOrder(dbus.DBusException):
     """Exception raised when service temporarily out of order"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR,
+    _dbus_error_name = "%s.%s" % (GSM_ERROR,
                                   'ServiceTemporarilyOutOfOrder')
 
 
 class UnknownSubscriber(dbus.DBusException):
     """Exception raised when suscriber unknown"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'UnknownSubscriber')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'UnknownSubscriber')
 
 
 class ServiceNotInUse(dbus.DBusException):
     """Exception raised when service not in use"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'ServiceNotInUse')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'ServiceNotInUse')
 
 
 class ServiceNotAvailable(dbus.DBusException):
     """Exception raised when service not available"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'ServiceNotAvailable')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'ServiceNotAvailable')
 
 
 class UnknownNetworkMessage(dbus.DBusException):
     """Exception raised upon unknown network message"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'UnknownNetworkMessage')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'UnknownNetworkMessage')
 
 
 class CallIndexError(dbus.DBusException):
     """Exception raised upon call index error"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'CallIndexError')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'CallIndexError')
 
 
 class CallStateError(dbus.DBusException):
     """Exception raised upon call state error"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, 'CallStateError')
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, 'CallStateError')
 
 
 class MalformedUssdPduError(dbus.DBusException):
     """Exception raised when a malformed Ussd Pdu is received"""
-    _dbus_error_name = "%s.%s" % (MM_MODEM_ERROR, "MalformedUssdPduError")
+    _dbus_error_name = "%s.%s" % (GSM_ERROR, "MalformedUssdPduError")
 
 
 class ExpiredNotification(dbus.DBusException):
