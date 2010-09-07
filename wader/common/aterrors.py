@@ -56,6 +56,16 @@ class InputValueError(dbus.DBusException):
     _dbus_error_name = "%s.%s" % (GEN_ERROR, 'InputValueError')
 
 
+class SerialOpenFailed(dbus.DBusException):
+    """Could not open serial device"""
+    _dbus_error_name = "%s.%s" % (GEN_ERROR, 'SerialOpenFailed')
+
+
+class SerialSendFailed(dbus.DBusException):
+    """Could not write to serial device"""
+    _dbus_error_name = "%s.%s" % (GEN_ERROR, 'SerialSendFailed')
+
+
 class SerialResponseTimeout(dbus.DBusException):
     """Serial response timed out"""
     _dbus_error_name = "%s.%s" % (GEN_ERROR, 'SerialResponseTimeout')
