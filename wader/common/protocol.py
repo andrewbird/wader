@@ -449,7 +449,7 @@ class WCDMAProtocol(SerialProtocol):
         :type oldpin: str
         :type newpin: str
 
-        :raise GenericError: When the password is incorrect.
+        :raise General: When the password is incorrect.
         :raise IncorrectPassword: When the password is incorrect.
         :raise InputValueError: When the PIN != \d{4}
         """
@@ -523,7 +523,7 @@ class WCDMAProtocol(SerialProtocol):
         :type pin: int
         :type enable: bool
 
-        :raise GenericError: If ``pin`` is incorrect.
+        :raise General: If ``pin`` is incorrect.
         :raise IncorrectPassword: If ``pin`` is incorrect.
         :raise ValueError: When ``pin`` != \d{4}
         """
@@ -578,7 +578,7 @@ class WCDMAProtocol(SerialProtocol):
         """
         Returns all the contacts stored in the SIM card
 
-        :raise GenericError: When no contacts are found.
+        :raise General: When no contacts are found.
         :raise NotFound: When no contacts are found.
         :raise SimBusy: When the SIM is not ready.
         :raise SimNotStarted: When the SIM is not ready.
@@ -624,7 +624,7 @@ class WCDMAProtocol(SerialProtocol):
         """
         Returns the phonebook size of the SIM card
 
-        :raise GenericError: When the SIM is not ready.
+        :raise General: When the SIM is not ready.
         :raise SimBusy: When the SIM is not ready.
         :raise CMSError500: When the SIM is not ready.
         """
@@ -656,7 +656,7 @@ class WCDMAProtocol(SerialProtocol):
         """
         Returns all the messages stored in the SIM card
 
-        :raise GenericError: When no messages are found.
+        :raise General: When no messages are found.
         :raise NotFound: When no messages are found.
 
         :rtype: list
@@ -683,7 +683,7 @@ class WCDMAProtocol(SerialProtocol):
         """Returns a list with the used contact ids"""
 
         def errback(failure):
-            failure.trap(E.NotFound, E.GenericError)
+            failure.trap(E.NotFound, E.General)
             return []
 
         d = self.list_contacts()
@@ -696,7 +696,7 @@ class WCDMAProtocol(SerialProtocol):
         d = self.list_sms()
 
         def errback(failure):
-            failure.trap(E.NotFound, E.GenericError)
+            failure.trap(E.NotFound, E.General)
             return []
 
         d.addCallback(lambda smslist: [int(s.group('id')) for s in smslist])
@@ -725,7 +725,7 @@ class WCDMAProtocol(SerialProtocol):
         """
         Authenticates using ``pin``
 
-        :raise GenericError: Exception raised by Nozomi when PIN is incorrect.
+        :raise General: Exception raised by Nozomi when PIN is incorrect.
         :raise IncorrectPassword: Exception raised when the PIN is incorrect
         """
         cmd = ATCmd('AT+CPIN="%s"' % str(pin), name='send_pin')
@@ -735,7 +735,7 @@ class WCDMAProtocol(SerialProtocol):
         """
         Authenticates using ``puk`` and ``pin``
 
-        :raise GenericError: Exception raised by Nozomi when PUK is incorrect.
+        :raise General: Exception raised by Nozomi when PUK is incorrect.
         :raise IncorrectPassword: Exception raised when the PUK is incorrect
         """
         atstr = 'AT+CPIN="%s","%s"' % (str(puk), str(pin))

@@ -29,7 +29,7 @@ from wader.common import consts
 from wader.common.middleware import WCDMAWrapper
 from wader.common.exported import HSOExporter
 from wader.common.hardware.base import WCDMACustomizer
-from wader.common.aterrors import GenericError
+from wader.common.aterrors import General
 from wader.common.sim import SIMBaseClass
 from wader.common.statem.simple import SimpleStateMachine
 from wader.common.plugin import DevicePlugin
@@ -166,7 +166,7 @@ class OptionSIMClass(SIMBaseClass):
                                             process_sim_state, auxdef)
                     else:
                         msg = "Max number of attempts reached %d"
-                        auxdef.errback(GenericError(msg % self.num_retries))
+                        auxdef.errback(General(msg % self.num_retries))
 
                 return
 
@@ -352,7 +352,7 @@ class OptionHSOWrapper(OptionWrapper):
         def real_get_ip4_config(deferred):
 
             def get_ip4_eb(failure):
-                failure.trap(E.GenericError)
+                failure.trap(E.General)
                 if self.state_dict.get('should_stop'):
                     self.state_dict.pop('should_stop')
                     return

@@ -85,7 +85,7 @@ class SIMBaseClass(object):
                 auxdef.callback(self.size)
 
             def phonebook_size_eb(failure):
-                failure.trap(E.GenericError, E.SimBusy, E.SimFailure)
+                failure.trap(E.General, E.SimBusy, E.SimFailure)
                 self.num_of_failures += 1
                 if self.num_of_failures > RETRY_ATTEMPTS:
                     # fail gracefully for now, we'll try again

@@ -30,7 +30,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
 
     def get_phonebook_size(self):
-        # the E170 that we have around keeps raising GenericErrors whenever
+        # the E170 that we have around keeps raising Generals whenever
         # is asked for its size, we'll have to cheat till we have time
         # to find a workaround
         d = super(HuaweiE17XWrapper, self).get_phonebook_size()
@@ -53,7 +53,7 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
             return max(indexes)
 
         def no_contacts_eb(failure):
-            failure.trap(E.NotFound, E.GenericError)
+            failure.trap(E.NotFound, E.General)
             return 0
 
         def get_valid_contacts(_max):

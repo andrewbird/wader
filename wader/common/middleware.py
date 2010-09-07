@@ -463,7 +463,7 @@ class WCDMAWrapper(WCDMAProtocol):
             return deque(list(free))
 
         def list_contacts_eb(failure):
-            failure.trap(E.NotFound, E.GenericError)
+            failure.trap(E.NotFound, E.General)
             return deque(range(1, self.device.sim.size))
 
         d = self.list_contacts()
@@ -525,7 +525,7 @@ class WCDMAWrapper(WCDMAProtocol):
             return 1
 
         def aterror_eb(failure):
-            failure.trap(E.GenericError)
+            failure.trap(E.General)
             # return the failure or wont work
             return failure
 
@@ -617,7 +617,7 @@ class WCDMAWrapper(WCDMAProtocol):
         """
 
         def not_found_eb(failure):
-            failure.trap(E.NotFound, E.InvalidIndex, E.GenericError)
+            failure.trap(E.NotFound, E.InvalidIndex, E.General)
             return []
 
         def get_them(ignored=None):

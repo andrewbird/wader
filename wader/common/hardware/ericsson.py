@@ -235,7 +235,7 @@ class EricssonWrapper(WCDMAWrapper):
             if mode in ERICSSON_CONN_DICT_REV:
                 return ERICSSON_CONN_DICT_REV[mode]
 
-            raise E.GenericError("unknown network mode: %d" % mode)
+            raise E.General("unknown network mode: %d" % mode)
 
         d = self.get_radio_status()
         d.addCallback(get_network_mode_cb)
@@ -296,7 +296,7 @@ class EricssonWrapper(WCDMAWrapper):
             return 1
 
         def aterror_eb(failure):
-            failure.trap(E.GenericError)
+            failure.trap(E.General)
             # return the failure or wont work
             return failure
 

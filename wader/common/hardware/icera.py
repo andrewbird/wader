@@ -250,7 +250,7 @@ class IceraWrapper(WCDMAWrapper):
         def real_get_ip4_config(deferred):
 
             def get_ip4_eb(failure):
-                failure.trap(E.GenericError)
+                failure.trap(E.General)
                 if self.state_dict.get('should_stop'):
                     self.state_dict.pop('should_stop')
                     return
@@ -282,7 +282,7 @@ class IceraWrapper(WCDMAWrapper):
 
         def _get_ip4_config_cb(resp):
             if not resp:
-                raise E.GenericError()
+                raise E.General()
 
             ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
             # XXX: Fix dns3

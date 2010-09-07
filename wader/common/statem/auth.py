@@ -77,17 +77,17 @@ class AuthStateMachine(Modal):
 
     def incorrect_puk_eb(self, failure):
         """Executed when the PUK is incorrect"""
-        failure.trap(E.IncorrectPassword, E.GenericError)
+        failure.trap(E.IncorrectPassword, E.General)
         self.notify_auth_failure(E.IncorrectPassword())
 
     def incorrect_puk2_eb(self, failure):
         """Executed when the PUK2 is incorrect"""
-        failure.trap(E.IncorrectPassword, E.GenericError)
+        failure.trap(E.IncorrectPassword, E.General)
         self.notify_auth_failure(E.IncorrectPassword())
 
     def pin_required_eb(self, failure):
         """Executed when SIM PIN is required"""
-        failure.trap(E.SimPinRequired, E.GenericError)
+        failure.trap(E.SimPinRequired, E.General)
         self.notify_auth_failure(E.SimPinRequired())
 
     def puk_required_eb(self, failure):
@@ -109,7 +109,7 @@ class AuthStateMachine(Modal):
 
     def sim_busy_eb(self, failure):
         """Executed when SIM is busy, try again in a while"""
-        failure.trap(E.SimBusy, E.SimNotStarted, E.GenericError)
+        failure.trap(E.SimBusy, E.SimNotStarted, E.General)
         self.num_sim_busy += 1
         if self.num_sim_busy >= MAX_NUM_SIM_BUSY:
             # we can now consider that there's something wrong with the

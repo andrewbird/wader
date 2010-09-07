@@ -275,7 +275,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         """
 
         def not_found_eb(failure):
-            failure.trap(E.NotFound, E.InvalidIndex, E.GenericError)
+            failure.trap(E.NotFound, E.InvalidIndex, E.General)
             return []
 
         def get_them(ignored=None):
@@ -556,7 +556,7 @@ class HuaweiSIMClass(SIMBaseClass):
     def initialize(self, set_encoding=True):
 
         def at_curc_eb(failure):
-            failure.trap(E.GenericError)
+            failure.trap(E.General)
 
         def init_cb(size):
             # enable unsolicited control commands

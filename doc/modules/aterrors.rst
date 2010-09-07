@@ -13,7 +13,7 @@ Functions
 Exceptions
 ----------
 
-.. autoexception:: GenericError
+.. autoexception:: General
 
 .. autoexception:: InputValueError
 

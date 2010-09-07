@@ -50,7 +50,7 @@ ERROR                                 # Plain ERROR regexp
 """, re.VERBOSE)
 
 
-class GenericError(dbus.DBusException):
+class General(dbus.DBusException):
     """Exception raised when an ERROR has occurred"""
     _dbus_error_name = GEN_ERROR
 
@@ -456,7 +456,7 @@ class CMSError500(dbus.DBusException):
 
 ERROR_DICT = {
     # Generic error
-    'ERROR': GenericError,
+    'ERROR': General,
 
     # CME Errors
     '+CME ERROR: incorrect password': IncorrectPassword,
