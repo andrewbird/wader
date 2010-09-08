@@ -28,7 +28,7 @@ from collections import deque
 import dbus
 import serial
 from twisted.python import log
-from twisted.internet import defer, reactor
+from twisted.internet import defer, reactor, task
 
 import wader.common.aterrors as E
 from wader.common.consts import (MDM_INTFACE, CRD_INTFACE, NET_INTFACE,
@@ -1039,15 +1039,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         DELAY = self.device.custom.auth_klass.DELAY
         log.msg("giving the device %d seconds to settle, waiting..." % DELAY)
-
-        deferred = defer.Deferred()
-
-        def do_init():
-            d = self.device.initialize()
-            d.addCallback(deferred.callback)
-
-        reactor.callLater(DELAY, do_init)
-        return deferred
+        return task.deferLater(reactor, DELAY, self.device.initialize)
 
 
 class BasicNetworkOperator(object):
