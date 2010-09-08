@@ -346,7 +346,6 @@ class OptionHSOWrapper(OptionWrapper):
             msg = "Cannot get IP4 config from a non static ip method"
             raise E.OperationNotSupported(msg)
 
-        self.state_dict['retry_call'] = None
         self.state_dict['num_of_retries'] = 0
 
         def real_get_ip4_config(deferred):
@@ -361,9 +360,8 @@ class OptionHSOWrapper(OptionWrapper):
                 if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
                     return failure
 
-                self.state_dict['retry_call'] = reactor.callLater(
-                        HSO_RETRY_TIMEOUT,
-                        real_get_ip4_config, deferred)
+                reactor.callLater(HSO_RETRY_TIMEOUT,
+                                  real_get_ip4_config, deferred)
 
             d = self._get_ip4_config()
             d.addCallback(deferred.callback)
