@@ -94,14 +94,14 @@ class HardwareManager(object):
 
             if self._call is None:
                 # the first time we set a small delay and whenever a device
-                # is added we will reset the call ADD_THRESHOLD seconds
+                # is added we will reset the call 2 seconds
                 self._call = reactor.callLater(2,
                                             self._process_hotplugged_devices)
+
             elif self._call.active():
                 # XXX: this can be optimized by substracting x milliseconds
                 # for every device added to the reset call. However it
                 # introduces some more logic and perhaps should live outside.
-
                 self._call.reset(ADD_THRESHOLD)
 
     def register_controller(self, controller):
