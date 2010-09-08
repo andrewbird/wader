@@ -945,18 +945,18 @@ class WCDMAWrapper(WCDMAProtocol):
         if not port.obj.isOpen():
             raise AttributeError("Data serial port is not open")
 
-        def restore_speed(d, speed):
+        def restore_speed(speed):
             port.obj.setBaudrate(speed)
             port.obj.close()
             self.device.set_status(DEV_ENABLED)
-            d.callback(True)
+            return True
 
         d = defer.Deferred()
         # lower and raise baud speed
         speed = port.obj.getBaudrate()
         port.obj.setBaudrate(0)
-        reactor.callLater(.1, restore_speed, d, speed)
-        return d
+        # restore the speed in .1 seconds
+        return task.deferLater(reactor, .1, restore_speed, speed)
 
     def register_with_netid(self, netid):
         """
