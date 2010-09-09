@@ -407,6 +407,10 @@ class OptionHSOWrapper(OptionWrapper):
         return d
 
     def hso_connect(self):
+        # clean should_stop
+        if 'should_stop' in self.state_dict:
+            self.state_dict.pop('should_stop')
+
         conn_id = self.state_dict.get('conn_id')
         if not conn_id:
             raise E.CallIndexError("conn_id is None")
@@ -421,6 +425,7 @@ class OptionHSOWrapper(OptionWrapper):
         if not conn_id:
             raise E.CallIndexError("conn_id is None")
 
+        self.state_dict['should_stop'] = True
         d = self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
         d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
         return d
