@@ -951,7 +951,6 @@ class WCDMAWrapper(WCDMAProtocol):
             self.device.set_status(DEV_ENABLED)
             return True
 
-        d = defer.Deferred()
         # lower and raise baud speed
         speed = port.obj.getBaudrate()
         port.obj.setBaudrate(0)
