@@ -573,12 +573,11 @@ class NMProfileManager(Object):
                     # uuid = profile.get_settings()['connection']['uuid']
                     # self.profiles[uuid] = profile
                     try:
-                         profile = self._get_profile_from_gconf_path(path)
-                         uuid = profile.get_settings()['connection']['uuid']
-                         self.profiles[uuid] = profile
-
+                        profile = self._get_profile_from_gconf_path(path)
+                        uuid = profile.get_settings()['connection']['uuid']
+                        self.profiles[uuid] = profile
                     except ex.ProfileNotFoundError:
-                         pass
+                        pass
 
         return self.profiles.values()
 

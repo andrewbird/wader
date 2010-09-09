@@ -199,8 +199,8 @@ class ProfileManager(object):
         return self.backend.get_profile_by_object_path(opath)
 
     def get_profile_options_from_imsi(self, imsi):
-        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_imsi")
         """Generates a new :class:`Profile` from ``imsi``"""
+        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_imsi")
         with closing(NetworkProvider()) as provider:
             network = provider.get_network_by_id(imsi)
             if network:
@@ -211,8 +211,8 @@ class ProfileManager(object):
             raise ex.ProfileNotFoundError("No profile for IMSI %s" % imsi)
 
     def get_profile_options_from_network(self, network):
-        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_network")
         """Generates a new :class:`Profile` from ``network``"""
+        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_network")
         props = {}
 
         # gsm
