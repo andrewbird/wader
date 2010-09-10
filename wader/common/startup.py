@@ -121,8 +121,11 @@ def get_wader_application():
 
 def attach_to_serial_port(device):
     """Attaches the serial port in ``device``"""
-    d = defer.Deferred()
     port = device.ports.get_application_port()
+    if port.obj is not None:
+        return defer.succeed(device)
+
+    d = defer.Deferred()
     port.obj = SerialPort(device.sconn, port.path, reactor,
                           baudrate=device.baudrate)
     reactor.callLater(ATTACH_DELAY, lambda: d.callback(device))
