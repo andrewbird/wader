@@ -265,8 +265,12 @@ class HardwareManager(object):
 
     def _unregister_client(self, client):
         """Removes client identified by ``opath``"""
-        plugin = self.clients.pop(client.opath)
-        plugin.close(removed=True)
+        try:
+            plugin = self.clients.pop(client.opath)
+            plugin.close(removed=True)
+        except KeyError:
+            log.err("_unregister_client: Could not "
+                    "unregister %s. Is not present." % client.opath)
 
     def _generate_opath(self):
         self._client_count += 1
