@@ -484,8 +484,14 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         # +CUSD: 0,"3037373935353033333035",0
         # (07795503305)
 
-        # +CUSD: 0,"C2303BEC1E97413D90140473C162A0221E9E96E741E430BD0CD452816
+        # +CUSD: 0,"C2303BEC1E97413D90140473C162A0221E9E96E741E430BD0CD452816"
         #          "2B4574CF692C162301748F876D7E7A069737A9A837A20980B04",15
+
+        # +CUSD: 0,"D95399CD7EB340F9771D840EDBCB0AA9CD25CB81C269393DDD2E83143"
+        #          "0D0B43945CD53A0B09BACA0B964305053082287E9619722FBAE83C2F2"
+        #          "32E8ED0635A94E90F6ED2EBB405076393C2F83C8E9301BA48AD162AAD"
+        #          "808647ECB41E4323D9C6697C92071981D768FCB739742287FD7CF683A"
+        #          "88FE06E5DF7590380F6A529D2E",0
 
         def send_request(ussd):
             if not is_gsm_text(ussd):
@@ -500,10 +506,24 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         def convert_response(response):
             resp = response[0].group('resp')
             code = response[0].group('code')
-            if code == '15':
-                ret = unpack_msg(resp)
-                if is_gsm_text(ret):
-                    return ret
+
+            if code is not None:
+                code = int(code)
+
+                if ((code & 0x10) == 0x10):
+                    log.err("We don't yet handle ISO 639 encoded USSD"
+                            " - please report")
+                    raise E.MalformedUssdPduError(resp)
+
+                if ((code & 0xf4) == 0xf4):
+                    log.err("We don't yet handle 8 bit encoded USSD"
+                            " - please report")
+                    raise E.MalformedUssdPduError(resp)
+
+            ret = unpack_msg(resp)
+            if is_gsm_text(ret):
+                return ret
+
             try:
                 return resp.decode('hex')
             except TypeError:
