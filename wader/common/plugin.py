@@ -127,6 +127,7 @@ class DevicePlugin(object):
 
             if self.ports.cport.obj is not None:
                 self.ports.cport.obj.loseConnection("Bye!")
+                self.ports.cport.obj = None
 
         if self.daemons is not None and self.daemons.running:
             self.daemons.stop_daemons()
