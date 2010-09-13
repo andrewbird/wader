@@ -710,7 +710,9 @@ class WCDMAWrapper(WCDMAProtocol):
         it is the caller's responsability to give at least 15 seconds
         to the device to settle, this time varies from device to device
         """
-        d = super(WCDMAWrapper, self).send_pin(pin)
+        from wader.common.startup import attach_to_serial_port
+        d = attach_to_serial_port(self.device)
+        d.addCallback(lambda _: super(WCDMAWrapper, self).send_pin(pin))
         d.addCallback(lambda response: response[0].group('resp'))
         return d
 
