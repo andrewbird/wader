@@ -397,7 +397,7 @@ class MessageAssemblyLayer(object):
         if this the first time we see this notification.
         """
         wap_push = self.sms_map.pop(index)
-        notification, _ = extract_push_notification(wap_push.text)
+        notification = extract_push_notification(wap_push.text)
 
         index = None
         new = False
