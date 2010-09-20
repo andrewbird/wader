@@ -131,6 +131,25 @@ HUAWEI_CMD_DICT['get_radio_status'] = build_cmd_dict(
                        end=re.compile('\r\n\+CFUN:\s?\d\r\n'),
                        extract=re.compile('\r\n\+CFUN:\s?(?P<status>\d)\r\n'))
 
+HUAWEI_CMD_DICT['check_pin'] = build_cmd_dict(re.compile(r"""
+                        \r\n
+                        \+CPIN:\s*
+                        (?P<resp>
+                        READY      |
+                        SIM\sPIN2? |
+                        SIM\sPUK2?
+                        )
+                        \r\n
+                        """, re.VERBOSE))
+
+#+CPBR: (1-200),80,14,0,0,0
+HUAWEI_CMD_DICT['get_phonebook_size'] = build_cmd_dict(re.compile(r"""
+                        \r\n
+                        \+CPBR:\s
+                        \(\d+-(?P<size>\d+)\).*
+                        \r\n
+                        """, re.VERBOSE))
+
 HUAWEI_CMD_DICT['get_contact'] = build_cmd_dict(re.compile(r"""
                        \r\n
                        \^CPBR:\s(?P<id>\d+),
