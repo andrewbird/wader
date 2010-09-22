@@ -20,6 +20,7 @@
 from datetime import datetime
 from operator import itemgetter
 from time import mktime
+from pytz import timezone
 
 from zope.interface import implements
 
@@ -132,9 +133,12 @@ class Message(object):
 
         if 'date' not in ret:
             # XXX: Should we really fake a date?
-            ret['date'] = get_tz_aware_now()
+            _datetime = get_tz_aware_now()
+        else:
+            # SmsDeliver dates are UTC but naive
+            _datetime = ret['date'].replace(tzinfo=timezone('UTC'))
 
-        m = cls(ret['number'], _datetime=ret['date'], csca=ret['csca'],
+        m = cls(ret['number'], _datetime=_datetime, csca=ret['csca'],
                 ref=ret.get('ref'), cnt=ret.get('cnt'), seq=ret.get('seq', 0),
                 fmt=ret.get('fmt'))
         m.type = ret.get('type')
