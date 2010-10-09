@@ -172,7 +172,7 @@ class Message(object):
         sms = SmsSubmit(self.number, self.text)
 
         sms.csca = self.csca
-        sms.status_request = self.status_request
+        sms.request_status = self.status_request
 
         if store:
             sms.validity = None
