@@ -83,15 +83,6 @@ ZTE_CMD_DICT['get_band'] = build_cmd_dict(re.compile(r"""
                                             \r\n
                                             """, re.VERBOSE))
 
-ZTE_CMD_DICT['get_netreg_status'] = build_cmd_dict(re.compile(r"""
-                                            \r\n
-                                            \+CREG:\s
-                                            (?P<mode>\d),
-                                            (?P<status>\d+)
-                                            (,[0-9a-fA-F]*,[0-9a-fA-F]*)?
-                                            \r\n
-                                            """, re.VERBOSE))
-
 ZTE_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
                                             \r\n
                                             \+ZSNT:\s

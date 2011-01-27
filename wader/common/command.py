@@ -139,6 +139,7 @@ CMD_DICT = {
                               \r\n
                               \+CREG:\s
                               (?P<mode>\d),(?P<status>\d+)
+                              (,[0-9a-fA-F]*,[0-9a-fA-F]*)?
                               \r\n
                               """, re.X)),
 

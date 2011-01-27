@@ -57,13 +57,6 @@ SIERRA_BAND_DICT = {
 
 SIERRA_CMD_DICT = get_cmd_dict_copy()
 
-SIERRA_CMD_DICT['get_netreg_status'] = build_cmd_dict(re.compile(
-                    r"""
-                    \r\n
-                    \+CREG:\s
-                    (?P<mode>\d),(?P<status>\d+)(,[0-9a-fA-F]*,[0-9a-fA-F]*)?
-                    \r\n""", re.VERBOSE))
-
 SIERRA_CMD_DICT['get_band'] = build_cmd_dict(re.compile(
                     "\r\n\!BAND:\s?(?P<band>\d+)"))
 
