@@ -484,7 +484,7 @@ class NetworkExporter(ContactsExporter):
         d.addCallback(lambda objs: [obj.netid for obj in objs])
         return self.add_callbacks(d, async_cb, async_eb)
 
-    @method(NET_INTFACE, in_signature='', out_signature='i',
+    @method(NET_INTFACE, in_signature='', out_signature='u',
             async_callbacks=('async_cb', 'async_eb'))
     def GetSignalQuality(self, async_cb, async_eb):
         """Returns the signal quality"""
