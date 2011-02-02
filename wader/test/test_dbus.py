@@ -55,7 +55,7 @@ MDM_INTFACE = 'org.freedesktop.ModemManager.Modem'
 SPL_INTFACE = 'org.freedesktop.ModemManager.Modem.Simple'
 CRD_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Card'
 CTS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Contacts'
-SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Sms'
+SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.SMS'
 NET_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Network'
 
 # should the extensions introduced by the Wader project be tested?

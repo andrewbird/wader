@@ -691,7 +691,7 @@ class MmsExporter(NetworkExporter):
 
 
 class SmsExporter(MmsExporter):
-    """I export the org.freedesktop.ModemManager.Modem.Gsm.Sms interface"""
+    """I export the org.freedesktop.ModemManager.Modem.Gsm.SMS interface"""
 
     @method(SMS_INTFACE, in_signature='u', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))

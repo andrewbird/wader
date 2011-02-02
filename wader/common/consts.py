@@ -46,7 +46,7 @@ WADER_KEYRING_INTFACE = WADER_KEYRING_SERVICE
 
 MDM_INTFACE = 'org.freedesktop.ModemManager.Modem'
 SPL_INTFACE = 'org.freedesktop.ModemManager.Modem.Simple'
-SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Sms'
+SMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.SMS'
 MMS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Mms'
 CTS_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Contacts'
 NET_INTFACE = 'org.freedesktop.ModemManager.Modem.Gsm.Network'
