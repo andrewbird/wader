@@ -228,11 +228,11 @@ CMD_DICT = {
 
     'send_ussd': build_cmd_dict(re.compile("""
                               \r\n\+CUSD:\s
-                              (?P<index>\d),
-                              "(?P<resp>.*)",?
-                              (?P<code>\d+)?
+                              (?P<index>\d)
+                              (?:,"(?P<resp>.*)")?
+                              (?:,(?P<code>\d+))?
                               \r\n""", re.X),
-                              re.compile('\r\n\+CUSD:\s\d,".*",?(\d+)?\r\n')),
+                              re.compile('\r\n\+CUSD:\s\d(?:,".*")?(?:,\d+)?\r\n')),
 
     'set_apn': build_cmd_dict(),
 

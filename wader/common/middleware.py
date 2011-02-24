@@ -782,6 +782,9 @@ class WCDMAWrapper(WCDMAProtocol):
                 self.device.set_property(USD_INTFACE, 'State', 'idle')
 
             resp = response[0].group('resp')
+            if resp is None:
+                return ""   # returning the Empty string is valid
+
             if 'UCS2' in self.device.sim.charset:
                 if check_if_ucs2(resp):
                     try:
