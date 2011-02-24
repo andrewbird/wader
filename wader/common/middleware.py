@@ -129,7 +129,12 @@ class WCDMAWrapper(WCDMAProtocol):
     def cancel_ussd(self):
         """Cancels an ongoing USSD session"""
         d = super(WCDMAWrapper, self).cancel_ussd()
-        d.addCallback(lambda result: result[0].group('resp'))
+
+        def set_idle(result):
+            self.device.set_property(USD_INTFACE, 'State', 'idle')
+            return result[0].group('resp')
+
+        d.addCallback(set_idle)
         return d
 
     def change_pin(self, oldpin, newpin):
