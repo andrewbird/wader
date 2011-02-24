@@ -25,8 +25,8 @@ from twisted.plugin import IPlugin, getPlugins
 from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
-                                 NET_INTFACE, DEV_DISABLED, DEV_ENABLED,
-                                 DEV_AUTHENTICATED)
+                                 NET_INTFACE, USD_INTFACE,
+                                 DEV_DISABLED, DEV_ENABLED, DEV_AUTHENTICATED)
 from wader.common.daemon import build_daemon_collection
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
@@ -76,7 +76,7 @@ class DevicePlugin(object):
         self.sysfs_path = None
         # dictionary with org.freedesktop.DBus.Properties
         self.props = {MDM_INTFACE: {}, HSO_INTFACE: {}, CRD_INTFACE: {},
-                      NET_INTFACE: {}}
+                      NET_INTFACE: {}, USD_INTFACE: {}}
         self.ports = None
 
     def __repr__(self):

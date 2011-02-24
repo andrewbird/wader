@@ -32,6 +32,7 @@ from twisted.internet import defer, reactor, task
 
 import wader.common.aterrors as E
 from wader.common.consts import (MDM_INTFACE, CRD_INTFACE, NET_INTFACE,
+                                 USD_INTFACE,
                                  MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
                                  DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED,
                                  MM_GSM_ACCESS_TECH_GPRS,
@@ -50,7 +51,6 @@ from wader.common.protocol import WCDMAProtocol
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message
 from wader.common.utils import rssi_to_percentage
-
 
 
 class WCDMAWrapper(WCDMAProtocol):
@@ -775,6 +775,12 @@ class WCDMAWrapper(WCDMAProtocol):
         """Sends the ussd command ``ussd``"""
 
         def convert_response(response):
+            index = response[0].group('index')
+            if index == '1':
+                self.device.set_property(USD_INTFACE, 'State', 'user-response')
+            else:
+                self.device.set_property(USD_INTFACE, 'State', 'idle')
+
             resp = response[0].group('resp')
             if 'UCS2' in self.device.sim.charset:
                 if check_if_ucs2(resp):
@@ -789,6 +795,8 @@ class WCDMAWrapper(WCDMAProtocol):
 
         if 'UCS2' in self.device.sim.charset:
             ussd = pack_ucs2_bytes(ussd)
+
+        self.device.set_property(USD_INTFACE, 'State', 'active')
 
         d = super(WCDMAWrapper, self).send_ussd(str(ussd))
         d.addCallback(convert_response)
