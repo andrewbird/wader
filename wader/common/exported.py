@@ -819,7 +819,7 @@ class UssdExporter(SmsExporter):
 
     @method(USD_INTFACE, in_signature='', out_signature='',
             async_callbacks=('async_cb', 'async_eb'))
-    def Cancel(self, ussd, async_cb, async_eb):
+    def Cancel(self, async_cb, async_eb):
         """Cancels an ongoing USSD session"""
         d = self.sconn.cancel_ussd()
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
