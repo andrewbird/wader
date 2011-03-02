@@ -21,7 +21,7 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	python setup.py install --root $(CURDIR)/debian/wader-core
+	python setup.py install --install-layout=deb --root $(CURDIR)/debian/wader-core
 	DH_PYCENTRAL=nomove dh_pycentral
 	dh_install
 
