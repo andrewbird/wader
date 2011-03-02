@@ -26,7 +26,7 @@ from dbus import UInt32
 # app name
 APP_NAME = 'Wader'
 APP_SLUG_NAME = 'wader-core'
-APP_VERSION = '0.5.5'
+APP_VERSION = '0.5.6'
 
 # DBus stuff
 WADER_SERVICE = 'org.freedesktop.ModemManager'
