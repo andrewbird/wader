@@ -88,6 +88,10 @@ def transpose_to_NM(oldprops, new=True):
         mm_val = props['gsm'].get('network-type', MM_ALLOWED_MODE_ANY)
         props['gsm']['network-type'] = NM_NETWORK_TYPE_MAP[mm_val]
 
+        # filter out old single band settings, NM now uses a mask
+        if 'band' in props['gsm']:
+            del props['gsm']['band']
+
     # NM doesn't like us setting these on update
     if not new:
         for key in ['connection', 'gsm', 'ppp', 'serial', 'ipv4']:
