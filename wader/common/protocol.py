@@ -185,8 +185,11 @@ class BufferingStateMachine(object, protocol.Protocol):
         return _buffer
 
     def process_notification_sms_received(self, _buffer):
-        match = SMS_RECEIVED.match(_buffer)
-        if match:
+        while True:
+            match = SMS_RECEIVED.match(_buffer)
+            if not match:
+                break
+
             mal = getattr(self, 'mal', None)
             if mal:
                 index = int(match.group('id'))
