@@ -184,6 +184,18 @@ class BufferingStateMachine(object, protocol.Protocol):
 
         return _buffer
 
+    def process_notification_sms_received(self, _buffer):
+        match = SMS_RECEIVED.match(_buffer)
+        if match:
+            mal = getattr(self, 'mal', None)
+            if mal:
+                index = int(match.group('id'))
+                mal.on_sms_notification(index)
+
+            _buffer = _buffer.replace(match.group(), '', 1)
+
+        return _buffer
+
     def handle_idle(self, data):
         """
         Processes ``data`` in `idle` state
@@ -212,16 +224,9 @@ class BufferingStateMachine(object, protocol.Protocol):
 
         # second most possible event:
         # new SMS arrived
-        match = SMS_RECEIVED.match(self.idlebuf)
-        if match:
-            mal = getattr(self, 'mal', None)
-            if mal:
-                index = int(match.group('id'))
-                mal.on_sms_notification(index)
-
-            self.idlebuf = self.idlebuf.replace(match.group(), '', 1)
-            if not self.idlebuf:
-                return
+        self.idlebuf = self.process_notification_sms_received(self.idlebuf)
+        if not self.idlebuf:
+            return
 
         # third most possible event:
         # SMS delivery report
@@ -271,7 +276,13 @@ class BufferingStateMachine(object, protocol.Protocol):
     def handle_waiting(self, data):
         """Process ``data`` in the wait state"""
         self.waitbuf += data
+
         self.waitbuf = self.process_notifications(self.waitbuf)
+        if not self.waitbuf:
+            return
+
+        # new SMS arrived
+        self.waitbuf = self.process_notification_sms_received(self.waitbuf)
         if not self.waitbuf:
             return
 
