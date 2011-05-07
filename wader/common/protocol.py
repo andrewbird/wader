@@ -757,6 +757,7 @@ class WCDMAProtocol(SerialProtocol):
         """Sends the USSD command ``ussd``"""
         dcs = 15
         cmd = ATCmd('AT+CUSD=1,"%s",%d' % (ussd, dcs), name='send_ussd')
+        cmd.timeout = 30
         return self.queue_at_cmd(cmd)
 
     def set_apn(self, index, apn):
