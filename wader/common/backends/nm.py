@@ -145,7 +145,7 @@ class NMDialer(Dialer):
         interface = dbus.Interface(obj, NM_INTFACE)
         for opath in interface.GetDevices():
             dev = self.bus.get_object(NM_SERVICE, opath)
-            udi = dev.Get('org.freedesktop.NetworkManager.Devices', 'Udi')
+            udi = dev.Get('org.freedesktop.NetworkManager.Device', 'Udi')
             if self.device.opath == udi:
                 return opath
 
