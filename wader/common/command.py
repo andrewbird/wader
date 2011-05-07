@@ -174,7 +174,7 @@ CMD_DICT = {
     'get_phonebook_size': build_cmd_dict(re.compile(r"""
                               \r\n
                               \+CPBR:\s
-                              \(\d\-(?P<size>\d+)\),\d+,\d+
+                              \(\d\-(?P<size>\d+)\)(?:,\d+)*
                               \r\n""", re.X)),
 
     'get_pin_status': build_cmd_dict(
