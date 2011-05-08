@@ -29,6 +29,7 @@ from twisted.trial import unittest
 
 from wader.common.utils import (get_file_data, save_file, natsort,
                                 convert_ip_to_int, convert_int_to_ip,
+                                convert_int_to_uint32, convert_uint32_to_int,
                                 rssi_to_percentage, flatten_list,
                                 revert_dict, get_tz_aware_now,
                                 get_tz_aware_mtime)
@@ -93,6 +94,15 @@ class TestUtilities(unittest.TestCase):
             num = convert_ip_to_int(ip)
             self.failIf(num < 0)
             self.assertEqual(ip, convert_int_to_ip(num))
+
+    def test_int_to_uint32_to_int_conversion(self):
+        c = 10000000
+        while c:
+            i = randint(0, 0xffffffff)
+            u32 = convert_int_to_uint32(i)
+            i2 = convert_uint32_to_int(u32)
+            self.assertEqual(i, i2)
+            c -= 1
 
     def test_rssi_to_percentage(self):
         self.assertEqual(rssi_to_percentage(31), 100)

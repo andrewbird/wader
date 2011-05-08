@@ -120,18 +120,42 @@ def convert_int_to_ip(i):
     return "%d.%d.%d.%d" % (n1, n2, n3, n4)
 
 
-def convert_int_to_uint(i):
+def convert_int_to_uint32(i):
     """
-    Converts ``i`` to unsigned int
+    Converts ``i`` to unsigned int32
 
-    Python lacks the unsigned int type, but NetworkManager uses it
-    all over the place, so we need to support it.
+    We need to pass unsigned 32 bit ints over DBus, so we need to encode them
+    as if they are signed.
 
     :rtype: unsigned int
     """
-    if i < 0:
-        i += 0xffffffff + 1
+
+    if i > 0xffffffff:
+        raise OverflowError
+
+    if i > 0x7fffffff:
+        i = int(0x100000000 - i)
+        if i < 2147483648:
+            return - i
+        else:
+            return -2147483648
     return i
+
+
+def convert_uint32_to_int(u32):
+    """
+    Converts ``u32`` to python int
+
+    Unsigned 32 bit ints are passed over DBus but get interpreted as signed
+    so we need to convert them to standard Python ints.
+
+    :rtype: int
+    """
+
+    if u32 < 0:
+        return u32 + 0xffffffff + 1
+
+    return u32
 
 
 def patch_list_signature(props, signature='au'):
