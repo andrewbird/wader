@@ -29,8 +29,8 @@ from wader.common.keyring import (KeyringManager, KeyringInvalidPassword,
                                   KeyringIsClosed, KeyringNoMatchError)
 from wader.common.profile import Profile
 from wader.common.secrets import ProfileSecrets
-from wader.common.utils import (convert_int_to_uint, patch_list_signature,
-                                revert_dict)
+from wader.common.utils import (convert_int_to_uint32, convert_uint32_to_int,
+                                patch_list_signature, revert_dict)
 
 # this line is required, otherwise gnomekeyring will complain about
 # the application name not being set
@@ -75,8 +75,18 @@ def transpose_from_NM(oldprops):
             nm_val = props['gsm'].get('network-type')
             props['gsm']['network-type'] = NM_NETWORK_TYPE_MAP_REV[nm_val]
 
-    # XXX: shouldn't we be converting the DNS/Address/route integer values
-    #      received from NM
+    if 'ipv4' in props:
+        if 'dns' in props['ipv4']:
+            props['ipv4']['ignore-auto-dns'] = (len(props['ipv4']['dns']) > 0)
+        else:
+            props['ipv4']['ignore-auto-dns'] = False
+
+        # convert the integer format
+        for key in ['addresses', 'dns', 'routes']:
+            if key in props['ipv4']:
+                vals = map(convert_uint32_to_int, props['ipv4'][key])
+                props['ipv4'][key] = vals
+
     return dict(props)
 
 
@@ -105,8 +115,7 @@ def transpose_to_NM(oldprops, new=True):
         # convert the integer format
         for key in ['addresses', 'dns', 'routes']:
             if key in props['ipv4']:
-                val = props['ipv4'][key]
-                value = map(dbus.UInt32, map(convert_int_to_uint, val))
+                value = map(convert_int_to_uint32, props['ipv4'][key])
                 if key in ['dns']:
                     props['ipv4'][key] = dbus.Array(value, signature='u')
                 else:
@@ -152,7 +161,7 @@ class NMDialer(Dialer):
     def _get_stats_iface(self):
         if self.device.get_property(MDM_INTFACE,
                                     'IpMethod') == MM_IP_METHOD_PPP:
-            iface = 'ppp0' # XXX: shouldn't hardcode to first PPP instance
+            iface = 'ppp0'  # XXX: shouldn't hardcode to first PPP instance
         else:
             iface = self.device.get_property(MDM_INTFACE, 'Device')
 
