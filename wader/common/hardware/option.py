@@ -449,8 +449,8 @@ class HSOSimpleStateMachine(SimpleStateMachine):
             log.msg("HSO Simple SM: connect exited")
 
         def do_next(self):
-            username = self.settings['username']
-            password = self.settings['password']
+            username = self.settings.get('username', '')
+            password = self.settings.get('password', '')
             # XXX: One day Connect.Simple will receive auth too
             # defaulting to PAP_AUTH as that's what we had before
             auth = consts.HSO_PAP_AUTH

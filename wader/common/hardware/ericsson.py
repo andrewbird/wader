@@ -460,8 +460,8 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
             def on_mbm_authenticated(_):
                 return self.sconn.send_at("AT*E2NAP=1")
 
-            username = str(self.settings['username'])
-            password = str(self.settings['password'])
+            username = self.settings.get('username', '')
+            password = self.settings.get('password', '')
 
             d = self.sconn.mbm_authenticate(username, password)
             d.addErrback(log.err)
