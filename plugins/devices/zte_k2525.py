@@ -120,7 +120,7 @@ class ZTEK2525Wrapper(ZTEWrapper):
         d.addCallback(get_radio_status_cb)
         return d
 
-    def get_network_info(self):
+    def get_network_info(self, _type=None):
         """
         Returns the network info  (a.k.a AT+COPS?)
 
@@ -130,7 +130,7 @@ class ZTEK2525Wrapper(ZTEWrapper):
         care of insisting before this problem. This method will convert
         numeric network IDs to alphanumeric.
         """
-        d = super(WCDMAWrapper, self).get_network_info()
+        d = super(WCDMAWrapper, self).get_network_info(_type)
 
         def get_net_info_cb(netinfo):
             """

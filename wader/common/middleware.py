@@ -351,8 +351,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         d = self.get_netreg_status()
         d.addCallback(lambda info: resp.append(info[1]))
-        d.addCallback(lambda _: self.set_network_info_format(3, 2))
-        d.addCallback(lambda _: self.get_network_info())
+        d.addCallback(lambda _: self.get_network_info('numeric'))
         d.addCallback(get_netinfo_cb)
 
         def get_netinfo_eb(failure):
@@ -360,8 +359,7 @@ class WCDMAWrapper(WCDMAProtocol):
             resp.append("0")
 
         d.addErrback(get_netinfo_eb)
-        d.addCallback(lambda _: self.set_network_info_format(3, 0))
-        d.addCallback(lambda _: self.get_network_info())
+        d.addCallback(lambda _: self.get_network_info('name'))
         d.addCallback(get_netinfo_cb)
         d.addErrback(get_netinfo_eb)
         d.addCallback(lambda _: tuple(resp))
@@ -378,7 +376,7 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(get_netreg_status)
         return d
 
-    def get_network_info(self):
+    def get_network_info(self, _type=None):
         """
         Returns the network info  (a.k.a AT+COPS?)
 
@@ -388,7 +386,7 @@ class WCDMAWrapper(WCDMAProtocol):
         care of insisting before this problem. This method will convert
         numeric network IDs to alphanumeric.
         """
-        d = super(WCDMAWrapper, self).get_network_info()
+        d = super(WCDMAWrapper, self).get_network_info(_type)
 
         def get_net_info_cb(netinfo):
             """

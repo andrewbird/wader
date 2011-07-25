@@ -351,7 +351,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
         d.addCallback(lambda match: self._regexp_to_contact(match[0]))
         return d
 
-    def get_network_info(self):
+    def get_network_info(self, _type=None):
 
         # Some E220 firmwares will append an extra char to AT+COPS?
         # (off-by-one) or reply as 'FFFFFFFFFF+'. The following callback
@@ -367,7 +367,7 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             # clean extra '@', 'x1a', etc
             return NETINFO_REGEXP.sub('', operator), tech
 
-        d = super(HuaweiWCDMAWrapper, self).get_network_info()
+        d = super(HuaweiWCDMAWrapper, self).get_network_info(_type)
         d.addCallback(process_netinfo_cb)
         return d
 

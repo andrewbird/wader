@@ -623,9 +623,15 @@ class WCDMAProtocol(SerialProtocol):
         cmd = ATCmd('AT+CREG?', name='get_netreg_status')
         return self.queue_at_cmd(cmd)
 
-    def get_network_info(self):
+    def get_network_info(self, _type=None):
         """Returns a tuple with the network info"""
-        cmd = ATCmd('AT+COPS?', name='get_network_info')
+        if _type is 'name':
+            s = 'AT+COPS=3,0;+COPS?'
+        elif _type is 'numeric':
+            s = 'AT+COPS=3,2;+COPS?'
+        else:
+            s = 'AT+COPS?'
+        cmd = ATCmd(s, name='get_network_info')
         return self.queue_at_cmd(cmd)
 
     def get_network_names(self):
