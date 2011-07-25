@@ -33,6 +33,10 @@ class MalformedSMSError(Exception):
     """Exception raised when an error is received decodifying a SMS"""
 
 
+class MalformedUssdPduError(Exception):
+    """Exception raised when an error is received decoding a USSD response"""
+
+
 class NetworkRegistrationError(Exception):
     """
     Exception raised when an error occurred while registering with the network
