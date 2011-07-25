@@ -38,6 +38,7 @@ def convert_network_mode_to_access_technology(mode):
         consts.MM_NETWORK_MODE_UMTS: consts.MM_GSM_ACCESS_TECH_UMTS,
         consts.MM_NETWORK_MODE_HSDPA: consts.MM_GSM_ACCESS_TECH_HSDPA,
         consts.MM_NETWORK_MODE_HSUPA: consts.MM_GSM_ACCESS_TECH_HSUPA,
+        consts.MM_NETWORK_MODE_HSPA: consts.MM_GSM_ACCESS_TECH_HSPA,
     }
     return trans_table.get(mode, consts.MM_GSM_ACCESS_TECH_UNKNOWN)
 
