@@ -964,14 +964,20 @@ class WCDMAWrapper(WCDMAProtocol):
             raise AttributeError("Data serial port is not open")
 
         def restore_speed(speed):
-            port.obj.setBaudrate(speed)
+            try:
+                port.obj.setBaudrate(speed)
+            except serial.SerialException:
+                pass
             port.obj.close()
             self.device.set_status(DEV_ENABLED)
             return True
 
         # lower and raise baud speed
         speed = port.obj.getBaudrate()
-        port.obj.setBaudrate(0)
+        try:
+            port.obj.setBaudrate(0)
+        except serial.SerialException:
+            pass
         # restore the speed in .1 seconds
         return task.deferLater(reactor, .1, restore_speed, speed)
 
