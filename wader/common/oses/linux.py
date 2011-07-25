@@ -187,8 +187,22 @@ class HardwareManager(object):
                 except ValueError:
                     props[prop] = value
 
-            # if this properties are present, we should use them as
-            # data port and control port
+            if 'DEVNAME' in props:
+                abspath = device.get_device_file()
+                if props['DEVNAME'] != abspath:
+                    # Sometimes the DEVNAME property obtained from 'gudev' is
+                    # just a relative pathname. This seems to occur on boot
+                    # with the device already inserted, rather than upon a
+                    # hotplug insertion event.
+                    if abspath.endswith(props['DEVNAME']) and exists(abspath):
+                        props['DEVNAME'] = abspath
+                    else:
+                        log.msg("DEVNAME != device.get_device_file() but " +
+                                "fixup not possible")
+                        log.msg("'%s' != '%s'" % (props['DEVNAME'], abspath))
+
+            # if these properties are present, we should use them as the
+            # data and control ports
             for mm_prop in ['ID_MM_PORT_TYPE_MODEM', 'ID_MM_PORT_TYPE_AUX']:
                 if mm_prop in device.get_property_keys():
                     props[mm_prop] = bool(int(device.get_property(mm_prop)))
