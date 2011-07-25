@@ -84,36 +84,14 @@ class SignalQualityDaemon(WaderDaemon):
 
 
 class NetworkRegistrationDaemon(WaderDaemon):
-    """
-    I monitor several network registration parameters
-
-    I cache, compare and emit if different from previous reading
-    """
-
-    def __init__(self, frequency, device):
-        super(NetworkRegistrationDaemon, self).__init__(frequency, device)
-        self.reading = None
+    """I monitor several network registration parameters"""
 
     def function(self):
         d = self.device.sconn.get_netreg_info()
-        d.addCallback(self.compare_and_emit_if_different)
+        # automatically emits now if not cached
+        #d.addCallback(lambda x: self.device.exporter.RegistrationInfo(*x))
 
         return True
-
-    def compare_and_emit_if_different(self, info):
-        """
-        Compares ``info`` with previously cached value
-
-        If they are different it will emit `RegistrationInfo` signal
-        """
-        if not self.reading:
-            self.reading = info
-        else:
-            if self.reading == info:
-                # nothing has changed
-                return
-
-        self.device.exporter.RegistrationInfo(*info)
 
 
 class WaderDaemonCollection(object):

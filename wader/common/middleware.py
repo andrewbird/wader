@@ -27,12 +27,14 @@ from collections import deque
 
 import dbus
 import serial
+from time import time
 from twisted.python import log
 from twisted.internet import defer, reactor, task
 
 import wader.common.aterrors as E
-from wader.common.consts import (MDM_INTFACE, CRD_INTFACE, NET_INTFACE,
-                                 USD_INTFACE,
+
+from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
+                                 NET_INTFACE, USD_INTFACE,
                                  MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
                                  DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED,
                                  MM_GSM_ACCESS_TECH_GPRS,
@@ -48,9 +50,12 @@ import wader.common.exceptions as ex
 from wader.common.mal import MessageAssemblyLayer
 from wader.common.mms import send_m_send_req, send_m_notifyresp_ind, get_payload
 from wader.common.protocol import WCDMAProtocol
+from wader.common.signals import SIG_CREG
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
 from wader.common.sms import Message
 from wader.common.utils import rssi_to_percentage
+
+CACHETIME = 5
 
 
 class WCDMAWrapper(WCDMAProtocol):
@@ -68,6 +73,20 @@ class WCDMAWrapper(WCDMAProtocol):
         self.state_dict = {}
         # message assembly layer (initted on do_enable_device)
         self.mal = MessageAssemblyLayer(self)
+
+        self.signal_matchs = []
+        self.cached_registration = (0, (0, '', ''))
+
+    def connect_to_signals(self):
+        bus = dbus.SystemBus()
+        device = bus.get_object(WADER_SERVICE, self.device.sconn.device.opath)
+        sm = device.connect_to_signal(SIG_CREG, self.on_creg_cb)
+        self.signal_matchs.append(sm)
+
+    def clean_signals(self):
+        while self.signal_matchs:
+            sm = self.signal_matchs.pop()
+            sm.remove()
 
     def __str__(self):
         return self.device.__remote_name__
@@ -326,11 +345,10 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda response: response[0].group('name'))
         return d
 
-    def get_netreg_info(self):
-        """Get the registration status and the current operator"""
+    def _get_netreg_info(self, status):
         # Ugly but it works. The naive approach with DeferredList won't work
         # as the call order is not guaranteed
-        resp = []
+        resp = [status]
 
         def get_netinfo_cb(info):
             new = info[1]
@@ -349,31 +367,57 @@ class WCDMAWrapper(WCDMAProtocol):
 
             return resp.append(info[0])
 
-        d = self.get_netreg_status()
-        d.addCallback(lambda info: resp.append(info[1]))
-        d.addCallback(lambda _: self.get_network_info('numeric'))
-        d.addCallback(get_netinfo_cb)
-
         def get_netinfo_eb(failure):
             failure.trap(E.NoNetwork)
-            resp.append("0")
+            resp.append('')
 
+        d = self.get_network_info('numeric')
+        d.addCallback(get_netinfo_cb)
         d.addErrback(get_netinfo_eb)
+
         d.addCallback(lambda _: self.get_network_info('name'))
         d.addCallback(get_netinfo_cb)
         d.addErrback(get_netinfo_eb)
+
         d.addCallback(lambda _: tuple(resp))
+        return d
+
+    def _get_netreg_info_update_and_emit(self, reginfo):
+        """Update the cache, emit RegistrationInfo signal"""
+
+        self.cached_registration = (time() + CACHETIME, reginfo)
+        self.device.exporter.RegistrationInfo(*reginfo)
+        return reginfo
+
+    def get_netreg_info(self):
+        """Get the registration status and the current operator"""
+
+        if self.cached_registration[0] >= time():  # cache hasn't expired
+            log.msg("middleware::get_netreg_info served from cache")
+            d = defer.succeed(self.cached_registration[1])
+        else:
+            d = self.get_netreg_status()
+            d.addCallback(lambda info: info[1])
+            d.addCallback(self._get_netreg_info)
+            d.addCallback(self._get_netreg_info_update_and_emit)
+        return d
+
+    def on_creg_cb(self, status):
+        """Callback for +CREG notifications"""
+        d = defer.succeed(status)
+        d.addCallback(self._get_netreg_info)
+        d.addCallback(self._get_netreg_info_update_and_emit)
         return d
 
     def get_netreg_status(self):
         """Returns a tuple with the network registration status"""
         d = super(WCDMAWrapper, self).get_netreg_status()
 
-        def get_netreg_status(resp):
+        def convert_cb(resp):
             # convert them to int
             return int(resp[0].group('mode')), int(resp[0].group('status'))
 
-        d.addCallback(get_netreg_status)
+        d.addCallback(convert_cb)
         return d
 
     def get_network_info(self, _type=None):
@@ -390,7 +434,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         def get_net_info_cb(netinfo):
             """
-            Returns a (Networname, ConnType) tuple
+            Returns a (Networkname, ConnType) tuple
 
             It returns None if there's no info
             """
@@ -1002,6 +1046,8 @@ class WCDMAWrapper(WCDMAProtocol):
             return self._do_disable_device()
 
     def _do_disable_device(self):
+        self.clean_signals()
+
         if self.device.status == DEV_CONNECTED:
 
             def on_disconnect_from_internet(_):
@@ -1020,6 +1066,11 @@ class WCDMAWrapper(WCDMAProtocol):
         if self.device.status == DEV_ENABLED:
             return defer.succeed(self.device)
 
+        def signals(resp):
+            self.connect_to_signals()
+            self.device.sconn.set_netreg_notification(1)
+            return resp
+
         from wader.common.startup import attach_to_serial_port
         if self.device.status == DEV_AUTHENTICATED:
             # if a device was enabled and then disabled, there's no need to
@@ -1027,6 +1078,7 @@ class WCDMAWrapper(WCDMAProtocol):
             # is device specific
             d = attach_to_serial_port(self.device)
             d.addCallback(self.device.initialize)
+            d.addCallback(signals)
             return d
 
         def process_device_and_initialize(device):
@@ -1038,6 +1090,7 @@ class WCDMAWrapper(WCDMAProtocol):
             # if auth aint ready the callback chain wont be executed and
             # will just return the given exception
             d.addCallback(self.device.initialize)
+            d.addCallback(signals)
             return d
 
         d = attach_to_serial_port(self.device)
