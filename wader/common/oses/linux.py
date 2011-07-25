@@ -350,11 +350,39 @@ class HardwareManager(object):
 
             # now get the ports
             ports_need_probe = True
+
             if info[DRIVER] == 'hso':
                 dport, cport = self._get_hso_ports(ports)
                 ports_need_probe = False
 
-            elif info[DRIVER] == 'cdc_acm':
+            # if these two properties are present, use them right away and
+            # do not probe
+            if ('ID_MM_PORT_TYPE_MODEM' in info
+                    or 'ID_MM_PORT_TYPE_AUX' in info):
+                try:
+                    dport = info['ID_MM_PORT_TYPE_MODEM']
+                    log.msg("%s: ID_MM_PORT_TYPE_MODEM" % dport)
+                except KeyError:
+                    pass
+                try:
+                    cport = info['ID_MM_PORT_TYPE_AUX']
+                    log.msg("%s: ID_MM_PORT_TYPE_AUX" % cport)
+                except KeyError:
+                    pass
+                ports_need_probe = False
+
+            if ports_need_probe:
+                # the ports were not hardcoded nor was an HSO device
+                dport, cport = probe_ports(ports)
+
+            if not dport and not cport:
+                # this shouldn't happen
+                msg = 'No data port and no control port with ports: %s'
+                raise RuntimeError(msg % ports)
+
+            set_property(consts.MDM_INTFACE, 'Device', dport.split('/')[-1])
+
+            if info[DRIVER] == 'cdc_acm':
                 # MBM device
                 # XXX: Not all CDC devices support DHCP, to override see
                 #      plugin attribute 'ipmethod'
@@ -375,40 +403,9 @@ class HardwareManager(object):
                 set_property(consts.MDM_INTFACE, 'Device', hso_device)
 
                 if hasattr(plugin, 'ipmethod'):
-                    # allows us to specify a method in a driver independant way
+                    # allows us to specify a method in a driver independent way
                     set_property(consts.MDM_INTFACE, 'IpMethod',
                                  plugin.ipmethod)
-
-            # if this two properties are present, use them right away and
-            # do not probe
-            if ('ID_MM_PORT_TYPE_MODEM' in info
-                    or 'ID_MM_PORT_TYPE_AUX' in info):
-                try:
-                    dport = info['ID_MM_PORT_TYPE_MODEM']
-                    log.msg("%s: ID_MM_PORT_TYPE_MODEM" % dport)
-                except KeyError:
-                    pass
-                try:
-                    cport = info['ID_MM_PORT_TYPE_AUX']
-                    log.msg("%s: ID_MM_PORT_TYPE_AUX" % cport)
-                except KeyError:
-                    pass
-
-                ports_need_probe = False
-
-            if ports_need_probe:
-                # the ports were not hardcoded nor was an HSO device
-                dport, cport = probe_ports(ports)
-
-            if not dport and not cport:
-                # this shouldn't happen
-                msg = 'No data port and no control port with ports: %s'
-                raise RuntimeError(msg % ports)
-
-            if 'Device' not in plugin.get_properties(consts.MDM_INTFACE):
-                # do not set it again
-                device = dport.split('/')[-1]
-                set_property(consts.MDM_INTFACE, 'Device', device)
 
             plugin.ports = Ports(dport, cport)
             return plugin
