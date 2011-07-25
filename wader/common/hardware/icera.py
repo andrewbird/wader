@@ -332,6 +332,7 @@ class IceraSimpleStateMachine(SimpleStateMachine):
     set_apn = SimpleStateMachine.set_apn
     set_band = SimpleStateMachine.set_band
     set_network_mode = SimpleStateMachine.set_network_mode
+    wait_for_registration = SimpleStateMachine.wait_for_registration
     done = SimpleStateMachine.done
 
     class connect(Mode):

@@ -22,6 +22,11 @@ from twisted.python import log
 
 import wader.common.aterrors as E
 from wader.contrib.modal import mode, Modal
+from wader.common.consts import STATUS_HOME, STATUS_ROAMING
+
+# poll at 'n' second intervals for 'm' tries
+INTERVAL = 3
+TRIES = 30
 
 
 class SimpleStateMachine(Modal):
@@ -72,6 +77,7 @@ class SimpleStateMachine(Modal):
             log.msg("Simple SM: begin exited")
 
         def do_next(self):
+            self.registration_tries = TRIES
             self.transition_to('check_pin')
 
     class check_pin(mode):
@@ -147,7 +153,7 @@ class SimpleStateMachine(Modal):
             log.msg("Simple SM: set_band entered")
 
         def __exit__(self):
-            log.msg("Simple SM: set_apn exited")
+            log.msg("Simple SM: set_band exited")
 
         def do_next(self):
             if 'band' in self.settings:
@@ -169,10 +175,32 @@ class SimpleStateMachine(Modal):
         def do_next(self):
             if 'network_mode' in self.settings:
                 d = self.sconn.set_network_mode(self.settings['network_mode'])
-                d.addCallback(lambda _:
-                        reactor.callLater(1, self.transition_to, 'connect'))
+                d.addCallback(lambda _: reactor.callLater(1,
+                                self.transition_to, 'wait_for_registration'))
             else:
-                self.transition_to('connect')
+                self.transition_to('wait_for_registration')
+
+    class wait_for_registration(mode):
+
+        def __enter__(self):
+            log.msg("Simple SM: wait_for_registration entered")
+
+        def __exit__(self):
+            log.msg("Simple SM: wait_for_registration exited")
+
+        def do_next(self):
+
+            def get_netreg_status_cb(info):
+                if info[1] in [STATUS_HOME, STATUS_ROAMING]:
+                    self.transition_to('connect')
+                elif self.registration_tries <= 0:
+                    self.notify_failure(E.NoNetwork("Not registered"))
+                else:
+                    self.registration_tries -= 1
+                    reactor.callLater(INTERVAL, self.do_next)
+
+            d = self.sconn.get_netreg_status()
+            d.addCallback(get_netreg_status_cb)
 
     class connect(mode):
 

@@ -421,6 +421,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
     begin = SimpleStateMachine.begin
     check_pin = SimpleStateMachine.check_pin
     register = SimpleStateMachine.register
+    wait_for_registration = SimpleStateMachine.wait_for_registration
 
     class set_apn(Mode):
 
@@ -434,9 +435,9 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
         def do_next(self):
             if 'apn' in self.settings:
                 d = self.sconn.set_apn(self.settings['apn'])
-                d.addCallback(lambda _: self.transition_to('connect'))
+                d.addCallback(lambda _: self.transition_to('wait_for_registration'))
             else:
-                self.transition_to('connect')
+                self.transition_to('wait_for_registration')
 
     class connect(Mode):
 
