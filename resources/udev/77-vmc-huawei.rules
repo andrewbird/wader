@@ -51,6 +51,11 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14a5", ENV{.MM_USBIFNUM}=="03", ENV{
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_AUX}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 
+# K4605
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14c6", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14c6", ENV{.MM_USBIFNUM}=="03", ENV{.MM_USBNUMIFS}==" 6", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14c6", ENV{.MM_USBIFNUM}=="04", ENV{.MM_USBNUMIFS}==" 7", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
 LABEL="vmc_huawei_tty_end"
 
 LABEL="vmc_huawei_end"
