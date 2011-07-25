@@ -21,6 +21,7 @@
 from __future__ import with_statement
 from contextlib import closing
 
+import re
 import serial
 from twisted.internet.threads import deferToThread
 from twisted.python import log
@@ -80,6 +81,7 @@ def build_band_dict(family_dict, supported_list):
 
 def check_auth_state(plugin):
     codes = {
+        'READY': '',
         'SIM PIN': 'sim-pin',
         'SIM PIN2': 'sim-pin2',
         'SIM PUK': 'sim-puk',
@@ -105,15 +107,22 @@ def check_auth_state(plugin):
             ser.write('AT+CPIN?\r\n')
             lines = ser.readlines()
 
+            found = False
             for line in lines:
-                if '+CPIN: ' in line:
-                    line = line[7:]
-                    line = line.replace('\r', '').replace('\n', '')
+                line = line.replace('\r', '').replace('\n', '')
 
-                    if line in codes:
+                m = re.search('\+CPIN:\s*(?P<code>\w+[\w -]*\w+)', line)
+                if m is not None:
+                    code = m.group('code')
+                    if code in codes:
                         plugin.set_property(MDM_INTFACE, 'UnlockRequired',
-                                            codes[line])
+                                            codes[code])
+                        found = True
                         break
+
+            if not found:
+                log.msg("check_auth_state: +CPIN? no match lines = %s"
+                        % str(lines))
 
         return plugin
 

@@ -337,7 +337,6 @@ class HardwareManager(object):
                          consts.MM_MODEM_TYPE_REV['GSM'])
             set_property(consts.MDM_INTFACE, 'Driver', info[DRIVER])
             set_property(consts.MDM_INTFACE, 'Enabled', False)
-            set_property(consts.MDM_INTFACE, 'UnlockRequired', "")
 
             # set to unknown
             set_property(consts.NET_INTFACE, 'AccessTechnology', 0)
