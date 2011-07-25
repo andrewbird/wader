@@ -23,6 +23,7 @@ from contextlib import closing
 
 import re
 import serial
+from time import sleep
 from twisted.internet.threads import deferToThread
 from twisted.python import log
 
@@ -101,28 +102,28 @@ def check_auth_state(plugin):
 
     def do_check(port):
         with closing(serial.Serial(port.path, timeout=.5)) as ser:
-            ser.flushOutput()
-            ser.flushInput()
 
-            ser.write('AT+CPIN?\r\n')
-            lines = ser.readlines()
+            for i in range(15):  # some devices/SIMs are slow to be available
+                ser.flushOutput()
+                ser.flushInput()
 
-            found = False
-            for line in lines:
-                line = line.replace('\r', '').replace('\n', '')
+                ser.write('AT+CPIN?\r\n')
+                lines = ser.readlines()
 
-                m = re.search('\+CPIN:\s*(?P<code>\w+[\w -]*\w+)', line)
-                if m is not None:
-                    code = m.group('code')
-                    if code in codes:
-                        plugin.set_property(MDM_INTFACE, 'UnlockRequired',
+                for line in lines:
+                    line = line.replace('\r', '').replace('\n', '')
+
+                    m = re.search('\+CPIN:\s*(?P<code>\w+[\w -]*\w+)', line)
+                    if m is not None:
+                        code = m.group('code')
+                        if code in codes:
+                            plugin.set_property(MDM_INTFACE, 'UnlockRequired',
                                             codes[code])
-                        found = True
-                        break
+                            return plugin
 
-            if not found:
-                log.msg("check_auth_state: +CPIN? no match lines = %s"
-                        % str(lines))
+                sleep(1)  # can do this as we are in a separate thread
+
+        log.msg("check_auth_state: +CPIN? no match lines = %s" % str(lines))
 
         return plugin
 
