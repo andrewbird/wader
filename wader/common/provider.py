@@ -499,7 +499,6 @@ class NetworkOperator(object):
                      wap_auth=row[16])
 
 
-
 class NetworkProvider(DBProvider):
     """DB network provider"""
 
@@ -598,12 +597,16 @@ class NetworkProvider(DBProvider):
         self.populate_networks_from_objs([getattr(networks, item)()
                 for item in dir(networks) if is_valid(item)])
 
-        self.populate_networks_from_mbpi()
+        try:
+            self.populate_networks_from_mbpi()
+        except TypeError:
+            pass  # MBPI v1.0 format
 
         # update timestamps
         objs = os.path.join(EXTRA_DIR, 'networks.py')
         args = (get_tz_aware_mtime(objs), get_tz_aware_mtime(MBPI))
-        self.conn.cursor().execute("insert into sources_info values (?,?)", args)
+        self.conn.cursor().execute(
+                                "insert into sources_info values (?,?)", args)
 
         self.conn.commit()
         self.conn.isolation_level = None
@@ -703,7 +706,7 @@ class NetworkProvider(DBProvider):
             countrycode = getAttributeValue(country, "code")
             if countrycode == '':
                 continue
-            elif countrycode == 'gb': # TZ DB is just plain wrong
+            elif countrycode == 'gb':  # TZ DB is just plain wrong
                 countryname = 'United Kingdom'
             else:
                 countryname = country_names[countrycode]
