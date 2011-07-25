@@ -10,6 +10,9 @@ SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", \
 # Tag the interface with type
 SUBSYSTEM!="tty", GOTO="vmc_zte_tty_end"
 
+# ONDA MT503HS
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0002", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0002", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # ONDA MSA405HS
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0037", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0037", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
