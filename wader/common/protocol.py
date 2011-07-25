@@ -631,7 +631,7 @@ class WCDMAProtocol(SerialProtocol):
     def get_network_names(self):
         """Returns a tuple with the network info"""
         cmd = ATCmd('AT+COPS=?', name='get_network_names')
-        cmd.timeout = 40
+        cmd.timeout = 120
         return self.queue_at_cmd(cmd)
 
     def get_phonebook_size(self):

@@ -590,8 +590,8 @@ class DBusTestCase(unittest.TestCase):
         """Test for Network.Scan"""
         # get the first five digits of the IMSI and check that its around
         imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
-        # potentially long operation, increasing timeout to 45
-        networks = self.device.Scan(dbus_interface=NET_INTFACE, timeout=45)
+        # potentially long operation, increasing timeout to 125
+        networks = self.device.Scan(dbus_interface=NET_INTFACE, timeout=125)
         home_network_found = False
         for network in networks:
             if network['operator-num'] == imsi[:5]:
