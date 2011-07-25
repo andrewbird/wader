@@ -382,8 +382,10 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda _: tuple(resp))
         return d
 
-    def _get_netreg_info_update_and_emit(self, reginfo):
+    def _get_netreg_info_update_and_emit(self, _reginfo):
         """Update the cache, emit RegistrationInfo signal"""
+
+        reginfo = (dbus.UInt32(_reginfo[0]), _reginfo[1], _reginfo[2])
 
         self.cached_registration = (time() + CACHETIME, reginfo)
         self.device.exporter.RegistrationInfo(*reginfo)
