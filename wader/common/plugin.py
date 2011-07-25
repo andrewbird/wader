@@ -129,6 +129,12 @@ class DevicePlugin(object):
                 self.ports.cport.obj.loseConnection("Bye!")
                 self.ports.cport.obj = None
 
+            # if our device was pulled out whilst we were connected
+            if self.ports.dport.obj is not None:
+                if self.ports.dport.obj.isOpen():
+                    self.ports.dport.obj.close()
+                self.ports.dport.obj = None
+
         if self.daemons is not None and self.daemons.running:
             self.daemons.stop_daemons()
 
