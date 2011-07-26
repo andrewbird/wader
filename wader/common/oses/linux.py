@@ -324,6 +324,8 @@ class HardwareManager(object):
         query = [info.get(key) for key in [VENDOR, MODEL]]
         plugin = PluginManager.get_plugin_by_vendor_product_id(*query)
         if plugin:
+            dport = cport = None
+
             plugin.sysfs_path = sysfs_path
             plugin.opath = self._generate_opath()
             set_property = partial(plugin.set_property, emit=False)
