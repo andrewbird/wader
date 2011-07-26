@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2010  Vodafone España, S.A.
+# Copyright (C) 2008-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Andrew Bird
 #
@@ -41,18 +41,18 @@ class HuaweiE1750Customizer(HuaweiWCDMACustomizer):
     wrapper_klass = HuaweiE1750Wrapper
 
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
-    # HSDPA/UMTS 900/1900/2100 MHz
+    # HSDPA/UMTS 2100 MHz
+    # Device with PID 0x1436 only shows UMTS 2100 support, but other
+    # sources on the web suggest there may be variants
     band_dict = build_band_dict(
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,
 
-                   consts.MM_NETWORK_BAND_G850,#  850
-                   consts.MM_NETWORK_BAND_EGSM,#  900
-                   consts.MM_NETWORK_BAND_DCS, # 1800
-                   consts.MM_NETWORK_BAND_PCS, # 1900
+                   consts.MM_NETWORK_BAND_G850,  # 850
+                   consts.MM_NETWORK_BAND_EGSM,  # 900
+                   consts.MM_NETWORK_BAND_DCS,  # 1800
+                   consts.MM_NETWORK_BAND_PCS,  # 1900
 
-#                   consts.MM_NETWORK_BAND_U900,
-                   consts.MM_NETWORK_BAND_U1900,
                    consts.MM_NETWORK_BAND_U2100])
 
 
@@ -67,5 +67,11 @@ class HuaweiE1750(HuaweiWCDMADevicePlugin):
 
     __properties__ = {
         'ID_VENDOR_ID': [0x12d1],
-        'ID_MODEL_ID': [0x140c],
+        'ID_MODEL_ID': [0x0000],
     }
+
+    def preprobe_init(self, ports, info):
+        if info['ID_MODEL_ID'] == 0x140c:
+            self.__properties__['ID_MODEL_ID'][0] = 0x140c
+        if info['ID_MODEL_ID'] == 0x1436:
+            self.__properties__['ID_MODEL_ID'][0] = 0x1436

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -23,6 +23,7 @@ from wader.plugins.huawei_e160 import HuaweiE160
 from wader.plugins.huawei_e160b import HuaweiE160B
 from wader.plugins.huawei_e169 import HuaweiE169
 from wader.plugins.huawei_e17X import HuaweiE17X
+from wader.plugins.huawei_e173 import HuaweiE173
 from wader.plugins.huawei_e180 import HuaweiE180
 from wader.plugins.huawei_e220 import HuaweiE220
 from wader.plugins.huawei_e270 import HuaweiE270
@@ -46,6 +47,30 @@ from wader.plugins.huawei_em730v import HuaweiEM730V
 from wader.plugins.huawei_em770 import HuaweiEM770
 
 from wader.plugins.huawei_b970 import HuaweiB970
+
+
+class HuaweiEXXX1436(HuaweiWCDMADevicePlugin):
+    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's 1436 family"""
+    name = "Huawei EXXX"
+    version = "0.1"
+    author = u"Andrew Bird"
+
+    __remote_name__ = None
+
+    __properties__ = {
+        'ID_VENDOR_ID': [0x12d1],
+        'ID_MODEL_ID': [0x1436],
+    }
+
+    def __init__(self):
+        super(HuaweiEXXX1436, self).__init__()
+
+        self.mapping = {
+            'E173': HuaweiE173,
+            'E1750': HuaweiE1750,
+
+            'default': HuaweiE1750,
+        }
 
 
 class HuaweiEXXX140c(HuaweiWCDMADevicePlugin):
@@ -147,6 +172,7 @@ class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
         }
 
 
+huaweiexxx1436 = HuaweiEXXX1436()
 huaweiexxx140c = HuaweiEXXX140c()
 huaweiexxx1003 = HuaweiEXXX1003()
 huaweiexxx1001 = HuaweiEXXX1001()

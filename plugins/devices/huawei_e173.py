@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
@@ -74,5 +74,8 @@ class HuaweiE173(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x14a5],
     }
 
+    def preprobe_init(self, ports, info):
+        if info['ID_MODEL_ID'] == 0x1436:
+            self.__properties__['ID_MODEL_ID'][0] = 0x1436
 
 huaweie173 = HuaweiE173()

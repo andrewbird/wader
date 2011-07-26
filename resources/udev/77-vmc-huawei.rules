@@ -33,6 +33,10 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1411", ENV{.MM_USBIFNUM}=="02", ENV{
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="141b", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="141b", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
+# Generic 0x1436 (so far seen E173, E1750)
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1436", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1436", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
 # K4505
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1464", ENV{.MM_USBIFNUM}=="03", ENV{.MM_USBNUMIFS}==" 6", ENV{ID_MM_PORT_TYPE_AUX}="1"
