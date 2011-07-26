@@ -51,6 +51,10 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1465", ENV{.MM_USBIFNUM}=="04", ENV{
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14a5", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14a5", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
+# E1820
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ac", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ac", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
 # K3806
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_AUX}="1"
