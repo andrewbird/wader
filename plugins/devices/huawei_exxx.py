@@ -19,6 +19,7 @@
 
 from wader.common.hardware.huawei import HuaweiWCDMADevicePlugin
 
+from wader.plugins.huawei_e160 import HuaweiE160
 from wader.plugins.huawei_e160b import HuaweiE160B
 from wader.plugins.huawei_e169 import HuaweiE169
 from wader.plugins.huawei_e17X import HuaweiE17X
@@ -95,7 +96,8 @@ class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
             'E270': HuaweiE270,
             'E272': HuaweiE272,
 
-            'E160B': HuaweiE160B,    # USB Sticks
+            'E160': HuaweiE160,      # USB Sticks
+            'E160B': HuaweiE160B,
             'E17X': HuaweiE17X,
             'E180': HuaweiE180,
             'K3565': HuaweiK3565,
