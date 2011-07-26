@@ -23,6 +23,7 @@ from twisted.python import log
 import wader.common.aterrors as E
 from wader.contrib.modal import mode, Modal
 from wader.common.consts import STATUS_HOME, STATUS_ROAMING
+from wader.common.utils import convert_network_mode_to_allowed_mode
 
 # poll at 'n' second intervals for 'm' tries
 INTERVAL = 3
@@ -44,9 +45,8 @@ class SimpleStateMachine(Modal):
         #      remove it here or we stamp on the card setting
         #      done from the user's profile
         if 'network_mode' in settings:
-            log.msg("Simple SM:nm-applet sent us network mode %d"
-                        % settings['network_mode'])
             del settings['network_mode']
+
         self.settings = settings
 
         self.deferred = defer.Deferred()
@@ -160,23 +160,38 @@ class SimpleStateMachine(Modal):
                 d = self.sconn.set_band(self.settings['band'])
                 d.addCallback(lambda _:
                         reactor.callLater(1,
-                                       self.transition_to, 'set_network_mode'))
+                                       self.transition_to, 'set_allowed_mode'))
             else:
-                self.transition_to('set_network_mode')
+                self.transition_to('set_allowed_mode')
 
-    class set_network_mode(mode):
+    class set_allowed_mode(mode):
 
         def __enter__(self):
-            log.msg("Simple SM: set_network_mode entered")
+            log.msg("Simple SM: set_allowed_mode entered")
 
         def __exit__(self):
-            log.msg("Simple SM: set_network_mode exited")
+            log.msg("Simple SM: set_allowed_mode exited")
 
         def do_next(self):
-            if 'network_mode' in self.settings:
-                d = self.sconn.set_network_mode(self.settings['network_mode'])
-                d.addCallback(lambda _: reactor.callLater(1,
-                                self.transition_to, 'wait_for_registration'))
+
+            def get_network_mode_cb(mode):
+                allowed = convert_network_mode_to_allowed_mode(mode)
+
+                if allowed == self.settings['allowed_mode']:
+                    log.msg("Simple SM: set_allowed_mode is current")
+                    self.transition_to('wait_for_registration')
+                else:
+                    log.msg("Simple SM: set_allowed_mode change required")
+                    d2 = self.sconn.set_allowed_mode(
+                            self.settings['allowed_mode'])
+                    # We need to wait long enough for the device to start
+                    # switching and lose the current registration
+                    d2.addCallback(lambda _: reactor.callLater(5,
+                            self.transition_to, 'wait_for_registration'))
+
+            if 'allowed_mode' in self.settings:
+                d = self.sconn.get_network_mode()
+                d.addCallback(get_network_mode_cb)
             else:
                 self.transition_to('wait_for_registration')
 

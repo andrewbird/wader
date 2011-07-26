@@ -437,7 +437,7 @@ class HSOSimpleStateMachine(SimpleStateMachine):
     register = SimpleStateMachine.register
     set_apn = SimpleStateMachine.set_apn
     set_band = SimpleStateMachine.set_band
-    set_network_mode = SimpleStateMachine.set_network_mode
+    set_allowed_mode = SimpleStateMachine.set_allowed_mode
     wait_for_registration = SimpleStateMachine.wait_for_registration
     done = SimpleStateMachine.done
 
