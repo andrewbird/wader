@@ -19,11 +19,13 @@
 """Daemons for Wader"""
 
 from gobject import timeout_add_seconds, source_remove
+from time import time
 from twisted.python import log
 
 import wader.common.signals as S
 
 SIG_REG_INFO_FREQ = 120
+SIG_REG_INFO_POLL = 5
 SIG_RSSI_FREQ = 15
 
 
@@ -49,10 +51,14 @@ class WaderDaemon(object):
         """Starts the Daemon"""
         log.msg("daemon %s started..." % self)
         if self.task_id is None:
-            self.task_id = timeout_add_seconds(self.frequency, self.function)
-
             args = (self, 'function', self.frequency)
             log.msg("executing %s.%s every %d seconds" % args)
+
+            # call the first directly
+            self.function()
+
+            # setup the poll
+            self.task_id = timeout_add_seconds(self.frequency, self.function)
 
     def stop(self):
         """Stops the Daemon"""
@@ -87,9 +93,28 @@ class NetworkRegistrationDaemon(WaderDaemon):
     """I monitor several network registration parameters"""
 
     def function(self):
+
+        # when our next invocation will occur
+        self.expiry = time() + self.frequency
+
+        def is_registered((status, number, name)):
+            return status in [1, 5] and number and name
+
+        def schedule_if_necessary(registered):
+
+            def poll():
+                d = self.device.sconn.get_netreg_info()
+                d.addCallback(is_registered)
+                d.addCallback(schedule_if_necessary)
+                return False  # once only
+
+            if not registered and \
+                    time() < (self.expiry - (SIG_REG_INFO_POLL * 2)):
+                timeout_add_seconds(SIG_REG_INFO_POLL, poll)
+
         d = self.device.sconn.get_netreg_info()
-        # automatically emits now if not cached
-        #d.addCallback(lambda x: self.device.exporter.RegistrationInfo(*x))
+        d.addCallback(is_registered)
+        d.addCallback(schedule_if_necessary)
 
         return True
 
