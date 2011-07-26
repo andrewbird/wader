@@ -35,6 +35,9 @@ class HuaweiE173Wrapper(HuaweiWCDMAWrapper):
         # Seems Huawei didn't implement +GMI
         return defer.succeed('Huawei')
 
+    def send_ussd(self, ussd):
+        return self._send_ussd_old_mode(ussd)
+
 
 class HuaweiE173Customizer(HuaweiWCDMACustomizer):
     """
