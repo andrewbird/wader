@@ -76,6 +76,10 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ca", ENV{.MM_USBIFNUM}=="03", ENV{
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14cb", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14cb", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
+# K4511
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14cc", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14cc", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
 LABEL="vmc_huawei_tty_end"
 
 LABEL="vmc_huawei_end"
