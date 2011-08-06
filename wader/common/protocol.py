@@ -144,6 +144,9 @@ class BufferingStateMachine(object, protocol.Protocol):
 
     def dataReceived(self, data):
         """See `twisted.internet.protocol.Protocol.dataReceived`"""
+        # XXX: Change the following zero to one to log all data from the modem
+        if 0:
+            log.msg('dataReceived: %s' % str(data))
         state = 'handle_%s' % self.state
         getattr(self, state)(data)
 
