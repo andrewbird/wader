@@ -148,6 +148,10 @@ class ModemExporter(Object, DBusExporterHelper):
     def DialStats(self, (rx_bytes, tx_bytes, rx_rate, tx_rate)):
         pass
 
+    @signal(dbus_interface=MDM_INTFACE, signature='uuu')
+    def StateChanged(self, old, new, reason):
+        log.msg("emitting StateChanged(%d, %d, %d)" % (old, new, reason))
+
     @signal(dbus_interface=dbus.PROPERTIES_IFACE, signature='sa{sv}')
     def MmPropertiesChanged(self, iface, properties):
         log.msg("emitting MmPropertiesChanged: %s %s" % (iface, properties))

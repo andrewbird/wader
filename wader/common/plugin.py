@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Plugin system for Wader"""
 
+from dbus import UInt32
 from pytz import timezone
 from time import time
 from twisted.internet import defer, reactor
@@ -102,12 +103,15 @@ class DevicePlugin(object):
         if hasattr(self.exporter, 'MmPropertiesChanged') and emit:
             self.exporter.MmPropertiesChanged(iface, {name: value})
 
-    def set_status(self, status):
+    def set_status(self, status, reason=UInt32(0)):
         """Sets internal device status to ``status``"""
         if status == MM_MODEM_STATE_ENABLED and self._status < status:
             self.exporter.DeviceEnabled(self.opath)
 
         self.set_property(MDM_INTFACE, 'State', status)
+
+        # Default reason is MM_MODEM_STATE_CHANGED_REASON_UNKNOWN
+        self.exporter.StateChanged(self._status, status, reason)
 
         self._status = status
 
