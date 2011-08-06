@@ -169,9 +169,15 @@ class EricssonWrapper(WCDMAWrapper):
         return d
 
     def disconnect_from_internet(self):
+        self.device.set_status(consts.MM_MODEM_STATE_DISCONNECTING)
+
+        def disconnect_cb(ignored):
+            # XXX: perhaps we should check the registration status here
+            if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
+
         d = self.send_at('AT*ENAP=0')
-        d.addCallback(lambda _:
-                        self.device.set_status(consts.MM_MODEM_STATE_ENABLED))
+        d.addCallback(disconnect_cb)
         return d
 
     def enable_pin(self, pin, enable):
@@ -463,6 +469,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
                 return self.sconn.send_at("AT*ENAP=1,%d" % conn_id)
 
             def on_mbm_authenticated(_):
+                self.device.set_status(consts.MM_MODEM_STATE_CONNECTING)
                 return self.sconn.send_at("AT*E2NAP=1")
 
             username = self.settings.get('username', '')
