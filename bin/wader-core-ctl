@@ -3,9 +3,9 @@
 import os
 from optparse import OptionParser
 import sys
+from time import sleep
 
-from wader.common.consts import (APP_VERSION, LOG_PATH, DATA_DIR, PID_PATH,
-                                 BASE_DIR)
+from wader.common.consts import (APP_VERSION, LOG_PATH, DATA_DIR, PID_PATH)
 
 from twisted.python.release import sh
 
@@ -14,18 +14,17 @@ def stop_core():
     if os.path.exists(PID_PATH):
         sh("kill -9 `cat %s`" % PID_PATH)
 
-
 parser = OptionParser()
-parser.add_option ("-v", "--version", action="store_true",
+parser.add_option("-v", "--version", action="store_true",
                    dest="show_version", default=False,
                    help="Show version and exit")
-parser.add_option ("-r", "--restart", action="store_true",
+parser.add_option("-r", "--restart", action="store_true",
                    dest="should_restart", default=False,
                    help="Restart wader-core")
-parser.add_option ("-s", "--start", action="store_true",
+parser.add_option("-s", "--start", action="store_true",
                    dest="should_start", default=True,
                    help="Start wader-core")
-parser.add_option ("-t", "--stop", action="store_true",
+parser.add_option("-t", "--stop", action="store_true",
                    dest="should_stop", default=False,
                    help="Stop wader-core")
 
@@ -39,10 +38,16 @@ if options.should_stop:
     stop_core()
 
 if options.should_restart:
-    stop_core()
+    try:
+        stop_core()
+    except:
+        print "Failed to stop core cleanly, may still be running"
 
-    sh("dbus-send --system --dest=org.freedesktop.ModemManager /org/freedesktop/ModemManager org.freedesktop.ModemManager.EnumerateDevices")
+    sleep(1)
 
+    sh("dbus-send --system --dest=org.freedesktop.ModemManager "
+       "/org/freedesktop/ModemManager "
+       "org.freedesktop.ModemManager.EnumerateDevices")
 
 elif options.should_start:
     if os.path.exists('/tmp/wader.err'):
@@ -50,5 +55,5 @@ elif options.should_start:
 
     tap_path = os.path.join(DATA_DIR, 'core-tap.py')
     sh("/usr/bin/twistd --nodaemon --python=%s --logfile=%s "
-       "--pidfile=%s --reactor=glib2 2>/tmp/wader.err" % (tap_path, LOG_PATH, PID_PATH))
-
+       "--pidfile=%s --reactor=glib2 2>/tmp/wader.err" % (tap_path, LOG_PATH,
+                                                                    PID_PATH))
