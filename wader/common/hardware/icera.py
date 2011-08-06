@@ -127,6 +127,10 @@ ICERA_CONN_DICT_REV = {
     '3G-HSDPA-HSUPA': consts.MM_NETWORK_MODE_HSPA,
 }
 
+# Icera proprietary error
+E.ERROR_DICT['+CME ERROR: 767'] = E.General  # Operation failed
+E.ERROR_DICT['+CME ERROR: 769'] = E.SimBusy
+
 
 def icera_new_conn_mode(args):
     if not args:
