@@ -974,12 +974,16 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_simple_status(self):
         """Returns the status for o.fd.MM.Modem.Simple.GetStatus"""
+        if self.device.status < MM_MODEM_STATE_ENABLED:
+            return defer.succeed(dict(state=self.device.status))
 
         def get_simple_status_cb((rssi, netinfo, band, net_mode)):
-            return dict(signal_quality=rssi,
+            return dict(state=self.device.status,
+                        signal_quality=rssi,
                         operator_code=netinfo[1],
                         operator_name=netinfo[2],
-                        band=band)
+                        band=band,
+                        network_mode=net_mode)
 
         deferred_list = []
         deferred_list.append(self.get_signal_quality())

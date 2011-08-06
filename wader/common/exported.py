@@ -179,8 +179,9 @@ class SimpleExporter(ModemExporter):
 
         def get_simple_status_cb(status):
             # by default it is converted to Int32
-            for name in ['signal_quality', 'band']:
-                status[name] = dbus.UInt32(status[name])
+            for name in ['signal_quality', 'band', 'network_mode']:
+                if name in status:
+                    status[name] = dbus.UInt32(status[name])
 
             return status
 
