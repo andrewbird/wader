@@ -90,7 +90,8 @@ ICERA_CMD_DICT['get_network_mode'] = build_cmd_dict(
         (?P<domain>\d+)
     """, re.VERBOSE))
 
-# %IPDPADDR:<cid>,<ip>,<gw>,<dns1>,<dns2>[,<nbns1>,<nbns2>]\r\n
+# K3805-Z :- %IPDPADDR:<cid>,<ip>,<gw>,<dns1>,<dns2>[,<nbns1>,<nbns2>]\r\n
+# K4510-Z :- %IPDPADDR:<cid>,<ip>,<gw>,<dns1>,<dns2>[,<nbns1>,<nbns2>,<subnetmask>,<dhcp>]\r\n
 ICERA_CMD_DICT['get_ip4_config'] = build_cmd_dict(
     re.compile(r"""
         %IPDPADDR:
@@ -249,7 +250,8 @@ class IceraWrapper(WCDMAWrapper):
         def real_get_ip4_config(deferred):
 
             def get_ip4_eb(failure):
-                failure.trap(E.General)
+                failure.trap(E.General, E.OperationNotSupported)
+
                 if self.state_dict.get('should_stop'):
                     self.state_dict.pop('should_stop')
                     return
