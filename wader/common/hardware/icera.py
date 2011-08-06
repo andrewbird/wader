@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2009  Vodafone España, S.A.
+# Copyright (C) 2009-2011  Vodafone España, S.A.
 # Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
@@ -74,12 +74,25 @@ ICERA_CMD_DICT['get_phonebook_size'] = build_cmd_dict(
 ICERA_CMD_DICT['list_sms'] = build_cmd_dict(
     re.compile(r"""
         \r\n
-        \+CMGL:\s
+        \+CMGL:\s*
         (?P<id>\d+),
         (?P<where>\d),
         (?P<alpha>"\w*?")?,
         \d+
         \r\n(?P<pdu>\w+)
+    """, re.VERBOSE))
+
+# \r\n+CMGR: 0,"616E64726577",29\r\n
+# 0791447758100650040C914497716247010000117082812392400B4AB29A3C5693D56BF218\r\n
+ICERA_CMD_DICT['get_sms'] = build_cmd_dict(
+    re.compile(r"""
+        \r\n
+        \+CMGR:\s*
+        (?P<where>\d+),
+        (?P<contact>.*),
+        \d+\r\n
+        (?P<pdu>\w+)
+        \r\n
     """, re.VERBOSE))
 
 # \r\n%IPSYS: 1,2\r\n
