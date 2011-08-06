@@ -415,6 +415,15 @@ class OptionHSOWrapper(OptionWrapper):
         if not conn_id:
             raise E.CallIndexError("conn_id is None")
 
+        if self.device.status == consts.MM_MODEM_STATE_CONNECTED:
+            # this cannot happen
+            raise E.Connected("we are already connected")
+
+        if self.device.status == consts.MM_MODEM_STATE_CONNECTING:
+            raise E.SimBusy("we are already connecting")
+
+        self.device.set_status(consts.MM_MODEM_STATE_CONNECTING)
+
         return self.device.sconn.send_at('AT_OWANCALL=%d,1,0' % conn_id)
 
     def disconnect_from_internet(self):
@@ -425,10 +434,16 @@ class OptionHSOWrapper(OptionWrapper):
         if not conn_id:
             raise E.CallIndexError("conn_id is None")
 
+        self.device.set_status(consts.MM_MODEM_STATE_DISCONNECTING)
         self.state_dict['should_stop'] = True
+
+        def disconnect_cb(ignored):
+            # XXX: perhaps we should check the registration status here
+            if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
+
         d = self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
-        d.addCallback(lambda _:
-                        self.device.set_status(consts.MM_MODEM_STATE_ENABLED))
+        d.addCallback(disconnect_cb)
         return d
 
 
