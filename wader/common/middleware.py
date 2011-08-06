@@ -37,12 +37,16 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
                                  MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
                                  DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED,
+                                 MM_GSM_ACCESS_TECH_GSM_COMPAT,
                                  MM_GSM_ACCESS_TECH_GPRS,
                                  MM_GSM_ACCESS_TECH_EDGE,
                                  MM_GSM_ACCESS_TECH_UMTS,
                                  MM_GSM_ACCESS_TECH_HSDPA,
                                  MM_GSM_ACCESS_TECH_HSUPA,
-                                 MM_GSM_ACCESS_TECH_HSPA)
+                                 MM_GSM_ACCESS_TECH_HSPA,
+                                 MM_GSM_ACCESS_TECH_HSPA_PLUS,
+                                 MM_GSM_ACCESS_TECH_LTE)
+
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
@@ -355,15 +359,16 @@ class WCDMAWrapper(WCDMAProtocol):
             cur = self.device.get_property(NET_INTFACE, 'AccessTechnology')
 
             # Don't stamp on the value provided by a richer method
-            if new == 'GPRS' and cur != MM_GSM_ACCESS_TECH_EDGE:
-                self.device.set_property(NET_INTFACE, 'AccessTechnology',
-                                         MM_GSM_ACCESS_TECH_GPRS)
-
-            if new == '3G' and cur not in [MM_GSM_ACCESS_TECH_HSDPA,
-                                           MM_GSM_ACCESS_TECH_HSUPA,
-                                           MM_GSM_ACCESS_TECH_HSPA]:
-                self.device.set_property(NET_INTFACE, 'AccessTechnology',
-                                         MM_GSM_ACCESS_TECH_UMTS)
+            if (new == MM_GSM_ACCESS_TECH_GPRS and
+                    cur == MM_GSM_ACCESS_TECH_EDGE) or \
+               (new == MM_GSM_ACCESS_TECH_UMTS and
+                    cur in [MM_GSM_ACCESS_TECH_HSDPA,
+                            MM_GSM_ACCESS_TECH_HSUPA,
+                            MM_GSM_ACCESS_TECH_HSPA,
+                            MM_GSM_ACCESS_TECH_HSPA_PLUS]):
+                self.device.set_property(NET_INTFACE, 'AccessTechnology', cur)
+            else:
+                self.device.set_property(NET_INTFACE, 'AccessTechnology', new)
 
             return resp.append(info[0])
 
@@ -451,10 +456,20 @@ class WCDMAWrapper(WCDMAProtocol):
                 # we should raise an exception here
                 raise E.NoNetwork()
 
-            status = int(netinfo.group('status'))
-            conn_type = (status == 0) and 'GPRS' or '3G'
-            netname = netinfo.group('netname')
+            # TS 27007 got updated as of 10.4
+            _map = {
+                '0': MM_GSM_ACCESS_TECH_GPRS,  # strictly GSM
+                '1': MM_GSM_ACCESS_TECH_GSM_COMPAT,
+                '2': MM_GSM_ACCESS_TECH_UMTS,  # strictly UTRAN
+                '3': MM_GSM_ACCESS_TECH_EDGE,
+                '4': MM_GSM_ACCESS_TECH_HSDPA,
+                '5': MM_GSM_ACCESS_TECH_HSUPA,
+                '6': MM_GSM_ACCESS_TECH_HSPA,
+                '7': MM_GSM_ACCESS_TECH_LTE,
+            }
+            conn_type = _map.get(netinfo.group('status'))
 
+            netname = netinfo.group('netname')
             if netname in ['Limited Service',
                     pack_ucs2_bytes('Limited Service')]:
                 raise ex.LimitedServiceNetworkError
