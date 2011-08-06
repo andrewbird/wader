@@ -917,7 +917,7 @@ class DBusTestCase(unittest.TestCase):
         #sm = None  # SignalMatch
         #sms = {'number' : number, 'text' : 'send test'}
 
-        #def on_sms_received_cb(index):
+        #def on_sms_received_cb(index, complete):
         #    def compare_messages(_sms):
         #        self.assertEqual(_sms['text'], sms['text'])
         #        sm.remove() # remove SignalMatch
@@ -930,7 +930,7 @@ class DBusTestCase(unittest.TestCase):
         #                    reply_handler=compare_messages,
         #                    error_handler=d.errback)
 
-        #sm = self.device.connect_to_signal("SMSReceived", on_sms_received_cb,
+        #sm = self.device.connect_to_signal("SmsReceived", on_sms_received_cb,
         #                                   dbus_interface=SMS_INTFACE)
 
         #self.device.Send(sms, dbus_interface=SMS_INTFACE,
@@ -950,7 +950,7 @@ class DBusTestCase(unittest.TestCase):
         #sm = None  # SignalMatch
         #sms = {'number' : number, 'text' : 'send from storage test' }
 
-        #def on_sms_received_cb(index):
+        #def on_sms_received_cb(index, complete):
         #    def compare_messages(_sms):
         #        self.assertEqual(_sms['text'], sms['text'])
         #        sm.remove() # remove SignalMatch
@@ -974,7 +974,7 @@ class DBusTestCase(unittest.TestCase):
         #                                reply_handler=lambda indexes: None,
         #                                error_handler=d.errback)
 
-        #sm = self.device.connect_to_signal("SMSReceived", on_sms_received_cb)
+        #sm = self.device.connect_to_signal("SmsReceived", on_sms_received_cb)
 
         ## save the message and send it to ourselves
         #self.device.Save(sms, dbus_interface=SMS_INTFACE,

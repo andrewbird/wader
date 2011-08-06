@@ -803,8 +803,8 @@ class SmsExporter(MmsExporter):
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @signal(dbus_interface=SMS_INTFACE, signature='ub')
-    def SMSReceived(self, index, completed):
-        log.msg('Emitting SMSReceived(%d, %s)' % (index, completed))
+    def SmsReceived(self, index, complete):
+        log.msg('Emitting SmsReceived(%d, %s)' % (index, complete))
 
     @signal(dbus_interface=SMS_INTFACE, signature='ub')
     def Completed(self, index, completed):
