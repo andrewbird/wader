@@ -39,6 +39,10 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  MM_MODEM_STATE_DISABLED,
                                  MM_MODEM_STATE_ENABLING,
                                  MM_MODEM_STATE_ENABLED,
+                                 MM_MODEM_STATE_SEARCHING,
+                                 MM_MODEM_STATE_REGISTERED,
+                                 MM_MODEM_STATE_DISCONNECTING,
+                                 MM_MODEM_STATE_CONNECTING,
                                  MM_MODEM_STATE_CONNECTED,
                                  MM_GSM_ACCESS_TECH_GSM_COMPAT,
                                  MM_GSM_ACCESS_TECH_GPRS,
@@ -398,6 +402,14 @@ class WCDMAWrapper(WCDMAProtocol):
 
         self.cached_registration = (time() + CACHETIME, reginfo)
         self.device.exporter.RegistrationInfo(*reginfo)
+
+        if self.device.status in [MM_MODEM_STATE_ENABLED,
+                                  MM_MODEM_STATE_SEARCHING,
+                                  MM_MODEM_STATE_REGISTERED]:
+            if _reginfo[0] in [1, 5]:
+               self.device.set_status(MM_MODEM_STATE_REGISTERED)
+            else:
+               self.device.set_status(MM_MODEM_STATE_SEARCHING)
         return reginfo
 
     def get_netreg_info(self):
@@ -1002,17 +1014,37 @@ class WCDMAWrapper(WCDMAProtocol):
             # this cannot happen
             raise E.Connected("we are already connected")
 
+        if self.device.status == MM_MODEM_STATE_CONNECTING:
+            raise E.SimBusy("we are already connecting")
+
+        def connect_eb(failure):
+            log.msg("connect_simple errorback")
+
+            if self.device.status >= MM_MODEM_STATE_REGISTERED:
+                self.device.set_status(MM_MODEM_STATE_REGISTERED)
+            failure.raiseException()  # re-raise
+
         simplesm = self.device.custom.simp_klass(self.device, settings)
         d = simplesm.start_simple()
         d.addCallback(lambda _:
                         self.device.set_status(MM_MODEM_STATE_CONNECTED))
+        d.addErrback(connect_eb)
         return d
 
     def connect_to_internet(self, number):
         """Opens data port and dials ``number`` in"""
+        # Note: this is called by:
+        #    1/ connect_simple via simple state machine
+        #    2/ directly by Connect() dbus method
+
         if self.device.status == MM_MODEM_STATE_CONNECTED:
             # this cannot happen
             raise E.Connected("we are already connected")
+
+        if self.device.status == MM_MODEM_STATE_CONNECTING:
+            raise E.SimBusy("we are already connecting")
+
+        self.device.set_status(MM_MODEM_STATE_CONNECTING)
 
         # open the data port
         port = self.device.ports.dport
@@ -1023,15 +1055,25 @@ class WCDMAWrapper(WCDMAProtocol):
         # not like to write unicode to serial ports
         d = defer.maybeDeferred(port.obj.write,
                                 "ATDT%s\r\n" % str(number))
-        d.addCallback(lambda _:
-                        self.device.set_status(MM_MODEM_STATE_CONNECTED))
+
+        # we should detect error or success here and set state
+
         return d
 
     def disconnect_from_internet(self):
         """Disconnects the modem temporally lowering the DTR"""
+
+        # NM usually issues disconnect as part of a connect sequence
+        if self.device.status < MM_MODEM_STATE_CONNECTED:
+            return defer.succeed(True)
+
         port = self.device.ports.dport
         if not port.obj.isOpen():
             raise AttributeError("Data serial port is not open")
+
+        self.device.set_status(MM_MODEM_STATE_DISCONNECTING)
+
+        # XXX: should check that we did stop the connection and set status
 
         def restore_speed(speed):
             try:
@@ -1039,7 +1081,11 @@ class WCDMAWrapper(WCDMAProtocol):
             except serial.SerialException:
                 pass
             port.obj.close()
-            self.device.set_status(MM_MODEM_STATE_ENABLED)
+
+            # XXX: perhaps we should check the registration status here
+            if self.device.status > MM_MODEM_STATE_REGISTERED:
+                self.device.set_status(MM_MODEM_STATE_REGISTERED)
+
             return True
 
         # lower and raise baud speed
@@ -1079,7 +1125,8 @@ class WCDMAWrapper(WCDMAProtocol):
         if self.device.status == MM_MODEM_STATE_CONNECTED:
 
             def on_disconnect_from_internet(_):
-                self.device.set_status(MM_MODEM_STATE_ENABLED)
+                if self.device.status >= MM_MODEM_STATE_REGISTERED:
+                    self.device.set_status(MM_MODEM_STATE_REGISTERED)
                 self.device.close()
 
             d = self.disconnect_from_internet()
@@ -1087,7 +1134,7 @@ class WCDMAWrapper(WCDMAProtocol):
             d.addErrback(log.err)
             return d
 
-        if self.device.status == MM_MODEM_STATE_ENABLED:
+        if self.device.status >= MM_MODEM_STATE_ENABLED:
             return self.device.close()
 
     def _do_enable_device(self):
@@ -1104,7 +1151,9 @@ class WCDMAWrapper(WCDMAProtocol):
             # XXX: This netreg notification seems to be unrelated to enable,
             #      perhaps it should be moved?
             self.device.sconn.set_netreg_notification(1)
-            self.device.set_status(MM_MODEM_STATE_ENABLED)
+            if self.device.status < MM_MODEM_STATE_ENABLED:
+                self.device.set_status(MM_MODEM_STATE_ENABLED)
+
             return resp
 
         from wader.common.startup import attach_to_serial_port
