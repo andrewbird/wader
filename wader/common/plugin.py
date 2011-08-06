@@ -19,14 +19,16 @@
 """Plugin system for Wader"""
 
 from pytz import timezone
-from twisted.internet import defer
+from time import time
+from twisted.internet import defer, reactor
+from twisted.internet.task import deferLater
 from twisted.python import log
 from twisted.plugin import IPlugin, getPlugins
 from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
-                                 DEV_DISABLED, DEV_ENABLED, DEV_AUTHENTICATED)
+                                 DEV_DISABLED, DEV_ENABLED)
 from wader.common.daemon import build_daemon_collection
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
@@ -63,6 +65,8 @@ class DevicePlugin(object):
         self.sconn = None
         # device internal state
         self._status = DEV_DISABLED
+        # time SIM authentication was done
+        self._authtime = None
         # collection of daemons
         self.daemons = None
         # onyl used in devices that like to share ids, like
@@ -103,12 +107,22 @@ class DevicePlugin(object):
             self.exporter.DeviceEnabled(self.opath)
 
         self._status = status
-        self.set_property(MDM_INTFACE, 'Enabled', status >= DEV_ENABLED)
 
     @property
     def status(self):
         """Returns the internal device status"""
         return self._status
+
+    def set_authtime(self, authtime):
+        self._authtime = authtime
+
+    @property
+    def authtime(self):
+        """
+        Returns the time in secs (UTC) that authentication was done
+        or None if it's not occurred yet
+        """
+        return self._authtime
 
     def close(self, remove_from_conn=False, removed=False):
         """Closes the plugin and frees all the associated resources"""
@@ -139,16 +153,9 @@ class DevicePlugin(object):
             self.daemons.stop_daemons()
 
         d = defer.succeed(True)
-
-        if removed:
-            d.addCallback(lambda _: self.set_status(DEV_DISABLED))
-        elif self.status == DEV_ENABLED:
+        if not removed:
             d.addCallback(lambda _: self.sconn.enable_radio(False))
-            if self.auth_persists_over_disable:
-                d.addCallback(lambda _: self.set_status(DEV_AUTHENTICATED))
-            else:
-                d.addCallback(lambda _: self.set_status(DEV_DISABLED))
-
+        d.addCallback(lambda _: self.set_status(DEV_DISABLED))
         d.addCallback(free_resources)
         return d
 
@@ -172,17 +179,29 @@ class DevicePlugin(object):
             d.addCallback(on_init)
             return d
 
-        # initialize method is always called right after authentication
-        # is OK, be it right after a successful SendP{in,uk,uk2} or
-        # because the device was already authenticated
-        self.set_status(DEV_AUTHENTICATED)
-        # sometimes, right after a combination of Modem.Enable operations
-        # and hot pluggings, the core will not reply to the first AT command
-        # sent, but it will to the second. This addCallbacks call handles
-        # both the callback and errback (if the command times out)
-        d = self.sconn.enable_radio(True)
-        d.addCallback(initialize_sim)
-        d.addErrback(log.err)
+        # XXX: Sometimes, right after a combination of Modem.Enable operations
+        #      and hot pluggings, the core will not reply to the first AT
+        #      command sent, but it will to the second. This was an old comment
+        #      and it's not certain that this still occurs; if symptoms persist
+        #      we'll need to re-add handling for this case.
+
+        if self.authtime is None:
+            log.err("Being asked to initialise before auth has been checked")
+            raise RuntimeError
+
+        def do_init():
+            log.msg('Enabling radio and initialising SIM')
+            d = self.sconn.enable_radio(True)
+            d.addCallback(initialize_sim)
+            d.addErrback(log.err)
+            return d
+
+        remaining = (self.authtime + self.custom.auth_klass.DELAY) - time() + 1
+        if remaining > 0:
+            log.msg('Delaying SIM initialisation for %d secs' % remaining)
+            d = deferLater(reactor, remaining, do_init)
+        else:
+            d = do_init()
         return d
 
     def patch(self, other):

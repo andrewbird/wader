@@ -36,7 +36,8 @@ import wader.common.aterrors as E
 from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
                                  MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
-                                 DEV_AUTHENTICATED, DEV_ENABLED, DEV_CONNECTED,
+                                 DEV_DISABLED, DEV_ENABLING,
+                                 DEV_ENABLED, DEV_CONNECTED,
                                  MM_GSM_ACCESS_TECH_GSM_COMPAT,
                                  MM_GSM_ACCESS_TECH_GPRS,
                                  MM_GSM_ACCESS_TECH_EDGE,
@@ -1080,32 +1081,38 @@ class WCDMAWrapper(WCDMAProtocol):
             return self.device.close()
 
     def _do_enable_device(self):
-        if self.device.status == DEV_ENABLED:
+        if self.device.status >= DEV_ENABLED:
             return defer.succeed(self.device)
+
+        if self.device.status == DEV_ENABLING:
+            raise E.SimBusy()
+
+        self.device.set_status(DEV_ENABLING)
 
         def signals(resp):
             self.connect_to_signals()
+            # XXX: This netreg notification seems to be unrelated to enable,
+            #      perhaps it should be moved?
             self.device.sconn.set_netreg_notification(1)
+            self.device.set_status(DEV_ENABLED)
             return resp
 
         from wader.common.startup import attach_to_serial_port
-        if self.device.status == DEV_AUTHENTICATED:
-            # if a device was enabled and then disabled, there's no need to
-            # check the authentication again if it persists, but this behaviour
-            # is device specific
-            d = attach_to_serial_port(self.device)
-            d.addCallback(self.device.initialize)
-            d.addCallback(signals)
-            return d
 
         def process_device_and_initialize(device):
             self.device = device
             auth_klass = self.device.custom.auth_klass
             authsm = auth_klass(self.device)
+
+            def set_status(failure):
+                self.device.set_status(DEV_DISABLED)
+                failure.raiseException() # re-raise
+
             d = authsm.start_auth()
             # if auth is ready, the device will initialize straight away
-            # if auth aint ready the callback chain wont be executed and
+            # if auth isn't ready the callback chain won't be executed and
             # will just return the given exception
+            d.addErrback(set_status)
             d.addCallback(self.device.initialize)
             d.addCallback(signals)
             return d
@@ -1118,19 +1125,17 @@ class WCDMAWrapper(WCDMAProtocol):
         """
         To be executed after successful authentication over DBus
 
-        I will check if the device was really initted and will set
-        the UnlockRequired property to ''. If an auth was performed, I will
-        delay the rest of the initialization process some seconds (15) so
-        the device can settle.
+        Network Manager calls this via SendPin() even when not performing an
+        Enable or SimpleConnect, it's just done as part of noticing a new
+        device has appeared. So after we have unlocked we save a timestamp so
+        that any subsequent initialisation can check if the requisite settling
+        DELAY has elapsed, but we can't continue blindly to initialisation as
+        used to be the case.
         """
         self.device.set_property(MDM_INTFACE, 'UnlockRequired', '')
-        if self.device.status == DEV_AUTHENTICATED:
-            log.msg("device was already initted, just returning orig result")
-            return result
+        self.device.set_authtime(time())
 
-        DELAY = self.device.custom.auth_klass.DELAY
-        log.msg("giving the device %d seconds to settle, waiting..." % DELAY)
-        return task.deferLater(reactor, DELAY, self.device.initialize)
+        return result
 
 
 class BasicNetworkOperator(object):

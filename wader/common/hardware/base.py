@@ -119,6 +119,7 @@ def check_auth_state(plugin):
                         if code in codes:
                             plugin.set_property(MDM_INTFACE, 'UnlockRequired',
                                             codes[code])
+                            plugin.set_authtime(0)
                             return plugin
 
                 sleep(1)  # can do this as we are in a separate thread
