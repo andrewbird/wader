@@ -7,3 +7,6 @@ ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="101
 
 # Vodafone (ZTE) K3770-Z
 ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1177", RUN="/sbin/ifconfig %k -arp"
+
+# Vodafone (ZTE) K3772-Z
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1181", RUN="/sbin/ifconfig %k -arp"
