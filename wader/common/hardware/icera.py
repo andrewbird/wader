@@ -330,6 +330,15 @@ class IceraWrapper(WCDMAWrapper):
         if conn_id is None:
             raise E.CallIndexError("conn_id is None")
 
+        if self.device.status == consts.MM_MODEM_STATE_CONNECTED:
+            # this cannot happen
+            raise E.Connected("we are already connected")
+
+        if self.device.status == consts.MM_MODEM_STATE_CONNECTING:
+            raise E.SimBusy("we are already connecting")
+
+        self.device.set_status(consts.MM_MODEM_STATE_CONNECTING)
+
         return self.send_at('AT%%IPDPACT=%d,1' % conn_id)
 
     def disconnect_from_internet(self):
@@ -340,9 +349,15 @@ class IceraWrapper(WCDMAWrapper):
         if conn_id is None:
             raise E.CallIndexError("conn_id is None")
 
+        self.device.set_status(consts.MM_MODEM_STATE_DISCONNECTING)
+
+        def disconnect_cb(ignored):
+            # XXX: perhaps we should check the registration status here
+            if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
+
         d = self.send_at('AT%%IPDPACT=%d,0' % conn_id)
-        d.addCallback(lambda _:
-                        self.device.set_status(consts.MM_MODEM_STATE_ENABLED))
+        d.addCallback(disconnect_cb)
         return d
 
 
