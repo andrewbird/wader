@@ -27,6 +27,7 @@ from wader.common.command import get_cmd_dict_copy, build_cmd_dict
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
+from wader.common.sim import SIMBaseClass
 from wader.common.utils import revert_dict
 import wader.common.signals as S
 
@@ -195,6 +196,40 @@ class ZTEWCDMACustomizer(WCDMACustomizer):
     wrapper_klass = ZTEWrapper
 
 
+class ZTEWCDMASIMClass(SIMBaseClass):
+    """WCDMA SIM class for ZTE devices"""
+
+    def __init__(self, sconn):
+        super(ZTEWCDMASIMClass, self).__init__(sconn)
+
+    def setup_sms(self):
+        # Select SIM storage
+        self.sconn.send_at('AT+CPMS="SM","SM","SM"')
+
+        # Notification when a SMS arrives...
+        self.sconn.set_sms_indication(2, 1, 0, 2, 0)
+        # XXX: We have to set +CDSI indication as original ZTE devices don't
+        #      support +CDS mode. At some point we will have to implement
+        #      processing of +CDSI notifications in core
+        # Sample notification
+        # '+CDSI: "SR",50'
+        #
+        # Sample retrieval
+        # AT+CPMS="SR";+CMGR=50;+CMGD=50;+CPMS="SM"
+        # +CPMS: 1,100,1,15,1,15
+        #
+        # +CMGR: ,,25
+        # 079144775810065006FD0C91449771624701117013908522401170139085624000
+        #
+        # +CPMS: 0,100,1,15,1,15
+        #
+        # OK
+
+        # set PDU mode
+        self.sconn.set_sms_format(0)
+
+
 class ZTEWCDMADevicePlugin(DevicePlugin):
     """WCDMA device plugin for ZTE devices"""
+    sim_klass = ZTEWCDMASIMClass
     custom = ZTEWCDMACustomizer()
