@@ -167,10 +167,6 @@ MM_NETWORK_BANDS = [
     MM_NETWORK_BAND_U17IX,
     MM_NETWORK_BAND_U1900]
 
-MM_IP_METHOD_PPP = UInt32(0)
-MM_IP_METHOD_STATIC = UInt32(1)
-MM_IP_METHOD_DHCP = UInt32(2)
-
 MM_SYSTEM_SETTINGS_PATH = '/org/freedesktop/ModemManager/Settings'
 
 # necessary for relocatable bundling on OSX
