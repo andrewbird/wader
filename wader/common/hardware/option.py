@@ -384,7 +384,7 @@ class OptionHSOWrapper(OptionWrapper):
             ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
             # XXX: Fix dns3
             dns2 = dns3 = resp[0].group('dns2')
-            self.device.set_status(consts.DEV_CONNECTED)
+            self.device.set_status(consts.MM_MODEM_STATE_CONNECTED)
             return [ip, dns1, dns2, dns3]
 
         d.addCallback(_get_ip4_config_cb)
@@ -427,7 +427,8 @@ class OptionHSOWrapper(OptionWrapper):
 
         self.state_dict['should_stop'] = True
         d = self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
-        d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
+        d.addCallback(lambda _:
+                        self.device.set_status(consts.MM_MODEM_STATE_ENABLED))
         return d
 
 

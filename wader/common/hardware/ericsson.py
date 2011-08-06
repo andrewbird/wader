@@ -101,7 +101,9 @@ class EricssonSIMClass(SIMBaseClass):
     def initialize(self, set_encoding=True):
         self.sconn.reset_settings()
         self.sconn.disable_echo()
-        self.sconn.send_at('AT+CPBS="SM"') # So that phonebook size is returned
+
+        # So that phonebook size is returned
+        self.sconn.send_at('AT+CPBS="SM"')
 
         def init_callback(size):
             # setup SIM storage defaults
@@ -168,7 +170,8 @@ class EricssonWrapper(WCDMAWrapper):
 
     def disconnect_from_internet(self):
         d = self.send_at('AT*ENAP=0')
-        d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
+        d.addCallback(lambda _:
+                        self.device.set_status(consts.MM_MODEM_STATE_ENABLED))
         return d
 
     def enable_pin(self, pin, enable):
@@ -435,7 +438,8 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
         def do_next(self):
             if 'apn' in self.settings:
                 d = self.sconn.set_apn(self.settings['apn'])
-                d.addCallback(lambda _: self.transition_to('wait_for_registration'))
+                d.addCallback(lambda _:
+                                self.transition_to('wait_for_registration'))
             else:
                 self.transition_to('wait_for_registration')
 
@@ -469,7 +473,7 @@ class EricssonSimpleStateMachine(SimpleStateMachine):
             d.addCallback(on_mbm_authenticated)
             d.addCallback(on_e2nap_done)
             d.addCallback(lambda _:
-                    self.device.set_status(consts.DEV_CONNECTED))
+                    self.device.set_status(consts.MM_MODEM_STATE_CONNECTED))
             d.addCallback(lambda _: self.transition_to('done'))
 
     class done(Mode):

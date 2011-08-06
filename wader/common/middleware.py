@@ -36,8 +36,10 @@ import wader.common.aterrors as E
 from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
                                  MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
-                                 DEV_DISABLED, DEV_ENABLING,
-                                 DEV_ENABLED, DEV_CONNECTED,
+                                 MM_MODEM_STATE_DISABLED,
+                                 MM_MODEM_STATE_ENABLING,
+                                 MM_MODEM_STATE_ENABLED,
+                                 MM_MODEM_STATE_CONNECTED,
                                  MM_GSM_ACCESS_TECH_GSM_COMPAT,
                                  MM_GSM_ACCESS_TECH_GPRS,
                                  MM_GSM_ACCESS_TECH_EDGE,
@@ -53,7 +55,8 @@ from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2)
 import wader.common.exceptions as ex
 from wader.common.mal import MessageAssemblyLayer
-from wader.common.mms import send_m_send_req, send_m_notifyresp_ind, get_payload
+from wader.common.mms import (send_m_send_req, send_m_notifyresp_ind,
+                              get_payload)
 from wader.common.protocol import WCDMAProtocol
 from wader.common.signals import SIG_CREG
 from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
@@ -687,7 +690,8 @@ class WCDMAWrapper(WCDMAProtocol):
 
         def get_them(ignored=None):
             d = super(WCDMAWrapper, self).list_contacts()
-            d.addCallback(lambda matches: map(self._regexp_to_contact, matches))
+            d.addCallback(lambda matches:
+                                        map(self._regexp_to_contact, matches))
             d.addErrback(not_found_eb)
             return d
 
@@ -916,7 +920,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         It will not enable it if its already enabled and viceversa
         """
-        if self.device.status >= DEV_ENABLED and enable:
+        if self.device.status >= MM_MODEM_STATE_ENABLED and enable:
             # no need to enable an enabled device
             return defer.succeed("OK")
 
@@ -990,18 +994,19 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def connect_simple(self, settings):
         """Connects with the given ``settings``"""
-        if self.device.status == DEV_CONNECTED:
+        if self.device.status == MM_MODEM_STATE_CONNECTED:
             # this cannot happen
             raise E.Connected("we are already connected")
 
         simplesm = self.device.custom.simp_klass(self.device, settings)
         d = simplesm.start_simple()
-        d.addCallback(lambda _: self.device.set_status(DEV_CONNECTED))
+        d.addCallback(lambda _:
+                        self.device.set_status(MM_MODEM_STATE_CONNECTED))
         return d
 
     def connect_to_internet(self, number):
         """Opens data port and dials ``number`` in"""
-        if self.device.status == DEV_CONNECTED:
+        if self.device.status == MM_MODEM_STATE_CONNECTED:
             # this cannot happen
             raise E.Connected("we are already connected")
 
@@ -1014,7 +1019,8 @@ class WCDMAWrapper(WCDMAProtocol):
         # not like to write unicode to serial ports
         d = defer.maybeDeferred(port.obj.write,
                                 "ATDT%s\r\n" % str(number))
-        d.addCallback(lambda _: self.device.set_status(DEV_CONNECTED))
+        d.addCallback(lambda _:
+                        self.device.set_status(MM_MODEM_STATE_CONNECTED))
         return d
 
     def disconnect_from_internet(self):
@@ -1029,7 +1035,7 @@ class WCDMAWrapper(WCDMAProtocol):
             except serial.SerialException:
                 pass
             port.obj.close()
-            self.device.set_status(DEV_ENABLED)
+            self.device.set_status(MM_MODEM_STATE_ENABLED)
             return True
 
         # lower and raise baud speed
@@ -1066,10 +1072,10 @@ class WCDMAWrapper(WCDMAProtocol):
     def _do_disable_device(self):
         self.clean_signals()
 
-        if self.device.status == DEV_CONNECTED:
+        if self.device.status == MM_MODEM_STATE_CONNECTED:
 
             def on_disconnect_from_internet(_):
-                self.device.set_status(DEV_ENABLED)
+                self.device.set_status(MM_MODEM_STATE_ENABLED)
                 self.device.close()
 
             d = self.disconnect_from_internet()
@@ -1077,24 +1083,24 @@ class WCDMAWrapper(WCDMAProtocol):
             d.addErrback(log.err)
             return d
 
-        if self.device.status == DEV_ENABLED:
+        if self.device.status == MM_MODEM_STATE_ENABLED:
             return self.device.close()
 
     def _do_enable_device(self):
-        if self.device.status >= DEV_ENABLED:
+        if self.device.status >= MM_MODEM_STATE_ENABLED:
             return defer.succeed(self.device)
 
-        if self.device.status == DEV_ENABLING:
+        if self.device.status == MM_MODEM_STATE_ENABLING:
             raise E.SimBusy()
 
-        self.device.set_status(DEV_ENABLING)
+        self.device.set_status(MM_MODEM_STATE_ENABLING)
 
         def signals(resp):
             self.connect_to_signals()
             # XXX: This netreg notification seems to be unrelated to enable,
             #      perhaps it should be moved?
             self.device.sconn.set_netreg_notification(1)
-            self.device.set_status(DEV_ENABLED)
+            self.device.set_status(MM_MODEM_STATE_ENABLED)
             return resp
 
         from wader.common.startup import attach_to_serial_port
@@ -1105,8 +1111,8 @@ class WCDMAWrapper(WCDMAProtocol):
             authsm = auth_klass(self.device)
 
             def set_status(failure):
-                self.device.set_status(DEV_DISABLED)
-                failure.raiseException() # re-raise
+                self.device.set_status(MM_MODEM_STATE_DISABLED)
+                failure.raiseException()  # re-raise
 
             d = authsm.start_auth()
             # if auth is ready, the device will initialize straight away

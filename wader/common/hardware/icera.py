@@ -83,7 +83,8 @@ ICERA_CMD_DICT['list_sms'] = build_cmd_dict(
     """, re.VERBOSE))
 
 # \r\n+CMGR: 0,"616E64726577",29\r\n
-# 0791447758100650040C914497716247010000117082812392400B4AB29A3C5693D56BF218\r\n
+# 0791447758100650040C914497716247010000117082812392400B4AB29A3C5693D56BF2
+# 18\r\n
 ICERA_CMD_DICT['get_sms'] = build_cmd_dict(
     re.compile(r"""
         \r\n
@@ -104,7 +105,8 @@ ICERA_CMD_DICT['get_network_mode'] = build_cmd_dict(
     """, re.VERBOSE))
 
 # K3805-Z :- %IPDPADDR:<cid>,<ip>,<gw>,<dns1>,<dns2>[,<nbns1>,<nbns2>]\r\n
-# K4510-Z :- %IPDPADDR:<cid>,<ip>,<gw>,<dns1>,<dns2>[,<nbns1>,<nbns2>,<subnetmask>,<dhcp>]\r\n
+# K4510-Z :- %IPDPADDR:<cid>,<ip>,<gw>,<dns1>,<dns2>[,<nbns1>,<nbns2>,
+#            <subnetmask>,<dhcp>]\r\n
 ICERA_CMD_DICT['get_ip4_config'] = build_cmd_dict(
     re.compile(r"""
         %IPDPADDR:
@@ -304,7 +306,7 @@ class IceraWrapper(WCDMAWrapper):
             ip, dns1 = resp[0].group('ip'), resp[0].group('dns1')
             # XXX: Fix dns3
             dns2 = dns3 = resp[0].group('dns2')
-            self.device.set_status(consts.DEV_CONNECTED)
+            self.device.set_status(consts.MM_MODEM_STATE_CONNECTED)
             return [ip, dns1, dns2, dns3]
 
         d.addCallback(_get_ip4_config_cb)
@@ -339,7 +341,8 @@ class IceraWrapper(WCDMAWrapper):
             raise E.CallIndexError("conn_id is None")
 
         d = self.send_at('AT%%IPDPACT=%d,0' % conn_id)
-        d.addCallback(lambda _: self.device.set_status(consts.DEV_ENABLED))
+        d.addCallback(lambda _:
+                        self.device.set_status(consts.MM_MODEM_STATE_ENABLED))
         return d
 
 

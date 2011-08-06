@@ -28,7 +28,8 @@ from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
-                                 DEV_DISABLED, DEV_ENABLED)
+                                 MM_MODEM_STATE_DISABLED,
+                                 MM_MODEM_STATE_ENABLED)
 from wader.common.daemon import build_daemon_collection
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
@@ -64,7 +65,7 @@ class DevicePlugin(object):
         # serial connection reference
         self.sconn = None
         # device internal state
-        self._status = DEV_DISABLED
+        self._status = MM_MODEM_STATE_DISABLED
         # time SIM authentication was done
         self._authtime = None
         # collection of daemons
@@ -103,8 +104,10 @@ class DevicePlugin(object):
 
     def set_status(self, status):
         """Sets internal device status to ``status``"""
-        if status == DEV_ENABLED and self._status < status:
+        if status == MM_MODEM_STATE_ENABLED and self._status < status:
             self.exporter.DeviceEnabled(self.opath)
+
+        self.set_property(MDM_INTFACE, 'State', status)
 
         self._status = status
 
@@ -155,7 +158,7 @@ class DevicePlugin(object):
         d = defer.succeed(True)
         if not removed:
             d.addCallback(lambda _: self.sconn.enable_radio(False))
-        d.addCallback(lambda _: self.set_status(DEV_DISABLED))
+        d.addCallback(lambda _: self.set_status(MM_MODEM_STATE_DISABLED))
         d.addCallback(free_resources)
         return d
 
@@ -168,7 +171,7 @@ class DevicePlugin(object):
 
             self.daemons.start_daemons()
             d = self.sconn.init_properties()
-            d.addCallback(lambda _: self.set_status(DEV_ENABLED))
+            d.addCallback(lambda _: self.set_status(MM_MODEM_STATE_ENABLED))
             d.addCallback(lambda _: self.sconn.mal.initialize(obj=self.sconn))
             d.addCallback(lambda _: size)
             return d
