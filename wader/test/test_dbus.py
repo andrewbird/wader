@@ -142,11 +142,17 @@ class DBusTestCase(unittest.TestCase):
             time.sleep(1)
             d.callback(True)
 
+        def send_pin_cb():
+            # enable the device
+            self.device.Enable(True, dbus_interface=MDM_INTFACE,
+                               reply_handler=enable_device_cb,
+                               error_handler=d.errback)
+
         def enable_device_eb(e):
             if 'SimPinRequired' in get_dbus_error(e):
                 pin = config.get('test', 'pin', '0000')
                 self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
-                                    reply_handler=enable_device_cb,
+                                    reply_handler=send_pin_cb,
                                     error_handler=d.errback)
             elif 'SimPukRequired' in get_dbus_error(e):
                 pin = config.get('test', 'pin', '0000')
@@ -156,7 +162,7 @@ class DBusTestCase(unittest.TestCase):
                     raise unittest.SkipTest(msg)
 
                 self.device.SendPuk(puk, pin, dbus_interface=CRD_INTFACE,
-                                    reply_handler=enable_device_cb,
+                                    reply_handler=send_pin_cb,
                                     error_handler=d.errback)
             else:
                 raise unittest.SkipTest("Cannot handle error %s" % e)
@@ -1047,11 +1053,17 @@ class DBusTestCase(unittest.TestCase):
             # time.sleep(1)
             d.callback(True)
 
+        def send_pin_cb():
+            # enable the device
+            self.device.Enable(True, dbus_interface=MDM_INTFACE,
+                               reply_handler=enable_device_cb,
+                               error_handler=d.errback)
+
         def enable_device_eb(e):
             if 'SimPinRequired' in get_dbus_error(e):
                 pin = config.get('test', 'pin', '0000')
                 self.device.SendPin(pin, dbus_interface=CRD_INTFACE,
-                                    reply_handler=enable_device_cb,
+                                    reply_handler=send_pin_cb,
                                     error_handler=d.errback)
             else:
                 raise unittest.SkipTest("Cannot handle error %s" % e)
