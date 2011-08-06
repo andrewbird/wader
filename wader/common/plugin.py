@@ -18,6 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Plugin system for Wader"""
 
+# import inspect  # for debugging only
+
 from dbus import UInt32
 from pytz import timezone
 from time import time
@@ -105,6 +107,13 @@ class DevicePlugin(object):
 
     def set_status(self, status, reason=UInt32(0)):
         """Sets internal device status to ``status``"""
+#        # uncomment for debugging only
+#        caller = inspect.stack()[1]
+#        try:
+#            log.msg("set_status called by %s" % str(caller))
+#        finally:
+#            del caller
+
         if status == MM_MODEM_STATE_ENABLED and self._status < status:
             self.exporter.DeviceEnabled(self.opath)
 
