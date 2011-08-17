@@ -523,6 +523,13 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             return self.queue_at_cmd(cmd)
 
         def convert_response(response):
+            index = response[0].group('index')
+            if index == '1':
+                self.device.set_property(
+                                consts.USD_INTFACE, 'State', 'user-response')
+            else:
+                self.device.set_property(consts.USD_INTFACE, 'State', 'idle')
+
             resp = response[0].group('resp')
             code = response[0].group('code')
 
@@ -547,6 +554,8 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
                 return resp.decode('hex')
             except TypeError:
                 raise E.MalformedUssdPduError(resp)
+
+        self.device.set_property(consts.USD_INTFACE, 'State', 'active')
 
         d = send_request(str(ussd))
         d.addCallback(convert_response)
