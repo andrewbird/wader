@@ -968,6 +968,9 @@ class WCDMAWrapper(WCDMAProtocol):
         # XXX: Implement UnlockRetries
         self.device.set_property(MDM_INTFACE, 'UnlockRetries', 999)
 
+        # There's no way to query this, so we have to assume :-(
+        self.device.set_property(USD_INTFACE, 'State', 'idle')
+
         d = self.get_bands()
         d.addCallback(lambda bands:
                 self.device.set_property(CRD_INTFACE, 'SupportedBands', bands))
