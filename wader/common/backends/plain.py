@@ -51,7 +51,7 @@ from wader.common.utils import save_file, is_bogus_ip, patch_list_signature
 from wader.contrib import aes
 
 
-WVDIAL_CONF = os.path.join('/etc', 'ppp', 'peers', 'wvdial')
+WVDIAL_PPPD_OPTIONS = os.path.join('/etc', 'ppp', 'peers', 'wvdial')
 WVDIAL_RETRIES = 3
 WVTEMPLATE = """
 [Dialer Defaults]
@@ -103,7 +103,6 @@ DEFAULT_TEMPLATE = """
 debug
 noauth
 name wvdial
-replacedefaultroute
 noipdefault
 nomagic
 usepeerdns
@@ -242,7 +241,7 @@ class WVDialDialer(Dialer):
         self.backup_path = self._backup_conf()
         self.conf = conf
         # generate auth configuration
-        self._generate_auth_config()
+        self._generate_wvdial_ppp_options()
         # generate wvdial.conf from template
         port = self.device.ports.dport
         self.conf_path = get_wvdial_conf_file(self.conf, port.path)
@@ -258,28 +257,36 @@ class WVDialDialer(Dialer):
 
         self._restore_conf()
 
-    def _generate_auth_config(self):
+    def _generate_wvdial_ppp_options(self):
         if not self.conf.refuse_chap:
-            save_file(WVDIAL_CONF, CHAP_TEMPLATE)
+            wvdial_ppp_options = CHAP_TEMPLATE
         elif not self.conf.refuse_pap:
-            save_file(WVDIAL_CONF, PAP_TEMPLATE)
+            wvdial_ppp_options = PAP_TEMPLATE
         else:
             # this could be a NOOP, but the user might have modified
             # the stock /etc/ppp/peers/wvdial file, so the safest option
             # is to overwrite with our known good options.
-            save_file(WVDIAL_CONF, DEFAULT_TEMPLATE)
+            wvdial_ppp_options = DEFAULT_TEMPLATE
+
+        # There are some patched pppd implementations
+        # Most systems offer 'replacedefaultroute', but not Fedora
+        osobj = get_os_object()
+        if hasattr(osobj, 'get_additional_wvdial_ppp_options'):
+            wvdial_ppp_options += osobj.get_additional_wvdial_ppp_options()
+
+        save_file(WVDIAL_PPPD_OPTIONS, wvdial_ppp_options)
 
     def _backup_conf(self):
         path = tempfile.mkstemp('wvdial', APP_NAME)[1]
         try:
-            shutil.copy(WVDIAL_CONF, path)
+            shutil.copy(WVDIAL_PPPD_OPTIONS, path)
             return path
         except IOError:
             return None
 
     def _restore_conf(self):
         if self.backup_path:
-            shutil.copy(self.backup_path, WVDIAL_CONF)
+            shutil.copy(self.backup_path, WVDIAL_PPPD_OPTIONS)
             os.unlink(self.backup_path)
             self.backup_path = None
 

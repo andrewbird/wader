@@ -43,5 +43,8 @@ class SUSEDistro(LinuxPlugin):
         if exists("/usr/sbin/nscd"):
             getProcessValue("/usr/sbin/nscd", ["-i", "hosts"])
 
+    def get_additional_wvdial_ppp_options(self):
+        return "replacedefaultroute\n"
+
 
 susedistro = SUSEDistro()

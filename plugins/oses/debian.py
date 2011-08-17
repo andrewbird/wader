@@ -33,4 +33,8 @@ class DebianBasedDistro(LinuxPlugin):
 
         return False
 
+    def get_additional_wvdial_ppp_options(self):
+        return "replacedefaultroute\n"
+
+
 debian = DebianBasedDistro()

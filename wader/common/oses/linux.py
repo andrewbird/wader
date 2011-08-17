@@ -465,3 +465,6 @@ class LinuxPlugin(UnixPlugin):
             return map(int, [get_file_data(rx_b), get_file_data(tx_b)])
         except (IOError, OSError):
             return 0, 0
+
+    def get_additional_wvdial_ppp_options(self):
+        return ""

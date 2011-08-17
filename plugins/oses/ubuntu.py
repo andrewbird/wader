@@ -39,5 +39,8 @@ class UbuntuBasedDistro(LinuxPlugin):
         if exists("/usr/sbin/nscd"):
             return getProcessValue("/usr/sbin/nscd", ["-i", "hosts"])
 
+    def get_additional_wvdial_ppp_options(self):
+        return "replacedefaultroute\n"
+
 
 ubuntu = UbuntuBasedDistro()
