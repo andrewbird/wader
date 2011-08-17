@@ -16,13 +16,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-from wader.common.encoding import unpack_ucs2_bytes, check_if_ucs2
-from wader.common.exceptions import MalformedUssdPduError
 from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper)
-from wader.common.middleware import WCDMAWrapper
 
 
 class ZTEK4505Wrapper(ZTEWrapper):
@@ -31,23 +27,7 @@ class ZTEK4505Wrapper(ZTEWrapper):
         """Sends the ussd command ``ussd``"""
         # K4505-Z wants request in ascii chars even though current
         # set might be ucs2
-
-        def convert_response(response):
-            resp = response[0].group('resp')
-            if 'UCS2' in self.device.sim.charset:
-                if check_if_ucs2(resp):
-                    try:
-                        return unpack_ucs2_bytes(resp)
-                    except (TypeError, UnicodeDecodeError):
-                        raise MalformedUssdPduError(resp)
-
-                raise MalformedUssdPduError(resp)
-
-            return resp
-
-        d = super(WCDMAWrapper, self).send_ussd(str(ussd))
-        d.addCallback(convert_response)
-        return d
+        return super(ZTEK4505Wrapper, self).send_ussd(ussd, force_ascii=True)
 
 
 class ZTEK4505Customizer(ZTEWCDMACustomizer):

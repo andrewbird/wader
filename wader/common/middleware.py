@@ -852,7 +852,7 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda response: int(response[0].group('index')))
         return d
 
-    def send_ussd(self, ussd):
+    def send_ussd(self, ussd, force_ascii=False):
         """Sends the ussd command ``ussd``"""
 
         def convert_response(response):
@@ -877,7 +877,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
             return resp
 
-        if 'UCS2' in self.device.sim.charset:
+        if 'UCS2' in self.device.sim.charset and not force_ascii:
             ussd = pack_ucs2_bytes(ussd)
 
         self.device.set_property(USD_INTFACE, 'State', 'active')
