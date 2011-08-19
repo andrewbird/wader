@@ -38,6 +38,9 @@ from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_OBJPATH,
                                  APP_NAME, MDM_INTFACE, HSO_CHAP_AUTH,
                                  HSO_NO_AUTH, HSO_PAP_AUTH,
+                                 MM_MODEM_STATE_REGISTERED,
+                                 MM_MODEM_STATE_CONNECTING,
+                                 MM_MODEM_STATE_DISCONNECTING,
                                  MM_SYSTEM_SETTINGS_PATH)
 from wader.common.dialer import Dialer
 import wader.common.exceptions as ex
@@ -194,6 +197,8 @@ class WVDialDialer(Dialer):
             self.should_stop = False
             return
 
+        self.device.set_status(MM_MODEM_STATE_CONNECTING)
+
         self.proto = WVDialProtocol(self)
         args = [self.binary, '-C', self.conf_path, 'connect']
         self.iconn = reactor.spawnProcess(self.proto, args[0], args, env=None)
@@ -206,6 +211,8 @@ class WVDialDialer(Dialer):
     def disconnect(self):
         if self.proto is None:
             return defer.succeed(self.opath)
+
+        self.device.set_status(MM_MODEM_STATE_DISCONNECTING)
 
         # ignore the fact that we are gonna be disconnected
         self.proto.ignore_disconnect = True
@@ -228,6 +235,7 @@ class WVDialDialer(Dialer):
             def disconnect_cb(error_code):
                 log.msg("wvdial: exit code %d" % error_code)
                 self._cleanup()
+                self.device.set_status(MM_MODEM_STATE_REGISTERED)
                 return self.opath
 
             d.addCallback(disconnect_cb)
