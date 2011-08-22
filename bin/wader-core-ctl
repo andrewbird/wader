@@ -22,13 +22,18 @@ parser.add_option("-r", "--restart", action="store_true",
                    dest="should_restart", default=False,
                    help="Restart wader-core")
 parser.add_option("-s", "--start", action="store_true",
-                   dest="should_start", default=True,
-                   help="Start wader-core")
+                   dest="should_start", default=False,
+                   help="Start wader-core (only to be called by D-Bus service)")
 parser.add_option("-t", "--stop", action="store_true",
                    dest="should_stop", default=False,
                    help="Stop wader-core")
 
 options, args = parser.parse_args()
+
+if not (options.show_version or options.should_restart or
+        options.should_start or options.should_stop):
+    print(parser.format_help().strip())
+    sys.exit(0)
 
 if options.show_version:
     print "%s: version %s" % (os.path.basename(sys.argv[0]), APP_VERSION)
