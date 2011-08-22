@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -30,6 +30,13 @@ from twisted.internet import reactor, defer
 from twisted.plugin import IPlugin, getPlugins
 from twisted.python import log
 
+# Logger related imports.
+import glob
+import time
+from twisted.python import threadable
+from twisted.python.log import ILogObserver, FileLogObserver
+from twisted.python.logfile import BaseLogFile, LogReader
+
 import wader.common.consts as consts
 from wader.common._dbus import DBusExporterHelper
 from wader.common.provider import NetworkProvider, nick_debug
@@ -39,6 +46,138 @@ DELAY = 10
 ATTACH_DELAY = 1
 
 OLDLOCK = os.path.join(consts.DATA_DIR, '.setup-done')
+
+_application = None
+
+
+def _get_application():
+    """
+    Factory function that returns an Application object.
+    If the object does not exist then it creates a new Application object.
+    (Internal use only).
+    """
+    global _application
+    if _application is not None:
+        return _application
+
+    _application = Application(consts.APP_NAME)
+    return _application
+
+
+class WaderLogFile(BaseLogFile):
+    """
+    A log file that can be rotated.
+
+    A rotateLength of None disables automatic log rotation.
+    """
+    def __init__(self, name, directory, defaultMode=None,
+                                                     maxRotatedFiles=None):
+        """
+        Create a log file rotating on length.
+
+        @param name: file name.
+        @type name: C{str}
+        @param directory: path of the log file.
+        @type directory: C{str}
+        @param defaultMode: mode used to create the file.
+        @type defaultMode: C{int}
+        @param maxRotatedFiles: if not None, max number of log files the class
+            creates. Warning: it removes all log files above this number.
+        @type maxRotatedFiles: C{int}
+        """
+        BaseLogFile.__init__(self, name, directory, defaultMode)
+        self.maxRotatedFiles = maxRotatedFiles
+
+    def _openFile(self):
+        BaseLogFile._openFile(self)
+        self.lastDate = self.toDate(os.stat(self.path)[8])
+
+    def toDate(self, *args):
+        """Convert a unixtime to (year, month, day) localtime tuple,
+        or return the current (year, month, day) localtime tuple.
+
+        This function primarily exists so you may overload it with
+        gmtime, or some cruft to make unit testing possible.
+        """
+        # primarily so this can be unit tested easily
+        return time.localtime(*args)[:3]
+
+    def shouldRotate(self):
+        """Rotate when the date has changed since last write"""
+        return self.toDate() > self.lastDate
+
+    def getLog(self, identifier):
+        """
+        Given an integer, return a LogReader for an old log file.
+        """
+        filename = "%s.%d" % (self.path, identifier)
+        if not os.path.exists(filename):
+            raise ValueError("no such logfile exists")
+        return LogReader(filename)
+
+    def write(self, data):
+        """
+        Write some data to the file.
+        """
+        BaseLogFile.write(self, data)
+        # Guard against a corner case where time.time()
+        # could potentially run backwards to yesterday.
+        # Primarily due to network time.
+        self.lastDate = max(self.lastDate, self.toDate())
+
+    def rotate(self):
+        """
+        Rotate the file and create a new one.
+
+        If it's not possible to open new logfile, this will fail silently,
+        and continue logging to old logfile.
+        """
+        if not (os.access(self.directory, os.W_OK) and \
+                os.access(self.path, os.W_OK)):
+            return
+        logs = self.listLogs()
+        logs.reverse()
+        for i in logs:
+            if self.maxRotatedFiles is not None and i >= self.maxRotatedFiles:
+                os.remove("%s.%d" % (self.path, i))
+            else:
+                os.rename("%s.%d" % (self.path, i),
+                                                "%s.%d" % (self.path, i + 1))
+        self._file.close()
+        os.rename(self.path, "%s.1" % self.path)
+        self._openFile()
+
+    def listLogs(self):
+        """
+        Return sorted list of integers - the old logs' identifiers.
+        """
+        result = []
+        for name in glob.glob("%s.*" % self.path):
+            try:
+                counter = int(name.split('.')[-1])
+                if counter:
+                    result.append(counter)
+            except ValueError:
+                pass
+        result.sort()
+        return result
+
+    def __getstate__(self):
+        state = BaseLogFile.__getstate__(self)
+        del state["lastDate"]
+        return state
+
+threadable.synchronize(WaderLogFile)
+
+
+def set_logger():
+    """
+    Sets name, rotations and deleting of log file.
+    """
+    application = _get_application()
+    logfile = WaderLogFile(consts.LOG_NAME, consts.LOG_DIR,
+                                            maxRotatedFiles=consts.LOG_NUMBER)
+    application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
 
 
 class WaderService(Service):
@@ -114,7 +253,7 @@ def get_wader_application():
     and modify the application object
     """
     service = WaderService()
-    application = Application(consts.APP_NAME)
+    application = _get_application()
     service.setServiceParent(application)
     return application
 
@@ -158,6 +297,8 @@ def setup_and_export_device(device):
 
 def create_skeleton_and_do_initial_setup():
     """I perform the operations needed for the initial user setup"""
+    set_logger()
+
     if os.path.exists(OLDLOCK):
         # old way to signal that the setup is complete
         os.unlink(OLDLOCK)

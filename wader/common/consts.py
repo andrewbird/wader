@@ -206,4 +206,8 @@ PLUGINS_DIR = [PLUGINS_DIR,
                join(PLUGINS_DIR, 'devices')]
 
 PID_PATH = join(BASE_DIR, 'var', 'run', 'wader.pid')
-LOG_PATH = join(BASE_DIR, 'var', 'log', 'wader.log')
+
+# logger consts
+LOG_NAME = 'wader.log'
+LOG_DIR = join(BASE_DIR, 'var', 'log')
+LOG_NUMBER = 6
