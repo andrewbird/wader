@@ -13,7 +13,6 @@ from wader.common._gconf import GConfHelper
 from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH,
-                                 APP_SLUG_NAME,
                                  MDM_INTFACE, MM_IP_METHOD_PPP,
                                  MM_SYSTEM_SETTINGS_PATH,
                                  MM_ALLOWED_MODE_ANY,
@@ -32,10 +31,10 @@ from wader.common.secrets import ProfileSecrets
 from wader.common.utils import (convert_int_to_uint32, convert_uint32_to_int,
                                 patch_list_signature, revert_dict)
 
-# this line is required, otherwise gnomekeyring will complain about
-# the application name not being set
-gobject.set_application_name(APP_SLUG_NAME)
-
+# XXX: mustn't set the application name here else BCM gets called 'wader-core'
+# > this line is required, otherwise gnomekeyring will complain about
+# > the application name not being set
+# gobject.set_application_name(APP_SLUG_NAME)
 
 NM_SERVICE = 'org.freedesktop.NetworkManager'
 NM_OBJPATH = '/org/freedesktop/NetworkManager'
