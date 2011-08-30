@@ -48,6 +48,12 @@ NM08_SYSTEM_SETTINGS_OBJ = '/org/freedesktop/NetworkManagerSettings'
 NM08_SYSTEM_SETTINGS_CONNECTION = '%s.Connection' % NM08_SYSTEM_SETTINGS
 NM08_SYSTEM_SETTINGS_SECRETS = '%s.Secrets' % NM08_SYSTEM_SETTINGS_CONNECTION
 
+NM084_SETTINGS = '%sUserSettings' % NM_SERVICE
+NM084_SETTINGS_INT = '%sSettings' % NM_INTFACE
+NM084_SETTINGS_OBJ = '%sSettings' % NM_OBJPATH
+NM084_SETTINGS_CONNECTION = '%s.Connection' % NM084_SETTINGS_INT
+NM084_SETTINGS_CONNECTION_SECRETS = '%s.Secrets' % NM084_SETTINGS_CONNECTION
+
 NM09_MODEM_INTFACE = '%s.Modem' % NM_DEVICE
 NM09_SETTINGS = NM_SERVICE
 NM09_SETTINGS_INT = '%s.Settings' % NM_INTFACE
@@ -623,10 +629,10 @@ class NM08Profile(NMProfile):
         self.remove_from_connection()
 
 
-class NM09Profile(NMProfile):
+class NM084Profile(NMProfile):
 
     def __init__(self, opath, nm_obj, props, manager):
-        super(NM09Profile, self).__init__(opath, nm_obj, props, manager)
+        super(NM084Profile, self).__init__(opath, nm_obj, props, manager)
 
         self.secrets = DummySecrets(self, self.manager.keyring_manager)
 
@@ -636,9 +642,9 @@ class NM09Profile(NMProfile):
         log.msg("NM Connection profile %s has been removed" % self.opath)
         self.manager.remove_profile_cb(self)
 
-    def _on_updated(self):
+    def _on_updated(self, props):
         log.msg("NM Connection profile %s has been updated" % self.opath)
-        self.manager.update_profile_cb(self)
+        self.manager.update_profile_cb(self, props)
 
     def update(self, props):
         """Updates the profile with settings ``props``"""
@@ -651,6 +657,13 @@ class NM09Profile(NMProfile):
         # emit Removed and unexport from DBus
         self.Removed()
         self.remove_from_connection()
+
+
+class NM09Profile(NM084Profile):
+
+    def _on_updated(self):
+        log.msg("NM Connection profile %s has been updated" % self.opath)
+        self.manager.update_profile_cb(self)
 
 
 class NMProfileManager(Object):
@@ -870,50 +883,55 @@ class NM08ProfileManager(NMProfileManager):
                        dbus_interface=NM08_SYSTEM_SETTINGS_CONNECTION)
 
 
-class NM09ProfileManager(NMProfileManager):
+class NMLaterProfileManager(NMProfileManager):
+    # XXX: Poor name but is intended to provide common stuff in 0.8.4 and 0.9,
+    #      to be subclassed only
 
     def __init__(self):
-        super(NM09ProfileManager, self).__init__()
+        super(NMLaterProfileManager, self).__init__()
 
-        self.keyring_manager = DummyKeyringManager(self._keyring_get_callback,
-                                                    self._keyring_set_callback)
-        # connect to signals
-        self._connect_to_signals()
+    def _init_nm_manager(self):
+        obj = self.bus.get_object(self.NM_SETTINGS, self.NM_SETTINGS_OBJ)
+        self.nm_manager = dbus.Interface(obj, self.NM_SETTINGS_INT)
 
-    def _keyring_get_callback(self, uuid):
+    def _connect_to_signals(self):
+        self.nm_manager.connect_to_signal("NewConnection",
+                       self._on_new_nm_profile, self.NM_SETTINGS_INT)
+
+    def _on_new_nm_profile(self, opath):
+        log.msg("NM notified us of a new connection profile %s" % opath)
+        self._store_new_profile(opath)
+
+    def _get_profile_from_nm_connection(self, props):
+        print "NMLaterProfileManager::_get_profile_from_nm_connection()"
+
+        props = transpose_from_NM(props)
+        uuid = props['connection']['uuid']
         try:
-            secrets = self.nm_profiles[uuid].GetSecrets('gsm',
-                                    dbus_interface=NM09_SETTINGS_CONNECTION)
-        except (KeyError, dbus.exceptions.DBusException):
-            # XXX: ideally we'd return None, but callers may expect
-            return {u'gsm': {u'passwd': u''}}
-        else:
-            return transpose_from_NM(secrets)
+            return self.NM_PROFILE_KLASS(self.get_next_dbus_opath(),
+                               self.nm_profiles[uuid], props, self)
+        except KeyError:
+            raise ex.ProfileNotFoundError("Profile '%s' could not "
+                                          "be found" % uuid)
 
     def _keyring_set_callback(self, uuid, secrets):
+        # Our UI clients expect that setting password secrets is a separate
+        # operation to other profile activities when in fact we do it via the
+        # same mechanism again, this means that two NM connection updates are
+        # generated for every client profile save.
+        print "NMLaterProfileManager::_keyring_set_callback()"
+
         passwd = secrets['gsm']['passwd']
 
         if uuid in self.nm_profiles:
             obj = self.nm_profiles[uuid]
             # Need to merge in the password
-            nm_props = obj.GetSettings(dbus_interface=NM09_SETTINGS_CONNECTION)
+            nm_props = obj.GetSettings(dbus_interface=self.NM_SETTINGS_CONNECTION)
             nm_props['gsm']['password'] = passwd
 
-            obj.Update(nm_props, dbus_interface=NM09_SETTINGS_CONNECTION)
+            obj.Update(nm_props, dbus_interface=self.NM_SETTINGS_CONNECTION)
         else:
             log.msg("NM connection profile does not exist for %s" % uuid)
-
-    def _init_nm_manager(self):
-        obj = self.bus.get_object(NM09_SETTINGS, NM09_SETTINGS_OBJ)
-        self.nm_manager = dbus.Interface(obj, NM09_SETTINGS_INT)
-
-    def _connect_to_signals(self):
-        self.nm_manager.connect_to_signal("NewConnection",
-                       self._on_new_nm_profile, NM09_SETTINGS_INT)
-
-    def _on_new_nm_profile(self, opath):
-        log.msg("NM notified us of a new connection profile %s" % opath)
-        self._store_new_profile(opath)
 
     def _store_new_profile(self, opath):
         """
@@ -921,9 +939,10 @@ class NM09ProfileManager(NMProfileManager):
             1/ from signal handler when NM has a new connection
             2/ by get_profiles to populate the profiles cache
         """
-        obj = self.bus.get_object(NM09_SETTINGS, opath)
+        print "NMLaterProfileManager::_store_new_profile()"
+        obj = self.bus.get_object(self.NM_SETTINGS, opath)
 
-        props = obj.GetSettings(dbus_interface=NM09_SETTINGS_CONNECTION)
+        props = obj.GetSettings(dbus_interface=self.NM_SETTINGS_CONNECTION)
 
         # filter out non GSM profiles
         if props['connection']['type'] != 'gsm':
@@ -944,27 +963,6 @@ class NM09ProfileManager(NMProfileManager):
                 self.profiles[uuid] = profile
                 self.NewConnection(profile.opath)
 
-    def _get_profile_from_nm_connection(self, props):
-        props = transpose_from_NM(props)
-        uuid = props['connection']['uuid']
-        try:
-            return NM09Profile(self.get_next_dbus_opath(),
-                               self.nm_profiles[uuid], props, self)
-        except KeyError:
-            raise ex.ProfileNotFoundError("Profile '%s' could not "
-                                          "be found" % uuid)
-
-    def add_profile(self, props):
-        """Adds a profile with settings ``props``"""
-        log.msg("Asking NM to create new connection profile")
-
-        props = transpose_to_NM(props)
-
-        self.nm_manager.AddConnection(props)
-
-        # the rest will be handled by _on_new_nm_profile when the signal
-        # arrives
-
     def get_profiles(self):
         """Returns all the profiles in the system"""
         if not self.nm_profiles:
@@ -977,6 +975,7 @@ class NM09ProfileManager(NMProfileManager):
         return self.profiles.values()
 
     def remove_profile(self, profile):
+        print "NMLaterProfileManager::remove_profile()"
         """
         Removes profile ``profile``
 
@@ -987,13 +986,13 @@ class NM09ProfileManager(NMProfileManager):
 
         if uuid in self.nm_profiles:
             obj = self.nm_profiles[uuid]
-            obj.Delete(dbus_interface=NM09_SETTINGS_CONNECTION)
+            obj.Delete(dbus_interface=self.NM_SETTINGS_CONNECTION)
         else:
             log.msg("NM connection profile does not exist for %s" % uuid)
 
     def remove_profile_cb(self, profile):
         """
-        Called by NM09Profile's Remove signal handler
+        Called by NMxxxProfile's Remove signal handler
         """
         log.msg("NM notified us of a connection profile removal")
 
@@ -1013,32 +1012,35 @@ class NM09ProfileManager(NMProfileManager):
         Should initiate the NM connection update, but the update of our
         profile should be done by the signal handler
         """
+        print "NMLaterProfileManager::update_profile()"
         uuid = profile.get_settings()['connection']['uuid']
         nm_props = transpose_to_NM(props, new=False)
 
         if uuid in self.nm_profiles:
             obj = self.nm_profiles[uuid]
-            obj.Update(nm_props, dbus_interface=NM09_SETTINGS_CONNECTION)
+            obj.Update(nm_props, dbus_interface=self.NM_SETTINGS_CONNECTION)
         else:
             log.msg("NM connection profile does not exist for %s" % uuid)
 
-    def update_profile_cb(self, profile):
+    def update_profile_cb(self, profile, nm_props=None):
         """
-        Called by NM09Profile's Updated signal handler
+        Called by NMxxxProfile's Updated signal handler
         Called twice per BCM profile change as passwd is updated separately
         via the keyring
         """
         log.msg("NM notified us of a connection profile update")
 
-        # NM 0.9 doesn't signal the changed props so we have to retrieve them
-        # and the secret too
         obj = profile.nm_obj
-        nm_props = obj.GetSettings(dbus_interface=NM09_SETTINGS_CONNECTION)
 
-        # now get the password and merge
+        if nm_props is None:
+            # NM 0.9 doesn't signal the changed props so we have to retrieve them
+            nm_props = obj.GetSettings(dbus_interface=self.NM_SETTINGS_CONNECTION)
+
+        # NM 0.8.4 does signal the changed props but we still have to retrieve the
+        # password and merge
         try:
             secrets = obj.GetSecrets('gsm',
-                                    dbus_interface=NM09_SETTINGS_CONNECTION)
+                                    dbus_interface=self.NM_SETTINGS_CONNECTION)
             password = secrets['gsm']['password']
         except (KeyError, dbus.exceptions.DBusException):
             pass
@@ -1052,6 +1054,168 @@ class NM09ProfileManager(NMProfileManager):
             self.profiles[uuid].update(props)
 
 
+class NM084ProfileManager(NMLaterProfileManager):
+
+    def __init__(self):
+        super(NM084ProfileManager, self).__init__()
+
+        self.keyring_manager = DummyKeyringManager(self._keyring_get_callback,
+                                                    self._keyring_set_callback)
+        self.helper = GConfHelper()
+
+        # profile class to create
+        self.NM_PROFILE_KLASS = NM084Profile
+
+        # connect to signals
+        self._connect_to_signals()
+
+    def _init_nm_manager(self):
+        # define DBus details
+        self.NM_SETTINGS = NM084_SETTINGS
+        self.NM_SETTINGS_OBJ = NM084_SETTINGS_OBJ
+        self.NM_SETTINGS_INT = NM084_SETTINGS_INT
+        self.NM_SETTINGS_CONNECTION = NM084_SETTINGS_CONNECTION
+
+        super(NM084ProfileManager, self)._init_nm_manager()
+
+    def _get_secrets_gnome(self, uuid):
+        # Absolutely the bare minimum wanted here, if the keyring doesn't exist
+        # don't create it, and if we fail because we aren't on a gnome system or
+        # the value doesn't exist then just return None
+        print "NM084ProfileManager::_keyring_get_callback() trying GnomeKeyring"
+
+        attr = {
+            'setting-name': 'gsm',
+            'setting-key': 'password',
+            'connection-uuid': str(uuid)
+        }
+
+        try:
+            import gnomekeyring as gk
+
+            # Search all the keyrings for it, not just default
+            items = gk.find_items_sync(gk.ITEM_GENERIC_SECRET, attr)
+            return items[0].secret
+
+        except (ImportError, IndexError, gk.IOError, gk.NoMatchError):
+            return None
+
+    def _keyring_get_callback(self, uuid):
+        # Getting the secrets probably will need to be obtained from Gnome Keyring
+        # directly on NM 0.8.4 as the DBus config usually restricts the secrets
+        # access to root only
+        print "NM084ProfileManager::_keyring_get_callback()"
+
+        try:
+            secrets = self.nm_profiles[uuid].GetSecrets('gsm', ['password',], True,
+                                    dbus_interface=NM084_SETTINGS_CONNECTION_SECRETS)
+            print "NM084ProfileManager::_keyring_get_callback() got secrets from NM"
+            return transpose_from_NM(secrets)
+
+        except KeyError:
+            # XXX: ideally we'd return None, but callers may expect
+            return {u'gsm': {u'passwd': u'not found'}}
+
+        except dbus.exceptions.DBusException, e:
+            if 'AccessDenied' in str(e):
+                print "NM084ProfileManager::_keyring_get_callback() DBus config prevents access to secrets"
+            else:
+                print str(e)
+
+            passwd = self._get_secrets_gnome(uuid)
+            if passwd is not None:
+                return {u'gsm': {u'passwd': unicode(passwd)}}
+
+            # XXX: TODO, try KDE's keyring, kwallet
+
+            # XXX: ideally we'd return None, but callers may expect
+            return {u'gsm': {u'passwd': u'not found'}}
+
+    def _get_next_free_gpath(self):
+        """Returns the next unused slot of /system/networking/connections"""
+        all_dirs = list(self.helper.client.all_dirs(GCONF_PROFILES_BASE))
+        try:
+            max_index = max(map(int, [d.split('/')[-1] for d in all_dirs]))
+        except ValueError:
+            # /system/networking/connections is empty
+            max_index = -1
+
+        index = 0 if not all_dirs else max_index + 1
+        return os.path.join(GCONF_PROFILES_BASE, str(index))
+
+    def _write_NM_connection_to_gconf(self, path, props):
+        for key in props:
+            for name in props[key]:
+                value = props[key][name]
+                _path = os.path.join(path, key, name)
+
+                self.helper.set_value(_path, value)
+
+        self.helper.client.notify(path)
+        self.helper.client.suggest_sync()
+
+    def add_profile(self, props):
+        """Adds a profile with settings ``props``"""
+        log.msg("Creating a new NM connection profile in GConf")
+
+        props = transpose_to_NM(props)
+
+        # AddConnection(props) never got implemented in NM 0.8x
+        # So we need to write to gconf and wait for the applet to notice
+        next_gpath = self._get_next_free_gpath()
+        self._write_NM_connection_to_gconf(next_gpath, props)
+
+        # The rest will be handled by _on_new_nm_profile when the signal
+        # arrives
+
+
+class NM09ProfileManager(NMLaterProfileManager):
+
+    def __init__(self):
+        super(NM09ProfileManager, self).__init__()
+
+        self.keyring_manager = DummyKeyringManager(self._keyring_get_callback,
+                                                    self._keyring_set_callback)
+        # profile class to create
+        self.NM_PROFILE_KLASS = NM09Profile
+
+        # connect to signals
+        self._connect_to_signals()
+
+    def _init_nm_manager(self):
+        # define DBus details
+        self.NM_SETTINGS = NM09_SETTINGS
+        self.NM_SETTINGS_OBJ = NM09_SETTINGS_OBJ
+        self.NM_SETTINGS_INT = NM09_SETTINGS_INT
+        self.NM_SETTINGS_CONNECTION = NM09_SETTINGS_CONNECTION
+
+        super(NM09ProfileManager, self)._init_nm_manager()
+
+    def _keyring_get_callback(self, uuid):
+        # On NM0.9 we can get the secrets directly from the network manager
+        # service
+        try:
+            secrets = self.nm_profiles[uuid].GetSecrets('gsm',
+                                    dbus_interface=self.NM_SETTINGS_CONNECTION)
+        except (KeyError, dbus.exceptions.DBusException):
+            # XXX: ideally we'd return None, but callers may expect
+            return {u'gsm': {u'passwd': u'not found'}}
+        else:
+            return transpose_from_NM(secrets)
+
+    def add_profile(self, props):
+        """Adds a profile with settings ``props``"""
+        log.msg("Asking NM to create new connection profile")
+
+        props = transpose_to_NM(props)
+
+        # In NM 0.9 this finally got implemented
+        self.nm_manager.AddConnection(props)
+
+        # The rest will be handled by _on_new_nm_profile when the signal
+        # arrives
+
+
 class NetworkManagerBackend(object):
 
     implements(IBackend)
@@ -1060,6 +1224,7 @@ class NetworkManagerBackend(object):
         self.bus = dbus.SystemBus()
         self._nm08_core_present = None
         self._nm08_applet_present = None
+        self._nm084_present = None
         self._nm09_present = None
         self._profile_manager = None
         self._keyring_manager = None
@@ -1093,6 +1258,22 @@ class NetworkManagerBackend(object):
         return all([self._is_nm08_core_present(),
                     self._is_nm08_applet_present()])
 
+    def _is_nm084_present(self):
+        if self._nm084_present is None:
+            try:
+                # NM 0.8.4 core now provides a version property
+                obj = self.bus.get_object(NM_SERVICE, NM_OBJPATH)
+                iface = dbus.Interface(obj, "org.freedesktop.DBus.Properties")
+                ver = iface.Get(NM_INTFACE, "Version")
+                if ver.startswith('0.8.4') or ver.startswith('0.8.3.99'):
+                    self._nm084_present = True
+                else:
+                    self._nm084_present = False
+            except dbus.DBusException:
+                self._nm084_present = False
+
+        return self._nm084_present
+
     def _is_nm09_present(self):
         if self._nm09_present is None:
             try:
@@ -1117,6 +1298,8 @@ class NetworkManagerBackend(object):
         """
         if self._is_nm09_present():
             return '09'
+        if self._is_nm084_present():
+            return '084'
         if self._is_nm08_present():
             return '08'
         return None
@@ -1124,7 +1307,7 @@ class NetworkManagerBackend(object):
     def should_be_used(self):
         """
         Returns True if:
-            NM09 is present
+            NM084 or NM09 is present
         or
             Both NM08 core and UI applet are present
         """
@@ -1132,6 +1315,8 @@ class NetworkManagerBackend(object):
 
     def get_dialer_klass(self, device):
         if self._get_version() == '08':
+            return NM08Dialer
+        elif self._get_version() == '084':
             return NM08Dialer
         else:
             return NM09Dialer
@@ -1152,6 +1337,8 @@ class NetworkManagerBackend(object):
         if self._profile_manager is None:
             if self._get_version() == '08':
                 self._profile_manager = NM08ProfileManager()
+            elif self._get_version() == '084':
+                self._profile_manager = NM084ProfileManager()
             else:
                 self._profile_manager = NM09ProfileManager()
 
