@@ -18,18 +18,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 from __future__ import with_statement
 
+import errno
 import pickle
 from cStringIO import StringIO
 import os
 import tempfile
 import re
 import shutil
+from signal import SIGTERM, SIGKILL
 from string import Template
-
 
 import dbus
 from dbus.service import signal, Object, BusName
-from twisted.internet import utils, reactor, defer, protocol, error
+from twisted.internet import reactor, defer, protocol, error, task
 from twisted.python import log, procutils
 from zope.interface import implements
 
@@ -41,6 +42,7 @@ from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  MM_MODEM_STATE_REGISTERED,
                                  MM_MODEM_STATE_CONNECTING,
                                  MM_MODEM_STATE_DISCONNECTING,
+                                 MM_MODEM_STATE_CONNECTED,
                                  MM_SYSTEM_SETTINGS_PATH)
 from wader.common.dialer import Dialer
 import wader.common.exceptions as ex
@@ -53,6 +55,68 @@ from wader.common.secrets import ProfileSecrets
 from wader.common.utils import save_file, is_bogus_ip, patch_list_signature
 from wader.contrib import aes
 
+
+def proc_running(pid):
+    try:
+        pid = int(pid)
+    except ValueError:
+        return None
+
+    if pid <= 1:
+        return False    # No killing of process group members or all of init's
+                        # children
+    try:
+        os.kill(pid, 0)
+    except OSError, err:
+        if err.errno == errno.ESRCH:
+            return False
+        elif err.errno == errno.EPERM:
+            return pid
+        else:
+            return None  # Unknown error
+    else:
+        return pid
+
+
+def signal_process(name, pid, signal):
+    pid = proc_running(pid)
+    if not pid:
+        log.msg('wvdial: "%s" process (%s) already exited' %
+                (name, str(pid)))
+        return False
+
+    log.msg('wvdial: "%s" process (%s) will be sent %s' %
+                (name, str(pid), signal))
+    try:
+        os.kill(pid, SIGKILL)
+    except OSError, err:
+        if err.errno == errno.ESRCH:
+            log.msg('wvdial: "%s" process (%s) not found' %
+                (name, str(pid)))
+        elif err.errno == errno.EPERM:
+            log.msg('wvdial: "%s" process (%s) permission denied' %
+                (name, str(pid)))
+        else:
+            log.msg('wvdial: "%s" process exit "%s"' % (name, str(err)))
+
+    return True  # signal was sent
+
+
+def validate_dns(dynamic, use_static, static):
+
+    if use_static:
+        valid_dns = [addr for addr in static if addr]
+    else:
+        # If static DNS is not set, then we should use the DNS returned by the
+        # network, but let's check if they're valid DNS IPs
+        valid_dns = [addr for addr in dynamic if not is_bogus_ip(addr)]
+
+    if len(valid_dns):
+        return True, valid_dns
+
+    # The DNS assigned by the network is invalid or missing, or the static
+    # addresses are missing, so notify the user and fallback to Google etc
+    return False, FALLBACK_DNS
 
 WVDIAL_PPPD_OPTIONS = os.path.join('/etc', 'ppp', 'peers', 'wvdial')
 WVDIAL_RETRIES = 3
@@ -67,6 +131,7 @@ Dial Command = ATDT
 New PPPD = yes
 Check Def Route = on
 Dial Attempts = 3
+Auto Reconnect = off
 
 [Dialer connect]
 
@@ -184,13 +249,40 @@ class WVDialDialer(Dialer):
         self.backup_path = ""
         self.conf = None
         self.conf_path = ""
+        self.dirty = False
         self.proto = None
         self.iconn = None
         self.iface = 'ppp0'
         self.should_stop = False
+        self.attempting_connect = False
+
+    def Connected(self):
+        self.device.set_status(MM_MODEM_STATE_CONNECTED)
+        self.attempting_connect = False
+        super(WVDialDialer, self).Connected()
+
+    def Disconnected(self):
+        if self.device.status >= MM_MODEM_STATE_REGISTERED:
+            self.device.set_status(MM_MODEM_STATE_REGISTERED)
+        self.attempting_connect = False
+        super(WVDialDialer, self).Disconnected()
 
     def configure(self, config):
-        return defer.maybeDeferred(self._generate_config, config)
+        self.dirty = True
+
+        def get_context_id(ign):
+            conn_id = self.device.sconn.state_dict.get('conn_id')
+            try:
+                context = int(conn_id)
+            except ValueError:
+                raise Exception('WVDialDialer context id is "%s"' %
+                                str(conn_id))
+            return context
+
+        d = self.device.sconn.set_apn(config.apn)
+        d.addCallback(get_context_id)
+        d.addCallback(lambda context: self._generate_config(config, context))
+        return d
 
     def connect(self):
         if self.should_stop:
@@ -198,6 +290,7 @@ class WVDialDialer(Dialer):
             return
 
         self.device.set_status(MM_MODEM_STATE_CONNECTING)
+        self.attempting_connect = True
 
         self.proto = WVDialProtocol(self)
         args = [self.binary, '-C', self.conf_path, 'connect']
@@ -206,6 +299,7 @@ class WVDialDialer(Dialer):
 
     def stop(self):
         self.should_stop = True
+        self.attempting_connect = False
         return self.disconnect()
 
     def disconnect(self):
@@ -214,35 +308,51 @@ class WVDialDialer(Dialer):
 
         self.device.set_status(MM_MODEM_STATE_DISCONNECTING)
 
-        # ignore the fact that we are gonna be disconnected
-        self.proto.ignore_disconnect = True
+        msg = 'WVdial failed to connect'
 
+        def get_pppd_pid():
+            pid_file = "/var/run/%s.pid" % self.iface
+
+            if not os.path.exists(pid_file):
+                return False
+
+            pid = None
+            with open(pid_file) as f:
+                pid = f.read()
+            return pid
+
+        def cleanup_pppd():
+            if self.attempting_connect:
+                self.proto.deferred.errback(RuntimeError(msg))
+
+            pppd_pid = get_pppd_pid()
+            if not signal_process('pppd', pppd_pid, SIGTERM):
+                # process was already gone
+                d = defer.succeed(self._cleanup())
+            else:
+                d = task.deferLater(reactor, 5,
+                            signal_process, 'pppd', pppd_pid, SIGKILL)
+                d.addCallback(lambda _: self._cleanup())
+            return d
+
+        # tell wvdial to quit
         try:
-            self.proto.transport.signalProcess('KILL')
+            self.proto.transport.signalProcess('TERM')
         except error.ProcessExitedAlready:
-            return defer.succeed(self.opath)
+            log.msg("wvdial: wvdial exited")
 
         # just be damn sure that we're killing everything
-        if self.proto.pid:
-            try:
-                kill_path = procutils.which('kill')[0]
-            except IndexError:
-                kill_path = '/bin/kill'
-
-            args = [kill_path, '-9', self.proto.pid]
-            d = utils.getProcessValue(args[0], args, env=None)
-
-            def disconnect_cb(error_code):
-                log.msg("wvdial: exit code %d" % error_code)
-                self._cleanup()
-                self.device.set_status(MM_MODEM_STATE_REGISTERED)
-                return self.opath
-
-            d.addCallback(disconnect_cb)
-            return d
+        wvdial_pid = proc_running(self.proto.pid)
+        if not wvdial_pid:
+            # process was already gone
+            d = cleanup_pppd()
         else:
-            self._cleanup()
-            return defer.succeed(self.opath)
+            d = task.deferLater(reactor, 5,
+                            signal_process, 'wvdial', wvdial_pid, SIGKILL)
+            d.addCallback(lambda _: cleanup_pppd())
+
+        d.addCallback(lambda _: self.opath)
+        return d
 
     def _generate_config(self, conf):
         # backup wvdial configuration
@@ -256,6 +366,9 @@ class WVDialDialer(Dialer):
 
     def _cleanup(self, ignored=None):
         """cleanup our traces"""
+        if not self.dirty:
+            return
+
         try:
             path = os.path.dirname(self.conf_path)
             os.unlink(self.conf_path)
@@ -300,9 +413,6 @@ class WVDialDialer(Dialer):
 
     def _set_iface(self, iface):
         self.iface = iface
-        if self.conf.staticdns:
-            osobj = get_os_object()
-            osobj.add_dns_info((self.conf.dns1, self.conf.dns2), iface)
 
 
 class WVDialProtocol(protocol.ProcessProtocol):
@@ -314,7 +424,6 @@ class WVDialProtocol(protocol.ProcessProtocol):
         self.pid = None
         self.retries = 0
         self.deferred = defer.Deferred()
-        self.ignore_disconnect = False
         self.dns = []
 
     def connectionMade(self):
@@ -329,24 +438,64 @@ class WVDialProtocol(protocol.ProcessProtocol):
         self._parse_output(data)
 
     def outConnectionLost(self):
-        log.msg('wvdial: pppd closed their stdout!')
+        log.msg('wvdial: wvdial closed its stdout!')
 
     def errConnectionLost(self):
-        log.msg('wvdial: pppd closed their stderr.')
+        log.msg('wvdial: wvdial closed its stderr.')
 
     def processEnded(self, status_object):
         log.msg('wvdial: quitting')
-        if not self.__connected and not self.ignore_disconnect:
+
+        if not self.__connected:
             self.dialer.disconnect()
-            self.dialer.Disconnected()
+
+        self._set_disconnected(force=True)
+
+    def processExited(self, status):
+        log.msg('wvdial: wvdial processExited')
 
     def _set_connected(self):
         if self.__connected:
             return
 
+        if self.dialer.conf.staticdns:
+            valid_dns = []
+            if self.dialer.conf.dns1:
+                valid_dns.append(self.dialer.conf.dns1)
+            if self.dialer.conf.dns2:
+                valid_dns.append(self.dialer.conf.dns2)
+        else:
+            # If static DNS is not set, then we should use the DNS returned by
+            # the network, but let's check if they're valid DNS IPs
+            valid_dns = [addr for addr in self.dns if not is_bogus_ip(addr)]
+
+        if not len(valid_dns):
+            # The DNS assigned by the network is invalid or missing, or the
+            # static addresses are missing, so notify the user
+            if self.dialer.conf.staticdns:
+                self.dialer.InvalidDNS([])
+            else:
+                self.dialer.InvalidDNS(self.dns)
+
+            # Fallback to Google
+            valid_dns = ['8.8.8.8']
+
+        osobj = get_os_object()
+        osobj.add_dns_info(valid_dns, self.dialer.iface)
+
         self.__connected = True
         self.dialer.Connected()
         self.deferred.callback(self.dialer.opath)
+
+    def _set_disconnected(self, force=False):
+        if not self.__connected and not force:
+            return
+
+        osobj = get_os_object()
+        osobj.delete_dns_info(self.dialer.iface)
+
+        self.__connected = False
+        self.dialer.Disconnected()
 
     def _extract_iface(self, data):
         match = PPPD_IFACE_REGEXP.search(data)
@@ -355,61 +504,46 @@ class WVDialProtocol(protocol.ProcessProtocol):
             log.msg("wvdial: dialer interface %s" % self.dialer.iface)
 
     def _extract_dns_strings(self, data):
-        if self.__connected:
-            return
-
         for match in re.finditer(DNS_REGEXP, data):
-            dns_ip = match.group('ip')
-            self.dns.append(dns_ip)
-
-            if len(self.dns) == 2:
-                if not self.dialer.conf.staticdns:
-                    # if static DNS is not set, then we should use the
-                    # DNS returned by the network
-                    osobj = get_os_object()
-                    osobj.add_dns_info(self.dns, self.dialer.iface)
-
-                self._set_connected()
-
-                # check if they're valid DNS ips
-                if any(map(is_bogus_ip, self.dns)):
-                    # the DNS assigned by the APN is probably invalid
-                    # notify the user only if she didn't specify static DNS
-                    self.dialer.InvalidDNS(self.dns)
+            self.dns.append(match.group('ip'))
 
     def _extract_connected(self, data):
-        if self.__connected:
-            return
-
-        # extract pppd pid
-        match = PPPD_PID_REGEXP.search(data)
-        if match:
-            self.pid = match.group('pid')
-            self.retries += 1
-
         if CONNECTED_REGEXP.search(data):
             self._set_connected()
 
     def _extract_disconnected(self, data):
         # more than three attempts
-        disconnected = MAX_ATTEMPTS_REGEXP.search(data)
+        max_attempts = MAX_ATTEMPTS_REGEXP.search(data)
         # pppd died
         pppd_died = PPPD_DIED_REGEXP.search(data)
-        # wvdial refuses to stop after three attempts?
 
-        if disconnected or pppd_died or self.retries >= WVDIAL_RETRIES:
-            if not self.ignore_disconnect:
-                self.__connected = False
-                self.dialer.disconnect()
-                self.dialer.Disconnected()
+        if max_attempts or pppd_died:
+            self._set_disconnected()
+
+    def _extract_tries(self, data):
+        # force wvdial to stop after three attempts
+        if self.retries >= WVDIAL_RETRIES:
+            self.dialer.disconnect()
+            self._set_disconnected()
+            return
+
+        # extract pppd pid
+        match = PPPD_PID_REGEXP.search(data)
+        if match:
+            self.pid = int(match.group('pid'))
+            self.retries += 1
+            log.msg("wvdial: dialer tries %d" % self.retries)
 
     def _parse_output(self, data):
         self._extract_iface(data)
         self._extract_dns_strings(data)
+
         if not self.__connected:
             self._extract_connected(data)
         else:
             self._extract_disconnected(data)
+
+        self._extract_tries(data)
 
 
 class HSODialer(Dialer):
