@@ -191,7 +191,8 @@ class ProfileManager(object):
         :raise ProfileNotFoundError: If no profile was found
         """
         profile = self.backend.get_profile_by_uuid(uuid)
-        log.msg("INFO profile.py: (wader.common) - get_profile_by_uuid: %s" % profile)
+        log.msg("INFO profile.py: (wader.common) - get_profile_by_uuid: %s" %
+                profile)
         return self.backend.get_profile_by_uuid(uuid)
 
     def get_profile_by_object_path(self, opath):
@@ -200,7 +201,8 @@ class ProfileManager(object):
 
     def get_profile_options_from_imsi(self, imsi):
         """Generates a new :class:`Profile` from ``imsi``"""
-        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_imsi")
+        log.msg("INFO profile.py: (wader.common) - "
+                "get_profile_options_from_imsi")
         with closing(NetworkProvider()) as provider:
             network = provider.get_network_by_id(imsi)
             if network:
@@ -212,7 +214,8 @@ class ProfileManager(object):
 
     def get_profile_options_from_network(self, network):
         """Generates a new :class:`Profile` from ``network``"""
-        log.msg("INFO profile.py: (wader.common) - get_profile_options_from_network")
+        log.msg("INFO profile.py: (wader.common) - "
+                "get_profile_options_from_network")
         props = {}
 
         # gsm
@@ -223,8 +226,21 @@ class ProfileManager(object):
                         'number': '*99#',
                         'apn': network.apn,
                         'name': 'gsm'}
+
         # ppp
         props['ppp'] = dict(name='ppp')
+
+        # set ppp auth to values we handle
+        if 'PAP' in network.auth:
+            props['ppp']['refuse-eap'] = True
+            props['ppp']['refuse-chap'] = True
+            props['ppp']['refuse-mschap'] = True
+            props['ppp']['refuse-mschapv2'] = True
+        elif 'CHAP' in network.auth:
+            props['ppp']['refuse-pap'] = True
+        else:
+            pass  # allow all auths
+
         # serial
         props['serial'] = dict(baud=115200,
                               name='serial')
