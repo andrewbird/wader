@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Ubuntu OSPlugin"""
 
+import re
 from os.path import exists
 
 from twisted.internet.utils import getProcessValue
@@ -25,6 +26,7 @@ from twisted.internet.utils import getProcessValue
 from wader.common.oses.linux import LinuxPlugin
 from wader.common.utils import get_file_data
 
+VERS_REGEX = '^DISTRIB_RELEASE=\s*(?P<version>\d+\.\d+)\s*$'
 
 class UbuntuBasedDistro(LinuxPlugin):
     """A plugin to be used on Ubuntu systems"""
@@ -33,14 +35,29 @@ class UbuntuBasedDistro(LinuxPlugin):
         if not exists('/etc/lsb-release'):
             return False
 
-        return 'Ubuntu' in get_file_data('/etc/lsb-release')
+        lsb = get_file_data('/etc/lsb-release')
+        if 'Ubuntu' in lsb:
+            match = re.search(VERS_REGEX, lsb,  re.MULTILINE)
+            if match:
+                vers = match.group('version').replace('.','')
+                try:
+                    self.version = int(vers)
+                except ValueError:
+                    pass
+
+            return True
+
+        return False
 
     def update_dns_cache(self):
         if exists("/usr/sbin/nscd"):
             return getProcessValue("/usr/sbin/nscd", ["-i", "hosts"])
 
     def get_additional_wvdial_ppp_options(self):
-        return "replacedefaultroute\n"
-
+        options = "replacedefaultroute\n"
+        #if hasattr(self, 'version'):
+        #    if self.version <= 904:
+        #        options += "usepeerdns\n"
+        return options
 
 ubuntu = UbuntuBasedDistro()
