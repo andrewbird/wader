@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Ubuntu ip-up script passes all args to us as single arg so use the env
+# PPP_IFACE="$1"
+# PPP_TTY="$2"
+# PPP_SPEED="$3"
+# PPP_LOCAL="$4"
+# PPP_REMOTE="$5"
+# PPP_IPPARAM="$6"
+
+if [ "$PPP_IPPARAM" = "wader" ] ; then
+  unset USEPEERDNS
+fi
+
+run-parts /etc/ppp/ip-up.d \
+  --arg="$PPP_IFACE" --arg="$PPP_TTY" --arg="$PPP_SPEED" \
+  --arg="$PPP_LOCAL" --arg="$PPP_REMOTE" --arg="$PPP_IPPARAM"
+
+# if pon was called with the "quick" argument, stop pppd
+if [ -e /var/run/ppp-quick ]; then
+  rm /var/run/ppp-quick
+  wait
+  kill $PPPD_PID
+fi
