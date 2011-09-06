@@ -134,7 +134,7 @@ E.ERROR_DICT['+CME ERROR: 767'] = E.General  # Operation failed
 E.ERROR_DICT['+CME ERROR: 769'] = E.SimBusy
 
 
-def icera_new_conn_mode(args):
+def icera_new_conn_mode(args, device):
     if not args:
         return consts.MM_NETWORK_MODE_UNKNOWN
 

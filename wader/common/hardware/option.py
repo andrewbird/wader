@@ -178,7 +178,7 @@ class OptionSIMClass(SIMBaseClass):
         return process_sim_state(deferred)
 
 
-def new_conn_mode_cb(args):
+def new_conn_mode_cb(args, device):
     """
     Translates Option's unsolicited notifications to Wader's representation
     """
@@ -493,7 +493,7 @@ class OptionWCDMACustomizer(WCDMACustomizer):
     device_capabilities = [S.SIG_NETWORK_MODE, S.SIG_RSSI]
     signal_translations = {
         '_OSSYSI': (S.SIG_NETWORK_MODE, new_conn_mode_cb),
-        '_OSIGQ': (S.SIG_RSSI, lambda args:
+        '_OSIGQ': (S.SIG_RSSI, lambda args, device:
                         (rssi_to_percentage(int(args.split(',')[0]))))}
     wrapper_klass = OptionWrapper
 

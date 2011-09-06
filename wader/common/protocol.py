@@ -174,13 +174,14 @@ class BufferingStateMachine(object, protocol.Protocol):
                 # otherwise use value as args
                 if func:
                     try:
-                        args = func(value)
+                        args = func(value, self.device)
                     except Exception, e:
                         msg = "%s can not handle notification %s"
                         log.err(e, msg % (func, value))
                         args = value
 
-                    self.emit_signal(signal, args)
+                    if signal is not None:
+                        self.emit_signal(signal, args)
 
                 # remove from the idlebuf the match (but only once please)
                 _buffer = _buffer.replace(match.group(), '', 1)

@@ -94,7 +94,7 @@ ZTE_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
                                             """, re.VERBOSE))
 
 
-def zte_new_conn_mode(what):
+def zte_new_conn_mode(what, device):
     zpasr = re.search(r'"(?P<mode>.*?)"(?:,"(?P<domain>.*?)")?', what)
     mode = zpasr.group('mode')
 

@@ -96,7 +96,7 @@ def compress_7_to_8_bit(txt):
     return ''.join(map(chr, op))
 
 
-def huawei_new_conn_mode(args):
+def huawei_new_conn_mode(args, device):
     """Translates `args` to Wader's internal representation"""
     mode_args_dict = {
         '3,0': consts.MM_NETWORK_MODE_GPRS,
@@ -576,7 +576,8 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
 
     signal_translations = {
         '^MODE': (S.SIG_NETWORK_MODE, huawei_new_conn_mode),
-        '^RSSI': (S.SIG_RSSI, lambda rssi: rssi_to_percentage(int(rssi))),
+        '^RSSI': (S.SIG_RSSI,
+                    lambda rssi, device: rssi_to_percentage(int(rssi))),
         '^DSFLOWRPT': (None, None),
         '^BOOT': (None, None),
         '^SRVST': (None, None),
