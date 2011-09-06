@@ -148,6 +148,20 @@ def icera_new_conn_mode(args, device):
         return consts.MM_NETWORK_MODE_UNKNOWN
 
 
+def icera_connection_state(args, device):
+    if not args:
+        return
+
+    args = args.replace(' ', '')
+    args = args.split(',')
+
+    if len(args) >= 2:
+        if str(args[1]) == '3':
+            device.connection_attempt_failed = True
+
+    return None
+
+
 class IceraSIMClass(SIMBaseClass):
     """
     Icera SIM Class
@@ -268,6 +282,11 @@ class IceraWrapper(WCDMAWrapper):
 
         def real_get_ip4_config(deferred):
 
+            def inform_caller():
+                if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                    self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
+                deferred.errback(RuntimeError('Connection attempt failed'))
+
             def get_ip4_eb(failure):
                 failure.trap(E.General, E.OperationNotSupported)
 
@@ -277,10 +296,16 @@ class IceraWrapper(WCDMAWrapper):
 
                 self.state_dict['num_of_retries'] += 1
                 if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
+                    inform_caller()
                     return failure
 
                 reactor.callLater(HSO_RETRY_TIMEOUT,
                                   real_get_ip4_config, deferred)
+
+            # We received an unsolicited notification that we failed
+            if self.device.connection_attempt_failed:
+                inform_caller()
+                return
 
             d = self._get_ip4_config()
             d.addCallback(deferred.callback)
@@ -337,6 +362,7 @@ class IceraWrapper(WCDMAWrapper):
         if self.device.status == consts.MM_MODEM_STATE_CONNECTING:
             raise E.SimBusy("we are already connecting")
 
+        self.device.connection_attempt_failed = False
         self.device.set_status(consts.MM_MODEM_STATE_CONNECTING)
 
         return self.send_at('AT%%IPDPACT=%d,1' % conn_id)
@@ -405,6 +431,7 @@ class IceraWCDMACustomizer(WCDMACustomizer):
     device_capabilities = [S.SIG_NETWORK_MODE]
     signal_translations = {
         '%NWSTATE': (S.SIG_NETWORK_MODE, icera_new_conn_mode),
+        '%IPDPACT': (None, icera_connection_state),
     }
     wrapper_klass = IceraWrapper
     exporter_klass = HSOExporter

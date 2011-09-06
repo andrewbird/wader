@@ -350,6 +350,11 @@ class OptionHSOWrapper(OptionWrapper):
 
         def real_get_ip4_config(deferred):
 
+            def inform_caller():
+                if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                    self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
+                deferred.errback(RuntimeError('Connection attempt failed'))
+
             def get_ip4_eb(failure):
                 failure.trap(E.General)
                 if self.state_dict.get('should_stop'):
@@ -358,6 +363,7 @@ class OptionHSOWrapper(OptionWrapper):
 
                 self.state_dict['num_of_retries'] += 1
                 if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
+                    inform_caller()
                     return failure
 
                 reactor.callLater(HSO_RETRY_TIMEOUT,
