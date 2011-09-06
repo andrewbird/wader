@@ -139,7 +139,7 @@ Modem = $serialport
 Baud = 460800
 Init2 = ATZ
 Init3 = ATQ0 V1 E0 S0=0 &C1 &D2
-Init4 = AT+CGDCONT=1,"IP","$apn"
+Init4 = AT+CGDCONT=$context,"IP","$apn"
 ISDN = 0
 Modem Type = Analog Modem
 """
@@ -195,7 +195,7 @@ refuse-pap
 """
 
 
-def get_wvdial_conf_file(conf, serial_port):
+def get_wvdial_conf_file(conf, context, serial_port):
     """
     Returns the path of the generated wvdial.conf
 
@@ -203,14 +203,14 @@ def get_wvdial_conf_file(conf, serial_port):
     :param serial_port: The port to use
     :rtype: str
     """
-    text = _generate_wvdial_conf(conf, serial_port)
+    text = _generate_wvdial_conf(conf, context, serial_port)
     dirpath = tempfile.mkdtemp('', APP_NAME, '/tmp')
     path = tempfile.mkstemp('wvdial.conf', APP_NAME, dirpath, True)[1]
     save_file(path, text)
     return path
 
 
-def _generate_wvdial_conf(conf, sport):
+def _generate_wvdial_conf(conf, context, sport):
     """
     Generates a specially crafted wvdial.conf with `conf` and `sport`
 
@@ -227,10 +227,10 @@ def _generate_wvdial_conf(conf, sport):
     template = Template(data.getvalue())
     data.close()
     # construct number
-    number = '*99***%d#' % conf.context
+    number = '*99***%d#' % context
     # return template
     props = dict(serialport=sport, username=user, password=passwd,
-                 apn=theapn, phone=number)
+                 context=context, apn=theapn, phone=number)
     return template.substitute(props)
 
 
@@ -354,7 +354,7 @@ class WVDialDialer(Dialer):
         d.addCallback(lambda _: self.opath)
         return d
 
-    def _generate_config(self, conf):
+    def _generate_config(self, conf, context):
         # backup wvdial configuration
         self.backup_path = self._backup_conf()
         self.conf = conf
@@ -362,7 +362,7 @@ class WVDialDialer(Dialer):
         self._generate_wvdial_ppp_options()
         # generate wvdial.conf from template
         port = self.device.ports.dport
-        self.conf_path = get_wvdial_conf_file(self.conf, port.path)
+        self.conf_path = get_wvdial_conf_file(self.conf, context, port.path)
 
     def _cleanup(self, ignored=None):
         """cleanup our traces"""

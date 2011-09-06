@@ -407,9 +407,9 @@ class WCDMAWrapper(WCDMAProtocol):
                                   MM_MODEM_STATE_SEARCHING,
                                   MM_MODEM_STATE_REGISTERED]:
             if _reginfo[0] in [1, 5]:
-               self.device.set_status(MM_MODEM_STATE_REGISTERED)
+                self.device.set_status(MM_MODEM_STATE_REGISTERED)
             else:
-               self.device.set_status(MM_MODEM_STATE_SEARCHING)
+                self.device.set_status(MM_MODEM_STATE_SEARCHING)
         return reginfo
 
     def get_netreg_info(self):
@@ -896,7 +896,7 @@ class WCDMAWrapper(WCDMAProtocol):
             for _index, _apn in apns:
                 if _apn == the_apn:
                     self.state_dict['conn_id'] = _index
-                    return
+                    return defer.succeed('OK')
 
             try:
                 conn_id = max([idx for idx, _ in apns]) + 1

@@ -355,7 +355,7 @@ class EricssonWrapper(WCDMAWrapper):
             for _index, _apn in apns:
                 if _apn == the_apn:
                     self.state_dict['conn_id'] = _index
-                    return
+                    return defer.succeed('OK')
 
             try:
                 conn_id = max([idx for idx, _ in apns]) + 1

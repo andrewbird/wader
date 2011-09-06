@@ -322,11 +322,14 @@ class DialerManager(Object, DBusExporterHelper):
         self.connection_attempts[device_opath] = dialer, conf
         device = self.ctrl.hm.clients[device_opath]
 
-        conn_id = device.sconn.state_dict.get('conn_id')
-        if conn_id is None:
-            raise CallIndexError("conn_id is None")
+        def get_conn_id(ign):
+            conn_id = device.sconn.state_dict.get('conn_id')
+            if conn_id is None:
+                raise CallIndexError("conn_id is None")
 
-        conf.context = conn_id
+            conf.context = conn_id
+
+            return conn_id
 
         def start_traffic_monitoring(conn_opath):
             dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
@@ -340,6 +343,7 @@ class DialerManager(Object, DBusExporterHelper):
             return conn_opath
 
         d = dialer.configure(conf)
+        d.addCallback(get_conn_id)
         d.addCallback(lambda ign: dialer.connect())
         d.addCallback(start_traffic_monitoring)
         return d
@@ -370,7 +374,8 @@ class DialerManager(Object, DBusExporterHelper):
                 d = dialer.disconnect()
                 d.addCallback(dialer.close)
             else:
-                # if there was no connection/conn attempt, there's nothing to handle
+                # if there was no connection/conn attempt, there's nothing to
+                # handle
                 d = defer.succeed(True)
 
         def prepare_connection_and_activate(_):
