@@ -169,6 +169,7 @@ DNS_REGEXP = re.compile(r"""
 
 
 DEFAULT_TEMPLATE = """
+ipparam wader
 debug
 noauth
 name wvdial
