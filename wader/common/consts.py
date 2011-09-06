@@ -71,6 +71,9 @@ MM_MODEM_STATE_CONNECTED = UInt32(90)
 # Used by both w.c.h.option and w.c.h.icera
 HSO_NO_AUTH, HSO_PAP_AUTH, HSO_CHAP_AUTH = 0, 1, 2
 
+# Google DNS, used in the event that we have nothing else valid
+FALLBACK_DNS = ['8.8.8.8', '8.8.4.4']
+
 MM_MODEM_TYPE = {
     UInt32(1): 'GSM',
     UInt32(2): 'CDMA',

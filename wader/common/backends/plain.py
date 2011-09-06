@@ -37,8 +37,8 @@ from zope.interface import implements
 from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH,
-                                 APP_NAME, MDM_INTFACE, HSO_CHAP_AUTH,
-                                 HSO_NO_AUTH, HSO_PAP_AUTH,
+                                 APP_NAME, FALLBACK_DNS, MDM_INTFACE,
+                                 HSO_CHAP_AUTH, HSO_NO_AUTH, HSO_PAP_AUTH,
                                  MM_MODEM_STATE_REGISTERED,
                                  MM_MODEM_STATE_CONNECTING,
                                  MM_MODEM_STATE_DISCONNECTING,
@@ -458,30 +458,16 @@ class WVDialProtocol(protocol.ProcessProtocol):
         if self.__connected:
             return
 
-        if self.dialer.conf.staticdns:
-            valid_dns = []
-            if self.dialer.conf.dns1:
-                valid_dns.append(self.dialer.conf.dns1)
-            if self.dialer.conf.dns2:
-                valid_dns.append(self.dialer.conf.dns2)
-        else:
-            # If static DNS is not set, then we should use the DNS returned by
-            # the network, but let's check if they're valid DNS IPs
-            valid_dns = [addr for addr in self.dns if not is_bogus_ip(addr)]
-
-        if not len(valid_dns):
-            # The DNS assigned by the network is invalid or missing, or the
-            # static addresses are missing, so notify the user
+        valid, dns = validate_dns(self.dns, self.dialer.conf.staticdns,
+                                [self.dialer.conf.dns1, self.dialer.conf.dns2])
+        if not valid:
             if self.dialer.conf.staticdns:
                 self.dialer.InvalidDNS([])
             else:
                 self.dialer.InvalidDNS(self.dns)
 
-            # Fallback to Google
-            valid_dns = ['8.8.8.8']
-
         osobj = get_os_object()
-        osobj.add_dns_info(valid_dns, self.dialer.iface)
+        osobj.add_dns_info(dns, self.dialer.iface)
 
         self.__connected = True
         self.dialer.Connected()
@@ -554,8 +540,11 @@ class HSODialer(Dialer):
     def __init__(self, device, opath, **kwds):
         super(HSODialer, self).__init__(device, opath, **kwds)
         self.iface = self.device.get_property(MDM_INTFACE, 'Device')
+        self.conf = None
 
     def configure(self, config):
+        self.conf = config
+
         if not config.refuse_chap:
             auth = HSO_CHAP_AUTH
         elif not config.refuse_pap:
@@ -579,10 +568,18 @@ class HSODialer(Dialer):
         return d
 
     def _get_ip4_config_cb(self, (ip, dns1, dns2, dns3)):
+        valid, dns = validate_dns([dns1, dns2, dns3], self.conf.staticdns,
+                                    [self.conf.dns1, self.conf.dns2])
+        if not valid:
+            if self.conf.staticdns:
+                self.InvalidDNS([])
+            else:
+                self.InvalidDNS(self.dns)
+
         osobj = get_os_object()
         d = osobj.configure_iface(self.iface, ip, 'up')
         d.addCallback(lambda _: osobj.add_default_route(self.iface))
-        d.addCallback(lambda _: osobj.add_dns_info([dns1, dns2], self.iface))
+        d.addCallback(lambda _: osobj.add_dns_info(dns, self.iface))
         return d
 
     def disconnect(self):
