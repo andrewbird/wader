@@ -132,6 +132,7 @@ New PPPD = yes
 Check Def Route = on
 Dial Attempts = 3
 Auto Reconnect = off
+Auto DNS = on
 
 [Dialer connect]
 
@@ -173,7 +174,6 @@ noauth
 name wvdial
 noipdefault
 nomagic
-usepeerdns
 ipcp-accept-local
 ipcp-accept-remote
 nomp
