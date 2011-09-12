@@ -25,10 +25,11 @@ from twisted.python import log
 
 from messaging.sms import SmsDeliver
 from messaging.sms.wap import (extract_push_notification,
-                               is_a_wap_push_notification)
+                               is_a_wap_push_notification, is_mms_notification)
 
 from wader.common.aterrors import (CMSError314, SimBusy, SimNotStarted,
                                    SimFailure)
+from wader.common.encoding import pack_dbus_safe_string
 from wader.common.signals import SIG_MMS, SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
 from wader.common.sms import Message
 from wader.common.mms import dbus_data_to_mms
@@ -204,11 +205,19 @@ class MessageAssemblyLayer(object):
                     if completed:
                         notification = self.sms_map[index]
                         if self._is_a_wap_push_notification(notification):
-                            self._process_wap_push_notification(index, emit)
-                            # there's no need to return an index here as we
-                            # have been called by gen_cache and mms have a
-                            # different index scheme than mms.
-                            return
+                            if self._process_wap_push_notification(index,
+                                                                        emit):
+                                debug("MAL::_add_sms MMS processed OK")
+                                # There's no need to return an index here as we
+                                # have been called by gen_cache and MMS has a
+                                # different index scheme than SMS.
+                                return
+
+                            # XXX: Must have been a non-MMS notification WAP
+                            #      push, there's nothing we can do with those
+                            #      presently. Leave them to be displayed as
+                            #      SMS, although poorly, so that they may be
+                            #      removed by the user if desired.
 
                     if emit:
                         # only emit signals in runtime, not startup
@@ -291,6 +300,11 @@ class MessageAssemblyLayer(object):
         for sms in self.sms_map.values():
             if sms.fmt != 0x04:
                 ret.append(sms.to_dict())
+            else:
+                # WAP Pushes are binary and may not be valid DBus strings
+                _sms = sms.to_dict()
+                _sms['text'] = pack_dbus_safe_string(_sms['text'])
+                ret.append(_sms)
 
         return ret
 
@@ -401,8 +415,12 @@ class MessageAssemblyLayer(object):
         If ``emit`` is True, it will emit a MMSReceived signal
         if this the first time we see this notification.
         """
+        notification = extract_push_notification(self.sms_map[index].text)
+        if not is_mms_notification(notification):
+            debug("MAL::_process_wap_push_notification: is not for MMS")
+            return False
+
         wap_push = self.sms_map.pop(index)
-        notification = extract_push_notification(wap_push.text)
 
         index = None
         new = False
@@ -432,6 +450,8 @@ class MessageAssemblyLayer(object):
             notification = container.get_last_notification()
             headers = self._clean_headers(notification)
             self.wrappee.emit_signal(SIG_MMS, index, headers)
+
+        return True
 
     def _clean_headers(self, notification):
         """Clean ``headers`` so its safe to send the dict via DBus"""

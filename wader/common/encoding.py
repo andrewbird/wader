@@ -20,6 +20,8 @@
 
 CONTROL_0, CONTROL_1, LATIN_EX_A, LATIN_EX_B = range(4)
 
+ZIP_BASE64_MAGIC = '{ZIP+BASE64}'
+
 
 def pack_ucs2_bytes(s):
     """
@@ -218,3 +220,26 @@ def to_u(s):
     :rtype: unicode
     """
     return (s if isinstance(s, unicode) else unicode(s, 'utf8'))
+
+
+def pack_dbus_safe_string(s):
+    """
+    Converts string ``s`` to BASE64 encoded ZIP compressed string
+
+    :rtype: str
+    """
+    return '%s\n%s' % (ZIP_BASE64_MAGIC, s.encode('zip').encode('base64'))
+
+
+def unpack_dbus_safe_string(s):
+    """
+    Converts BASE64 encoded ZIP compressed string ``s`` to string
+
+    :rtype: str
+    """
+    if not s.startswith(ZIP_BASE64_MAGIC):
+        raise ValueError
+    try:
+        return s[len(ZIP_BASE64_MAGIC):].decode('base64').decode('zip')
+    except:
+        raise ValueError
