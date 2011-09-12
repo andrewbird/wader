@@ -125,6 +125,8 @@ fi
 %doc LICENSE README
 
 %changelog
+* Sun Sep 11 2011 Andrew Bird <ajb@spheresystems.co.uk> 0.5.7
+- 0.5.7 Release
 * Mon Jun 06 2011 Andrew Bird <ajb@spheresystems.co.uk> 0.5.6
 - 0.5.6 Update spec file
 * Tue May 05 2009 Pablo Marti <pmarti@warp.es> 0.3.6
