@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Andrew Bird
 #
@@ -26,9 +26,11 @@ class ZTEK3570Wrapper(ZTEWrapper):
 
     def send_ussd(self, ussd):
         """Sends the ussd command ``ussd``"""
-        # K3570-Z / K3571-Z want request in ascii chars even though current
-        # set might be ucs2
-        return super(ZTEK3570Wrapper, self).send_ussd(ussd, force_ascii=True)
+        # K3570-Z / K3571-Z want requests in ASCII chars even though the
+        # current character set might be UCS2. Some versions of firmware
+        # reply in UCS2 or ASCII at different times, so we need a loose check
+        return super(ZTEK3570Wrapper, self).send_ussd(ussd, force_ascii=True,
+                                                    loose_charset_check=True)
 
 
 class ZTEK3570Customizer(ZTEWCDMACustomizer):

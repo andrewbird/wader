@@ -56,7 +56,7 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
 
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
-                                   pack_ucs2_bytes, check_if_ucs2)
+                                   pack_ucs2_bytes, check_if_ucs2, LATIN_EX_B)
 import wader.common.exceptions as ex
 from wader.common.mal import MessageAssemblyLayer
 from wader.common.mms import (send_m_send_req, send_m_notifyresp_ind,
@@ -852,7 +852,7 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda response: int(response[0].group('index')))
         return d
 
-    def send_ussd(self, ussd, force_ascii=False):
+    def send_ussd(self, ussd, force_ascii=False, loose_charset_check=False):
         """Sends the ussd command ``ussd``"""
 
         def convert_response(response):
@@ -867,15 +867,25 @@ class WCDMAWrapper(WCDMAProtocol):
                 return ""   # returning the Empty string is valid
 
             if 'UCS2' in self.device.sim.charset:
-                if check_if_ucs2(resp):
+                if check_if_ucs2(resp, limit=LATIN_EX_B):
                     try:
                         return unpack_ucs2_bytes(resp)
                     except (TypeError, UnicodeDecodeError):
+                        if loose_charset_check:
+                            return resp
                         raise E.MalformedUssdPduError(resp)
+
+                elif loose_charset_check:
+                    return resp
 
                 raise E.MalformedUssdPduError(resp)
 
             return resp
+
+        def reset_state(failure):
+            if self.device.get_property(USD_INTFACE, 'State') != 'idle':
+                self.device.set_property(USD_INTFACE, 'State', 'idle')
+            failure.raiseException()  # re-raise
 
         if 'UCS2' in self.device.sim.charset and not force_ascii:
             ussd = pack_ucs2_bytes(ussd)
@@ -884,6 +894,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
         d = super(WCDMAWrapper, self).send_ussd(str(ussd))
         d.addCallback(convert_response)
+        d.addErrback(reset_state)
         return d
 
     def set_allowed_mode(self, mode):
