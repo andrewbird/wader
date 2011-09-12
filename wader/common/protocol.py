@@ -835,7 +835,9 @@ class WCDMAProtocol(SerialProtocol):
         cmd = ATCmd('AT+CSCA="%s"' % number, name='set_smsc')
         return self.queue_at_cmd(cmd)
 
-    def send_at(self, at_str, name='send_at'):
+    def send_at(self, at_str, name='send_at', timeout=None):
         """Send an arbitrary AT string to the SIM card"""
         cmd = ATCmd(at_str, name=name)
+        if timeout:
+            cmd.timeout = timeout
         return self.queue_at_cmd(cmd)
