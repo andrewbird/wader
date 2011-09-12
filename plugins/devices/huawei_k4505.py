@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
@@ -56,6 +56,9 @@ class HuaweiK4505Wrapper(HuaweiWCDMAWrapper):
 
         return d
 
+    def send_ussd(self, ussd):
+        return self._send_ussd_ucs2_mode(ussd)
+
 
 class HuaweiK4505Customizer(HuaweiWCDMACustomizer):
     """
@@ -65,7 +68,6 @@ class HuaweiK4505Customizer(HuaweiWCDMACustomizer):
 
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
     # HSDPA/UMTS 2100/900 MHz
-
     band_dict = build_band_dict(
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,

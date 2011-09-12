@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,13 +20,21 @@ from wader.common import consts
 from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
+                                          HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
+
+
+class HuaweiE510Wrapper(HuaweiWCDMAWrapper):
+
+    def send_ussd(self, ussd):
+        return self._send_ussd_ucs2_mode(ussd)
 
 
 class HuaweiE510Customizer(HuaweiWCDMACustomizer):
     """
     :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E510
     """
+    wrapper_klass = HuaweiE510Wrapper
 
     # GSM/GPRS/EDGE 900/1800/1900 MHz
     # HSDPA/UMTS 2100/900 MHz
@@ -34,9 +42,9 @@ class HuaweiE510Customizer(HuaweiWCDMACustomizer):
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,
 
-                   consts.MM_NETWORK_BAND_EGSM,#  900
-                   consts.MM_NETWORK_BAND_DCS, # 1800
-                   consts.MM_NETWORK_BAND_PCS, # 1900
+                   consts.MM_NETWORK_BAND_EGSM,  # 900
+                   consts.MM_NETWORK_BAND_DCS,   # 1800
+                   consts.MM_NETWORK_BAND_PCS,   # 1900
 
 # XXX: const needs to be enabled in family first
 #                   consts.MM_NETWORK_BAND_U900,

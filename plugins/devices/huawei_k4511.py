@@ -20,16 +20,24 @@ from wader.common import consts
 from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
+                                          HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
+
+
+class HuaweiK4511Wrapper(HuaweiWCDMAWrapper):
+
+    def send_ussd(self, ussd):
+        return self._send_ussd_ucs2_mode(ussd)
 
 
 class HuaweiK4511Customizer(HuaweiWCDMACustomizer):
     """
     :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K4511
     """
+    wrapper_klass = HuaweiK4511Wrapper
+
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
     # HSDPA/UMTS 850/900/1900/2100 MHz
-
     band_dict = build_band_dict(
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,

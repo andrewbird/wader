@@ -866,21 +866,17 @@ class WCDMAWrapper(WCDMAProtocol):
             if resp is None:
                 return ""   # returning the Empty string is valid
 
-            if 'UCS2' in self.device.sim.charset:
-                if check_if_ucs2(resp, limit=LATIN_EX_B):
-                    try:
-                        return unpack_ucs2_bytes(resp)
-                    except (TypeError, UnicodeDecodeError):
-                        if loose_charset_check:
-                            return resp
-                        raise E.MalformedUssdPduError(resp)
-
-                elif loose_charset_check:
+            if not check_if_ucs2(resp, limit=LATIN_EX_B):
+                if 'UCS2' in self.device.sim.charset and \
+                        not loose_charset_check:
+                    raise E.MalformedUssdPduError(resp)
+                else:
                     return resp
-
-                raise E.MalformedUssdPduError(resp)
-
-            return resp
+            else:
+                try:
+                    return unpack_ucs2_bytes(resp)
+                except (TypeError, UnicodeDecodeError):
+                    raise E.MalformedUssdPduError(resp)
 
         def reset_state(failure):
             if self.device.get_property(USD_INTFACE, 'State') != 'idle':

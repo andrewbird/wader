@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,17 +20,24 @@ from wader.common import consts
 from wader.common.hardware.base import build_band_dict
 from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
+                                          HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
+
+
+class HuaweiK3765Wrapper(HuaweiWCDMAWrapper):
+
+    def send_ussd(self, ussd):
+        return self._send_ussd_ucs2_mode(ussd)
 
 
 class HuaweiK3765Customizer(HuaweiWCDMACustomizer):
     """
     :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3765
     """
+    wrapper_klass = HuaweiK3765Wrapper
 
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
     # HSDPA/UMTS 2100/900 MHz
-
     band_dict = build_band_dict(
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,

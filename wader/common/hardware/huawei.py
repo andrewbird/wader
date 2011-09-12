@@ -21,6 +21,7 @@
 import re
 
 from twisted.python import log
+from twisted.internet import defer
 
 from messaging.sms import is_gsm_text
 from messaging.utils import encode_str, unpack_msg
@@ -555,10 +556,58 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
             except TypeError:
                 raise E.MalformedUssdPduError(resp)
 
+        def reset_state(failure):
+            if self.device.get_property(consts.USD_INTFACE, 'State') != 'idle':
+                self.device.set_property(consts.USD_INTFACE, 'State', 'idle')
+            failure.raiseException()  # re-raise
+
         self.device.set_property(consts.USD_INTFACE, 'State', 'active')
 
         d = send_request(str(ussd))
         d.addCallback(convert_response)
+        d.addErrback(reset_state)
+        return d
+
+    def _send_ussd_ucs2_mode(self, ussd, loose_charset_check=False):
+        """
+        Sends the USSD command ``ussd`` in UCS2 mode regardless of the current
+        setting.
+
+        Many Huawei devices that implement Vodafone specified USSD translation
+        only function correctly in the UCS2 character set, so save the current
+        charset, flip to UCS2, call the ancestor, restore the charset and then
+        return the result
+        """
+
+        def save_set_charset(old):
+            if old == 'UCS2':
+                if hasattr(self, 'old_charset'):
+                    del self.old_charset
+                return defer.succeed('OK')
+            self.old_charset = old
+            return self.set_charset('UCS2')
+
+        def restore_charset(result):
+            if hasattr(self, 'old_charset'):
+                self.set_charset(self.old_charset)
+                del self.old_charset
+            return result
+
+        def restore_charset_eb(failure):
+            if hasattr(self, 'old_charset'):
+                self.set_charset(self.old_charset)
+                del self.old_charset
+            failure.raiseException()  # re-raise
+
+        d = defer.Deferred()
+        d.addCallback(lambda _: self.get_charset())
+        d.addCallback(save_set_charset)
+        d.addErrback(restore_charset_eb)
+        d.addCallback(lambda _: super(HuaweiWCDMAWrapper, self).send_ussd(ussd,
+                                    loose_charset_check=loose_charset_check))
+        d.addCallback(restore_charset)
+
+        d.callback(True)
         return d
 
 

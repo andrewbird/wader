@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -51,6 +51,9 @@ class HuaweiE220Wrapper(HuaweiWCDMAWrapper):
         cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
 
         return self.queue_at_cmd(cmd)
+
+    def send_ussd(self, ussd):
+        return self._send_ussd_ucs2_mode(ussd)
 
 
 class HuaweiE220Customizer(HuaweiWCDMACustomizer):

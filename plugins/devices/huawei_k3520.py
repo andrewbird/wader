@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2008-2009  Warp Networks, S.L.
+# Copyright (C) 2010-2011  Vodafone España, S.A.
 # Author:  Pablo Martí
 #
 # This program is free software; you can redistribute it and/or modify
@@ -45,6 +46,9 @@ class HuaweiK3520Wrapper(HuaweiWCDMAWrapper):
                             if c.name.lower().startswith(pattern.lower())])
         return d
 
+    def send_ussd(self, ussd):
+        return self._send_ussd_ucs2_mode(ussd)
+
 
 class HuaweiK3520Customizer(HuaweiWCDMACustomizer):
     """
@@ -54,7 +58,6 @@ class HuaweiK3520Customizer(HuaweiWCDMACustomizer):
 
     # GSM/GPRS/EDGE 850/900/1800/1900 MHz
     # HSDPA/UMTS 2100/900 MHz
-
     band_dict = build_band_dict(
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,

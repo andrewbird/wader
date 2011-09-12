@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2010  Vodafone España, S.A.
+# Copyright (C) 2010-2011  Vodafone España, S.A.
 # Author:  Jaime Soriano
 #
 # This program is free software; you can redistribute it and/or modify
@@ -71,6 +71,9 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
         d.addErrback(no_contacts_eb)
         d.addCallback(get_valid_contacts)
         return d
+
+    def send_ussd(self, ussd):
+        return self._send_ussd_ucs2_mode(ussd)
 
 
 class HuaweiE17XCustomizer(HuaweiWCDMACustomizer):
