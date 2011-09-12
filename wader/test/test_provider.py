@@ -208,7 +208,10 @@ class TestNetworkProvider(unittest.TestCase):
         if not os.path.exists(mbpi):
             raise unittest.SkipTest("No MBPI installed")
 
-        self.provider.populate_networks_from_mbpi(mbpi)
+        try:
+            self.provider.populate_networks_from_mbpi(mbpi)
+        except TypeError:
+            raise unittest.SkipTest("MBPI is unsupported version")
 
         c = self.provider.conn.cursor()
         c.execute("select * from network_info")
