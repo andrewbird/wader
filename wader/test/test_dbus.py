@@ -1020,8 +1020,8 @@ class DBusTestCase(unittest.TestCase):
         # leave everything as found
         self.device.SetSmsc(smsc, dbus_interface=SMS_INTFACE)
 
-    def test_Ussd(self):
-        """Test for working ussd implementation"""
+    def test_UssdGsm(self):
+        """Test for working ussd implementation if the card is using GSM charset"""
         def cb(*args):
             # get the IMSI and check if we have a suitable ussd request/regex
             imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
@@ -1032,13 +1032,37 @@ class DBusTestCase(unittest.TestCase):
             else:
                 raise unittest.SkipTest("Untested")
 
+            self.device.SetCharset('GSM', dbus_interface=CRD_INTFACE)
+
             response = self.device.Initiate(request)
 
             self.failUnless(re.compile(regex).match(response))
 
         return self.do_when_registered(cb)
 
-    test_Ussd.timeout = 60
+    test_UssdGsm.timeout = 60
+
+    def test_UssdUcs2(self):
+        """Test for working ussd implementation if the card is using USSD charset"""
+        def cb(*args):
+            # get the IMSI and check if we have a suitable ussd request/regex
+            imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+            if imsi.startswith("21401"):
+                request, regex = ('*118#', '^Spain.*$')
+            elif imsi.startswith("23415"):
+                request, regex = ('*#100#', '^07\d{9}$')
+            else:
+                raise unittest.SkipTest("Untested")
+
+            self.device.SetCharset('UCS2', dbus_interface=CRD_INTFACE)
+
+            response = self.device.Initiate(request)
+
+            self.failUnless(re.compile(regex).match(response))
+
+        return self.do_when_registered(cb)
+
+    test_UssdUcs2.timeout = 60
 
     def test_ZDisableReEnable(self):
         """Test last for disable device and reenable"""
