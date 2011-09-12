@@ -502,7 +502,7 @@ class WCDMAWrapper(WCDMAProtocol):
                     return netname, conn_type
 
                 # if we have arrived here, that means that the network id
-                # is a five digit integer
+                # is a five, six or seven digit integer
                 return str(netname), conn_type
 
         d.addCallback(get_net_info_cb)
@@ -1216,6 +1216,19 @@ class BasicNetworkOperator(object):
 
     def __repr__(self):
         return '<BasicNetworkOperator: %s>' % self.netid
+
+    def __cmp__(self, o):
+        try:
+            a = int(self.netid)
+        except (AttributeError, NameError, TypeError, ValueError):
+            a = None
+
+        try:
+            b = int(o.netid)
+        except (AttributeError, NameError, TypeError, ValueError):
+            b = None
+
+        return cmp(a, b)
 
     def __eq__(self, o):
         return self.netid == o.netid

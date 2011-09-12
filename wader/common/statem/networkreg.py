@@ -22,7 +22,7 @@ import dbus
 from twisted.python import log
 from twisted.internet import defer, reactor
 
-import wader.common.exceptions as ex
+#import wader.common.exceptions as ex
 import wader.common.aterrors as E
 from wader.common.signals import SIG_CREG
 from wader.common.consts import (WADER_SERVICE, STATUS_IDLE, STATUS_HOME,
@@ -167,7 +167,7 @@ class NetworkRegistrationStateMachine(Modal):
             # Network registration has been denied
             self.registering = False
             msg = 'Net registration failed: +CREG: %d,%d' % (_mode, status)
-            self.notify_failure(ex.NetworkRegistrationError(msg))
+            self.notify_failure(E.NetworkNotAllowed(msg))
             return
 
     def process_netreg_info(self, info):
@@ -185,7 +185,7 @@ class NetworkRegistrationStateMachine(Modal):
         self.transitionTo('manual_registration')
         self.do_next()
 
-    def find_netid_to_register_with(self, imsi_prefix):
+    def find_netid_to_register_with(self, imsi):
         """
         Registers with the first netid that appears in both +COPS=? and +CPOL?
         """
@@ -193,8 +193,16 @@ class NetworkRegistrationStateMachine(Modal):
         # failed. We'll try to register with the first netid present
         # in AT+COPS=? and AT+CPOL?
         def process_netnames(networks):
+            # Sort so that networks with longer prefixes are found first
+            networks.sort(reverse=True)
+
             for n in networks:
-                if n.netid in [self.netid, imsi_prefix]:
+                try:
+                    is_imsi_prefix = imsi.startswith(n.netid) \
+                                        if len(n.netid) else False
+                except (AttributeError, NameError, TypeError):
+                    is_imsi_prefix = False
+                if n.netid == self.netid or is_imsi_prefix:
                     assert self.registering == False, "Registering again?"
                     self.register_with_netid(n.netid)
                     self.registering = True
@@ -207,15 +215,24 @@ class NetworkRegistrationStateMachine(Modal):
                         self.registering = True
                         break
                 else:
-                    msg = "Couldnt find a netid in %s and %s to register with"
-                    args = (roam_operators, networks)
-                    raise ex.NetworkRegistrationError(msg % args)
+                    # Simplify for message
+                    cpol = list(set([i.netid for i in roam_operators]))
+                    netids = list(set([i.netid for i in networks]))
+                    msg = "No match in +CPOL %s / networks %s" % (cpol, netids)
+                    log.err(msg)
+                    self.notify_failure(E.NoNetwork(msg))
+#                    raise ex.NetworkRegistrationError(msg)
 
             def process_roaming_ids_eb(failure):
                 # +CME ERROR 3, +CME ERROR 4
                 failure.trap(E.OperationNotAllowed, E.OperationNotSupported)
-                msg = "Couldnt find a netid in %s to register with"
-                raise ex.NetworkRegistrationError(msg % networks)
+
+                # Simplify for message
+                netids = list(set([i.netid for i in networks]))
+                msg = "No +CPOL list to compare with networks %s" % netids
+                log.err(msg)
+                self.notify_failure(E.NoNetwork(msg))
+#                raise ex.NetworkRegistrationError(msg)
 
             d = self.sconn.get_roaming_ids()
             d.addCallback(process_roaming_ids_cb)
@@ -279,15 +296,25 @@ class NetworkRegistrationStateMachine(Modal):
         def do_next(self):
 
             def process_imsi_cb(imsi):
-                imsi = imsi[:5]
                 assert self.registering == False, "Registering again?"
-                if imsi == self.netid:
+
+                log.msg("manual_registration self.netid = %s, imsi = %s"
+                        % (str(self.netid), str(imsi)))
+
+                try:
+                    is_imsi_prefix = imsi.startswith(self.netid) \
+                                        if len(self.netid) else False
+                except (AttributeError, NameError, TypeError):
+                    is_imsi_prefix = False
+                if is_imsi_prefix:
+                    log.msg("manual_registration self.netid is IMSI prefix")
                     # if we've been specified a netid, we cannot do
                     # much more than trying to register with it and
                     # if it fails return asap
-                    self.register_with_netid(imsi)
+                    self.register_with_netid(self.netid)
                     self.registering = True
                 else:
+                    log.msg("manual_registration self.netid not IMSI prefix")
                     # look for a netid to register with
                     self.find_netid_to_register_with(imsi)
 
