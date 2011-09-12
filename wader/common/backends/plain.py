@@ -139,7 +139,8 @@ Auto DNS = on
 
 Modem = $serialport
 Baud = 460800
-Init2 = ATZ
+Init1 = AT
+Init2 = AT
 Init3 = ATQ0 V1 E0 S0=0 &C1 &D2
 Init4 = AT+CGDCONT=$context,"IP","$apn"
 ISDN = 0
