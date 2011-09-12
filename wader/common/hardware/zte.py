@@ -185,7 +185,8 @@ class ZTEWCDMACustomizer(WCDMACustomizer):
     band_dict = {}
     conn_dict = ZTE_MODE_DICT
     cmd_dict = ZTE_CMD_DICT
-    device_capabilities = [S.SIG_NETWORK_MODE]
+    device_capabilities = [S.SIG_NETWORK_MODE,
+                           S.SIG_SMS_NOTIFY_ONLINE]
     signal_translations = {
         '+ZDONR': (None, None),
         '+ZPASR': (S.SIG_NETWORK_MODE, zte_new_conn_mode),

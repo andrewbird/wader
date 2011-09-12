@@ -572,6 +572,7 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
     conn_dict = HUAWEI_CONN_DICT
     cmd_dict = HUAWEI_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE,
+                           S.SIG_SMS_NOTIFY_ONLINE,
                            S.SIG_RSSI]
 
     signal_translations = {
@@ -597,8 +598,12 @@ class HuaweiSIMClass(SIMBaseClass):
         super(HuaweiSIMClass, self).__init__(sconn)
 
     def setup_sms(self):
+        # Select SIM storage
+        self.sconn.send_at('AT+CPMS="SM","SM","SM"')
+
         # Notification when a SMS arrives...
         self.sconn.set_sms_indication(1, 1, 0, 1, 0)
+
         # set PDU mode
         self.sconn.set_sms_format(0)
 
@@ -614,7 +619,6 @@ class HuaweiSIMClass(SIMBaseClass):
 
             self.sconn.set_network_mode(consts.MM_NETWORK_MODE_ANY)
             self.sconn.send_at('AT+COPS=3,0')
-            self.sconn.send_at('AT+CPMS="SM","SM","SM"')
             return size
 
         d = super(HuaweiSIMClass, self).initialize(set_encoding=set_encoding)

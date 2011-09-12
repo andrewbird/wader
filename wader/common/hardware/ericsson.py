@@ -35,6 +35,7 @@ from wader.common.sim import SIMBaseClass
 from wader.common.statem.simple import SimpleStateMachine
 from wader.common.utils import revert_dict
 from wader.contrib.modal import mode as Mode
+import wader.common.signals as S
 
 
 MAX_RETRIES = 6
@@ -505,6 +506,7 @@ class EricssonCustomizer(WCDMACustomizer):
     band_dict = ERICSSON_BAND_DICT
     cmd_dict = ERICSSON_CMD_DICT
     conn_dict = ERICSSON_CONN_DICT
+    device_capabilities = [S.SIG_SMS_NOTIFY_ONLINE]
 
     signal_translations = {
         '*ESTKDISP': (None, None),

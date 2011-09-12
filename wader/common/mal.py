@@ -314,6 +314,11 @@ class MessageAssemblyLayer(object):
         d.addCallback(gen_cache)
         return d
 
+    def list_sms_raw(self):
+        """Returns all the raw sms, not assembled via the mal"""
+        debug("MAL::list_sms_raw")
+        return self.wrappee.do_list_sms()
+
     def send_mms(self, mms, extra_info):
         debug("MAL::send_mms: %s" % mms)
         d = self.wrappee.do_send_mms(dbus_data_to_mms(mms), extra_info)

@@ -28,7 +28,7 @@ from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.utils import revert_dict
 from wader.common.sim import SIMBaseClass
-
+import wader.common.signals as S
 
 NOVATEL_ALLOWED_DICT = {
     consts.MM_ALLOWED_MODE_ANY: '0,2',
@@ -147,13 +147,21 @@ class NovatelSIMClass(SIMBaseClass):
     def __init__(self, sconn):
         super(NovatelSIMClass, self).__init__(sconn)
 
+    def setup_sms(self):
+        # Select SIM storage
+        self.sconn.send_at('AT+CPMS="SM","SM","SM"')
+
+        # Notification when a SMS arrives...
+        self.sconn.set_sms_indication(1, 1, 0, 1, 0)
+
+        # set PDU mode
+        self.sconn.set_sms_format(0)
+
     def initialize(self, set_encoding=True):
 
         def init_callback(size):
             # make sure we are in most promiscuous mode before registration
             self.sconn.set_network_mode(consts.MM_NETWORK_MODE_ANY)
-            # set SMS storage default
-            self.sconn.send_at('AT+CPMS="SM","SM","SM"')
             return(size)
 
         d = super(NovatelSIMClass, self).initialize(set_encoding)
@@ -257,6 +265,7 @@ class NovatelWCDMACustomizer(WCDMACustomizer):
                     # the bands they support
     cmd_dict = NOVATEL_CMD_DICT
     conn_dict = NOVATEL_MODE_DICT
+    device_capabilities = [S.SIG_SMS_NOTIFY_ONLINE]
     wrapper_klass = NovatelWrapper
 
 

@@ -496,7 +496,9 @@ class OptionWCDMACustomizer(WCDMACustomizer):
     band_dict = revert_dict(OPTION_BAND_MAP_DICT)
     conn_dict = OPTION_CONN_DICT
     cmd_dict = OPTION_CMD_DICT
-    device_capabilities = [S.SIG_NETWORK_MODE, S.SIG_RSSI]
+    device_capabilities = [S.SIG_NETWORK_MODE,
+                           S.SIG_SMS_NOTIFY_ONLINE,
+                           S.SIG_RSSI]
     signal_translations = {
         '_OSSYSI': (S.SIG_NETWORK_MODE, new_conn_mode_cb),
         '_OSIGQ': (S.SIG_RSSI, lambda args, device:

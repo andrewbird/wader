@@ -22,8 +22,12 @@ from gobject import timeout_add_seconds, source_remove
 from time import time
 from twisted.python import log
 
+from wader.common.consts import (MM_MODEM_STATE_UNKNOWN,
+                                 MM_MODEM_STATE_CONNECTED)
 import wader.common.signals as S
 
+SIG_SMS_NOTIFY_ONLINE_FREQ = 5
+SIG_SMS_NOTIFY_ONLINE_POLL = 6  # interval = FREQ * POLL
 SIG_REG_INFO_FREQ = 120
 SIG_REG_INFO_POLL = 5
 SIG_RSSI_FREQ = 15
@@ -119,6 +123,48 @@ class NetworkRegistrationDaemon(WaderDaemon):
         return True
 
 
+class SmsNotifyOnlineDaemon(WaderDaemon):
+    """I monitor SMS appearing without notification"""
+
+    def __init__(self, frequency, device):
+        super(SmsNotifyOnlineDaemon, self).__init__(frequency, device)
+
+        self.last_status = MM_MODEM_STATE_UNKNOWN
+        self.last_poll = 1
+
+    def _set_smslist(self, l):
+        self.smslist = l
+
+    def _cmp_smslist(self, polled):
+        newsms = [sms for sms in polled if not sms in self.smslist]
+        if len(newsms):
+            for sms in newsms:
+                index = sms.to_dict()['index']
+
+                log.msg("SmsNotifyOnlineDaemon new SMS appeared %d" % index)
+                self.device.sconn.mal.on_sms_notification(index)
+
+            self.smslist = polled
+
+    def function(self):
+
+        if self.device.status is MM_MODEM_STATE_CONNECTED:
+            if self.device.status != self.last_status:
+                # we just got connected
+                self.last_poll = 0
+                d = self.device.sconn.mal.list_sms_raw()
+                d.addCallback(self._set_smslist)
+            else:
+                self.last_poll += 1
+                if (self.last_poll % SIG_SMS_NOTIFY_ONLINE_POLL) == 0:
+                    d = self.device.sconn.mal.list_sms_raw()
+                    d.addCallback(self._cmp_smslist)
+
+        self.last_status = self.device.status
+
+        return True
+
+
 class WaderDaemonCollection(object):
     """
     I am a collection of Daemons
@@ -181,6 +227,12 @@ def build_daemon_collection(device):
         # unsolicited notifications, we'll have to fake 'em
         daemon = SignalQualityDaemon(SIG_RSSI_FREQ, device)
         collection.append_daemon(S.SIG_RSSI, daemon)
+
+    if S.SIG_SMS_NOTIFY_ONLINE not in device.custom.device_capabilities:
+        # device doesn't send unsolicited notifications whilst
+        # connected, so we'll have to poll
+        daemon = SmsNotifyOnlineDaemon(SIG_SMS_NOTIFY_ONLINE_FREQ, device)
+        collection.append_daemon(S.SIG_SMS_NOTIFY_ONLINE, daemon)
 
     # daemons to be used regardless of ports or capabilities
     daemon = NetworkRegistrationDaemon(SIG_REG_INFO_FREQ, device)

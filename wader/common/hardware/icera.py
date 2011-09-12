@@ -428,7 +428,8 @@ class IceraWCDMACustomizer(WCDMACustomizer):
     band_dict = ICERA_BAND_DICT
     conn_dict = ICERA_MODE_DICT
     cmd_dict = ICERA_CMD_DICT
-    device_capabilities = [S.SIG_NETWORK_MODE]
+    device_capabilities = [S.SIG_NETWORK_MODE,
+                           S.SIG_SMS_NOTIFY_ONLINE]
     signal_translations = {
         '%NWSTATE': (S.SIG_NETWORK_MODE, icera_new_conn_mode),
         '%IPDPACT': (None, icera_connection_state),
