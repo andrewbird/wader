@@ -20,19 +20,91 @@
 
 from twisted.trial import unittest
 
-from wader.common.encoding import (check_if_ucs2,
+from wader.common.encoding import (CONTROL_0, CONTROL_1, LATIN_EX_A,
+                                   LATIN_EX_B, check_if_ucs2,
                                    pack_ucs2_bytes, unpack_ucs2_bytes)
+
+CTL_0 = '007F'
+CTL_1 = '00FF'
+LTN_A = '017F'
+LTN_B = '024F'
 
 
 class TestEncoding(unittest.TestCase):
     """Tests for encoding"""
 
     def test_check_if_ucs2(self):
+        self.assertEqual(check_if_ucs2(CTL_0), True)
+        self.assertEqual(check_if_ucs2(CTL_1), True)
+        self.assertEqual(check_if_ucs2(LTN_A), True)
+        self.assertEqual(check_if_ucs2(LTN_B), True)
         self.assertEqual(check_if_ucs2('6C34'), True)
-        self.assertEqual(check_if_ucs2('0056006F006400610066006F006E0065'),
-                         True)
-        # XXX: This should fail but doesn't
+        self.assertEqual(
+            check_if_ucs2('0056006F006400610066006F006E0065'), True)
+        self.assertEqual(check_if_ucs2('003'), False)
+
+        # XXX: This should be invalid but fails at the moment
         self.assertEqual(check_if_ucs2('D834DD1E'), False)
+
+    def test_check_if_ucs2_limit_control_0(self):
+        self.assertEqual(check_if_ucs2(CTL_0, limit=CONTROL_0), True)
+        self.assertEqual(check_if_ucs2(CTL_1, limit=CONTROL_0), False)
+        self.assertEqual(check_if_ucs2(LTN_A, limit=CONTROL_0), False)
+        self.assertEqual(check_if_ucs2(LTN_B, limit=CONTROL_0), False)
+        self.assertEqual(check_if_ucs2('6C34', limit=CONTROL_0), False)
+        self.assertEqual(
+            check_if_ucs2(CTL_0 + CTL_0 + CTL_0, limit=CONTROL_0), True)
+        self.assertEqual(
+            check_if_ucs2('6C34' + CTL_0 + CTL_0, limit=CONTROL_0), False)
+        self.assertEqual(
+            check_if_ucs2(CTL_0 + '6C34' + CTL_0, limit=CONTROL_0), False)
+        self.assertEqual(
+            check_if_ucs2(CTL_0 + CTL_0 + '6C34', limit=CONTROL_0), False)
+
+    def test_check_if_ucs2_limit_control_1(self):
+        self.assertEqual(check_if_ucs2(CTL_0, limit=CONTROL_1), True)
+        self.assertEqual(check_if_ucs2(CTL_1, limit=CONTROL_1), True)
+        self.assertEqual(check_if_ucs2(LTN_A, limit=CONTROL_1), False)
+        self.assertEqual(check_if_ucs2(LTN_B, limit=CONTROL_1), False)
+        self.assertEqual(check_if_ucs2('6C34', limit=CONTROL_1), False)
+        self.assertEqual(
+            check_if_ucs2(CTL_1 + CTL_1 + CTL_1, limit=CONTROL_1), True)
+        self.assertEqual(
+            check_if_ucs2('6C34' + CTL_1 + CTL_1, limit=CONTROL_1), False)
+        self.assertEqual(
+            check_if_ucs2(CTL_1 + '6C34' + CTL_1, limit=CONTROL_1), False)
+        self.assertEqual(
+            check_if_ucs2(CTL_1 + CTL_1 + '6C34', limit=CONTROL_1), False)
+
+    def test_check_if_ucs2_limit_extended_latin_a(self):
+        self.assertEqual(check_if_ucs2(CTL_0, limit=LATIN_EX_A), True)
+        self.assertEqual(check_if_ucs2(CTL_1, limit=LATIN_EX_A), True)
+        self.assertEqual(check_if_ucs2(LTN_A, limit=LATIN_EX_A), True)
+        self.assertEqual(check_if_ucs2(LTN_B, limit=LATIN_EX_A), False)
+        self.assertEqual(check_if_ucs2('6C34', limit=LATIN_EX_A), False)
+        self.assertEqual(
+            check_if_ucs2(LTN_A + LTN_A + LTN_A, limit=LATIN_EX_A), True)
+        self.assertEqual(
+            check_if_ucs2('6C34' + LTN_A + LTN_A, limit=LATIN_EX_A), False)
+        self.assertEqual(
+            check_if_ucs2(LTN_A + '6C34' + LTN_A, limit=LATIN_EX_A), False)
+        self.assertEqual(
+            check_if_ucs2(LTN_A + LTN_A + '6C34', limit=LATIN_EX_A), False)
+
+    def test_check_if_ucs2_limit_extended_latin_b(self):
+        self.assertEqual(check_if_ucs2(CTL_0, limit=LATIN_EX_B), True)
+        self.assertEqual(check_if_ucs2(CTL_1, limit=LATIN_EX_B), True)
+        self.assertEqual(check_if_ucs2(LTN_A, limit=LATIN_EX_B), True)
+        self.assertEqual(check_if_ucs2(LTN_B, limit=LATIN_EX_B), True)
+        self.assertEqual(check_if_ucs2('6C34', limit=LATIN_EX_B), False)
+        self.assertEqual(
+            check_if_ucs2(LTN_B + LTN_B + LTN_B, limit=LATIN_EX_B), True)
+        self.assertEqual(
+            check_if_ucs2('6C34' + LTN_B + LTN_B, limit=LATIN_EX_B), False)
+        self.assertEqual(
+            check_if_ucs2(LTN_B + '6C34' + LTN_B, limit=LATIN_EX_B), False)
+        self.assertEqual(
+            check_if_ucs2(LTN_B + LTN_B + '6C34', limit=LATIN_EX_B), False)
 
     def test_pack_ucs2_bytes(self):
         # 07911356131313F311000A9260214365870008AA080068006F006C0061

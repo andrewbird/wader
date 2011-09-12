@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -17,6 +17,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Helper methods for dealing with encoded strings"""
+
+CONTROL_0, CONTROL_1, LATIN_EX_A, LATIN_EX_B = range(4)
 
 
 def pack_ucs2_bytes(s):
@@ -152,9 +154,9 @@ def unpack_ucs2_bytes_in_ts31101_82(s):
     return t
 
 
-def check_if_ucs2(text):
+def check_if_ucs2(text, limit=None):
     """
-    Test whether ``s`` is a UCS2 encoded string
+    Test whether ``text`` is a UCS2 encoded string
 
     :rtype: bool
     """
@@ -165,6 +167,27 @@ def check_if_ucs2(text):
         except (UnicodeDecodeError, TypeError):
             return False
         else:
+            if limit is None:
+                return True
+
+            s = text
+            while len(s):
+                val = int(s[:4], 16)
+
+                if limit == LATIN_EX_B and val > 0x024F:
+                    return False
+
+                if limit == LATIN_EX_A and val > 0x017F:
+                    return False
+
+                if limit == CONTROL_1 and val > 0x00FF:
+                    return False
+
+                if limit == CONTROL_0 and val > 0x007F:
+                    return False
+
+                s = s[4:]
+
             return True
 
     return False
