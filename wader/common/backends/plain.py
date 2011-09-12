@@ -59,7 +59,7 @@ from wader.contrib import aes
 def proc_running(pid):
     try:
         pid = int(pid)
-    except ValueError:
+    except (TypeError, ValueError):
         return None
 
     if pid <= 1:
