@@ -131,6 +131,7 @@ Dial Command = ATDT
 New PPPD = yes
 Check Def Route = on
 Dial Attempts = 3
+Dial Timeout = 30
 Auto Reconnect = off
 Auto DNS = on
 
