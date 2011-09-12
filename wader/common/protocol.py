@@ -203,6 +203,19 @@ class BufferingStateMachine(object, protocol.Protocol):
 
         return _buffer
 
+    def process_notification_creg_received(self, _buffer):
+        while True:
+            match = CREG_REGEXP.match(_buffer)
+            if not match:
+                break
+
+            status = int(match.group('status'))
+            self.emit_signal(S.SIG_CREG, status)
+
+            _buffer = _buffer.replace(match.group(), '', 1)
+
+        return _buffer
+
     def handle_idle(self, data):
         """
         Processes ``data`` in `idle` state
@@ -261,13 +274,9 @@ class BufferingStateMachine(object, protocol.Protocol):
                 return
 
         # fifth most possible event
-        match = CREG_REGEXP.match(self.idlebuf)
-        if match:
-            status = int(match.group('status'))
-            self.emit_signal(S.SIG_CREG, status)
-            self.idlebuf = self.idlebuf.replace(match.group(), '')
-            if not self.idlebuf:
-                return
+        self.idlebuf = self.process_notification_creg_received(self.idlebuf)
+        if not self.idlebuf:
+            return
 
         # sixth most possible event:
         match = CALL_RECV.match(self.idlebuf)
@@ -290,6 +299,11 @@ class BufferingStateMachine(object, protocol.Protocol):
 
         # new SMS arrived
         self.waitbuf = self.process_notification_sms_received(self.waitbuf)
+        if not self.waitbuf:
+            return
+
+        # CREG arrived
+        self.waitbuf = self.process_notification_creg_received(self.waitbuf)
         if not self.waitbuf:
             return
 
