@@ -313,7 +313,7 @@ class DBusTestCase(unittest.TestCase):
                     self.assertEqual(state, 'user-response')
 
                     # Choose menu item, check it's the proper text
-                    response = self.device.Initiate(menu_item)
+                    response = self.device.Respond(menu_item)
                     self.failUnless(re.compile(text_regex).match(response))
 
                     # Should be just simple text message, no reply required
@@ -324,6 +324,7 @@ class DBusTestCase(unittest.TestCase):
                     d.callback(True)
 
                 except unittest.FailTest, e:
+                    self.device.Cancel()
                     d.errback(unittest.FailTest(e))
 
             def session_fail(failure):
