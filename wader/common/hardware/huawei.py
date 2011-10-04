@@ -561,8 +561,6 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
                 self.device.set_property(consts.USD_INTFACE, 'State', 'idle')
             failure.raiseException()  # re-raise
 
-        self.device.set_property(consts.USD_INTFACE, 'State', 'active')
-
         d = send_request(str(ussd))
         d.addCallback(convert_response)
         d.addErrback(reset_state)

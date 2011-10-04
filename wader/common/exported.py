@@ -833,6 +833,7 @@ class UssdExporter(SmsExporter):
             async_callbacks=('async_cb', 'async_eb'))
     def Initiate(self, command, async_cb, async_eb):
         """Sends the USSD command ``command``"""
+        self.device.set_property(USD_INTFACE, 'State', 'active')
         d = self.sconn.send_ussd(command)
         return self.add_callbacks(d, async_cb, async_eb)
 
@@ -840,6 +841,7 @@ class UssdExporter(SmsExporter):
             async_callbacks=('async_cb', 'async_eb'))
     def Respond(self, reply, async_cb, async_eb):
         """Sends ``reply`` to the network"""
+        self.device.set_property(USD_INTFACE, 'State', 'active')
         d = self.sconn.send_ussd(reply)
         return self.add_callbacks(d, async_cb, async_eb)
 

@@ -886,8 +886,6 @@ class WCDMAWrapper(WCDMAProtocol):
         if 'UCS2' in self.device.sim.charset and not force_ascii:
             ussd = pack_ucs2_bytes(ussd)
 
-        self.device.set_property(USD_INTFACE, 'State', 'active')
-
         d = super(WCDMAWrapper, self).send_ussd(str(ussd))
         d.addCallback(convert_response)
         d.addErrback(reset_state)
