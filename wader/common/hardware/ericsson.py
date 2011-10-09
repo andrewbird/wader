@@ -33,13 +33,14 @@ from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
 from wader.common.sim import SIMBaseClass
-from wader.common.statem.simple import SimpleStateMachine
 from wader.common.utils import revert_dict
-from wader.contrib.modal import mode as Mode
 import wader.common.signals as S
 
-MAX_RETRIES = 6
-RETRY_TIMEOUT = 4
+CREG_MAX_RETRIES = 6
+CREG_RETRY_TIMEOUT = 4
+
+HSO_MAX_RETRIES = 5
+HSO_RETRY_TIMEOUT = 1
 
 ERICSSON_BAND_DICT = {
     consts.MM_NETWORK_BAND_UNKNOWN: None,
@@ -61,7 +62,7 @@ ERICSSON_CONN_DICT = {
 ERINFO_2G_GPRS, ERINFO_2G_EGPRS = 1, 2
 ERINFO_3G_UMTS, ERINFO_3G_HSDPA = 1, 2
 
-E2NAP_DISCONNECTED, E2NAP_CONNECTED, E2NAP_CONNECTING = 0, 1, 2
+ENAP_DISCONNECTED, ENAP_CONNECTED, ENAP_CONNECTING = 0, 1, 2
 
 ERICSSON_CMD_DICT = get_cmd_dict_copy()
 
@@ -91,6 +92,30 @@ ERICSSON_CMD_DICT['get_phonebook_size'] = build_cmd_dict(re.compile(r"""
                 (?P<ignored>,.*)?
                 \r\n
                 """, re.VERBOSE))
+
+# *ENAP: 1
+ERICSSON_CMD_DICT['get_enap'] = build_cmd_dict('\*ENAP:\s+(?P<status>\d+)')
+
+# *E2IPCFG: (<type>,<ip_addr>)(?:,(<type>,<ip_addr>)){0,3}
+# D5540 (f3607gw)
+# *E2IPCFG: (1,"10.49.116.194")(2,"10.49.116.195")
+#           (3,"10.203.65.70")(3,"88.82.13.61")
+# *E2IPCFG: (1,"00310030002E00340039002E003100310036002E003100390034")
+#           (2,"00310030002E00340039002E003100310036002E003100390035")
+#           (3,"00310030002E003200300033002E00360035002E00370030")
+#           (3,"00380038002E00380032002E00310033002E00360031")
+
+ERICSSON_CMD_DICT['get_ip4_config'] = build_cmd_dict(
+    re.compile(r"""\*E2IPCFG:\s*
+        (?:\((?P<t1>\d+),
+            "(?P<v1>(?:\d+\.\d+\.\d+\.\d+)|(?:[\dA-Fa-f]+))"\))
+        (?:\((?P<t2>\d+),
+            "(?P<v2>(?:\d+\.\d+\.\d+\.\d+)|(?:[\dA-Fa-f]+))"\))?
+        (?:\((?P<t3>\d+),
+            "(?P<v3>(?:\d+\.\d+\.\d+\.\d+)|(?:[\dA-Fa-f]+))"\))?
+        (?:\((?P<t4>\d+),
+            "(?P<v4>(?:\d+\.\d+\.\d+\.\d+)|(?:[\dA-Fa-f]+))"\))?
+        """, re.VERBOSE))
 
 
 class EricssonSIMClass(SIMBaseClass):
@@ -167,18 +192,6 @@ class EricssonWrapper(WCDMAWrapper):
         atstr = 'AT+CPWD="%s","%s","%s"' % (where, oldpin, newpin)
         d = self.queue_at_cmd(ATCmd(atstr, name='change_pin'))
         d.addCallback(lambda result: result[0].group('resp'))
-        return d
-
-    def disconnect_from_internet(self):
-        self.device.set_status(consts.MM_MODEM_STATE_DISCONNECTING)
-
-        def disconnect_cb(ignored):
-            # XXX: perhaps we should check the registration status here
-            if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
-                self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
-
-        d = self.send_at('AT*ENAP=0')
-        d.addCallback(disconnect_cb)
         return d
 
     def enable_pin(self, pin, enable):
@@ -259,11 +272,11 @@ class EricssonWrapper(WCDMAWrapper):
 
             def get_netreg_status_cb((mode, status)):
                 self.state_dict['creg_retries'] += 1
-                if self.state_dict['creg_retries'] > MAX_RETRIES:
+                if self.state_dict['creg_retries'] > CREG_MAX_RETRIES:
                     return auxdef.callback((mode, status))
 
                 if status == 4:
-                    reactor.callLater(RETRY_TIMEOUT, get_it, auxdef)
+                    reactor.callLater(CREG_RETRY_TIMEOUT, get_it, auxdef)
                 else:
                     return auxdef.callback((mode, status))
 
@@ -334,18 +347,6 @@ class EricssonWrapper(WCDMAWrapper):
 
         index = int(match.group('id'))
         return Contact(name, number, index=index)
-
-    def mbm_authenticate(self, user, passwd):
-        conn_id = self.state_dict.get('conn_id')
-        if conn_id is None:
-            raise E.CallIndexError("conn_id is None")
-
-        if self.device.sim.charset == 'UCS2':
-            args = (conn_id, pack_ucs2_bytes(user), pack_ucs2_bytes(passwd))
-        else:
-            args = (conn_id, user, passwd)
-
-        return self.send_at('AT*EIAAUW=%d,1,"%s","%s"' % args)
 
     def send_pin(self, pin):
         """
@@ -460,6 +461,229 @@ class EricssonWrapper(WCDMAWrapper):
         d.addCallback(cb)
         return d
 
+    def get_ip4_config(self):
+        """
+        Returns the ip4 config on a NDIS device
+
+        Wrapper around _get_ip4_config that provides some error control
+        """
+        ip_method = self.device.get_property(consts.MDM_INTFACE, 'IpMethod')
+        if ip_method != consts.MM_IP_METHOD_STATIC:
+            msg = "Cannot get IP4 config from a non static ip method"
+            raise E.OperationNotSupported(msg)
+
+        self.state_dict['num_of_retries'] = 0
+
+        def check_if_connected(deferred):
+
+            def inform_caller():
+                if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                    self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
+                deferred.errback(RuntimeError('Connection attempt failed'))
+
+            def get_ip4_eb(failure):
+                failure.trap(E.General, E.Unknown)
+
+                if self.state_dict.get('should_stop'):
+                    self.state_dict.pop('should_stop')
+                    return
+
+                self.state_dict['num_of_retries'] += 1
+                if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
+                    inform_caller()
+                    return failure
+
+                reactor.callLater(HSO_RETRY_TIMEOUT,
+                                  check_if_connected, deferred)
+
+            # We received an unsolicited notification that we failed
+            if self.device.connection_attempt_failed:
+                inform_caller()
+                return
+
+            d = self._get_ip4_config()
+            d.addCallback(deferred.callback)
+            d.addErrback(get_ip4_eb)
+            return deferred
+
+        auxdef = defer.Deferred()
+        return check_if_connected(auxdef)
+
+    def _get_ip4_config(self):
+        """Returns the ip4 config on a later Ericsson NDIS device"""
+        cmd = ATCmd('AT*E2IPCFG?', name='get_ip4_config')
+        d = self.queue_at_cmd(cmd)
+
+        def _get_ip4_config_cb(resp):
+            if not resp:
+                raise E.General()
+
+            ip = None
+            dns = []
+
+            l = list(resp[0].groups())
+            while len(l) > 1:
+                t = l.pop(0)
+                a = l.pop(0)
+                if t is None or a is None:
+                    continue
+
+                if not '.' in a:
+                    a = from_ucs2(a)
+                if t == '1':
+                    ip = a
+                elif t == '3':
+                    dns.append(a)
+
+            if ip is None:
+                raise E.General()
+
+            self.device.set_status(consts.MM_MODEM_STATE_CONNECTED)
+
+            # XXX: We didn't get any, but we have to return something so use
+            #      the bogus values that 'pppd' returns sometimes.
+            if not len(dns):
+                dns = ['10.11.12.13', '10.11.12.14']
+
+            # XXX: caller expects exactly three!
+            while len(dns) < 3:
+                dns.append(dns[0])
+            return [ip] + dns[:3]
+
+        d.addCallback(_get_ip4_config_cb)
+        return d
+
+    def hso_authenticate(self, user, passwd, auth):
+        conn_id = self.state_dict.get('conn_id')
+        if conn_id is None:
+            raise E.CallIndexError("conn_id is None")
+
+        # XXX: We need to enrich the auth methods across the board
+        #      Bitfield '00111': MSCHAPv2, MSCHAP, CHAP, PAP, None
+        if auth is consts.HSO_NO_AUTH:
+            _auth = '00001'
+        elif auth is consts.HSO_PAP_AUTH:
+            _auth = '00010'
+        elif auth is consts.HSO_CHAP_AUTH:
+            _auth = '00100'
+        else:
+            _auth = '00111'  # CHAP + PAP + NONE
+
+        if self.device.sim.charset == 'UCS2':
+            args = (conn_id, pack_ucs2_bytes(user),
+                             pack_ucs2_bytes(passwd), _auth)
+        else:
+            args = (conn_id, user, passwd, _auth)
+
+        return self.send_at('AT*EIAAUW=%d,1,"%s","%s",%s' % args)
+
+    def hso_connect(self):
+        conn_id = self.state_dict.get('conn_id')
+        if conn_id is None:
+            raise E.CallIndexError("conn_id is None")
+
+        if self.device.status == consts.MM_MODEM_STATE_CONNECTED:
+            # this cannot happen
+            raise E.Connected("we are already connected")
+
+        if self.device.status == consts.MM_MODEM_STATE_CONNECTING:
+            raise E.SimBusy("we are already connecting")
+
+        # AT*E2NAP=1 used to be used to enable unsolicited interface status
+        # reports but not all devices support it and the existing code didn't
+        # even handle them either.
+
+        self.device.connection_attempt_failed = False
+        self.device.set_status(consts.MM_MODEM_STATE_CONNECTING)
+
+        d = self.send_at('AT*ENAP=1,%d' % conn_id)
+
+        ip_method = self.device.get_property(consts.MDM_INTFACE, 'IpMethod')
+        if ip_method == consts.MM_IP_METHOD_DHCP:
+            # XXX: it would be nice to be using ipmethod == STATIC here, but
+            # only later devices are capable of returning the negotiated DNS
+            # values, so we default to DHCP mode and let the interface be
+            # configured later by some other process. The most we can do is
+            # check if the connection is up and report it as connected (that's
+            # early, but actually no worse than ipmethod == PPP).
+
+            def get_enap():
+                cmd = ATCmd('AT*ENAP?', name='get_enap')
+                d = self.queue_at_cmd(cmd)
+
+                def get_enap_cb(resp):
+                    if not resp:
+                        raise E.General()
+
+                    status = resp[0].group('status')
+                    if status is None:
+                        raise E.General()
+
+                    status = int(status)
+                    if status is ENAP_DISCONNECTED:
+                        self.device.connection_attempt_failed = True
+                    elif status is ENAP_CONNECTED:
+                        self.device.set_status(consts.MM_MODEM_STATE_CONNECTED)
+                    else:  # ENAP_CONNECTING and spurious values
+                        raise E.General()
+
+                    return status
+
+                d.addCallback(get_enap_cb)
+                return d
+
+            self.state_dict['num_of_retries'] = 0
+
+            def check_if_connected(deferred):
+
+                def inform_caller():
+                    if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                        self.device.set_status(
+                            consts.MM_MODEM_STATE_REGISTERED)
+                    deferred.errback(RuntimeError('Connection attempt failed'))
+
+                def get_enap_eb(failure):
+                    failure.trap(E.General, E.OperationNotSupported)
+
+                    if self.state_dict.get('should_stop'):
+                        self.state_dict.pop('should_stop')
+                        return
+
+                    self.state_dict['num_of_retries'] += 1
+                    if self.state_dict['num_of_retries'] > HSO_MAX_RETRIES:
+                        inform_caller()
+                        return failure
+
+                    reactor.callLater(HSO_RETRY_TIMEOUT,
+                                      check_if_connected, deferred)
+
+                # We received an unsolicited notification that we failed
+                if self.device.connection_attempt_failed:
+                    inform_caller()
+                    return
+
+                d = get_enap()
+                d.addCallback(deferred.callback)
+                d.addErrback(get_enap_eb)
+                return deferred
+
+            auxdef = defer.Deferred()
+            d.addCallback(lambda x: check_if_connected(auxdef))
+
+        return d
+
+    def hso_disconnect(self):
+        self.device.set_status(consts.MM_MODEM_STATE_DISCONNECTING)
+
+        def disconnect_cb(ignored):
+            # XXX: perhaps we should check the registration status here
+            if self.device.status > consts.MM_MODEM_STATE_REGISTERED:
+                self.device.set_status(consts.MM_MODEM_STATE_REGISTERED)
+
+        d = self.send_at('AT*ENAP=0')
+        d.addCallback(disconnect_cb)
+        return d
+
 
 class EricssonF3607gwWrapper(EricssonWrapper):
     """Wrapper for F3307 / F3607gw Ericsson cards"""
@@ -470,76 +694,6 @@ class EricssonF3607gwWrapper(EricssonWrapper):
                 [c for c in contacts
                        if c.name.lower().startswith(pattern.lower())])
         return d
-
-
-class EricssonSimpleStateMachine(SimpleStateMachine):
-    begin = SimpleStateMachine.begin
-    check_pin = SimpleStateMachine.check_pin
-    register = SimpleStateMachine.register
-    wait_for_registration = SimpleStateMachine.wait_for_registration
-
-    class set_apn(Mode):
-
-        def __enter__(self):
-            log.msg("EricssonSimpleStateMachine: set_apn entered")
-            self.sconn.set_charset("GSM")
-
-        def __exit__(self):
-            log.msg("EricssonSimpleStateMachine: set_apn exited")
-
-        def do_next(self):
-            if 'apn' in self.settings:
-                d = self.sconn.set_apn(self.settings['apn'])
-                d.addCallback(lambda _:
-                                self.transition_to('wait_for_registration'))
-            else:
-                self.transition_to('wait_for_registration')
-
-    class connect(Mode):
-
-        def __enter__(self):
-            log.msg("EricssonSimpleStateMachine: connect entered")
-
-        def __exit__(self):
-            log.msg("EricssonSimpleStateMachine: connect exited")
-            # restore charset after being connected
-            self.sconn.set_charset("UCS2")
-
-        def do_next(self):
-
-            def on_e2nap_done(_):
-                conn_id = self.sconn.state_dict.get('conn_id')
-                if conn_id is None:
-                    raise E.CallIndexError("conn_id is None")
-
-                return self.sconn.send_at("AT*ENAP=1,%d" % conn_id)
-
-            def on_mbm_authenticated(_):
-                self.device.set_status(consts.MM_MODEM_STATE_CONNECTING)
-                return self.sconn.send_at("AT*E2NAP=1")
-
-            username = self.settings.get('username', '')
-            password = self.settings.get('password', '')
-
-            d = self.sconn.mbm_authenticate(username, password)
-            d.addErrback(log.err)
-            d.addCallback(on_mbm_authenticated)
-            d.addCallback(on_e2nap_done)
-            d.addCallback(lambda _:
-                    self.device.set_status(consts.MM_MODEM_STATE_CONNECTED))
-            d.addCallback(lambda _: self.transition_to('done'))
-
-    class done(Mode):
-
-        def __enter__(self):
-            log.msg("EricssonSimpleStateMachine: done entered")
-
-        def __exit__(self):
-            log.msg("EricssonSimpleStateMachine: done exited")
-
-        def do_next(self):
-            # give it some time to connect
-            reactor.callLater(5, self.notify_success)
 
 
 class EricssonCustomizer(WCDMACustomizer):
@@ -562,7 +716,6 @@ class EricssonCustomizer(WCDMACustomizer):
         '+PACSP0': (None, None)}
 
     wrapper_klass = EricssonWrapper
-    simp_klass = EricssonSimpleStateMachine
 
 
 class EricssonF3607gwCustomizer(EricssonCustomizer):
