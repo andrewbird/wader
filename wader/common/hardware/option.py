@@ -21,7 +21,6 @@
 import re
 
 from twisted.internet import defer, reactor
-from twisted.python import log
 
 import wader.common.aterrors as E
 from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
@@ -31,11 +30,9 @@ from wader.common.exported import HSOExporter
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.aterrors import General
 from wader.common.sim import SIMBaseClass
-from wader.common.statem.simple import SimpleStateMachine
 from wader.common.plugin import DevicePlugin
 from wader.common.utils import rssi_to_percentage, revert_dict
 import wader.common.signals as S
-from wader.contrib.modal import mode as Mode
 
 NUM_RETRIES = 30
 RETRY_TIMEOUT = 4
@@ -432,10 +429,7 @@ class OptionHSOWrapper(OptionWrapper):
 
         return self.device.sconn.send_at('AT_OWANCALL=%d,1,0' % conn_id)
 
-    def disconnect_from_internet(self):
-        """
-        meth:`~wader.common.middleware.WCDMAWrapper.disconnect_from_internet`
-        """
+    def hso_disconnect(self):
         conn_id = self.state_dict.get('conn_id')
         if not conn_id:
             raise E.CallIndexError("conn_id is None")
@@ -451,36 +445,6 @@ class OptionHSOWrapper(OptionWrapper):
         d = self.device.sconn.send_at('AT_OWANCALL=%d,0,0' % conn_id)
         d.addCallback(disconnect_cb)
         return d
-
-
-class HSOSimpleStateMachine(SimpleStateMachine):
-    begin = SimpleStateMachine.begin
-    check_pin = SimpleStateMachine.check_pin
-    register = SimpleStateMachine.register
-    set_apn = SimpleStateMachine.set_apn
-    set_band = SimpleStateMachine.set_band
-    set_allowed_mode = SimpleStateMachine.set_allowed_mode
-    wait_for_registration = SimpleStateMachine.wait_for_registration
-    done = SimpleStateMachine.done
-
-    class connect(Mode):
-
-        def __enter__(self):
-            log.msg("HSO Simple SM: connect entered")
-
-        def __exit__(self):
-            log.msg("HSO Simple SM: connect exited")
-
-        def do_next(self):
-            username = self.settings.get('username', '')
-            password = self.settings.get('password', '')
-            # XXX: One day Connect.Simple will receive auth too
-            # defaulting to PAP_AUTH as that's what we had before
-            auth = consts.HSO_PAP_AUTH
-
-            d = self.sconn.hso_authenticate(username, password, auth)
-            d.addCallback(lambda _: self.sconn.hso_connect())
-            d.addCallback(lambda _: self.transition_to('done'))
 
 
 class OptionWCDMACustomizer(WCDMACustomizer):
@@ -511,7 +475,6 @@ class OptionHSOWCDMACustomizer(OptionWCDMACustomizer):
 
     exporter_klass = HSOExporter
     wrapper_klass = OptionHSOWrapper
-    simp_klass = HSOSimpleStateMachine
 
 
 class OptionWCDMADevicePlugin(DevicePlugin):

@@ -52,7 +52,8 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  MM_GSM_ACCESS_TECH_HSUPA,
                                  MM_GSM_ACCESS_TECH_HSPA,
                                  MM_GSM_ACCESS_TECH_HSPA_PLUS,
-                                 MM_GSM_ACCESS_TECH_LTE)
+                                 MM_GSM_ACCESS_TECH_LTE,
+                                 MM_IP_METHOD_PPP, HSO_PAP_AUTH)
 
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
@@ -1039,12 +1040,30 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addErrback(connect_eb)
         return d
 
-    def connect_to_internet(self, number):
-        """Opens data port and dials ``number`` in"""
+    def connect_to_internet(self, settings):
         # Note: this is called by:
         #    1/ connect_simple via simple state machine
         #    2/ directly by Connect() dbus method
 
+        ip_method = self.device.get_property(MDM_INTFACE, 'IpMethod')
+        if ip_method == MM_IP_METHOD_PPP:
+            return self.connect_to_internet_ppp(settings)
+
+        return self.connect_to_internet_hso(settings)
+
+    def connect_to_internet_hso(self, settings):
+        username = settings.get('username', '')
+        password = settings.get('password', '')
+        # XXX: One day Simple.Connect will receive auth too
+        # defaulting to PAP_AUTH as that's what we had before
+        auth = HSO_PAP_AUTH
+
+        d = self.hso_authenticate(username, password, auth)
+        d.addCallback(lambda _: self.hso_connect())
+        return d
+
+    def connect_to_internet_ppp(self, settings):
+        """Opens data port and dials ``settings['number']`` in"""
         if self.device.status == MM_MODEM_STATE_CONNECTED:
             # this cannot happen
             raise E.Connected("we are already connected")
@@ -1061,6 +1080,7 @@ class WCDMAWrapper(WCDMAProtocol):
         port.obj.flush()
         # send ATDT and convert number to string as pyserial does
         # not like to write unicode to serial ports
+        number = settings.get('number')
         d = defer.maybeDeferred(port.obj.write,
                                 "ATDT%s\r\n" % str(number))
 
@@ -1069,8 +1089,18 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     def disconnect_from_internet(self):
-        """Disconnects the modem temporally lowering the DTR"""
+        """Disconnects the modem"""
+        ip_method = self.device.get_property(MDM_INTFACE, 'IpMethod')
+        if ip_method == MM_IP_METHOD_PPP:
+            return self.disconnect_from_internet_ppp()
 
+        return self.disconnect_from_internet_hso()
+
+    def disconnect_from_internet_hso(self):
+        return self.hso_disconnect()
+
+    def disconnect_from_internet_ppp(self):
+        """Disconnects the modem temporarily lowering the DTR"""
         # NM usually issues disconnect as part of a connect sequence
         if self.device.status < MM_MODEM_STATE_CONNECTED:
             return defer.succeed(True)

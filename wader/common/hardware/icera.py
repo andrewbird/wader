@@ -21,7 +21,6 @@ Common stuff for all ZTE's Icera based cards
 
 import re
 from twisted.internet import defer, reactor
-from twisted.python import log
 
 from wader.common import consts
 import wader.common.aterrors as E
@@ -30,11 +29,9 @@ from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.exported import HSOExporter
 from wader.common.sim import SIMBaseClass
-from wader.common.statem.simple import SimpleStateMachine
 from wader.common.plugin import DevicePlugin
 from wader.common.utils import revert_dict
 import wader.common.signals as S
-from wader.contrib.modal import mode as Mode
 
 HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
@@ -367,10 +364,7 @@ class IceraWrapper(WCDMAWrapper):
 
         return self.send_at('AT%%IPDPACT=%d,1' % conn_id)
 
-    def disconnect_from_internet(self):
-        """
-        meth:`~wader.common.middleware.WCDMAWrapper.disconnect_from_internet`
-        """
+    def hso_disconnect(self):
         conn_id = self.state_dict.get('conn_id')
         if conn_id is None:
             raise E.CallIndexError("conn_id is None")
@@ -385,37 +379,6 @@ class IceraWrapper(WCDMAWrapper):
         d = self.send_at('AT%%IPDPACT=%d,0' % conn_id)
         d.addCallback(disconnect_cb)
         return d
-
-
-# XXX: maybe we can see about sharing this once SimpleConnect is working
-class IceraSimpleStateMachine(SimpleStateMachine):
-    begin = SimpleStateMachine.begin
-    check_pin = SimpleStateMachine.check_pin
-    register = SimpleStateMachine.register
-    set_apn = SimpleStateMachine.set_apn
-    set_band = SimpleStateMachine.set_band
-    set_allowed_mode = SimpleStateMachine.set_allowed_mode
-    wait_for_registration = SimpleStateMachine.wait_for_registration
-    done = SimpleStateMachine.done
-
-    class connect(Mode):
-
-        def __enter__(self):
-            log.msg("Icera Simple SM: connect entered")
-
-        def __exit__(self):
-            log.msg("Icera Simple SM: connect exited")
-
-        def do_next(self):
-            username = self.settings.get('username', '')
-            password = self.settings.get('password', '')
-            # XXX: One day Connect.Simple will receive auth too
-            # defaulting to PAP_AUTH as that's what we had before
-            auth = consts.HSO_PAP_AUTH
-
-            d = self.sconn.hso_authenticate(username, password, auth)
-            d.addCallback(lambda _: self.sconn.hso_connect())
-            d.addCallback(lambda _: self.transition_to('done'))
 
 
 class IceraWCDMACustomizer(WCDMACustomizer):
@@ -436,7 +399,6 @@ class IceraWCDMACustomizer(WCDMACustomizer):
     }
     wrapper_klass = IceraWrapper
     exporter_klass = HSOExporter
-    simp_klass = IceraSimpleStateMachine
 
 
 class IceraWCDMADevicePlugin(DevicePlugin):

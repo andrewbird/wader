@@ -73,7 +73,7 @@ class ModemExporter(Object, DBusExporterHelper):
         """
         # XXX: Use the passed number instead :/
         num = "%s***%d#" % (str(number[:-1]), self.sconn.state_dict['conn_id'])
-        d = self.sconn.connect_to_internet(num)
+        d = self.sconn.connect_to_internet(dict(number=num))
         return self.add_callbacks_and_swallow(d, async_cb, async_eb)
 
     @method(MDM_INTFACE, in_signature='', out_signature='',
