@@ -20,6 +20,7 @@
 import re
 
 from twisted.internet import defer, reactor
+from twisted.internet.task import deferLater
 from twisted.python import log
 
 import wader.common.aterrors as E
@@ -345,6 +346,35 @@ class EricssonWrapper(WCDMAWrapper):
             args = (conn_id, user, passwd)
 
         return self.send_at('AT*EIAAUW=%d,1,"%s","%s"' % args)
+
+    def send_pin(self, pin):
+        """
+        Sends ``pin`` to authenticate
+
+        We need to encode the PIN in the correct way, but also wait a little,
+        as Ericsson devices return straight away on unlock but an immediate
+        call to +CPIN? will still show the device as locked.
+        """
+        from wader.common.startup import attach_to_serial_port
+        d = attach_to_serial_port(self.device)
+
+        def _get_charset(_):
+            if hasattr(self.device, 'sim') and \
+                    hasattr(self.device.sim, 'charset'):
+                return defer.succeed(self.device.sim.charset)
+            else:
+                return self.get_charset()
+
+        d.addCallback(_get_charset)
+
+        def _send_pin(charset, pin):
+            if 'UCS2' in charset:
+                pin = pack_ucs2_bytes(pin)
+            return super(EricssonWrapper, self).send_pin(pin)
+
+        d.addCallback(_send_pin, pin)
+        d.addCallback(lambda x: deferLater(reactor, 1, lambda y: y, x))
+        return d
 
     def set_apn(self, apn):
         if self.device.sim.charset != 'UCS2':
