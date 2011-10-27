@@ -60,7 +60,8 @@ def list_files(path, exclude=None):
 data_files = [
    (join(RESOURCES, 'extra'), list_files('resources/extra')),
    (join(RESOURCES, 'config'), list_files('resources/config')),
-   (join(DATA_DIR, 'plugins'), list_files('plugins')),
+   (join(DATA_DIR, 'plugins'), list_files('plugins/devices')),
+   (join(DATA_DIR, 'plugins'), list_files('plugins/oses')),
    (DATA_DIR, ['core-tap.py']),
    (BIN_DIR, ['bin/wader-core-ctl']),
    (DBUS_SYSTEMD, ['resources/dbus/org.freedesktop.ModemManager.conf']),
