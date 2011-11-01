@@ -18,6 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Helper methods for dealing with encoded strings"""
 
+import messaging.sms.gsm0338  # imports GSM7 codec
+
 CONTROL_0, CONTROL_1, LATIN_EX_A, LATIN_EX_B = range(4)
 
 ZIP_BASE64_MAGIC = '{ZIP+BASE64}'
@@ -109,7 +111,7 @@ def unpack_ucs2_bytes_in_ts31101_81(s):
         c_ord = ord(c_chr)
 
         if c_ord & 0x80 == 0:
-            t += c_chr
+            t += c_chr.decode('gsm0338', 'replace')
         else:
             t += unichr(base + (c_ord & 0x7f))
     return t
@@ -150,10 +152,40 @@ def unpack_ucs2_bytes_in_ts31101_82(s):
         c_ord = ord(c_chr)
 
         if c_ord & 0x80 == 0:
-            t += c_chr
+            t += c_chr.decode('gsm0338', 'replace')
         else:
             t += unichr(base + (c_ord & 0x7f))
     return t
+
+
+def from_8bit_in_gsm(s):
+    """
+    Converts a string from ``s`` from GSM7 encoding using 8 bits.
+    """
+    t = s.decode('hex')
+    index = t.find('\xff')
+    if index != -1:
+        t = t[:index]
+    return t.decode('gsm0338', 'replace')
+
+
+def from_8bit_in_gsm_or_ts31101(s):
+    """
+    Returns a string from ``s`` to GSM7 or ts31101 encodings.
+    It checks if first byte indicates ts31101_80, 81 or 82,
+    if not it defaults to GSM7.
+    """
+    encoding = s[:2]
+    hexbytes = s[2:]
+    if encoding == '80':
+        return unpack_ucs2_bytes_in_ts31101_80(hexbytes).rstrip(u'\uffff')
+    elif encoding == '81':
+        return unpack_ucs2_bytes_in_ts31101_81(hexbytes)
+    elif encoding == '82':
+        return unpack_ucs2_bytes_in_ts31101_82(hexbytes)
+    else:
+        # default to GSM7 8bits, zero first bit.
+        return from_8bit_in_gsm(s)
 
 
 def check_if_ucs2(text, limit=None):
