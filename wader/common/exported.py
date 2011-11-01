@@ -279,6 +279,13 @@ class CardExporter(SimpleExporter):
         d = self.sconn.get_imsi()
         return self.add_callbacks(d, async_cb, async_eb)
 
+    @method(CRD_INTFACE, in_signature='', out_signature='s',
+            async_callbacks=('async_cb', 'async_eb'))
+    def GetSpn(self, async_cb, async_eb):
+        """Returns the SPN (Service Provider Name)."""
+        d = self.sconn.get_spn()
+        return self.add_callbacks(d, async_cb, async_eb)
+
     @method(CRD_INTFACE, in_signature='s', out_signature='s',
             async_callbacks=('async_cb', 'async_eb'))
     def SendATString(self, at_str, async_cb, async_eb):

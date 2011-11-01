@@ -345,6 +345,32 @@ class DBusTestCase(unittest.TestCase):
         imsi_regexp = re.compile('^\d{14,15}$') # 14 <= IMSI <= 15
         self.failUnless(imsi_regexp.match(imsi))
 
+    def test_CardGetSpn(self):
+        """Test for Card.GetSpn"""
+
+        def cb(*args):
+            imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+
+            # Note: It's difficult to determine MVNO SIMs from MNOs issued ones
+            #       so unless we can find a better method of telling them apart
+            #       we have to do exact matching on the whole IMSI.
+            for sim in [('234159222401636', 'ASDA Mobile'),
+                        ('23415', ''),      # VF-UK
+                        ('234107305239842', 'TESCO'),
+                        ('23410', ''),      # O2-UK
+                        ('214035453022694', 'MASmovil'),
+                        ('21403', ''),      # Orange-ES
+                        ('21401', '')]:     # Vodafone-ES
+                if imsi.startswith(sim[0]):
+                    spn = self.device.GetSpn(dbus_interface=CRD_INTFACE)
+                    self.assertEqual(spn, sim[1])
+                    return
+            raise unittest.SkipTest("Untested")
+
+        return self.do_when_registered(cb)
+
+    test_CardGetSpn.timeout = 60
+
     def test_CardResetSettings(self):
         """Test for Card.ResetSettings"""
         if not TEST_WADER_EXTENSIONS:

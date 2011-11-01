@@ -32,6 +32,9 @@ from twisted.python import log
 from twisted.internet import defer, reactor, task
 
 import wader.common.aterrors as E
+from wader.common.encoding import from_8bit_in_gsm_or_ts31101
+from wader.common.sim import (EF_SPN)
+from wader.common.sim import (COM_READ_BINARY)
 
 from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
@@ -685,6 +688,24 @@ class WCDMAWrapper(WCDMAProtocol):
                 raise E.NotFound()
 
         d.addCallback(get_smsc_cb)
+        return d
+
+    def get_spn(self):
+
+        """
+        Returns SPN Service Provider Name from SIM.
+        """
+        #  AT+CRSM=176,28486,0,1,16
+        d = super(WCDMAWrapper, self).sim_access_restricted(
+            COM_READ_BINARY, EF_SPN, 0, 1, 16)
+
+        def get_spn_cb(response):
+            spn = response[0].group('response')
+            if spn:
+                spn = from_8bit_in_gsm_or_ts31101(spn)
+            return spn or ''
+
+        d.addCallback(get_spn_cb)
         return d
 
     def list_available_mms(self):
