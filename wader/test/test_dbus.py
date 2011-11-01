@@ -47,6 +47,8 @@ from wader.common.consts import (MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
                                  MM_ALLOWED_MODE_ANY,
                                  MM_GSM_ACCESS_TECHNOLOGIES)
 
+from wader.contrib.luhn import is_luhn_valid
+
 MM_SERVICE = 'org.freedesktop.ModemManager'
 MM_OBJPATH = '/org/freedesktop/ModemManager'
 MM_INTFACE = MM_SERVICE
@@ -370,6 +372,17 @@ class DBusTestCase(unittest.TestCase):
         return self.do_when_registered(cb)
 
     test_CardGetSpn.timeout = 60
+
+    def test_CardSimIdentifier(self):
+        """Test for SimIdentifier property."""
+        iccid = self.device.Get(CRD_INTFACE, 'SimIdentifier',
+                                dbus_interface=dbus.PROPERTIES_IFACE)
+
+        msg = 'ICCID "%s" is not valid number string' % iccid
+        assert re.match(r'89\d{16,17}', iccid) is not None, msg
+
+        msg = 'ICCID "%s" does not pass Luhn algorithm validity test.' % iccid
+        assert is_luhn_valid(iccid), msg
 
     def test_CardResetSettings(self):
         """Test for Card.ResetSettings"""

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -32,10 +32,6 @@ from twisted.python import log
 from twisted.internet import defer, reactor, task
 
 import wader.common.aterrors as E
-from wader.common.encoding import from_8bit_in_gsm_or_ts31101
-from wader.common.sim import (EF_SPN)
-from wader.common.sim import (COM_READ_BINARY)
-
 from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
                                  MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
@@ -60,14 +56,16 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
 
 from wader.common.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
-                                   pack_ucs2_bytes, check_if_ucs2, LATIN_EX_B)
+                                   pack_ucs2_bytes, check_if_ucs2, LATIN_EX_B,
+                                   from_8bit_in_gsm_or_ts31101)
 import wader.common.exceptions as ex
 from wader.common.mal import MessageAssemblyLayer
 from wader.common.mms import (send_m_send_req, send_m_notifyresp_ind,
                               get_payload)
 from wader.common.protocol import WCDMAProtocol
 from wader.common.signals import SIG_CREG
-from wader.common.sim import RETRY_ATTEMPTS, RETRY_TIMEOUT
+from wader.common.sim import (COM_READ_BINARY, EF_SPN, EF_ICCID, SW_OK,
+                              RETRY_ATTEMPTS, RETRY_TIMEOUT)
 from wader.common.sms import Message
 from wader.common.utils import rssi_to_percentage
 
@@ -338,6 +336,39 @@ class WCDMAWrapper(WCDMAProtocol):
                 self.get_card_version()]
 
         return defer.gatherResults(dlist)
+
+    def get_iccid(self):
+        """Returns ICC identification number"""
+        d = super(WCDMAWrapper, self).sim_access_restricted(
+            COM_READ_BINARY, EF_ICCID, 0, 0, 10)
+
+        def get_iccid_cb(response):
+            data = response[0].group('response')
+            if data is None:
+                return ''
+            sw1 = int(response[0].group('sw1'))
+            if sw1 not in SW_OK:
+                # Command has not exec correctly.
+                return ''
+
+            # Parse BCD F padded string.
+            result = ''
+            i = 0
+            while (i + 1 < len(data)):
+                msd = data[i]
+                lsd = data[i + 1]
+                i += 2
+                if lsd in ['f', 'F']:
+                    break
+                result += lsd
+                if msd in ['f', 'F']:
+                    break
+                result += msd
+
+            return result
+
+        d.addCallback(get_iccid_cb)
+        return d
 
     def get_imei(self):
         """Returns the IMEI"""
@@ -1012,6 +1043,9 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda imei:
                 self.device.set_property(MDM_INTFACE, 'EquipmentIdentifier',
                                          imei))
+        d.addCallback(lambda _: self.get_iccid())
+        d.addCallback(lambda iccid:
+                self.device.set_property(CRD_INTFACE, 'SimIdentifier', iccid))
         return d
 
     def get_simple_status(self):
