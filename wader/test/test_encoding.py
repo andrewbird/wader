@@ -22,7 +22,10 @@ from twisted.trial import unittest
 
 from wader.common.encoding import (CONTROL_0, CONTROL_1, LATIN_EX_A,
                                    LATIN_EX_B, check_if_ucs2,
-                                   pack_ucs2_bytes, unpack_ucs2_bytes)
+                                   pack_ucs2_bytes, unpack_ucs2_bytes,
+                                   unpack_ucs2_bytes_in_ts31101_80,
+                                   unpack_ucs2_bytes_in_ts31101_81,
+                                   unpack_ucs2_bytes_in_ts31101_82)
 
 CTL_0 = '007F'
 CTL_1 = '00FF'
@@ -119,3 +122,38 @@ class TestEncoding(unittest.TestCase):
         self.assertEqual(unpack_ucs2_bytes('0068006F006C0061'), 'hola')
         resp = 'holas'
         self.assertEqual(unpack_ucs2_bytes('0068006F006C00610073'), resp)
+
+    def test_unpack_ucs2_bytes_in_ts31101_80(self):
+        # From Huawei example
+        self.assertEqual(
+            unpack_ucs2_bytes_in_ts31101_80('534E4E3A'), u'华为')
+
+    def test_unpack_ucs2_bytes_in_ts31101_81(self):
+        # From our original Huawei contacts code
+        self.assertEqual(
+            unpack_ucs2_bytes_in_ts31101_81('0602A46563746F72FF'), u'Ĥector')
+
+        # From Android code
+        self.assertEqual(
+            unpack_ucs2_bytes_in_ts31101_81('0A01566FEC6365204DE0696CFFFFFF'),
+                                            u'Vo\u00ECce M\u00E0il')
+        # From TS102221
+        # Byte 4 indicates GSM Default Alphabet character '53', i.e. 'S'.
+        # Byte 5 indicates a UCS2 character offset to the base pointer of '15',
+        #           expressed in binary as follows 001 0101, which, when added
+        #           to the base pointer value results in a sixteen bit value of
+        #           0000 1001 1001 0101, i.e. '0995', which is the Bengali
+        #           letter KA.
+        # Byte 6 / 7 were not defined in TS102221 example, so just repeated 5
+        # Byte 8 contains the value 'FF', but as the string length is 5, this
+        #           is a valid character in the string, where the bit pattern
+        #           111 1111 is added to the base pointer, yielding a sixteen
+        #           bit value of 0000 1001 1111 1111 for the UCS2 character
+        #           (i.e. '09FF').
+        self.assertEqual(
+            unpack_ucs2_bytes_in_ts31101_81('051353959595FFFF'), u'Sককক\u09FF')
+
+    def test_unpack_ucs2_bytes_in_ts31101_82(self):
+        # From TS102221
+        self.assertEqual(
+            unpack_ucs2_bytes_in_ts31101_82('0505302D82D32D31'),u'-Բփ-1')
