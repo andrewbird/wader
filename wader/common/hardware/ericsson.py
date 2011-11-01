@@ -36,7 +36,7 @@ from wader.common.statem.simple import SimpleStateMachine
 from wader.common.utils import revert_dict
 from wader.contrib.modal import mode as Mode
 import wader.common.signals as S
-from wader.common.sim import COM_READ_BINARY, EF_SPN
+from wader.common.sim import COM_READ_BINARY, EF_SPN, EF_ICCID, SW_OK
 
 MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
@@ -236,6 +236,42 @@ class EricssonWrapper(WCDMAWrapper):
             return ret
 
         d.addCallback(get_charsets_cb)
+        return d
+
+    def get_iccid(self):
+        """Returns ICC identification number"""
+        d = super(WCDMAWrapper, self).sim_access_restricted(
+            COM_READ_BINARY, EF_ICCID, 0, 0, 10)
+
+        def get_iccid_cb(response):
+            data = response[0].group('response')
+            if data is None:
+                return ''
+            if self.device.sim.charset == 'UCS2':
+                data = from_ucs2(data)
+
+            sw1 = int(response[0].group('sw1'))
+            if sw1 not in SW_OK:
+                # Command has not exec correctly.
+                return ''
+
+            # Parse BCD F padded string.
+            result = ''
+            i = 0
+            while (i + 1 < len(data)):
+                msd = data[i]
+                lsd = data[i + 1]
+                i += 2
+                if lsd in ['f', 'F']:
+                    break
+                result += lsd
+                if msd in ['f', 'F']:
+                    break
+                result += msd
+
+            return result
+
+        d.addCallback(get_iccid_cb)
         return d
 
     def get_network_mode(self):
