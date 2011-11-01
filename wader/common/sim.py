@@ -28,6 +28,28 @@ RETRY_ATTEMPTS = 3
 RETRY_TIMEOUT = 3
 
 
+# SIM files:
+# 3GPP TS 31.102 V10.21.0 (2011-064)
+EF_AD = 0x6fad  # 28589
+EF_SPN = 0x6f46  # 28486
+
+# SIM Commands:
+# ETSI TS 102 221 V8.2.0 (2009-06):  Commands
+# 3GPP TS 27.007 V10.4.0 (2011-06):  Restricted SIM access +CRSM
+COM_READ_BINARY = 0xb0  # 176
+COM_READ_RECORD = 0xb2  # 178
+COM_GET_RESPONSE = 0xc0  # 192
+COM_UPDATE_BINARY = 0xd6  # 214
+COM_UPDATE_RECORD = 0xdc  # 220
+COM_STATUS = 0xf2  # 242
+COM_RETRIEVE_DATA = 0xcb  # 203
+COM_SET_DATA = 0xdb  # 219
+
+# Successfull status bytes
+# ETSI TS 102 221 V8.2.0 (2009-06)
+SW_OK = [0x90, 0x91, 0x92]  # Response APDU structure.
+
+
 class SIMBaseClass(object):
     """
     I take care of initing the SIM

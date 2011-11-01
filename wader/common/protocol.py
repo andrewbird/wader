@@ -841,3 +841,33 @@ class WCDMAProtocol(SerialProtocol):
         if timeout:
             cmd.timeout = timeout
         return self.queue_at_cmd(cmd)
+
+    def sim_access_restricted(self, command, fileid=None, p1=None,
+                              p2=None, p3=None, data=None, pathid=None):
+        """
+        Implements CRSM AT command.
+        command is only mandatory argument.
+
+        :param command: command integer number.
+        :type command: int
+        """
+        if fileid is None:
+            cmd = ATCmd('AT+CRSM=%d' % command,
+                        name='sim_access_restricted')
+        elif p1 is None or p2 is None or p3 is None:
+            cmd = ATCmd('AT+CRSM=%d,%d' % (command, fileid),
+                        name='sim_access_restricted')
+        elif data is None:
+            cmd = ATCmd('AT+CRSM=%d,%d,%d,%d,%d' %
+                        (command, fileid, p1, p2, p3),
+                        name='sim_access_restricted')
+        elif pathid is None:
+            cmd = ATCmd('AT+CRSM=%d,%d,%d,%d,%d,%s' %
+                        (command, fileid, p1, p2, p3, data),
+                        name='sim_access_restricted')
+        else:
+            cmd = ATCmd('AT+CRSM=%d,%d,%d,%d,%d,%s,%s' %
+                        (command, fileid, p1, p2, p3, data, pathid),
+                        name='sim_access_restricted')
+
+        return self.queue_at_cmd(cmd)

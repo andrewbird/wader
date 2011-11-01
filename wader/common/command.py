@@ -247,6 +247,18 @@ CMD_DICT = {
     'set_sms_format': build_cmd_dict(),
 
     'set_smsc': build_cmd_dict(),
+
+    # r'CRSM:\s(?P<sw1>\d+),(?P<sw2>\d+)(?:,"?(?P<response>[0-9A-Fa-f]*)"?)?'
+    'sim_access_restricted': build_cmd_dict(re.compile(r"""
+                                          \r\n
+                                          \+CRSM:\s
+                                          (?P<sw1>\d+),
+                                          (?P<sw2>\d+)
+                                          (?:,"?
+                                          (?P<response>[0-9A-Fa-f]*)
+                                          "?)?
+                                          \r\n""", re.X)),
+
 }
 
 
