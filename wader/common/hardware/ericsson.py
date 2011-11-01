@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2009  Vodafone España, S.A.
+# Copyright (C) 2009-2011  Vodafone España, S.A.
 # Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common import consts
 from wader.common.contact import Contact
 from wader.common.encoding import (pack_ucs2_bytes, from_u, check_if_ucs2,
-                                   from_ucs2)
+                                   from_ucs2, from_8bit_in_gsm_or_ts31101)
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
@@ -36,7 +36,7 @@ from wader.common.statem.simple import SimpleStateMachine
 from wader.common.utils import revert_dict
 from wader.contrib.modal import mode as Mode
 import wader.common.signals as S
-
+from wader.common.sim import COM_READ_BINARY, EF_SPN
 
 MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
@@ -290,6 +290,25 @@ class EricssonWrapper(WCDMAWrapper):
         cmd = ATCmd('AT+CIND?', name='get_signal_quality')
         d = self.queue_at_cmd(cmd)
         d.addCallback(get_signal_quality_cb)
+        return d
+
+    def get_spn(self):
+        """
+        Returns SPN Service Provider Name from SIM.
+        """
+        #  AT+CRSM=176,28486,0,1,16
+        d = super(WCDMAWrapper, self).sim_access_restricted(
+            COM_READ_BINARY, EF_SPN, 0, 1, 16)
+
+        def get_spn_cb(response):
+            spn = response[0].group('response')
+            if spn:
+                if self.device.sim.charset == 'UCS2':
+                    spn = from_ucs2(spn)
+                spn = from_8bit_in_gsm_or_ts31101(spn)
+            return spn or ''
+
+        d.addCallback(get_spn_cb)
         return d
 
     def get_pin_status(self):
