@@ -354,6 +354,10 @@ class WCDMAWrapper(WCDMAProtocol):
             except (IndexError, TypeError, ValueError):
                 sw2 = None
 
+            if (sw1 not in SW_OK) or (sw1 == 0x90 and sw2 != 0):
+                # Status error.
+                raise E.General()
+
             data = response[0].group('response')
 
             return (sw1, sw2, data)
@@ -370,10 +374,10 @@ class WCDMAWrapper(WCDMAProtocol):
             sw1, sw2, data = response
 
             if data is None:
-                return ''
-            if sw1 not in SW_OK:
-                # Command has not exec correctly.
-                return ''
+                raise E.General()
+
+            if len(data) != 20:
+                raise E.General()
 
             # Parse BCD F padded string.
             result = ''
@@ -679,12 +683,7 @@ class WCDMAWrapper(WCDMAProtocol):
                 raise E.General()
             number = int(number[6:8], 16)
 
-            if sw1 not in SW_OK:
-                # Command has not exec correctly.
-                raise E.General()
-            elif sw1 == 0x90 and sw2 != 0:
-                raise E.General()
-            elif number in range(2, 5):
+            if number in range(2, 5):
                 # We got MNC number of digits right.
                 return number
             else:
@@ -837,6 +836,10 @@ class WCDMAWrapper(WCDMAProtocol):
 
         def get_spn_cb(response):
             sw1, sw2, spn = response
+
+            if spn is None:
+                raise E.General()
+
             if spn:
                 spn = from_8bit_in_gsm_or_ts31101(spn)
             return spn or ''
