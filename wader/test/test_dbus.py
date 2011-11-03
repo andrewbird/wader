@@ -336,7 +336,7 @@ class DBusTestCase(unittest.TestCase):
     def test_CardGetImei(self):
         """Test for Card.GetImei"""
         imei = self.device.GetImei(dbus_interface=CRD_INTFACE)
-        imei_regexp = re.compile('^\d{14,17}$') # 14 <= IMEI <= 17
+        imei_regexp = re.compile('^\d{14,17}$')  # 14 <= IMEI <= 17
         self.failUnless(imei_regexp.match(imei))
 
     def test_CardGetImsi(self):
@@ -344,8 +344,43 @@ class DBusTestCase(unittest.TestCase):
         imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
         # according to http://en.wikipedia.org/wiki/IMSI there are
         # also IMSIs with 14 digits
-        imsi_regexp = re.compile('^\d{14,15}$') # 14 <= IMSI <= 15
+        imsi_regexp = re.compile('^\d{14,15}$')  # 14 <= IMSI <= 15
         self.failUnless(imsi_regexp.match(imsi))
+
+    def test_CardGetOperatorId(self):
+        """Test for GetOperatorId."""
+
+        imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
+
+        known_good_sims = []
+        known_good_sims.append('234159222401636')  # ASDA Mobile
+        known_good_sims.append('234107305239842')  # TESCO
+        known_good_sims.append('214012300907507')  # VF-ES
+
+        try:
+            # We have to order this list so the longest matches are first.
+            # IMSI prefix, length of MCC+MNC
+            for sim in [('23415', 5),    # VF-UK
+                        ('23410', 5),    # O2-UK
+                        ('21403', 5),    # Orange-ES, Masmovil-ES
+                        ('21401', 5)]:   # VF-ES
+                if imsi.startswith(sim[0]):
+                    mcc_mnc = self.device.GetOperatorId(
+                                dbus_interface=CRD_INTFACE)
+                    self.assertEqual(mcc_mnc, sim[0][:sim[1]],
+                                        "mcc_mnc=%s : sim_first=%s" % \
+                                        (mcc_mnc, sim[0][:sim[1]]))
+                    return
+        except dbus.DBusException as e:
+            if imsi in known_good_sims:
+                raise unittest.FailTest("Failure with known good SIM")
+
+            # We know some SIM cards will fail.
+            self.failUnlessIn('org.freedesktop.ModemManager.Modem.General',
+                                get_dbus_error(e))
+            raise unittest.SkipTest("Failure, but not known if SIM is old")
+
+        raise unittest.SkipTest("Untested")
 
     def test_CardGetSpn(self):
         """Test for Card.GetSpn"""
@@ -1009,7 +1044,7 @@ class DBusTestCase(unittest.TestCase):
         #    # send it from storage and wait for the signal
         #    self.device.SendFromStorage(indexes[0],
         #                                dbus_interface=SMS_INTFACE,
-        #                                # we are not interested in the callback
+        #                                # we are not interested in callback
         #                                reply_handler=lambda indexes: None,
         #                                error_handler=d.errback)
 
@@ -1060,7 +1095,10 @@ class DBusTestCase(unittest.TestCase):
         self.device.SetSmsc(smsc, dbus_interface=SMS_INTFACE)
 
     def test_UssdGsm(self):
-        """Test for working ussd implementation if the card is using GSM charset"""
+        """
+        Test for working ussd implementation if the card is using GSM charset
+        """
+
         def cb(*args):
             # get the IMSI and check if we have a suitable ussd request/regex
             imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
@@ -1082,7 +1120,10 @@ class DBusTestCase(unittest.TestCase):
     test_UssdGsm.timeout = 60
 
     def test_UssdUcs2(self):
-        """Test for working ussd implementation if the card is using USSD charset"""
+        """
+        Test for working ussd implementation if the card is using UCS2 charset
+        """
+
         def cb(*args):
             # get the IMSI and check if we have a suitable ussd request/regex
             imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)

@@ -64,7 +64,7 @@ from wader.common.mms import (send_m_send_req, send_m_notifyresp_ind,
                               get_payload)
 from wader.common.protocol import WCDMAProtocol
 from wader.common.signals import SIG_CREG
-from wader.common.sim import (COM_READ_BINARY, EF_SPN, EF_ICCID, SW_OK,
+from wader.common.sim import (COM_READ_BINARY, EF_AD, EF_SPN, EF_ICCID, SW_OK,
                               RETRY_ATTEMPTS, RETRY_TIMEOUT)
 from wader.common.sms import Message
 from wader.common.utils import rssi_to_percentage
@@ -625,6 +625,92 @@ class WCDMAWrapper(WCDMAProtocol):
             return auxdef
 
         return get_it(deferred)
+
+    def get_operator_id(self):
+        """
+
+        Returns the ID of the network operator that issued the SIM card,
+        formatted as a 5 or 6-digit MCC/MNC code (ex "310410").
+
+        :raise General: When MCC+MNC cannot be retrieved.
+        """
+
+        d = defer.Deferred()
+
+        # Another way to handle global variables.
+        d.imsi = None
+        d.mnc_length = None
+
+        def get_op_id_eb(failure):
+            log.msg("get_operator_id FAILURE: %s" % repr(failure.value))
+            failure.raiseException()
+
+        d.addErrback(get_op_id_eb)
+
+        d_mnc = super(WCDMAWrapper, self).sim_access_restricted(
+            COM_READ_BINARY, EF_AD, 0, 0, 4)
+
+        def get_op_id_mnc_digits_cb(response):
+            number = response[0].group('response')
+            if number is None or len(number) < 8:
+                raise E.General()
+            number = int(number[6:8], 16)
+
+            sw1 = int(response[0].group('sw1'))
+            sw2 = int(response[0].group('sw2'))
+            if sw1 not in SW_OK:
+                # Command has not exec correctly.
+                raise E.General()
+            elif sw1 == 0x90 and sw2 != 0:
+                raise E.General()
+            elif number in range(2, 5):
+                # We got MNC number of digits right.
+                return number
+            else:
+                raise E.General()
+
+        def get_op_id_mnc_digits_eb(failure):
+            log.msg("get_operator_id mnc_digits FAILURE %s" % failure.value)
+            failure.raiseException()
+
+        d_mnc.addCallback(get_op_id_mnc_digits_cb)
+        d_mnc.addCallback(d.callback)
+        d_mnc.addErrback(get_op_id_mnc_digits_eb)
+        d_mnc.addErrback(d.errback)
+
+        def store_mnc_length(mnc_length):
+            self.mnc_length = mnc_length
+
+            d_imsi = self.get_imsi()
+            d_imsi.addErrback(get_op_id_imsi_eb)
+            d_imsi.addErrback(d.errback)
+            return d_imsi
+
+        d.addCallback(store_mnc_length)
+
+        def get_op_id_imsi_eb(failure):
+            log.msg("get_operator_id imsi FAILURE %s" % failure.value)
+            failure.raiseException()
+
+        def store_imsi(imsi):
+            self.imsi = imsi
+            return None
+
+        d.addCallback(store_imsi)
+
+        def get_op_id_cb(response):
+            number = self.mnc_length  # An integer.
+            imsi = self.imsi
+            if number is None or imsi is None:
+                raise E.General()
+            length = number + 3
+            if len(imsi) < length:
+                raise E.General()
+            return imsi[0:length]
+
+        d.addCallback(get_op_id_cb)
+
+        return d
 
     def get_phonebook_size(self):
         """Returns the phonebook size"""

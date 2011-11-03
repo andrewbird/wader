@@ -281,6 +281,16 @@ class CardExporter(SimpleExporter):
 
     @method(CRD_INTFACE, in_signature='', out_signature='s',
             async_callbacks=('async_cb', 'async_eb'))
+    def GetOperatorId(self, async_cb, async_eb):
+        """
+        Returns the ID of the network operator that issued the SIM card,
+        formatted as a 5 or 6-digit MCC/MNC code (ex "310410").
+        """
+        d = self.sconn.get_operator_id()
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(CRD_INTFACE, in_signature='', out_signature='s',
+            async_callbacks=('async_cb', 'async_eb'))
     def GetSpn(self, async_cb, async_eb):
         """Returns the SPN (Service Provider Name)."""
         d = self.sconn.get_spn()
