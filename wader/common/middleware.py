@@ -337,16 +337,40 @@ class WCDMAWrapper(WCDMAProtocol):
 
         return defer.gatherResults(dlist)
 
+    def sim_access_restricted(self, command, fileid=None, p1=None,
+                              p2=None, p3=None, data=None, pathid=None):
+
+        d = super(WCDMAWrapper, self).sim_access_restricted(
+                                    command, fileid, p1, p2, p3, data, pathid)
+
+        def cb(response):
+            try:
+                sw1 = int(response[0].group('sw1'))
+            except (IndexError, TypeError, ValueError):
+                sw1 = None
+
+            try:
+                sw2 = int(response[0].group('sw2'))
+            except (IndexError, TypeError, ValueError):
+                sw2 = None
+
+            data = response[0].group('response')
+
+            return (sw1, sw2, data)
+
+        d.addCallback(cb)
+        return d
+
     def get_iccid(self):
         """Returns ICC identification number"""
-        d = super(WCDMAWrapper, self).sim_access_restricted(
-            COM_READ_BINARY, EF_ICCID, 0, 0, 10)
+
+        d = self.sim_access_restricted(COM_READ_BINARY, EF_ICCID, 0, 0, 10)
 
         def get_iccid_cb(response):
-            data = response[0].group('response')
+            sw1, sw2, data = response
+
             if data is None:
                 return ''
-            sw1 = int(response[0].group('sw1'))
             if sw1 not in SW_OK:
                 # Command has not exec correctly.
                 return ''
@@ -628,7 +652,6 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_operator_id(self):
         """
-
         Returns the ID of the network operator that issued the SIM card,
         formatted as a 5 or 6-digit MCC/MNC code (ex "310410").
 
@@ -647,17 +670,15 @@ class WCDMAWrapper(WCDMAProtocol):
 
         d.addErrback(get_op_id_eb)
 
-        d_mnc = super(WCDMAWrapper, self).sim_access_restricted(
-            COM_READ_BINARY, EF_AD, 0, 0, 4)
+        d_mnc = self.sim_access_restricted(COM_READ_BINARY, EF_AD, 0, 0, 4)
 
         def get_op_id_mnc_digits_cb(response):
-            number = response[0].group('response')
+            sw1, sw2, number = response
+
             if number is None or len(number) < 8:
                 raise E.General()
             number = int(number[6:8], 16)
 
-            sw1 = int(response[0].group('sw1'))
-            sw2 = int(response[0].group('sw2'))
             if sw1 not in SW_OK:
                 # Command has not exec correctly.
                 raise E.General()
@@ -808,16 +829,14 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     def get_spn(self):
-
         """
         Returns SPN Service Provider Name from SIM.
         """
         #  AT+CRSM=176,28486,0,1,16
-        d = super(WCDMAWrapper, self).sim_access_restricted(
-            COM_READ_BINARY, EF_SPN, 0, 1, 16)
+        d = self.sim_access_restricted(COM_READ_BINARY, EF_SPN, 0, 1, 16)
 
         def get_spn_cb(response):
-            spn = response[0].group('response')
+            sw1, sw2, spn = response
             if spn:
                 spn = from_8bit_in_gsm_or_ts31101(spn)
             return spn or ''

@@ -27,7 +27,7 @@ from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common import consts
 from wader.common.contact import Contact
 from wader.common.encoding import (pack_ucs2_bytes, from_u, check_if_ucs2,
-                                   from_ucs2, from_8bit_in_gsm_or_ts31101)
+                                   from_ucs2)
 from wader.common.hardware.base import WCDMACustomizer
 from wader.common.middleware import WCDMAWrapper
 from wader.common.plugin import DevicePlugin
@@ -36,7 +36,6 @@ from wader.common.statem.simple import SimpleStateMachine
 from wader.common.utils import revert_dict
 from wader.contrib.modal import mode as Mode
 import wader.common.signals as S
-from wader.common.sim import COM_READ_BINARY, EF_AD, EF_ICCID, EF_SPN, SW_OK
 
 MAX_RETRIES = 6
 RETRY_TIMEOUT = 4
@@ -238,42 +237,6 @@ class EricssonWrapper(WCDMAWrapper):
         d.addCallback(get_charsets_cb)
         return d
 
-    def get_iccid(self):
-        """Returns ICC identification number"""
-        d = super(WCDMAWrapper, self).sim_access_restricted(
-            COM_READ_BINARY, EF_ICCID, 0, 0, 10)
-
-        def get_iccid_cb(response):
-            data = response[0].group('response')
-            if data is None:
-                return ''
-            if self.device.sim.charset == 'UCS2':
-                data = from_ucs2(data)
-
-            sw1 = int(response[0].group('sw1'))
-            if sw1 not in SW_OK:
-                # Command has not exec correctly.
-                return ''
-
-            # Parse BCD F padded string.
-            result = ''
-            i = 0
-            while (i + 1 < len(data)):
-                msd = data[i]
-                lsd = data[i + 1]
-                i += 2
-                if lsd in ['f', 'F']:
-                    break
-                result += lsd
-                if msd in ['f', 'F']:
-                    break
-                result += msd
-
-            return result
-
-        d.addCallback(get_iccid_cb)
-        return d
-
     def get_network_mode(self):
         ERICSSON_CONN_DICT_REV = revert_dict(ERICSSON_CONN_DICT)
 
@@ -309,95 +272,6 @@ class EricssonWrapper(WCDMAWrapper):
 
         return get_it(deferred)
 
-    def get_operator_id(self):
-        """
-        Returns the ID of the network operator that issued the SIM card,
-        formatted as a 5 or 6-digit MCC/MNC code (ex "310410").
-
-        :raise General: When MCC+MNC cannot be retrieved.
-        """
-
-        d = defer.Deferred()
-
-        # Another way to handle global variables.
-        d.imsi = None
-        d.mnc_length = None
-
-        def get_op_id_eb(failure):
-            log.msg("get_operator_id FAILURE: %s" % repr(failure.value))
-            failure.raiseException()
-
-        d.addErrback(get_op_id_eb)
-
-        d_mnc = super(WCDMAWrapper, self).sim_access_restricted(
-            COM_READ_BINARY, EF_AD, 0, 0, 4)
-
-        def get_op_id_mnc_digits_cb(response):
-            number = response[0].group('response')
-            if number is None:
-                raise E.General()
-            if self.device.sim.charset == 'UCS2':
-                number = from_ucs2(number)
-            if len(number) < 8:
-                raise E.General()
-            number = int(number[6:8], 16)
-
-            sw1 = int(response[0].group('sw1'))
-            sw2 = int(response[0].group('sw2'))
-            if sw1 not in SW_OK:
-                # Command has not exec correctly.
-                raise E.General()
-            elif sw1 == 0x90 and sw2 != 0:
-                raise E.General()
-            elif number in range(2, 5):
-                # We got MNC number of digits right.
-                return number
-            else:
-                raise E.General()
-
-        def get_op_id_mnc_digits_eb(failure):
-            log.msg("get_operator_id mnc_digits FAILURE %s" % failure.value)
-            failure.raiseException()
-
-        d_mnc.addCallback(get_op_id_mnc_digits_cb)
-        d_mnc.addCallback(d.callback)
-        d_mnc.addErrback(get_op_id_mnc_digits_eb)
-        d_mnc.addErrback(d.errback)
-
-        def store_mnc_length(mnc_length):
-            self.mnc_length = mnc_length
-
-            d_imsi = self.get_imsi()
-            d_imsi.addErrback(get_op_id_imsi_eb)
-            d_imsi.addErrback(d.errback)
-            return d_imsi
-
-        d.addCallback(store_mnc_length)
-
-        def get_op_id_imsi_eb(failure):
-            log.msg("get_operator_id imsi FAILURE %s" % failure.value)
-            failure.raiseException()
-
-        def store_imsi(imsi):
-            self.imsi = imsi
-            return None
-
-        d.addCallback(store_imsi)
-
-        def get_op_id_cb(response):
-            number = self.mnc_length  # An integer.
-            imsi = self.imsi
-            if number is None or imsi is None:
-                raise E.General()
-            length = number + 3
-            if len(imsi) < length:
-                raise E.General()
-            return imsi[0:length]
-
-        d.addCallback(get_op_id_cb)
-
-        return d
-
     def get_signal_quality(self):
         # On Ericsson, AT+CSQ only returns valid data in GPRS mode
         # So we need to override and provide an alternative. +CIND
@@ -415,25 +289,6 @@ class EricssonWrapper(WCDMAWrapper):
         cmd = ATCmd('AT+CIND?', name='get_signal_quality')
         d = self.queue_at_cmd(cmd)
         d.addCallback(get_signal_quality_cb)
-        return d
-
-    def get_spn(self):
-        """
-        Returns SPN Service Provider Name from SIM.
-        """
-        #  AT+CRSM=176,28486,0,1,16
-        d = super(WCDMAWrapper, self).sim_access_restricted(
-            COM_READ_BINARY, EF_SPN, 0, 1, 16)
-
-        def get_spn_cb(response):
-            spn = response[0].group('response')
-            if spn:
-                if self.device.sim.charset == 'UCS2':
-                    spn = from_ucs2(spn)
-                spn = from_8bit_in_gsm_or_ts31101(spn)
-            return spn or ''
-
-        d.addCallback(get_spn_cb)
         return d
 
     def get_pin_status(self):
@@ -558,6 +413,22 @@ class EricssonWrapper(WCDMAWrapper):
     def reset_settings(self):
         cmd = ATCmd('AT&F', name='reset_settings')
         return self.queue_at_cmd(cmd)
+
+    def sim_access_restricted(self, command, fileid=None, p1=None,
+                              p2=None, p3=None, data=None, pathid=None):
+
+        d = super(EricssonWrapper, self).sim_access_restricted(
+                                    command, fileid, p1, p2, p3, data, pathid)
+
+        def cb(response):
+            sw1, sw2, data = response
+
+            if self.device.sim.charset == 'UCS2' and data is not None:
+                data = from_ucs2(data)
+            return (sw1, sw2, data)
+
+        d.addCallback(cb)
+        return d
 
 
 class EricssonF3607gwWrapper(EricssonWrapper):
