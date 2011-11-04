@@ -356,7 +356,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
             if (sw1 not in SW_OK) or (sw1 == 0x90 and sw2 != 0):
                 # Status error.
-                raise E.General()
+                raise E.General('Bad Status response for AT+CRSM')
 
             data = response[0].group('response')
 
@@ -374,10 +374,10 @@ class WCDMAWrapper(WCDMAProtocol):
             sw1, sw2, data = response
 
             if data is None:
-                raise E.General()
+                raise E.General('ICCID not available')
 
             if len(data) != 20:
-                raise E.General()
+                raise E.General('ICCID length not correct')
 
             # Parse BCD F padded string.
             result = ''
@@ -669,7 +669,7 @@ class WCDMAWrapper(WCDMAProtocol):
         d.mnc_length = None
 
         def get_op_id_eb(failure):
-            log.msg("get_operator_id FAILURE: %s" % repr(failure.value))
+            log.msg("get_operator_id FAILURE: %s" % failure.value)
             failure.raiseException()
 
         d.addErrback(get_op_id_eb)
@@ -680,14 +680,14 @@ class WCDMAWrapper(WCDMAProtocol):
             sw1, sw2, number = response
 
             if number is None or len(number) < 8:
-                raise E.General()
+                raise E.General('Bad MNC length response')
             number = int(number[6:8], 16)
 
             if number in range(2, 5):
                 # We got MNC number of digits right.
                 return number
             else:
-                raise E.General()
+                raise E.General('Incorrect MNC length')
 
         def get_op_id_mnc_digits_eb(failure):
             log.msg("get_operator_id mnc_digits FAILURE %s" % failure.value)
@@ -722,10 +722,10 @@ class WCDMAWrapper(WCDMAProtocol):
             number = self.mnc_length  # An integer.
             imsi = self.imsi
             if number is None or imsi is None:
-                raise E.General()
+                raise E.General('Bad MNC length or IMSI')
             length = number + 3
             if len(imsi) < length:
-                raise E.General()
+                raise E.General('IMSI length too short')
             return imsi[0:length]
 
         d.addCallback(get_op_id_cb)
@@ -838,7 +838,7 @@ class WCDMAWrapper(WCDMAProtocol):
             sw1, sw2, spn = response
 
             if spn is None:
-                raise E.General()
+                raise E.General('SPN not returned.')
 
             if spn:
                 spn = from_8bit_in_gsm_or_ts31101(spn)

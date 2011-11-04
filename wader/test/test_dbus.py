@@ -74,6 +74,13 @@ def get_dbus_error(e):
     return e.message
 
 
+def get_dbus_message(e):
+    if hasattr(e, 'get_dbus_message'):
+        return e.get_dbus_message()
+
+    return ''
+
+
 class Config(object):
     """Simple GConf wrapper for string-only gets"""
 
@@ -374,8 +381,12 @@ class DBusTestCase(unittest.TestCase):
                 raise unittest.FailTest("Failure with known good SIM")
 
             # We know some SIM cards will fail.
-            self.failUnlessIn('org.freedesktop.ModemManager.Modem.General',
-                                get_dbus_error(e))
+            GENERAL = MDM_INTFACE + '.General'
+            txt = '%s not in %s' % (GENERAL, get_dbus_error(e))
+            msg = get_dbus_message(e)
+            if len(msg):
+                txt = '%s: dbus_message=%s' % (txt, msg)
+            self.failUnlessIn(GENERAL, get_dbus_error(e), txt)
             raise unittest.SkipTest("Failure, but not known if SIM is old")
 
         raise unittest.SkipTest("Untested")
