@@ -66,14 +66,12 @@ TEST_WADER_EXTENSIONS = True
 GENERIC_SKIP_MSG = "Wader extension to MM"
 GCONF_BASE = '/apps/wader-core'
 
-if dbus.version >= (0, 83, 0):
 
-    def get_dbus_error(e):
+def get_dbus_error(e):
+    if hasattr(e, 'get_dbus_name'):
         return e.get_dbus_name()
-else:
 
-    def get_dbus_error(e):
-        return e.message
+    return e.message
 
 
 class Config(object):

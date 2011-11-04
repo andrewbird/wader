@@ -58,11 +58,12 @@ TEST_WADER_EXTENSIONS = True
 GENERIC_SKIP_MSG = "Wader extension to MM"
 GCONF_BASE = '/apps/wader-core'
 
+
 def get_dbus_error(e):
-    if dbus.version >= (0, 83, 0):
+    if hasattr(e, 'get_dbus_name'):
         return e.get_dbus_name()
-    else:
-        return e.message
+
+    return e.message
 
 
 class Config(object):
@@ -240,7 +241,7 @@ class DBusTestCase(unittest.TestCase):
                     self.failUnless(re.compile(regex).match(response))
                     # check network is waiting for user response
                     state = self.device.Get(USD_INTFACE, 'State',
-                                            dbus_interface=dbus.PROPERTIES_IFACE)
+                                        dbus_interface=dbus.PROPERTIES_IFACE)
                     self.assertEqual(state, 'user-response')
                 except unittest.FailTest, e:
                     d.errback(unittest.FailTest(e))
@@ -249,7 +250,7 @@ class DBusTestCase(unittest.TestCase):
                     # check network is idle
                     try:
                         state = self.device.Get(USD_INTFACE, 'State',
-                                            dbus_interface=dbus.PROPERTIES_IFACE)
+                                        dbus_interface=dbus.PROPERTIES_IFACE)
                         self.assertEqual(state, 'idle')
                         d.callback(True)
                     except unittest.FailTest, e:
@@ -318,7 +319,7 @@ class DBusTestCase(unittest.TestCase):
 
                     # Should be just simple text message, no reply required
                     state = self.device.Get(USD_INTFACE, 'State',
-                                           dbus_interface=dbus.PROPERTIES_IFACE)
+                                        dbus_interface=dbus.PROPERTIES_IFACE)
                     self.assertEqual(state, 'idle')
 
                     d.callback(True)
