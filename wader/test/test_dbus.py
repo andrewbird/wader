@@ -394,23 +394,44 @@ class DBusTestCase(unittest.TestCase):
     def test_CardGetSpn(self):
         """Test for Card.GetSpn"""
 
+        known_good_sims = []
+        known_good_sims.append('234159222401636')  # ASDA Mobile
+        known_good_sims.append('234107305239842')  # TESCO
+        known_good_sims.append('214035453022694')  # MASmovil
+
         def cb(*args):
             imsi = self.device.GetImsi(dbus_interface=CRD_INTFACE)
 
             # Note: It's difficult to determine MVNO SIMs from MNOs issued ones
             #       so unless we can find a better method of telling them apart
             #       we have to do exact matching on the whole IMSI.
-            for sim in [('234159222401636', 'ASDA Mobile'),
-                        ('23415', ''),      # VF-UK
-                        ('234107305239842', 'TESCO'),
-                        ('23410', ''),      # O2-UK
-                        ('214035453022694', 'MASmovil'),
-                        ('21403', ''),      # Orange-ES
-                        ('21401', '')]:     # Vodafone-ES
-                if imsi.startswith(sim[0]):
-                    spn = self.device.GetSpn(dbus_interface=CRD_INTFACE)
-                    self.assertEqual(spn, sim[1])
-                    return
+            try:
+                for sim in [('234159222401636', 'ASDA Mobile'),
+                            ('23415', ''),      # VF-UK
+                            ('234107305239842', 'TESCO'),
+                            ('23410', ''),      # O2-UK
+                            ('214035453022694', 'MASmovil'),
+                            ('21403', ''),      # Orange-ES
+                            ('21401', '')]:     # Vodafone-ES
+                    if imsi.startswith(sim[0]):
+                        spn = self.device.GetSpn(dbus_interface=CRD_INTFACE)
+                        self.assertEqual(spn, sim[1])
+                        return
+
+            except dbus.DBusException as e:
+                if imsi in known_good_sims:
+                    raise unittest.FailTest("Failure with known good SIM")
+
+                # We know some SIM cards will fail.
+                GENERAL = MDM_INTFACE + '.General'
+                txt = '%s not in %s' % (GENERAL, get_dbus_error(e))
+                msg = get_dbus_message(e)
+                if len(msg):
+                    txt = '%s: dbus_message=%s' % (txt, msg)
+                self.failUnlessIn(GENERAL, get_dbus_error(e), txt)
+                raise unittest.SkipTest(
+                    "Failure, but not known if SIM has a populated SPN")
+
             raise unittest.SkipTest("Untested")
 
         return self.do_when_registered(cb)
