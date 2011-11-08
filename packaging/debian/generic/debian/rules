@@ -5,6 +5,13 @@ build: build-stamp
 
 build-stamp:
 	dh_testdir
+	set -ex; for python in $(shell pyversions -r) ; do \
+		$$python /usr/bin/nosetests \
+			-w wader/test \
+			-m '(?:^|[\b_\./-])[Tt]est(?!_contact)(?!_dbus)' \
+			-e test_int_to_uint32_to_int_conversion \
+			; \
+	done
 	python setup.py build
 	touch build-stamp
 
