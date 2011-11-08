@@ -180,9 +180,6 @@ class TestNetworkProvider(unittest.TestCase):
         f.write(xml)
         f.close
 
-    def test_populate_networks(self):
-        self.provider.populate_networks()
-
     def test_populate_db_from_objs(self):
         networks = [NetworkOperator(["21401"], "prepaid.vodafone.es",
                         "vodafone", "vodafone", "10.0.0.1", "10.0.0.2",
