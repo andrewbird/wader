@@ -37,7 +37,7 @@ RESOURCES = join(DATA_DIR, 'resources')
 DBUS_SYSTEMD = join(BASE_DIR, 'etc', 'dbus-1', 'system.d')
 DBUS_SYSTEM_SERVICES = join(BASE_DIR, 'usr', 'share', 'dbus-1',
                             'system-services')
-UDEV_RULESD = join(BASE_DIR, 'etc', 'udev', 'rules.d')
+UDEV_RULESD = join(BASE_DIR, 'lib', 'udev', 'rules.d')
 
 
 def list_files(path, exclude=None):
