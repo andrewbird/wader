@@ -1,0 +1,41 @@
+.\" This manpage is copyright (C) 2011 Alex Chiang <achiang@canonical.com>
+.\" 
+.\" This is free software; you may redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 2,
+.\" or (at your option) any later version.
+.\"
+.\" This is distributed in the hope that it will be useful, but
+.\" WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with APT; if not, write to the Free Software
+.\" Foundation, Inc.,
+.\" 02111-1307 USA
+.TH WADER-CORE-CTL 1 "Nov. 8, 2011"
+.SH NAME
+wader-core-ctl \- control the wader-core daemon
+.SH SYNOPSIS
+.B wader-core-ctl
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+wader-core-ctl lets you control the wader-core daemon, which is a drop-in
+replacement for ModemManager.
+.SH OPTIONS
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Show program's version number and exit.
+.TP
+\fB\-r\fR, \fB\-\-restart\fR
+Restart wader-core.
+.TP
+\fB\-\-s\fR, \fB\-\-start\fR
+Start wader-core (only to be called by D-Bus service).
+.TP
+\fB\-\-t\fR, \fB\-\-stop\fR
+Stop wader-core.
+.SH AUTHOR
+This manual page was written by Alex Chiang <achiang@canonical.com> for the
+Debian project (but may be used by others).
