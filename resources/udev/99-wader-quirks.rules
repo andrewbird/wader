@@ -13,3 +13,21 @@ ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="117
 
 # Vodafone (ZTE) K3772-Z
 ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1181", RUN="/sbin/ifconfig %k -arp"
+
+# Dell (Ericsson) D5540
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8183", RUN="/sbin/ifconfig %k -arp"
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8184", RUN="/sbin/ifconfig %k -arp"
+
+# Ericsson F3307
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0bdb", ATTRS{idProduct}=="1909", RUN="/sbin/ifconfig %k -arp"
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0bdb", ATTRS{idProduct}=="190a", RUN="/sbin/ifconfig %k -arp"
+
+# Ericsson F3607gw
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0bdb", ATTRS{idProduct}=="1904", RUN="/sbin/ifconfig %k -arp"
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0bdb", ATTRS{idProduct}=="1905", RUN="/sbin/ifconfig %k -arp"
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0bdb", ATTRS{idProduct}=="1906", RUN="/sbin/ifconfig %k -arp"
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0bdb", ATTRS{idProduct}=="1907", RUN="/sbin/ifconfig %k -arp"
+
+# Toshiba F3607gw
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0930", ATTRS{idProduct}=="130c", RUN="/sbin/ifconfig %k -arp"
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0930", ATTRS{idProduct}=="1311", RUN="/sbin/ifconfig %k -arp"
