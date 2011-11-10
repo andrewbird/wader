@@ -23,7 +23,7 @@ import pickle
 import random
 from twisted.trial import unittest
 
-from wader.contrib.aes import encryptData, decryptData
+from wader.common.aes import encryptData, decryptData
 
 
 def transform_passwd(passwd):
@@ -131,7 +131,7 @@ class TestEncoding(unittest.TestCase):
             original = make_gsm_dict(t[1])
 
             # decode
-            pickledobj = decryptData(t[0], t[2].decode('hex'))
+            pickledobj = decryptData(t[0], t[2].decode('hex'), testforpickle=True)
             decrypted = pickle.load(StringIO(pickledobj))
 
             self.assertEqual(decrypted, original)

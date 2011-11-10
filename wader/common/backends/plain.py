@@ -34,6 +34,7 @@ from twisted.internet import reactor, defer, protocol, error, task
 from twisted.python import log, procutils
 from zope.interface import implements
 
+from wader.common.aes import decryptData, encryptData
 from wader.common.consts import (WADER_PROFILES_SERVICE,
                                  WADER_PROFILES_INTFACE,
                                  WADER_PROFILES_OBJPATH,
@@ -53,7 +54,6 @@ from wader.common.oal import get_os_object
 from wader.common.profile import Profile
 from wader.common.secrets import ProfileSecrets
 from wader.common.utils import save_file, is_bogus_ip, patch_list_signature
-from wader.contrib import aes
 
 
 def proc_running(pid):
@@ -824,7 +824,7 @@ class PlainKeyring(object):
         except IOError:
             raise KeyringNoMatchError("No secrets for uuid %s" % uuid)
 
-        pickledobj = aes.decryptData(self.key, data)
+        pickledobj = decryptData(self.key, data, testforpickle=True)
         try:
             return pickle.load(StringIO(pickledobj))
         except:
@@ -833,7 +833,7 @@ class PlainKeyring(object):
     def update(self, uuid, conn_id, secrets, update=True):
         path = os.path.join(self.secrets_path, uuid)
         with open(path, 'w') as f:
-            data = aes.encryptData(self.key, pickle.dumps(secrets))
+            data = encryptData(self.key, pickle.dumps(secrets))
             f.write(data)
 
     def delete(self, uuid):
