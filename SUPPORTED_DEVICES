@@ -1,0 +1,46 @@
+============================= Well supported devices ===========================
+(we have physical samples and test regularily)
+
+Huawei
+E620 E660 E660A E870 EM730V B970 E160 E160B E172 E173 E220 E270 E272 E510
+E1750 E1820 E3735 K2540 K3520 K3565 K3565rev2 K3715 K3765 K3770 K3771 K3806
+K4505 K4510 K4511 K4605
+
+ZTE
+MF637U K3520-Z K3565-Z K3570-Z K3571-Z K3765-Z K3770-Z K3772-Z K3805-Z K3806-Z
+K4505-Z K4510-Z
+
+Novatel
+U740 XU870 MC950 X950D MiFi2352
+
+Option
+Colt Quad Fuji FujiLite Etna GtFusion
+K3760 E3730
+
+Ericsson (and vendor variants)
+F3307 F3507g F3607gw
+
+Qualcomm (and vendor variants)
+Gobi2000
+
+========================= Less well supported devices =========================
+(we don't have physical samples, either user contributed plugins or looks very
+similar to a device we have and we have a user report of it working)
+
+Huawei
+E169 E1550 E1692 E180 EM770
+
+Option
+GI0335 Icon225 Icon401 Gtm378 GtMax36
+
+Novatel
+EU740 EU870D MC990D S720
+
+ZTE and ONDA
+MF620 MF628 MF632 MF651 MSA405HS MT503HS
+
+Ericsson
+MD300
+
+SierraWireless
+850 875 MC8755
