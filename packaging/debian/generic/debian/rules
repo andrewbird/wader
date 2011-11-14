@@ -35,6 +35,7 @@ install: build
 	python setup.py install --install-layout=deb --root $(CURDIR)/debian/wader-core
 	DH_PYCENTRAL=nomove dh_pycentral
 	dh_install
+	dh_installman
 
 # Build architecture-independent files here.
 binary-indep: build install
