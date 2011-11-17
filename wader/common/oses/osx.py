@@ -50,6 +50,11 @@ class OSXPlugin(UnixPlugin):
 
     def is_valid(self):
         """See :meth:`wader.common.interfaces.IOSPlugin.is_valid`"""
+
+        # XXX: Disable OSX support until we can find the provenance of the C
+        #      module, or replace it with something else.
+        return False
+
         return sys.platform == 'darwin'
 
     def update_dns_cache(self):
