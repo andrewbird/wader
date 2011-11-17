@@ -17,11 +17,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """org.freedesktop.ModemManager.Modem.Simple state machine"""
 
+from epsilon.modal import mode, Modal
 from twisted.internet import defer, reactor
 from twisted.python import log
 
 import wader.common.aterrors as E
-from wader.contrib.modal import mode, Modal
 from wader.common.consts import STATUS_HOME, STATUS_ROAMING
 from wader.common.utils import convert_network_mode_to_allowed_mode
 

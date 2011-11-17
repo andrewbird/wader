@@ -18,11 +18,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Authentication state machine"""
 
+from epsilon.modal import mode, Modal
 from twisted.internet import reactor, defer
 from twisted.python import log
 
 import wader.common.aterrors as E
-from wader.contrib.modal import mode, Modal
 
 SIM_FAIL_DELAY = 15
 MAX_NUM_SIM_ERRORS = 3

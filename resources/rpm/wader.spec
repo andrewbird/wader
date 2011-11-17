@@ -26,7 +26,7 @@ BuildRequires:  dbus-python, python-zope-interface, python-twisted-core
 Requires:       python-twisted-core, pyserial, dbus-python, pytz, usb_modeswitch-data >= 20100322
 %endif
 
-Requires:       python >= 2.5, python-crypto, python-messaging >= 0.5.11, usb_modeswitch >= 1.1.0, python-gudev
+Requires:       python >= 2.5, python-crypto, python-messaging >= 0.5.11, usb_modeswitch >= 1.1.0, python-gudev, python-epsilon
 Obsoletes:      ModemManager
 Provides:       ModemManager
 
