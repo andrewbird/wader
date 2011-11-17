@@ -233,7 +233,7 @@ class DBusTestCase(unittest.TestCase):
 
     # org.freedesktop.ModemManager.Modem tests
     def test_ModemDeviceProperty(self):
-        if sys.platform != 'linux2':
+        if not sys.platform.startswith('linux'):
             raise unittest.SkipTest("Cannot be tested on OS != Linux")
 
         def check_if_valid_device(device):
@@ -255,7 +255,7 @@ class DBusTestCase(unittest.TestCase):
         self.failUnlessIsInstance(master_device, basestring)
 
     def test_ModemDriverProperty(self):
-        if sys.platform != 'linux2':
+        if not sys.platform.startswith('linux'):
             raise unittest.SkipTest("Cannot be tested on OS != Linux")
 
         driver = self.device.Get(MDM_INTFACE, 'Driver',

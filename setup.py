@@ -71,7 +71,7 @@ data_files = [
 
 ext_modules = []
 
-if sys.platform == 'linux2':
+if sys.platform.startswith('linux'):
     data_files.append((UDEV_RULESD, list_files('resources/udev')))
 
 elif sys.platform == 'darwin':
