@@ -184,7 +184,13 @@ class DevicePlugin(object):
 
             self.daemons.start_daemons()
             d = self.sconn.init_properties()
-            d.addCallback(lambda _: self.set_status(MM_MODEM_STATE_ENABLED))
+
+            def set_enable(_):
+                if self._status <= MM_MODEM_STATE_ENABLED:
+                    self.set_status(MM_MODEM_STATE_ENABLED)
+                return _
+
+            d.addCallback(set_enable)
             d.addCallback(lambda _: self.sconn.mal.initialize(obj=self.sconn))
             d.addCallback(lambda _: size)
             return d

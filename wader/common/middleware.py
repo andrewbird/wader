@@ -466,9 +466,7 @@ class WCDMAWrapper(WCDMAProtocol):
         self.cached_registration = (time() + CACHETIME, reginfo)
         self.device.exporter.RegistrationInfo(*reginfo)
 
-        if self.device.status in [MM_MODEM_STATE_ENABLED,
-                                  MM_MODEM_STATE_SEARCHING,
-                                  MM_MODEM_STATE_REGISTERED]:
+        if self.device.status <= MM_MODEM_STATE_REGISTERED:
             if _reginfo[0] in [1, 5]:
                 self.device.set_status(MM_MODEM_STATE_REGISTERED)
             else:
