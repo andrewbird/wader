@@ -113,9 +113,9 @@ fi
 %{wader_root}/resources/extra
 %ghost %{wader_root}/plugins/dropin.cache
 
-%dir %{_sysconfdir}/udev/
-%dir %{_sysconfdir}/udev/rules.d/
-%{_sysconfdir}/udev/rules.d/*
+%dir /lib/udev/
+%dir /lib/udev/rules.d/
+/lib/udev/rules.d/*
 
 %config %{_datadir}/dbus-1/system-services/org.freedesktop.ModemManager.service
 %config %{_sysconfdir}/dbus-1/system.d/org.freedesktop.ModemManager.conf
