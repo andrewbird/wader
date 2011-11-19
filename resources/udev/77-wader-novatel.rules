@@ -2,13 +2,13 @@
 # This can remove the need to probe at all, but generally it's used to
 # ensure that the data/modem port is identified
 
-ACTION!="add", GOTO="vmc_novatel_end"
+ACTION!="add", GOTO="wader_novatel_end"
 
 SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", \
    ENV{.MM_USBIFNUM}="$attr{bInterfaceNumber}"
 
 # Tag the interface with type
-SUBSYSTEM!="tty", GOTO="vmc_novatel_tty_end"
+SUBSYSTEM!="tty", GOTO="wader_novatel_tty_end"
 
 # U740
 ATTRS{idVendor}=="1410", ATTRS{idProduct}=="1400", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
@@ -44,6 +44,6 @@ ATTRS{idVendor}=="1410", ATTRS{idProduct}=="7003", ENV{.MM_USBIFNUM}=="01", ENV{
 #ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8137", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 #ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8137", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
-LABEL="vmc_novatel_tty_end"
+LABEL="wader_novatel_tty_end"
 
-LABEL="vmc_novatel_end"
+LABEL="wader_novatel_end"

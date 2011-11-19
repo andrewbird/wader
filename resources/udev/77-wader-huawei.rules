@@ -2,7 +2,7 @@
 # This can remove the need to probe at all, but generally it's used to
 # ensure that the data/modem port is identified
 
-ACTION!="add", GOTO="vmc_huawei_end"
+ACTION!="add", GOTO="wader_huawei_end"
 
 SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", \
    ENV{.MM_USBIFNUM}="$attr{bInterfaceNumber}"
@@ -11,7 +11,7 @@ SUBSYSTEMS=="usb", ATTRS{bNumInterfaces}=="?*", \
    ENV{.MM_USBNUMIFS}="$attr{bNumInterfaces}"
 
 # Tag the interface with type
-SUBSYSTEM!="tty", GOTO="vmc_huawei_tty_end"
+SUBSYSTEM!="tty", GOTO="wader_huawei_tty_end"
 
 # Generic 0x1001
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="1001", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
@@ -80,6 +80,6 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14cb", ENV{.MM_USBIFNUM}=="04", ENV{
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14cc", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14cc", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
-LABEL="vmc_huawei_tty_end"
+LABEL="wader_huawei_tty_end"
 
-LABEL="vmc_huawei_end"
+LABEL="wader_huawei_end"
