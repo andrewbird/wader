@@ -23,8 +23,6 @@ setuptools file for Wader
 from os.path import join, isdir, walk
 import sys
 
-from ez_setup import use_setuptools
-use_setuptools()
 from distutils.core import Extension
 from setuptools import setup
 
