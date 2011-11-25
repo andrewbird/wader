@@ -158,4 +158,4 @@ class TestEncoding(unittest.TestCase):
     def test_unpack_ucs2_bytes_in_ts31101_82(self):
         # From TS102221
         self.assertEqual(
-            unpack_ucs2_bytes_in_ts31101_82('0505302D82D32D31'),u'-Բփ-1')
+            unpack_ucs2_bytes_in_ts31101_82('0505302D82D32D31'), u'-Բփ-1')

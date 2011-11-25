@@ -60,6 +60,7 @@ data_files = [
    (join(RESOURCES, 'config'), list_files('resources/config')),
    (join(DATA_DIR, 'plugins'), list_files('plugins/devices')),
    (join(DATA_DIR, 'plugins'), list_files('plugins/oses')),
+   (join(DATA_DIR, 'test'), ['test/test_dbus.py', 'test/test_dbus_ussd_de.py']),
    (DATA_DIR, ['core-tap.py']),
    (BIN_DIR, ['bin/wader-core-ctl']),
    (DBUS_SYSTEMD, ['resources/dbus/org.freedesktop.ModemManager.conf']),
@@ -82,7 +83,7 @@ elif sys.platform == 'darwin':
 packages = [
     'wader', 'wader.common', 'wader.common.oses', 'wader.common.backends',
     'wader.common.statem', 'wader.common.hardware',
-    'wader.test', 'wader.plugins',
+    'wader.plugins',
 ]
 
 setup(name=APP_NAME,

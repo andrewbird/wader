@@ -219,7 +219,7 @@ class TestNetworkProvider(unittest.TestCase):
         c.execute("delete from network_info")
 
     def test_populate_db_from_networks_py_real(self):
-        extra = '../../resources/extra'
+        extra = '../resources/extra'
         if not os.path.exists(extra):
             raise unittest.SkipTest('Path to "networks.py" not valid')
 

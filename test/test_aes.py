@@ -131,7 +131,8 @@ class TestEncoding(unittest.TestCase):
             original = make_gsm_dict(t[1])
 
             # decode
-            pickledobj = decryptData(t[0], t[2].decode('hex'), testforpickle=True)
+            pickledobj = decryptData(t[0], t[2].decode('hex'),
+                                                            testforpickle=True)
             decrypted = pickle.load(StringIO(pickledobj))
 
             self.assertEqual(decrypted, original)
@@ -143,9 +144,9 @@ class TestEncoding(unittest.TestCase):
         LEN = 12
 
         for keys in range(n_keys):
-            length = int(random.random()*LEN)
+            length = int(random.random() * LEN)
 
-            key = os.urandom(LEN-length).encode('hex')
+            key = os.urandom(LEN - length).encode('hex')
             padded_key = transform_passwd(key)
 
             for passwds in range(n_passwds):
@@ -161,4 +162,3 @@ class TestEncoding(unittest.TestCase):
                 decrypted = pickle.load(StringIO(pickledobj))
 
                 self.assertEqual(decrypted, original)
-

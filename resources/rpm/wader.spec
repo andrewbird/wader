@@ -80,7 +80,6 @@ fi
 %dir %{python_sitelib}/wader/common/oses/
 %dir %{python_sitelib}/wader/common/statem/
 %dir %{python_sitelib}/wader/common/backends/
-%dir %{python_sitelib}/wader/test/
 %dir %{python_sitelib}/wader/plugins/
 
 %{python_sitelib}/wader/*.py
@@ -95,8 +94,6 @@ fi
 %{python_sitelib}/wader/common/statem/*.py[co]
 %{python_sitelib}/wader/common/backends/*.py
 %{python_sitelib}/wader/common/backends/*.py[co]
-%{python_sitelib}/wader/test/*.py
-%{python_sitelib}/wader/test/*.py[co]
 %{python_sitelib}/wader/plugins/*.py
 %{python_sitelib}/wader/plugins/*.py[co]
 
@@ -104,6 +101,7 @@ fi
 %dir %{wader_root}/plugins/
 %{wader_root}/*.py*
 %{wader_root}/plugins/*.py*
+%{wader_root}/test/test_dbus*.py*
 
 %dir %{wader_root}/resources
 %{wader_root}/resources/config

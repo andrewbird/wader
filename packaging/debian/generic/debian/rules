@@ -9,7 +9,7 @@ build-stamp:
 		$$python -c 'import sys; print sys.version' >/dev/null 2>&1 \
 		&& \
 		$$python /usr/bin/nosetests \
-			-w wader/test \
+			-w test \
 			-m '(?:^|[\b_\./-])[Tt]est(?!_contact)(?!_dbus)' \
 			-e test_int_to_uint32_to_int_conversion \
 		|| \
