@@ -32,13 +32,6 @@ class FedoraBasedDistro(LinuxPlugin):
     OSPlugin for Fedora-based distros
     """
 
-    #XXX: Almost duplicated code with Suse plugin
-    def get_timezone(self):
-        timezone_re = re.compile('ZONE="(?P<tzname>[\w/]+)"')
-        sysconf_clock_file = get_file_data('/etc/sysconfig/clock')
-        search_dict = timezone_re.search(sysconf_clock_file).groupdict()
-        return search_dict['tzname']
-
     def is_valid(self):
         paths = ['/etc/redhat-release', '/etc/fedora-release']
         return any(map(exists, paths))

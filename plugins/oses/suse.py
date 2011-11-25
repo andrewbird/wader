@@ -29,13 +29,6 @@ from wader.common.utils import get_file_data
 
 class SUSEDistro(LinuxPlugin):
 
-    #XXX: Almost duplicated code with Fedora plugin
-    def get_timezone(self):
-        timezone_re = re.compile('TIMEZONE="(?P<tzname>[\w/]+)"')
-        sysconf_clock_file = get_file_data('/etc/sysconfig/clock')
-        search_dict = timezone_re.search(sysconf_clock_file).groupdict()
-        return search_dict['tzname']
-
     def is_valid(self):
         return exists('/etc/SuSE-release')
 

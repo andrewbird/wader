@@ -59,8 +59,5 @@ class UnixPlugin(OSPlugin):
     def get_iface_stats(self, iface):
         raise NotImplementedError()
 
-    def get_timezone(self):
-        return get_file_data('/etc/timezone').replace('\n', '')
-
     def update_dns_cache(self):
         raise NotImplementedError()

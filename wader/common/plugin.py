@@ -254,25 +254,6 @@ class OSPlugin(object):
     def __init__(self):
         super(OSPlugin, self).__init__()
 
-    def get_timezone(self):
-        """
-        Returns the timezone
-
-        :rtype: str
-        """
-        raise NotImplementedError()
-
-    def get_tzinfo(self):
-        """Returns a :class:`pytz.timezone` out the timezone"""
-        zone = self.get_timezone()
-        try:
-            return timezone(zone)
-        except:
-            # we're not catching this exception because some dated pytz
-            # do not include UnknownTimeZoneError, if get_tzinfo doesn't works
-            # we just return None as its a valid tzinfo and we can't do more
-            return None
-
     def get_iface_stats(self, iface):
         """
         Returns ``iface`` network statistics

@@ -202,16 +202,6 @@ class IOSPlugin(IWaderPlugin):
     def get_iface_stats(iface):
         """Returns ``iface`` network statistics"""
 
-    def get_timezone():
-        """
-        Returns the timezone of the OS
-
-        :rtype: str
-        """
-
-    def get_tzinfo():
-        """Returns a :class:`pytz.timezone` out the timezone"""
-
     def is_valid():
         """Returns True if we are on the given OS/Distro"""
 
