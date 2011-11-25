@@ -80,7 +80,6 @@ fi
 %dir %{python_sitelib}/wader/common/oses/
 %dir %{python_sitelib}/wader/common/statem/
 %dir %{python_sitelib}/wader/common/backends/
-%dir %{python_sitelib}/wader/contrib/
 %dir %{python_sitelib}/wader/test/
 %dir %{python_sitelib}/wader/plugins/
 
@@ -96,8 +95,6 @@ fi
 %{python_sitelib}/wader/common/statem/*.py[co]
 %{python_sitelib}/wader/common/backends/*.py
 %{python_sitelib}/wader/common/backends/*.py[co]
-%{python_sitelib}/wader/contrib/*.py
-%{python_sitelib}/wader/contrib/*.py[co]
 %{python_sitelib}/wader/test/*.py
 %{python_sitelib}/wader/test/*.py[co]
 %{python_sitelib}/wader/plugins/*.py

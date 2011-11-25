@@ -81,7 +81,7 @@ elif sys.platform == 'darwin':
 
 packages = [
     'wader', 'wader.common', 'wader.common.oses', 'wader.common.backends',
-    'wader.common.statem', 'wader.common.hardware', 'wader.contrib',
+    'wader.common.statem', 'wader.common.hardware',
     'wader.test', 'wader.plugins',
 ]
 
