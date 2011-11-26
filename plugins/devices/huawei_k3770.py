@@ -18,8 +18,8 @@
 
 from twisted.internet import defer
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -42,7 +42,7 @@ class HuaweiK3770Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK3770Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3770
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K3770
     """
     wrapper_klass = HuaweiK3770Wrapper
 
@@ -62,7 +62,7 @@ class HuaweiK3770Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiK3770(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's K3770"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's K3770"""
     name = "Huawei K3770"
     version = "0.1"
     author = u"Alex Chiang"

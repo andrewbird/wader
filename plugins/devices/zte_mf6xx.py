@@ -17,16 +17,16 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import ZTEWCDMADevicePlugin
+from core.hardware.zte import ZTEWCDMADevicePlugin
 
-from wader.plugins.zte_mf620 import ZTEMF620
-from wader.plugins.zte_mf632 import ZTEMF632
-from wader.plugins.zte_mf628 import ZTEMF628
-from wader.plugins.onda_mt503hs import ONDAMT503HS
+from plugins.zte_mf620 import ZTEMF620
+from plugins.zte_mf632 import ZTEMF632
+from plugins.zte_mf628 import ZTEMF628
+from plugins.onda_mt503hs import ONDAMT503HS
 
 
 class ZTEMF6XX(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's MF6XX Family"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's MF6XX Family"""
     name = "ZTE MF6XX"
     version = "0.1"
     author = u"Pablo Martí"
@@ -52,7 +52,7 @@ zte_mf6xx = ZTEMF6XX()
 
 
 class ZTEMF628X(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's MF628 Family"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's MF628 Family"""
     name = "ZTE MF628X"
     version = "0.1"
     author = u"Andrew Bird"

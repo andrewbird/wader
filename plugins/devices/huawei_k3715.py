@@ -20,8 +20,8 @@ from twisted.internet import reactor
 from twisted.internet.task import deferLater
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -29,7 +29,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiK3715Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the K3715
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the K3715
     """
 
     def check_pin(self):
@@ -62,7 +62,7 @@ class HuaweiK3715Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK3715Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3715
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K3715
     """
     wrapper_klass = HuaweiK3715Wrapper
 
@@ -82,7 +82,7 @@ class HuaweiK3715Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiK3715(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's K3715"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's K3715"""
     name = "Huawei K3715"
     version = "0.1"
     author = u"Andrew Bird"

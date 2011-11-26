@@ -17,11 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionWCDMADevicePlugin
+from core.hardware.option import OptionWCDMADevicePlugin
 
 
 class OptionGTMax36(OptionWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Option's GT Max 36"""
+    """:class:`~core.plugin.DevicePlugin` for Option's GT Max 36"""
     name = "Option GT Max 36"
     version = "0.1"
     author = "kgb0y"

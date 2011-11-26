@@ -16,11 +16,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import HuaweiWCDMADevicePlugin
+from core.hardware.huawei import HuaweiWCDMADevicePlugin
 
 
 class HuaweiE169(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E169"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E169"""
     name = "Huawei E169"
     version = "0.1"
     author = u"Pablo Martí"

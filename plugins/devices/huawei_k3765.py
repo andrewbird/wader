@@ -17,8 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -32,7 +32,7 @@ class HuaweiK3765Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK3765Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3765
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K3765
     """
     wrapper_klass = HuaweiK3765Wrapper
 
@@ -53,7 +53,7 @@ class HuaweiK3765Customizer(HuaweiWCDMACustomizer):
 
 class HuaweiK3765(HuaweiWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Huawei's Vodafone K3765
+    :class:`~core.plugin.DevicePlugin` for Huawei's Vodafone K3765
     """
     name = "Huawei K3765"
     version = "0.1"

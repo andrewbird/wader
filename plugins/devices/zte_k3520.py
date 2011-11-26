@@ -17,11 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import ZTEWCDMADevicePlugin
+from core.hardware.zte import ZTEWCDMADevicePlugin
 
 
 class ZTEK3520(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's K3520"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's K3520"""
     name = "Vodafone K3520-Z"
     version = "0.1"
     author = "Andrew Bird"

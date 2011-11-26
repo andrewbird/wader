@@ -18,8 +18,8 @@
 
 from twisted.internet import defer
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -42,7 +42,7 @@ class HuaweiK3771Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK3771Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3771
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K3771
     """
     wrapper_klass = HuaweiK3771Wrapper
 
@@ -63,7 +63,7 @@ class HuaweiK3771Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiK3771(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's K3771"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's K3771"""
     name = "Huawei K3771"
     version = "0.1"
     author = u"Andrew Bird"

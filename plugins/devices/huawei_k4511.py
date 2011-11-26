@@ -17,8 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -32,7 +32,7 @@ class HuaweiK4511Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK4511Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K4511
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K4511
     """
     wrapper_klass = HuaweiK4511Wrapper
 
@@ -54,7 +54,7 @@ class HuaweiK4511Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiK4511(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's K4511"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's K4511"""
     name = "Huawei K4511"
     version = "0.1"
     author = u"Andrew Bird"

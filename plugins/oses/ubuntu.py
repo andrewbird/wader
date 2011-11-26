@@ -23,7 +23,7 @@ from os.path import exists
 
 from twisted.internet.utils import getProcessValue
 
-from wader.common.oses.linux import LinuxPlugin
+from core.oses.linux import LinuxPlugin
 from wader.common.utils import get_file_data
 
 VERS_REGEX = '^DISTRIB_RELEASE=\s*(?P<version>\d+\.\d+)\s*$'

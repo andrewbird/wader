@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import (OptionHSOWCDMADevicePlugin,
+from core.hardware.option import (OptionHSOWCDMADevicePlugin,
                                           OptionHSOWCDMACustomizer,
                                           OptionHSOWrapper)
 
@@ -36,7 +36,7 @@ class OptionGI0335Customizer(OptionHSOWCDMACustomizer):
 
 
 class OptionGI0335(OptionHSOWCDMADevicePlugin):
-    """:class:`wader.common.plugin.DevicePlugin` for Options's GI0335"""
+    """:class:`core.plugin.DevicePlugin` for Options's GI0335"""
     name = "Option GI0335"
     version = "0.1"
     author = u"Andrew Bird"

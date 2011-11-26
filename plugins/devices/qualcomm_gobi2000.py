@@ -17,11 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.qualcomm import QualcommWCDMADevicePlugin
+from core.hardware.qualcomm import QualcommWCDMADevicePlugin
 
 
 class QualcommWCDMAG2000(QualcommWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Qualcomm's Gobi 2000"""
+    """:class:`~core.plugin.DevicePlugin` for Qualcomm's Gobi 2000"""
     name = "Qualcomm Gobi 2000"
     version = "0.1"
     author = u"Andrew Bird"

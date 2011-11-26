@@ -17,7 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import (OptionWCDMADevicePlugin,
+from core.hardware.option import (OptionWCDMADevicePlugin,
                                           OptionWCDMACustomizer,
                                           OptionWrapper)
 
@@ -59,7 +59,7 @@ class OptionEtnaCustomizer(OptionWCDMACustomizer):
 
 
 class OptionEtna(OptionWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Options's Etna"""
+    """:class:`~core.plugin.DevicePlugin` for Options's Etna"""
     name = "Option Etna"
     version = "0.1"
     author = u"Pablo Martí"

@@ -16,12 +16,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.ericsson import (EricssonDevicePlugin,
+from core.hardware.ericsson import (EricssonDevicePlugin,
                                             EricssonF3607gwCustomizer)
 
 
 class EricssonD5540(EricssonDevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Ericsson's Dell D5540"""
+    """:class:`~core.plugin.DevicePlugin` for Ericsson's Dell D5540"""
     name = "Dell D5540"
     version = "0.1"
     author = u"Andrew Bird"

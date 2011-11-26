@@ -17,11 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.icera import IceraWCDMADevicePlugin
+from core.hardware.icera import IceraWCDMADevicePlugin
 
 
 class ZTEMF651(IceraWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's MF651"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's MF651"""
     name = "ZTE MF651"
     version = "0.1"
     author = "Andrew Bird"

@@ -17,40 +17,40 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import HuaweiWCDMADevicePlugin
+from core.hardware.huawei import HuaweiWCDMADevicePlugin
 
-from wader.plugins.huawei_e160 import HuaweiE160
-from wader.plugins.huawei_e160b import HuaweiE160B
-from wader.plugins.huawei_e169 import HuaweiE169
-from wader.plugins.huawei_e17X import HuaweiE17X
-from wader.plugins.huawei_e173 import HuaweiE173
-from wader.plugins.huawei_e180 import HuaweiE180
-from wader.plugins.huawei_e220 import HuaweiE220
-from wader.plugins.huawei_e270 import HuaweiE270
-from wader.plugins.huawei_e272 import HuaweiE272
-from wader.plugins.huawei_e510 import HuaweiE510
-from wader.plugins.huawei_e620 import HuaweiE620
-from wader.plugins.huawei_e660 import HuaweiE660
-from wader.plugins.huawei_e660a import HuaweiE660A
-from wader.plugins.huawei_e870 import HuaweiE870
-from wader.plugins.huawei_e1550 import HuaweiE1550
-from wader.plugins.huawei_e1692 import HuaweiE1692
-from wader.plugins.huawei_e1750 import HuaweiE1750
-from wader.plugins.huawei_e3735 import HuaweiE3735
+from plugins.huawei_e160 import HuaweiE160
+from plugins.huawei_e160b import HuaweiE160B
+from plugins.huawei_e169 import HuaweiE169
+from plugins.huawei_e17X import HuaweiE17X
+from plugins.huawei_e173 import HuaweiE173
+from plugins.huawei_e180 import HuaweiE180
+from plugins.huawei_e220 import HuaweiE220
+from plugins.huawei_e270 import HuaweiE270
+from plugins.huawei_e272 import HuaweiE272
+from plugins.huawei_e510 import HuaweiE510
+from plugins.huawei_e620 import HuaweiE620
+from plugins.huawei_e660 import HuaweiE660
+from plugins.huawei_e660a import HuaweiE660A
+from plugins.huawei_e870 import HuaweiE870
+from plugins.huawei_e1550 import HuaweiE1550
+from plugins.huawei_e1692 import HuaweiE1692
+from plugins.huawei_e1750 import HuaweiE1750
+from plugins.huawei_e3735 import HuaweiE3735
 
-from wader.plugins.huawei_k2540 import HuaweiK2540
-from wader.plugins.huawei_k3520 import HuaweiK3520
-from wader.plugins.huawei_k3565 import HuaweiK3565
-from wader.plugins.huawei_k3715 import HuaweiK3715
+from plugins.huawei_k2540 import HuaweiK2540
+from plugins.huawei_k3520 import HuaweiK3520
+from plugins.huawei_k3565 import HuaweiK3565
+from plugins.huawei_k3715 import HuaweiK3715
 
-from wader.plugins.huawei_em730v import HuaweiEM730V
-from wader.plugins.huawei_em770 import HuaweiEM770
+from plugins.huawei_em730v import HuaweiEM730V
+from plugins.huawei_em770 import HuaweiEM770
 
-from wader.plugins.huawei_b970 import HuaweiB970
+from plugins.huawei_b970 import HuaweiB970
 
 
 class HuaweiEXXX1436(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's 1436 family"""
+    """:class:`~plugin.DevicePlugin` for Huawei's 1436 family"""
     name = "Huawei EXXX"
     version = "0.1"
     author = u"Andrew Bird"
@@ -74,7 +74,7 @@ class HuaweiEXXX1436(HuaweiWCDMADevicePlugin):
 
 
 class HuaweiEXXX140c(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's 140c family"""
+    """:class:`~plugin.DevicePlugin` for Huawei's 140c family"""
     name = "Huawei EXXX"
     version = "0.1"
     author = u"Andrew Bird"
@@ -99,7 +99,7 @@ class HuaweiEXXX140c(HuaweiWCDMADevicePlugin):
 
 
 class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's 1003 family"""
+    """:class:`~plugin.DevicePlugin` for Huawei's 1003 family"""
     name = "Huawei EXXX"
     version = "0.1"
     author = u"Pablo Martí"
@@ -134,7 +134,7 @@ class HuaweiEXXX1003(HuaweiWCDMADevicePlugin):
 
 
 class HuaweiEXXX1001(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's 1001 family"""
+    """:class:`~plugin.DevicePlugin` for Huawei's 1001 family"""
     name = "Huawei EXXX"
     version = "0.1"
     author = u"Pablo Martí"

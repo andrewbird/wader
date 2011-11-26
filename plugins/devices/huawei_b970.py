@@ -16,16 +16,16 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.command import ATCmd
+from core.command import ATCmd
 from wader.common.encoding import pack_ucs2_bytes
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper)
 
 
 class HuaweiB970Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the B970
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the B970
     """
 
     def _add_contact(self, name, number, index):
@@ -50,13 +50,13 @@ class HuaweiB970Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiB970Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the B970
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the B970
     """
     wrapper_klass = HuaweiB970Wrapper
 
 
 class HuaweiB970(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's B970"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's B970"""
     name = "Huawei B970"
     version = "0.1"
     author = u"Andrew Bird"

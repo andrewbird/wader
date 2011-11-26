@@ -17,8 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMAWrapper,
                                           HuaweiWCDMACustomizer,
                                           HUAWEI_BAND_DICT)
@@ -26,7 +26,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiE160Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the E160
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the E160
     """
 
     def send_ussd(self, ussd):
@@ -35,7 +35,7 @@ class HuaweiE160Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE160Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E160
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E160
     """
     wrapper_klass = HuaweiE160Wrapper
 
@@ -56,7 +56,7 @@ class HuaweiE160Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiE160(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E160"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E160"""
     name = "Huawei E160"
     version = "0.1"
     author = u"Andrew Bird"

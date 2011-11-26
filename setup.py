@@ -60,6 +60,11 @@ data_files = [
    (join(RESOURCES, 'config'), list_files('resources/config')),
    (join(DATA_DIR, 'plugins'), list_files('plugins/devices')),
    (join(DATA_DIR, 'plugins'), list_files('plugins/oses')),
+   (join(DATA_DIR, 'core'), list_files('core')),
+   (join(DATA_DIR, 'core', 'backends'), list_files('core/backends')),
+   (join(DATA_DIR, 'core', 'hardware'), list_files('core/hardware')),
+   (join(DATA_DIR, 'core', 'oses'), list_files('core/oses')),
+   (join(DATA_DIR, 'core', 'statem'), list_files('core/statem')),
    (join(DATA_DIR, 'test'), ['test/test_dbus.py', 'test/test_dbus_ussd_de.py']),
    (DATA_DIR, ['core-tap.py']),
    (BIN_DIR, ['bin/wader-core-ctl']),
@@ -74,6 +79,7 @@ if sys.platform.startswith('linux'):
     data_files.append((UDEV_RULESD, list_files('resources/udev')))
 
 elif sys.platform == 'darwin':
+    # XXX This is broken.
     osxserialports = Extension('wader.common.oses.osxserialports',
                             sources=['wader/common/oses/_osxserialports.c'],
                             extra_link_args=['-framework', 'CoreFoundation',
@@ -81,9 +87,9 @@ elif sys.platform == 'darwin':
     ext_modules.append(osxserialports)
 
 packages = [
-    'wader', 'wader.common', 'wader.common.oses', 'wader.common.backends',
-    'wader.common.statem', 'wader.common.hardware',
-    'wader.plugins',
+    'wader',
+    'wader.common',
+    'wader.common.backends',
 ]
 
 setup(name=APP_NAME,

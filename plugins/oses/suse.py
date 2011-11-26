@@ -23,7 +23,7 @@ import re
 
 from twisted.internet.utils import getProcessValue
 
-from wader.common.oses.linux import LinuxPlugin
+from core.oses.linux import LinuxPlugin
 from wader.common.utils import get_file_data
 
 

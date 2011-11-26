@@ -16,11 +16,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
+from core.hardware.option import OptionHSOWCDMADevicePlugin
 
 
 class OptionIcon401(OptionHSOWCDMADevicePlugin):
-    """:class:`wader.common.plugin.DevicePlugin` for Options's Icon 401"""
+    """:class:`core.plugin.DevicePlugin` for Options's Icon 401"""
     name = "Option Icon 401"
     version = "0.1"
     author = "Pablo Marti"

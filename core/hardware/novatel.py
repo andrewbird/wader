@@ -22,12 +22,12 @@ import re
 from twisted.internet import defer, reactor
 
 from wader.common import consts
-from wader.common.command import get_cmd_dict_copy, build_cmd_dict
-from wader.common.hardware.base import WCDMACustomizer
-from wader.common.middleware import WCDMAWrapper
-from wader.common.plugin import DevicePlugin
+from core.command import get_cmd_dict_copy, build_cmd_dict
+from core.hardware.base import WCDMACustomizer
+from core.middleware import WCDMAWrapper
+from core.plugin import DevicePlugin
 from wader.common.utils import revert_dict
-from wader.common.sim import SIMBaseClass
+from core.sim import SIMBaseClass
 import wader.common.signals as S
 
 NOVATEL_ALLOWED_DICT = {

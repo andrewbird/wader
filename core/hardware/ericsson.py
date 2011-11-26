@@ -24,15 +24,15 @@ from twisted.internet.task import deferLater
 from twisted.python import log
 
 import wader.common.aterrors as E
-from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
+from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common import consts
-from wader.common.contact import Contact
+from core.contact import Contact
 from wader.common.encoding import (pack_ucs2_bytes, from_u, check_if_ucs2,
                                    from_ucs2)
-from wader.common.hardware.base import WCDMACustomizer
-from wader.common.middleware import WCDMAWrapper
-from wader.common.plugin import DevicePlugin
-from wader.common.sim import SIMBaseClass
+from core.hardware.base import WCDMACustomizer
+from core.middleware import WCDMAWrapper
+from core.plugin import DevicePlugin
+from core.sim import SIMBaseClass
 from wader.common.utils import revert_dict
 import wader.common.signals as S
 
@@ -335,7 +335,7 @@ class EricssonWrapper(WCDMAWrapper):
 
     def _regexp_to_contact(self, match):
         """
-        Returns a :class:`wader.common.contact.Contact` out of ``match``
+        Returns a :class:`core.contact.Contact` out of ``match``
 
         :type match: ``re.MatchObject``
         """
@@ -356,7 +356,7 @@ class EricssonWrapper(WCDMAWrapper):
         as Ericsson devices return straight away on unlock but an immediate
         call to +CPIN? will still show the device as locked.
         """
-        from wader.common.startup import attach_to_serial_port
+        from core.startup import attach_to_serial_port
         d = attach_to_serial_port(self.device)
 
         def _get_charset(_):

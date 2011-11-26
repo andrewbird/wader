@@ -16,11 +16,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.ericsson import EricssonDevicePlugin
+from core.hardware.ericsson import EricssonDevicePlugin
 
 
 class EricssonF3507G(EricssonDevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin} for Ericsson's F3507G"""
+    """:class:`~core.plugin.DevicePlugin} for Ericsson's F3507G"""
     name = "Ericsson F3507G"
     version = "0.1"
     author = u"Andrew Bird"

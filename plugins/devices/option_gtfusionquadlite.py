@@ -17,12 +17,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionWCDMADevicePlugin
+from core.hardware.option import OptionWCDMADevicePlugin
 
 
 class OptionGTFusionQuadLite(OptionWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Option's GT Fusion Quad Lite
+    :class:`~core.plugin.DevicePlugin` for Option's GT Fusion Quad Lite
     """
     name = "Option GT Fusion Quad Lite"
     version = "0.1"

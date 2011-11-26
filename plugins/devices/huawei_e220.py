@@ -18,10 +18,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.command import ATCmd
+from core.command import ATCmd
 from wader.common.encoding import pack_ucs2_bytes
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HuaweiSIMClass,
@@ -30,7 +30,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiE220Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the E220
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the E220
     """
 
     def _add_contact(self, name, number, index):
@@ -58,7 +58,7 @@ class HuaweiE220Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE220Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E220
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E220
     """
     wrapper_klass = HuaweiE220Wrapper
 
@@ -109,7 +109,7 @@ class HuaweiE220SIMClass(HuaweiSIMClass):
 
 
 class HuaweiE220(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E220"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E220"""
     name = "Huawei E220"
     version = "0.1"
     author = u"Pablo Martí"

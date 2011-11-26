@@ -20,7 +20,7 @@
 from twisted.trial import unittest
 from twisted.internet import defer
 
-from wader.common.contact import ContactStore
+from core.contact import ContactStore
 
 SKIP_TEST = False
 try:
@@ -37,7 +37,7 @@ executed = None
 
 
 class TestContactStore(unittest.TestCase):
-    """Tests for wader.common.contact.ContactStore"""
+    """Tests for core.contact.ContactStore"""
     skip = "No contact providers found" if SKIP_TEST else None
 
     def setUpOnce(self):

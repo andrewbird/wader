@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """BSD-based OS plugins"""
 
-from wader.common.oses.unix import UnixPlugin
+from core.oses.unix import UnixPlugin
 
 
 class FreeBSDPlugin(UnixPlugin):

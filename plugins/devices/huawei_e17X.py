@@ -20,8 +20,8 @@ from twisted.internet import defer
 
 import wader.common.aterrors as E
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -78,7 +78,7 @@ class HuaweiE17XWrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE17XCustomizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E17X
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E17X
     """
     wrapper_klass = HuaweiE17XWrapper
 
@@ -96,7 +96,7 @@ class HuaweiE17XCustomizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiE17X(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E17X"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E17X"""
     name = "Huawei E17X"
     version = "0.1"
     author = u"Jaime Soriano"

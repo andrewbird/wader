@@ -15,11 +15,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
 class NovatelEU740(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's EU740"""
+    """:class:`~core.plugin.DevicePlugin` for Novatel's EU740"""
     name = "Novatel EU740"
     version = "0.1"
     author = u"Pablo Martí"

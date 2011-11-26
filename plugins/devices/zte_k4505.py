@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
+from core.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper)
 
@@ -36,7 +36,7 @@ class ZTEK4505Customizer(ZTEWCDMACustomizer):
 
 class ZTEK4505(ZTEWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for ZTE's K4505-Z
+    :class:`~core.plugin.DevicePlugin` for ZTE's K4505-Z
     """
     name = "ZTE K4505-Z"
     version = "0.1"

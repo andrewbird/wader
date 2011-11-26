@@ -26,18 +26,18 @@ from twisted.internet import defer
 from messaging.sms import is_gsm_text
 from messaging.utils import encode_str, unpack_msg
 
-from wader.common.middleware import WCDMAWrapper
-from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
-from wader.common.contact import Contact
+from core.middleware import WCDMAWrapper
+from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
+from core.contact import Contact
 from wader.common import consts
 from wader.common.encoding import (from_u, pack_ucs2_bytes,
                                    unpack_ucs2_bytes_in_ts31101_80,
                                    unpack_ucs2_bytes_in_ts31101_81,
                                    unpack_ucs2_bytes_in_ts31101_82)
 
-from wader.common.hardware.base import WCDMACustomizer
-from wader.common.plugin import DevicePlugin
-from wader.common.sim import SIMBaseClass
+from core.hardware.base import WCDMACustomizer
+from core.plugin import DevicePlugin
+from core.sim import SIMBaseClass
 from wader.common.utils import rssi_to_percentage
 import wader.common.signals as S
 import wader.common.aterrors as E

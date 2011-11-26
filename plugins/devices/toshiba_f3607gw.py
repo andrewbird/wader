@@ -16,12 +16,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.ericsson import (EricssonDevicePlugin,
+from core.hardware.ericsson import (EricssonDevicePlugin,
                                             EricssonF3607gwCustomizer)
 
 
 class ToshibaF3607gw(EricssonDevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Ericsson's Toshiba F3607gw"""
+    """:class:`~core.plugin.DevicePlugin` for Ericsson's Toshiba F3607gw"""
     name = "Toshiba F3607gw"
     version = "0.1"
     author = u"Andrew Bird"

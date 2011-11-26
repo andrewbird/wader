@@ -19,10 +19,12 @@
 
 import os
 import tempfile
+import sys
 
 from twisted.trial import unittest
 
-from wader.common.resolvconf import NamedManager
+sys.path.insert(0, '..')
+from core.resolvconf import NamedManager
 from wader.common.utils import get_file_data
 
 

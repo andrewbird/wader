@@ -18,8 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMAWrapper,
                                           HuaweiWCDMACustomizer,
                                           HUAWEI_BAND_DICT)
@@ -27,7 +27,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiEM730VWrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the EM730V
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the EM730V
     """
 
     def send_ussd(self, ussd):
@@ -36,7 +36,7 @@ class HuaweiEM730VWrapper(HuaweiWCDMAWrapper):
 
 class HuaweiEM730VCustomizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the EM730V
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the EM730V
     """
     wrapper_klass = HuaweiEM730VWrapper
 
@@ -57,7 +57,7 @@ class HuaweiEM730VCustomizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiEM730V(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's EM730V"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's EM730V"""
     name = "Huawei EM730V"
     version = "0.1"
     author = u"Pablo Martí"

@@ -19,16 +19,16 @@
 
 import serial
 
-from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
+from core.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NOVATEL_BAND_DICT)
-from wader.common.hardware.base import build_band_dict
+from core.hardware.base import build_band_dict
 from wader.common import consts
 
 
 class NovatelMC950DCustomizer(NovatelWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for MC950D
+    :class:`~core.hardware.novatel.NovatelWCDMACustomizer` for MC950D
     """
 
     # Quad-Band 850/900/1800/1900 MHz GPRS/EDGE
@@ -50,7 +50,7 @@ class NovatelMC950DCustomizer(NovatelWCDMACustomizer):
 
 class NovatelMC950D(NovatelWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Novatel's Ovation MC950D
+    :class:`~core.plugin.DevicePlugin` for Novatel's Ovation MC950D
     """
     name = "Novatel MC950D"
     version = "0.1"

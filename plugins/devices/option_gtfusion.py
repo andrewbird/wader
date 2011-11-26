@@ -18,12 +18,12 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # Stefano Rivera contributed this info through email on 20 Sept 2007
-from wader.common.hardware.option import OptionWCDMADevicePlugin
+from core.hardware.option import OptionWCDMADevicePlugin
 
 
 class OptionGTFusion(OptionWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Option's GT Fusion
+    :class:`~core.plugin.DevicePlugin` for Option's GT Fusion
     """
     name = "Option GlobeTrotter Fusion"
     version = "0.1"

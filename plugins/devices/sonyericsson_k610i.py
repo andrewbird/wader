@@ -17,9 +17,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.sonyericsson import SonyEricssonCustomizer
-from wader.common.plugin import DevicePlugin
-from wader.common.middleware import WCDMAWrapper
+from core.hardware.sonyericsson import SonyEricssonCustomizer
+from core.plugin import DevicePlugin
+from core.middleware import WCDMAWrapper
 
 
 class K610iWrapper(WCDMAWrapper):
@@ -39,7 +39,7 @@ class SonyEricssonK610iCustomizer(SonyEricssonCustomizer):
 
 
 class SonyEricssonK610iUSB(DevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Sony Ericsson k610i"""
+    """:class:`~core.plugin.DevicePlugin` for Sony Ericsson k610i"""
     name = "Sony Ericsson K610i"
     version = "0.1"
     author = u"Jaime Soriano"

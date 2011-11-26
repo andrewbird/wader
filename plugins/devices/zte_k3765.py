@@ -20,7 +20,7 @@
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
 
-from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
+from core.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper)
 
@@ -63,7 +63,7 @@ class ZTEK3765Customizer(ZTEWCDMACustomizer):
 
 
 class ZTEK3765(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's K3765-Z"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's K3765-Z"""
     name = "Vodafone K3765-Z"
     version = "0.1"
     author = "Andrew Bird"

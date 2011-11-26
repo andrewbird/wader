@@ -19,7 +19,7 @@
 
 import serial
 
-from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
+from core.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NovatelWrapper)
 
@@ -45,7 +45,7 @@ class NovatelU740Customizer(NovatelWCDMACustomizer):
 
 
 class NovatelU740(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's U740"""
+    """:class:`~core.plugin.DevicePlugin` for Novatel's U740"""
     name = "Novatel U740"
     version = "0.1"
     author = "Adam King"

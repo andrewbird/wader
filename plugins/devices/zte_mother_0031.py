@@ -16,13 +16,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import ZTEWCDMADevicePlugin
+from core.hardware.zte import ZTEWCDMADevicePlugin
 
-from wader.plugins.zte_mf637u import ZTEMF637U
+from plugins.zte_mf637u import ZTEMF637U
 
 
 class ZTEMother0031(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's PID 0x031 Family"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's PID 0x031 Family"""
     name = "ZTE Mother 0x0031"
     version = "0.1"
     author = u"Andrew Bird"

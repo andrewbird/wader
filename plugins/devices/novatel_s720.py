@@ -20,7 +20,7 @@
 
 
 class NovatelS720(object):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel S720"""
+    """:class:`~core.plugin.DevicePlugin` for Novatel S720"""
     name = "Novatel S720"
     version = "0.1"
     author = u"Pablo Martí"

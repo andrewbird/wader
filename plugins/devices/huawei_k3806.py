@@ -17,8 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -26,7 +26,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiK3806Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the K3806
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the K3806
     """
 
     def enable_radio(self, enable):
@@ -45,7 +45,7 @@ class HuaweiK3806Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK3806Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3806
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K3806
     """
     wrapper_klass = HuaweiK3806Wrapper
 
@@ -67,7 +67,7 @@ class HuaweiK3806Customizer(HuaweiWCDMACustomizer):
 
 class HuaweiK3806(HuaweiWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Huawei's Vodafone K3806
+    :class:`~core.plugin.DevicePlugin` for Huawei's Vodafone K3806
     """
     name = "Huawei K3806"
     version = "0.1"

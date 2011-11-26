@@ -24,12 +24,12 @@ from twisted.internet import defer, reactor
 
 from wader.common import consts
 import wader.common.aterrors as E
-from wader.common.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
-from wader.common.hardware.base import WCDMACustomizer
-from wader.common.middleware import WCDMAWrapper
-from wader.common.exported import HSOExporter
-from wader.common.sim import SIMBaseClass
-from wader.common.plugin import DevicePlugin
+from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
+from core.hardware.base import WCDMACustomizer
+from core.middleware import WCDMAWrapper
+from core.exported import HSOExporter
+from core.sim import SIMBaseClass
+from core.plugin import DevicePlugin
 from wader.common.utils import revert_dict
 import wader.common.signals as S
 

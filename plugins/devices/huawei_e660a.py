@@ -18,10 +18,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.command import ATCmd
+from core.command import ATCmd
 from wader.common.encoding import pack_ucs2_bytes
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -51,7 +51,7 @@ class HuaweiE660aWrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE660aCustomizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E660a
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E660a
     """
     wrapper_klass = HuaweiE660aWrapper
 
@@ -71,7 +71,7 @@ class HuaweiE660aCustomizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiE660A(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E660A"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E660A"""
     name = "Huawei E660A"
     version = "0.1"
     author = u"Pablo Martí"

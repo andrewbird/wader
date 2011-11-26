@@ -17,11 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionWCDMADevicePlugin
+from core.hardware.option import OptionWCDMADevicePlugin
 
 
 class OptionNozomi(OptionWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Option's Nozomi"""
+    """:class:`~core.plugin.DevicePlugin` for Option's Nozomi"""
     name = "Option GlobeTrotter 3G+"
     version = "0.1"
     author = u"Pablo Martí"

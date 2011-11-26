@@ -15,12 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
 class NovatelEU870D(NovatelWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Novatel's EU870D MiniCard
+    :class:`~core.plugin.DevicePlugin` for Novatel's EU870D MiniCard
     """
     name = "Novatel EU870D MiniCard"
     version = "0.1"

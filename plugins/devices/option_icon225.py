@@ -16,11 +16,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
+from core.hardware.option import OptionHSOWCDMADevicePlugin
 
 
 class OptionIcon225(OptionHSOWCDMADevicePlugin):
-    """:class:`wader.common.plugin.DevicePlugin` for Options's Icon 225"""
+    """:class:`core.plugin.DevicePlugin` for Options's Icon 225"""
     name = "Option Icon 225"
     version = "0.1"
     author = "Isaac Clerencia"

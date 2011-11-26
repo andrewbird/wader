@@ -25,10 +25,10 @@ DevicePlugin for Option Colt
 from epsilon.modal import mode
 from twisted.python import log
 
-from wader.common.hardware.option import (OptionWCDMADevicePlugin,
+from core.hardware.option import (OptionWCDMADevicePlugin,
                                         OptionWCDMACustomizer)
-from wader.common.sim import SIMBaseClass
-from wader.common.statem.auth import AuthStateMachine
+from core.sim import SIMBaseClass
+from core.statem.auth import AuthStateMachine
 
 
 class OptionColtAuthStateMachine(AuthStateMachine):
@@ -88,12 +88,12 @@ class OptionColtSIMClass(SIMBaseClass):
 
 
 class OptionColtCustomizer(OptionWCDMACustomizer):
-    """:class:`~wader.common.hardware.Customizer` for Option Colt"""
+    """:class:`~core.hardware.Customizer` for Option Colt"""
     auth_klass = OptionColtAuthStateMachine
 
 
 class OptionColt(OptionWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Option Colt"""
+    """:class:`~core.plugin.DevicePlugin` for Option Colt"""
     name = "Option Colt"
     version = "0.1"
     author = u"Pablo Martí"

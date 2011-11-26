@@ -27,13 +27,13 @@ from time import sleep
 from twisted.internet.threads import deferToThread
 from twisted.python import log
 
-from wader.common.command import get_cmd_dict_copy
+from core.command import get_cmd_dict_copy
 from wader.common.consts import MDM_INTFACE
-from wader.common.middleware import WCDMAWrapper
-from wader.common.plugin import PluginManager
-from wader.common.statem.auth import AuthStateMachine
-from wader.common.statem.simple import SimpleStateMachine
-from wader.common.statem.networkreg import NetworkRegistrationStateMachine
+from core.middleware import WCDMAWrapper
+from core.plugin import PluginManager
+from core.statem.auth import AuthStateMachine
+from core.statem.simple import SimpleStateMachine
+from core.statem.networkreg import NetworkRegistrationStateMachine
 import wader.common.exceptions as ex
 
 
@@ -56,7 +56,7 @@ class WCDMACustomizer(object):
           device
     """
 
-    from wader.common.exported import WCDMAExporter
+    from core.exported import WCDMAExporter
     wrapper_klass = WCDMAWrapper
     exporter_klass = WCDMAExporter
     async_regexp = None
@@ -157,7 +157,7 @@ def _identify_device(port):
 
 
 def identify_device(plugin):
-    """Returns a :class:`~wader.common.plugin.DevicePlugin` out of `plugin`"""
+    """Returns a :class:`~core.plugin.DevicePlugin` out of `plugin`"""
     if not plugin.mapping:
         # only identify devices that require it
         return check_auth_state(plugin)

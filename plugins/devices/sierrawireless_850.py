@@ -18,11 +18,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """DevicePlugin for the Sierra Wireless 850 datacard"""
 
-from wader.common.hardware.sierra import SierraWCDMADevicePlugin
+from core.hardware.sierra import SierraWCDMADevicePlugin
 
 
 class SierraWireless850(SierraWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for SierraWireless 850"""
+    """:class:`~core.plugin.DevicePlugin` for SierraWireless 850"""
     name = "SierraWireless 850"
     version = "0.1"
     author = u"Pablo Martí"

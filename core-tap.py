@@ -23,13 +23,17 @@ import locale
 locale.setlocale(locale.LC_ALL, '')
 
 from wader.common.consts import APP_NAME
-from wader.common.startup import (create_skeleton_and_do_initial_setup,
-                                  get_wader_application)
+
+import sys
+sys.path.insert(0, '/usr/share/wader-core')
+
+from core.startup import (create_skeleton_and_do_initial_setup,
+                          get_wader_application)
 # it will just return if its not necessary
 create_skeleton_and_do_initial_setup()
 
 # check if we have an OSPlugin for this OS/Distro
-from wader.common.oal import get_os_object
+from core.oal import get_os_object
 if get_os_object() is None:
     message = 'OS/Distro not registered'
     details = """

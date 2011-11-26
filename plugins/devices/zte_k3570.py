@@ -17,7 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
+from core.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper)
 
@@ -38,7 +38,7 @@ class ZTEK3570Customizer(ZTEWCDMACustomizer):
 
 
 class ZTEK3570(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's K3570-Z"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's K3570-Z"""
     name = "Vodafone K3570-Z"
     version = "0.1"
     author = "Andrew Bird"

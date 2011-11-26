@@ -20,8 +20,8 @@ from twisted.internet import reactor
 from twisted.internet.task import deferLater
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -29,7 +29,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiE1820Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the E1820
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the E1820
     """
 
     def check_pin(self):
@@ -62,7 +62,7 @@ class HuaweiE1820Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE1820Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E1820
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E1820
     """
     wrapper_klass = HuaweiE1820Wrapper
 
@@ -83,7 +83,7 @@ class HuaweiE1820Customizer(HuaweiWCDMACustomizer):
 
 class HuaweiE1820(HuaweiWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Huawei's E1820
+    :class:`~core.plugin.DevicePlugin` for Huawei's E1820
     """
     name = "Huawei E1820"
     version = "0.1"

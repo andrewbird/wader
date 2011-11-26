@@ -40,7 +40,7 @@ from twisted.python.logfile import BaseLogFile, LogReader
 import wader.common.consts as consts
 from wader.common._dbus import DBusExporterHelper
 from wader.common.provider import NetworkProvider, nick_debug
-from wader.common.serialport import SerialPort
+from core.serialport import SerialPort
 
 DELAY = 10
 ATTACH_DELAY = 1
@@ -190,7 +190,7 @@ class WaderService(Service):
 
     def startService(self):
         """Starts the Wader service"""
-        from wader.common.dialer import DialerManager
+        from core.dialer import DialerManager
         self.ctrl = StartupController()
         self.dial = DialerManager(self.ctrl)
 
@@ -217,7 +217,7 @@ class StartupController(Object, DBusExporterHelper):
                        bus=dbus.SystemBus(mainloop=gloop))
         super(StartupController, self).__init__(bus_name=name,
                                         object_path=consts.WADER_OBJPATH)
-        from wader.common.oal import get_os_object
+        from core.oal import get_os_object
         self.hm = get_os_object().hw_manager
         assert self.hm is not None, "Running Wader on an unsupported OS?"
         self.hm.register_controller(self)
@@ -321,8 +321,8 @@ def create_skeleton_and_do_initial_setup():
         os.remove(consts.NETWORKS_DB)
 
     # regenerate plugin cache
-    import wader.plugins
-    list(getPlugins(IPlugin, package=wader.plugins))
+    import plugins
+    list(getPlugins(IPlugin, package=plugins))
 
     # create new DB
     provider = NetworkProvider()

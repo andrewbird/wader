@@ -26,12 +26,12 @@ from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, MM_MODEM_TYPE_REV,
                                  NET_INTFACE, MM_IP_METHOD_PPP)
-from wader.common.hardware.base import _identify_device
+from core.hardware.base import _identify_device
 from wader.common.interfaces import IHardwareManager
-from wader.common.oses.unix import UnixPlugin
-from wader.common.plugin import PluginManager
-from wader.common.serialport import Ports
-from wader.common.startup import setup_and_export_device
+from core.oses.unix import UnixPlugin
+from core.plugin import PluginManager
+from core.serialport import Ports
+from core.startup import setup_and_export_device
 
 
 class OSXPlugin(UnixPlugin):
@@ -82,7 +82,7 @@ class HardwareManager(object):
     def get_devices(self):
         """See :meth:`wader.common.interfaces.IHardwareManager.get_devices`"""
         # so pylint does not complain on Linux
-        osxserialports = reflect.namedAny('wader.common.oses.osxserialports')
+        osxserialports = reflect.namedAny('core.oses.osxserialports')
         devs_info = [d for d in osxserialports.modems()
                         if 'Modem' in d['suffix']]
         deferreds = []

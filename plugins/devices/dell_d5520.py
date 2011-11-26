@@ -20,15 +20,15 @@
 import serial
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NOVATEL_BAND_DICT)
 
 
 class NovatelD5520Customizer(NovatelWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for D5520
+    :class:`~core.hardware.novatel.NovatelWCDMACustomizer` for D5520
     """
     # Quad-Band 850/900/1800/1900 MHz GPRS/EDGE
     # Tri-Band 850/1900/2100 MHz HSUPA/HSDPA/UMTS
@@ -48,7 +48,7 @@ class NovatelD5520Customizer(NovatelWCDMACustomizer):
 
 
 class NovatelD5520(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's Dell D5520"""
+    """:class:`~core.plugin.DevicePlugin` for Novatel's Dell D5520"""
     name = "Dell D5520"
     version = "0.1"
     author = u"Pablo Martí"

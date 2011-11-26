@@ -16,18 +16,4 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-"""Common stuff for all SonyEricsson's cards"""
-
-from wader.common.hardware.base import WCDMACustomizer
-
-SONYERICSSON_ALLOWED_DICT = {}
-SONYERICSSON_CONN_DICT = {}
-SONYERICSSON_BAND_DICT = {}
-
-
-class SonyEricssonCustomizer(WCDMACustomizer):
-    """WCDMA customizer for sonny ericsson devices"""
-    async_regexp = None
-    allowed_dict = SONYERICSSON_ALLOWED_DICT
-    conn_dict = SONYERICSSON_CONN_DICT
-    band_dict = SONYERICSSON_BAND_DICT
+"""Wader's core"""

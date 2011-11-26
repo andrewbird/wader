@@ -17,8 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -32,7 +32,7 @@ class HuaweiE510Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE510Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E510
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E510
     """
     wrapper_klass = HuaweiE510Wrapper
 
@@ -52,7 +52,7 @@ class HuaweiE510Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiE510(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E510"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E510"""
     name = "Huawei E510"
     version = "0.1"
     author = u"Andrew Bird"

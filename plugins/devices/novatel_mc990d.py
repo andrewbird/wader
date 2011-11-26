@@ -18,12 +18,12 @@
 
 import serial
 
-from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
 class NovatelMC990D(NovatelWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Novatel MC990D
+    :class:`~core.plugin.DevicePlugin` for Novatel MC990D
     """
     name = "Novatel MC990D"
     version = "0.1"

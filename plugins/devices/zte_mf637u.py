@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
+from core.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper)
 
@@ -35,7 +35,7 @@ class ZTEMF637UCustomizer(ZTEWCDMACustomizer):
 
 
 class ZTEMF637U(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's MF637U"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's MF637U"""
     name = "ZTE MF637U"
     version = "0.1"
     author = u"Andrew Bird"

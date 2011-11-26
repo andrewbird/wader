@@ -27,8 +27,8 @@ from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
                                  HSO_INTFACE, SPL_INTFACE, USD_INTFACE,
                                  MMS_INTFACE)
 from wader.common.sms import Message
-from wader.common.mms import mms_to_dbus_data, dbus_data_to_mms
-from wader.common.contact import Contact
+from core.mms import mms_to_dbus_data, dbus_data_to_mms
+from core.contact import Contact
 from wader.common._dbus import DBusExporterHelper
 from wader.common.utils import (convert_ip_to_int,
                                 convert_network_mode_to_access_technology)

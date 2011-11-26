@@ -16,15 +16,15 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+from core.hardware.novatel import NovatelWCDMADevicePlugin
 
-from wader.plugins.novatel_mc990d import NovatelMC990D
-from wader.plugins.novatel_mifi2352 import NovatelMiFi2352
+from plugins.novatel_mc990d import NovatelMC990D
+from plugins.novatel_mifi2352 import NovatelMiFi2352
 
 
 class NovatelMother(NovatelWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` Novatel's Ovation/MiFi
+    :class:`~core.plugin.DevicePlugin` Novatel's Ovation/MiFi
     devices that share a common PID
     """
     name = "Novatel Mother"

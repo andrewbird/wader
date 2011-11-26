@@ -27,12 +27,12 @@ from twisted.internet import defer, reactor, utils
 from twisted.python import log, reflect
 
 from wader.common.interfaces import IHardwareManager
-from wader.common.hardware.base import identify_device, probe_ports
-from wader.common.plugin import PluginManager
+from core.hardware.base import identify_device, probe_ports
+from core.plugin import PluginManager
 from wader.common import consts
-from wader.common.oses.unix import UnixPlugin
-from wader.common.startup import setup_and_export_device
-from wader.common.serialport import Ports
+from core.oses.unix import UnixPlugin
+from core.startup import setup_and_export_device
+from core.serialport import Ports
 from wader.common.utils import get_file_data, natsort
 
 

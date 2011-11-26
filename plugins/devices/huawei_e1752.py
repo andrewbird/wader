@@ -16,13 +16,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import (HuaweiWCDMACustomizer,
+from core.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
 
 class HuaweiE1752(HuaweiWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Huawei's E1752
+    :class:`~core.plugin.DevicePlugin` for Huawei's E1752
     """
     name = "Huawei E1752"
     version = "0.1"

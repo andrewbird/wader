@@ -32,7 +32,7 @@ from wader.common.aterrors import (CMSError314, SimBusy, SimNotStarted,
 from wader.common.encoding import pack_dbus_safe_string
 from wader.common.signals import SIG_MMS, SIG_SMS, SIG_SMS_COMP, SIG_SMS_DELV
 from wader.common.sms import Message
-from wader.common.mms import dbus_data_to_mms
+from core.mms import dbus_data_to_mms
 
 STO_INBOX, STO_DRAFTS, STO_SENT = 1, 2, 3
 # XXX: What should this threshold be?

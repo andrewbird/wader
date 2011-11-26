@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.ericsson import (EricssonDevicePlugin,
+from core.hardware.ericsson import (EricssonDevicePlugin,
                                             EricssonWrapper,
                                             EricssonCustomizer,
                                             ERICSSON_CONN_DICT)
@@ -46,7 +46,7 @@ class EricssonMD300Customizer(EricssonCustomizer):
 
 
 class EricssonMD300(EricssonDevicePlugin):
-    """:class:`~wader.common.plugin.DBusDevicePlugin` for Ericsson's MD300"""
+    """:class:`~core.plugin.DBusDevicePlugin` for Ericsson's MD300"""
     name = "Ericsson MD300"
     version = "0.1"
     author = u"Andrew Bird"

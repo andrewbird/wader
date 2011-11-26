@@ -76,29 +76,29 @@ fi
 %dir %{python_sitelib}/wader
 %{python_sitelib}/Wader-*
 %dir %{python_sitelib}/wader/common/
-%dir %{python_sitelib}/wader/common/hardware/
-%dir %{python_sitelib}/wader/common/oses/
-%dir %{python_sitelib}/wader/common/statem/
-%dir %{python_sitelib}/wader/common/backends/
-%dir %{python_sitelib}/wader/plugins/
+%dir %{wader_root}/core/plugins/
 
 %{python_sitelib}/wader/*.py
 %{python_sitelib}/wader/*.py[co]
 %{python_sitelib}/wader/common/*.py
 %{python_sitelib}/wader/common/*.py[co]
-%{python_sitelib}/wader/common/hardware/*.py
-%{python_sitelib}/wader/common/hardware/*.py[co]
-%{python_sitelib}/wader/common/oses/*.py
-%{python_sitelib}/wader/common/oses/*.py[co]
-%{python_sitelib}/wader/common/statem/*.py
-%{python_sitelib}/wader/common/statem/*.py[co]
 %{python_sitelib}/wader/common/backends/*.py
 %{python_sitelib}/wader/common/backends/*.py[co]
-%{python_sitelib}/wader/plugins/*.py
-%{python_sitelib}/wader/plugins/*.py[co]
+%{wader_root}/core/plugins/*.py
+%{wader_root}/core/plugins/*.py[co]
 
 %dir %{wader_root}/
 %dir %{wader_root}/plugins/
+%dir %{wader_root}/core/
+%{wader_root}/core/*.py*
+%dir %{wader_root}/core/hardware/
+%{wader_root}/core/hardware/*.py*
+%dir %{wader_root}/core/oses/
+%{wader_root}/core/oses/*.py*
+%dir %{wader_root}/core/statem/
+%{wader_root}/core/statem/*.py*
+%dir %{wader_root}/core/backends/
+%{wader_root}/core/backends/*.py*
 %{wader_root}/*.py*
 %{wader_root}/plugins/*.py*
 %{wader_root}/test/test_dbus*.py*

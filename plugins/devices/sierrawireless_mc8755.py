@@ -19,11 +19,11 @@
 DevicePlugin for the HP branded Sierra Wireless MC8755 embedded device
 """
 
-from wader.common.hardware.sierra import SierraWCDMADevicePlugin
+from core.hardware.sierra import SierraWCDMADevicePlugin
 
 
 class SierraWirelessMC8755(SierraWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for SierraWireless MC 8755"""
+    """:class:`~core.plugin.DevicePlugin` for SierraWireless MC 8755"""
     name = "SierraWireless MC8755"
     version = "0.1"
     author = "John J Doe"

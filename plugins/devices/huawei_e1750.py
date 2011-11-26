@@ -18,8 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMAWrapper,
                                           HuaweiWCDMACustomizer,
                                           HUAWEI_BAND_DICT)
@@ -27,7 +27,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiE1750Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the E1750
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the E1750
     """
 
     def send_ussd(self, ussd):
@@ -36,7 +36,7 @@ class HuaweiE1750Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE1750Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E1750
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E1750
     """
     wrapper_klass = HuaweiE1750Wrapper
 
@@ -57,7 +57,7 @@ class HuaweiE1750Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiE1750(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E1750"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E1750"""
     name = "Huawei E1750"
     version = "0.1"
     author = u"Andrew Bird"

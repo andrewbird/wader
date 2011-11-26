@@ -18,6 +18,6 @@
 """
 OSX plugin
 """
-from wader.common.oses.osx import OSXPlugin
+from core.oses.osx import OSXPlugin
 
 osxplugin = OSXPlugin()

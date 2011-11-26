@@ -20,8 +20,8 @@
 
 from twisted.python import log
 
-from wader.common.plugin import OSPlugin
-from wader.common.resolvconf import NamedManager
+from core.plugin import OSPlugin
+from core.resolvconf import NamedManager
 from wader.common.utils import get_file_data
 
 

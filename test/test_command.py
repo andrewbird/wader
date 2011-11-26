@@ -19,10 +19,12 @@
 """Unittests for the command module"""
 
 import re
+import sys
 
 from twisted.trial import unittest
 
-from wader.common.command import get_cmd_dict_copy
+sys.path.insert(0, '..')
+from core.command import get_cmd_dict_copy
 
 cmd_dict = get_cmd_dict_copy()
 

@@ -20,7 +20,7 @@
 FreeBSD-based OS plugin
 """
 
-from wader.common.oses.bsd import FreeBSDPlugin
+from core.oses.bsd import FreeBSDPlugin
 
 
 class FreeBSD7Plugin(FreeBSDPlugin):

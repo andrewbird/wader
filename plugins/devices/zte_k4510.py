@@ -17,12 +17,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.icera import IceraWCDMADevicePlugin
+from core.hardware.icera import IceraWCDMADevicePlugin
 from wader.common.consts import MM_IP_METHOD_STATIC
 
 
 class ZTEK4510(IceraWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's Vodafone K4510"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's Vodafone K4510"""
     name = "ZTE K4510"
     version = "0.1"
     author = "Andrew Bird"

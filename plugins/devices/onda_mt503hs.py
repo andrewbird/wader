@@ -17,11 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.zte import ZTEWCDMADevicePlugin
+from core.hardware.zte import ZTEWCDMADevicePlugin
 
 
 class ONDAMT503HS(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ONDA's MT503HS"""
+    """:class:`~core.plugin.DevicePlugin` for ONDA's MT503HS"""
     name = "ONDA MT503HS"
     version = "0.1"
     author = "Andrew Bird"

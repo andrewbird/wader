@@ -18,12 +18,12 @@
 
 import serial
 
-from wader.common.hardware.novatel import NovatelWCDMADevicePlugin
+from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
 class NovatelMiFi2352(NovatelWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Novatel's MiFi 2352
+    :class:`~core.plugin.DevicePlugin` for Novatel's MiFi 2352
     """
     name = "Novatel MiFi2352"
     version = "0.1"

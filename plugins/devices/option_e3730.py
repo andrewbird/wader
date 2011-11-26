@@ -16,12 +16,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionHSOWCDMADevicePlugin
+from core.hardware.option import OptionHSOWCDMADevicePlugin
 
 
 class OptionE3730(OptionHSOWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Option's E3730
+    :class:`~core.plugin.DevicePlugin` for Option's E3730
     """
     name = "Option E3730"
     version = "0.1"

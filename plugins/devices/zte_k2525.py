@@ -23,12 +23,12 @@ from twisted.internet.task import deferLater
 
 from wader.common import consts
 import wader.common.aterrors as E
-from wader.common.command import build_cmd_dict
+from core.command import build_cmd_dict
 from wader.common.encoding import (unpack_ucs2_bytes, pack_ucs2_bytes,
                                    check_if_ucs2)
 from wader.common.exceptions import LimitedServiceNetworkError
-from wader.common.middleware import WCDMAWrapper, NetworkOperator
-from wader.common.hardware.zte import (ZTEWCDMADevicePlugin,
+from core.middleware import WCDMAWrapper, NetworkOperator
+from core.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper,
                                        ZTE_CMD_DICT)
@@ -225,7 +225,7 @@ class ZTEK2525Customizer(ZTEWCDMACustomizer):
 
 
 class ZTEK2525(ZTEWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for ZTE's K2525"""
+    """:class:`~core.plugin.DevicePlugin` for ZTE's K2525"""
     name = "Vodafone K2525"
     version = "0.1"
     author = "Andrew Bird"

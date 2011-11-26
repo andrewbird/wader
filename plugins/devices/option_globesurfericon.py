@@ -17,12 +17,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.option import OptionWCDMADevicePlugin
+from core.hardware.option import OptionWCDMADevicePlugin
 
 
 class OptionGlobesurferIcon(OptionWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Options's Globesurfer Icon
+    :class:`~core.plugin.DevicePlugin` for Options's Globesurfer Icon
     """
     name = "Option Globesurfer Icon"
     version = "0.1"

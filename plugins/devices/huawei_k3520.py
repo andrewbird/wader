@@ -17,11 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMAWrapper,
                                           HuaweiWCDMACustomizer,
                                           HUAWEI_BAND_DICT)
-from wader.common.hardware.base import build_band_dict
+from core.hardware.base import build_band_dict
 from wader.common import consts
 
 
@@ -52,7 +52,7 @@ class HuaweiK3520Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK3520Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K3520
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K3520
     """
     wrapper_klass = HuaweiK3520Wrapper
 
@@ -72,7 +72,7 @@ class HuaweiK3520Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiK3520(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's K3520"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's K3520"""
     name = "Huawei K3520"
     version = "0.1"
     author = u"Pablo Martí"

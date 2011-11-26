@@ -18,8 +18,8 @@
 
 from twisted.internet import defer
 from wader.common import consts
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -27,7 +27,7 @@ from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
 
 class HuaweiE173Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the E173
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the E173
     """
 
     def get_manufacturer_name(self):
@@ -41,7 +41,7 @@ class HuaweiE173Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiE173Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the E173
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the E173
     """
     wrapper_klass = HuaweiE173Wrapper
 
@@ -63,7 +63,7 @@ class HuaweiE173Customizer(HuaweiWCDMACustomizer):
 
 class HuaweiE173(HuaweiWCDMADevicePlugin):
     """
-    :class:`~wader.common.plugin.DevicePlugin` for Huawei's E173
+    :class:`~core.plugin.DevicePlugin` for Huawei's E173
     """
     name = "Huawei E173"
     version = "0.1"

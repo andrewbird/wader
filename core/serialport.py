@@ -46,7 +46,7 @@ class Port(object):
 
 
 class Ports(object):
-    """I am a pair of :class:`~wader.common.serialport.Port` objects"""
+    """I am a pair of :class:`~core.serialport.Port` objects"""
 
     def __init__(self, dport, cport):
         self.dport = Port(dport)

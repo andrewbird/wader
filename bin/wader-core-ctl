@@ -6,6 +6,7 @@ import sys
 from time import sleep
 
 from wader.common.consts import (APP_VERSION, DATA_DIR, PID_PATH)
+sys.path.insert(0, DATA_DIR)
 
 from twisted.python.release import sh
 

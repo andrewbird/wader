@@ -19,9 +19,9 @@
 
 import re
 
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer)
-from wader.common.command import build_cmd_dict
+from core.command import build_cmd_dict
 
 E620_CMD_DICT = HuaweiWCDMACustomizer.cmd_dict.copy()
 E620_CMD_DICT['get_roaming_ids'] = build_cmd_dict(re.compile(
@@ -36,7 +36,7 @@ class HuaweiE620Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiE620(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's E620"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's E620"""
     name = "Huawei E620"
     version = "0.1"
     author = u"Pablo Martí"

@@ -19,15 +19,15 @@
 import serial
 
 from wader.common import consts
-from wader.common.hardware.novatel import (NovatelWCDMADevicePlugin,
+from core.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NOVATEL_BAND_DICT)
-from wader.common.hardware.base import build_band_dict
+from core.hardware.base import build_band_dict
 
 
 class NovatelXU870Customizer(NovatelWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.novatel.NovatelWCDMACustomizer` for XU870
+    :class:`~core.hardware.novatel.NovatelWCDMACustomizer` for XU870
     """
 
     # Supported bands (from Novatel docs)
@@ -58,7 +58,7 @@ class NovatelXU870Customizer(NovatelWCDMACustomizer):
 
 
 class NovatelXU870(NovatelWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Novatel's XU870"""
+    """:class:`~core.plugin.DevicePlugin` for Novatel's XU870"""
     name = "Novatel XU870"
     version = "0.1"
     author = u"Pablo Martí"

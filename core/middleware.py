@@ -17,7 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
-Wrapper around :class:`~wader.common.protocol.WCDMAProtocol`
+Wrapper around :class:`~core.protocol.WCDMAProtocol`
 
 It basically provides error control and more high-level operations.
 N-tier folks can see this as a Business Logic class.
@@ -54,17 +54,17 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  MM_GSM_ACCESS_TECH_LTE,
                                  MM_IP_METHOD_PPP, HSO_PAP_AUTH)
 
-from wader.common.contact import Contact
+from core.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2, LATIN_EX_B,
                                    from_8bit_in_gsm_or_ts31101)
 import wader.common.exceptions as ex
-from wader.common.mal import MessageAssemblyLayer
-from wader.common.mms import (send_m_send_req, send_m_notifyresp_ind,
+from core.mal import MessageAssemblyLayer
+from core.mms import (send_m_send_req, send_m_notifyresp_ind,
                               get_payload)
-from wader.common.protocol import WCDMAProtocol
+from core.protocol import WCDMAProtocol
 from wader.common.signals import SIG_CREG
-from wader.common.sim import (COM_READ_BINARY, EF_AD, EF_SPN, EF_ICCID, SW_OK,
+from core.sim import (COM_READ_BINARY, EF_AD, EF_SPN, EF_ICCID, SW_OK,
                               RETRY_ATTEMPTS, RETRY_TIMEOUT)
 from wader.common.sms import Message
 from wader.common.utils import rssi_to_percentage
@@ -74,7 +74,7 @@ CACHETIME = 5
 
 class WCDMAWrapper(WCDMAProtocol):
     """
-    I am a wrapper around :class:`~wader.common.protocol.WCDMAProtocol`
+    I am a wrapper around :class:`~core.protocol.WCDMAProtocol`
 
     Its main objective is to provide some error control on some operations
     and a cleaner API to deal with its results.
@@ -875,7 +875,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def _regexp_to_contact(self, match):
         """
-        Returns a :class:`wader.common.contact.Contact` out of ``match``
+        Returns a :class:`core.contact.Contact` out of ``match``
 
         :type match: ``re.MatchObject``
         """
@@ -950,7 +950,7 @@ class WCDMAWrapper(WCDMAProtocol):
         it is the caller's responsability to give at least 15 seconds
         to the device to settle, this time varies from device to device
         """
-        from wader.common.startup import attach_to_serial_port
+        from core.startup import attach_to_serial_port
         d = attach_to_serial_port(self.device)
         d.addCallback(lambda _: super(WCDMAWrapper, self).send_pin(pin))
         d.addCallback(lambda response: response[0].group('resp'))
@@ -1355,7 +1355,7 @@ class WCDMAWrapper(WCDMAProtocol):
 
             return resp
 
-        from wader.common.startup import attach_to_serial_port
+        from core.startup import attach_to_serial_port
 
         def process_device_and_initialize(device):
             self.device = device

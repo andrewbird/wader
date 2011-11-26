@@ -33,7 +33,7 @@ from wader.common._dbus import DBusExporterHelper
 from wader.common.aterrors import CallIndexError
 import wader.common.consts as consts
 from wader.common.interfaces import IDialer
-from wader.common.oal import get_os_object
+from core.oal import get_os_object
 from wader.common.utils import convert_int_to_ip
 
 
@@ -293,7 +293,7 @@ class DialerManager(Object, DBusExporterHelper):
         :param dev_opath: DBus object path of the device to use
         :param opath: DBus object path of the dialer
         """
-        from wader.common.backends import get_backend, plain_backend
+        from core.backends import get_backend, plain_backend
         device = self.ctrl.hm.clients[dev_opath]
 
         if plain:

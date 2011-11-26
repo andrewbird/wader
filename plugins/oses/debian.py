@@ -21,7 +21,7 @@ Debian OSPlugin
 """
 from os.path import exists
 
-from wader.common.oses.linux import LinuxPlugin
+from core.oses.linux import LinuxPlugin
 
 
 class DebianBasedDistro(LinuxPlugin):

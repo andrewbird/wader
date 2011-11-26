@@ -21,11 +21,11 @@ from twisted.internet import defer, reactor
 from twisted.internet.task import deferLater
 
 from wader.common import consts
-from wader.common.command import get_cmd_dict_copy
-from wader.common.hardware.base import WCDMACustomizer
-from wader.common.middleware import WCDMAWrapper
-from wader.common.plugin import DevicePlugin
-from wader.common.sim import SIMBaseClass
+from core.command import get_cmd_dict_copy
+from core.hardware.base import WCDMACustomizer
+from core.middleware import WCDMAWrapper
+from core.plugin import DevicePlugin
+from core.sim import SIMBaseClass
 
 # Gobi 2000 notes:
 #   Unfortunately there is only one tty port available so it has to be

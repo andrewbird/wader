@@ -36,7 +36,7 @@ def get_os_object():
     if _os_obj is not None:
         return _os_obj
 
-    from wader.common.plugin import PluginManager
+    from core.plugin import PluginManager
     from wader.common.interfaces import IOSPlugin
 
     for osplugin in PluginManager.get_plugins(IOSPlugin):

@@ -16,14 +16,14 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.hardware.ericsson import (EricssonDevicePlugin,
+from core.hardware.ericsson import (EricssonDevicePlugin,
                                             EricssonF3607gwCustomizer)
 
 #
 # Note F3307 is a F3607gw without GPS and only 2 bands - same firmware
 #
 class EricssonF3307(EricssonDevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Ericsson's F3307"""
+    """:class:`~core.plugin.DevicePlugin` for Ericsson's F3307"""
     name = "Ericsson F3307"
     version = "0.1"
     author = u"Andrew Bird"

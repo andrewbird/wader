@@ -19,10 +19,10 @@
 from twisted.internet import defer
 
 from wader.common import consts
-from wader.common.command import ATCmd
+from core.command import ATCmd
 from wader.common.encoding import pack_ucs2_bytes
-from wader.common.hardware.base import build_band_dict
-from wader.common.hardware.huawei import (HuaweiWCDMADevicePlugin,
+from core.hardware.base import build_band_dict
+from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper,
                                           HUAWEI_BAND_DICT)
@@ -41,7 +41,7 @@ CONN_DICT = {
 
 class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMAWrapper` for the K2540
+    :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the K2540
     """
 
     def _add_contact(self, name, number, index):
@@ -88,7 +88,7 @@ class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
 
 class HuaweiK2540Customizer(HuaweiWCDMACustomizer):
     """
-    :class:`~wader.common.hardware.huawei.HuaweiWCDMACustomizer` for the K2540
+    :class:`~core.hardware.huawei.HuaweiWCDMACustomizer` for the K2540
     """
     wrapper_klass = HuaweiK2540Wrapper
 
@@ -107,7 +107,7 @@ class HuaweiK2540Customizer(HuaweiWCDMACustomizer):
 
 
 class HuaweiK2540(HuaweiWCDMADevicePlugin):
-    """:class:`~wader.common.plugin.DevicePlugin` for Huawei's K2540"""
+    """:class:`~core.plugin.DevicePlugin` for Huawei's K2540"""
     name = "Huawei K2540"
     version = "0.1"
     author = u"Andrew Bird"

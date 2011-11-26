@@ -25,7 +25,7 @@ from twisted.python.failure import Failure
 from twisted.python import log
 
 import wader.common.aterrors as E
-from wader.common.command import ATCmd
+from core.command import ATCmd
 import wader.common.signals as S
 
 # Standard unsolicited notifications
@@ -75,14 +75,14 @@ class BufferingStateMachine(object, protocol.Protocol):
 
     def cancel_current_delayed_call(self):
         """
-        Cancels current :class:`~wader.common.command.ATCmd` delayed call
+        Cancels current :class:`~core.command.ATCmd` delayed call
         """
         if self.cmd.call_id and self.cmd.call_id.active():
             self.cmd.call_id.cancel()
 
     def notify_success(self, result):
         """
-        Notify success to current :class:`~wader.common.command.ATCmd`
+        Notify success to current :class:`~core.command.ATCmd`
         """
         self.cancel_current_delayed_call()
         try:
@@ -92,7 +92,7 @@ class BufferingStateMachine(object, protocol.Protocol):
             log.err(e, "'%r' callback failed with args '%s'" % args)
 
     def notify_failure(self, failure):
-        """Notify failure to current :class:`~wader.common.command.ATCmd`"""
+        """Notify failure to current :class:`~core.command.ATCmd`"""
         self.cancel_current_delayed_call()
         self.cmd.deferred.errback(failure)
 
@@ -367,7 +367,7 @@ class SerialProtocol(BufferingStateMachine):
     SerialProtocol communicates with the SIM synchronously, only one command
     at a time. However, SerialProtocol offers an asynchronous interface
     :meth:`SerialProtocol.queue_at_cmd` which accepts and queues an
-    :class:`~wader.common.command.ATCmd` and returns a
+    :class:`~core.command.ATCmd` and returns a
     :class:`~twisted.internet.defer.Deferred` that will be callbacked with
     the commands response, or errback if an exception is
     raised.
@@ -391,9 +391,9 @@ class SerialProtocol(BufferingStateMachine):
     The transition to each state is driven by regular expressions, each
     command has associated a set of regular expressions that make the FSM
     change states. This regexps are defined in
-    :obj:`wader.common.command.CMD_DICT` although the plugin mechanism
+    :obj:`core.command.CMD_DICT` although the plugin mechanism
     offers the possibility of customizing the CMD_DICT through
-    :class:`~wader.common.hardware.base.Customizer` if a card uses a
+    :class:`~core.hardware.base.Customizer` if a card uses a
     different AT string than the rest for that particular command.
     """
 
@@ -435,7 +435,7 @@ class SerialProtocol(BufferingStateMachine):
 
     def queue_at_cmd(self, cmd):
         """
-        Queues an :class:`~wader.common.command.ATCmd` ``cmd``
+        Queues an :class:`~core.command.ATCmd` ``cmd``
 
         This deferred will be callbacked with the command's response
 

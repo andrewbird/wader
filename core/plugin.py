@@ -33,12 +33,13 @@ from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
                                  MM_MODEM_STATE_DISABLED,
                                  MM_MODEM_STATE_ENABLED)
-from wader.common.daemon import build_daemon_collection
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
 from wader.common.utils import flatten_list
-from wader.common.sim import SIMBaseClass
-import wader.plugins
+
+from core.daemon import build_daemon_collection
+from core.sim import SIMBaseClass
+import plugins
 
 
 class DevicePlugin(object):
@@ -275,7 +276,7 @@ class PluginManager(object):
     """I manage Wader's plugins"""
 
     @classmethod
-    def get_plugins(cls, interface=IPlugin, package=wader.plugins):
+    def get_plugins(cls, interface=IPlugin, package=plugins):
         """
         Returns all the plugins under ``package`` that implement ``interface``
         """
@@ -289,7 +290,7 @@ class PluginManager(object):
 
         :raise UnknownPluginNameError: When we don't know about the plugin
         """
-        for plugin in cls.get_plugins(interface, wader.plugins):
+        for plugin in cls.get_plugins(interface, plugins):
             if not hasattr(plugin, '__remote_name__'):
                 continue
 
@@ -317,7 +318,7 @@ class PluginManager(object):
                 # this will just return the default plugin for
                 # the mapping, we keep a reference to the mapping
                 # once the device is properly identified by
-                # wader.common.hardware.base::identify_device
+                # core.hardware.base::identify_device
                 _plugin = plugin.mapping['default']()
                 _plugin.mapping = plugin.mapping
                 return _plugin
