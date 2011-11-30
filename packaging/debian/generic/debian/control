@@ -11,7 +11,7 @@ XS-Python-Version: >= 2.5
 Package: wader-core
 Architecture: all
 Replaces: wader-core, vmc-core, modemmanager
-Depends: python (>= 2.5), ${python:Depends}, python-twisted-core, python-epsilon, python-serial, python-dbus, python-tz, python-m2crypto, python-messaging (>= 0.5.11), usb-modeswitch (>= 1.1.0), usb-modeswitch-data (>= 20100322), python-gudev, wvdial | network-manager (>=0.8), mobile-broadband-provider-info
+Depends: python-wader, python (>= 2.5), ${python:Depends}, python-twisted-core, python-epsilon, python-serial, python-dbus, python-tz, python-m2crypto, python-messaging (>= 0.5.11), usb-modeswitch (>= 1.1.0), usb-modeswitch-data (>= 20100322), python-gudev, wvdial | network-manager (>=0.8), mobile-broadband-provider-info 
 Recommends: python-twisted-conch
 Conflicts: modemmanager
 Provides: modemmanager
@@ -20,4 +20,11 @@ Description: Internet connection assistant for mobile devices.
   interface so other applications can use its services as connecting to the
   Internet, sending SMS, managing contacts, and such. This is the core
   package.
+  .
+
+Package: python-wader
+Architecture: all
+Depends: python (>= 2.5), ${python:Depends}, python-epsilon, python-dbus, python-tz, python-m2crypto, python-messaging (>= 0.5.11), mobile-broadband-provider-info
+Description: Library that provides access to wader core
+  This is the core package.
   .

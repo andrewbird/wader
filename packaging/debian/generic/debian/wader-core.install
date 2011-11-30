@@ -1,1 +1,5 @@
-debian/wader-core-restart-required.update-notifier /usr/share/wader-core/
+debian/wader-core-restart-required.update-notifier usr/share/wader-core/
+debian/tmp/etc
+debian/tmp/usr/share
+debian/tmp/usr/bin
+debian/tmp/lib

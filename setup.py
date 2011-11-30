@@ -103,7 +103,7 @@ setup(name=APP_NAME,
       data_files=data_files,
       ext_modules=ext_modules,
       zip_safe=False,
-      test_suite='wader.test',
+      test_suite='test',
       classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: No Input/Output (Daemon)',

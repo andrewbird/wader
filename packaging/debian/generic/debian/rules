@@ -9,11 +9,9 @@ build-stamp:
 		$$python -c 'import sys; print sys.version' >/dev/null 2>&1 \
 		&& \
 		$$python /usr/bin/nosetests \
-			-w test \
 			-m '(?:^|[\b_\./-])[Tt]est(?!_contact)(?!_dbus)' \
 			-e test_int_to_uint32_to_int_conversion \
-		|| \
-		true \
+			-e test_populate_db_from_networks_py_real \
 		; \
 	done
 	python setup.py build
@@ -32,8 +30,13 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	python setup.py install --install-layout=deb --root $(CURDIR)/debian/wader-core
-	DH_PYCENTRAL=nomove dh_pycentral
+	python setup.py install \
+		--install-layout=deb \
+		--skip-build \
+		--root $(CURDIR)/debian/tmp
+#	DH_PYCENTRAL=nomove dh_pycentral
+#	dh_movefiles -p python-wader
+#	dh_movefiles -p wader-core
 	dh_install
 	dh_installman
 

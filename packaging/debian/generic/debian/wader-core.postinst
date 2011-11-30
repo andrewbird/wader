@@ -56,7 +56,7 @@ reload_udev_rules()
 clear_plugin_cache()
 {
     rm -rf /usr/share/wader-core/plugins/dropin.cache
-    python -c "from twisted.plugin import IPlugin, getPlugins;import wader.plugins; list(getPlugins(IPlugin, package=wader.plugins))"
+    python -c "import sys; sys.path.insert(0, '/usr/share/wader-core'); from twisted.plugin import IPlugin, getPlugins;import plugins; list(getPlugins(IPlugin, package=plugins))"
 }
 
 tidyup_modem_manager()
