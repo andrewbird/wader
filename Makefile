@@ -2,7 +2,7 @@ SHELL = /bin/bash
 
 VERSION := $(shell python -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
 SOURCES := $(shell rpmbuild --eval '%{_topdir}' 2>/dev/null)/SOURCES
-WCV := wader-core-$(VERSION)
+WV := wader-$(VERSION)
 
 all:
 	@echo Usage: make deb \[TARGET=ubuntu-lucid\] \| rpm
@@ -14,7 +14,7 @@ rpm:
 		exit 1;\
 	fi
 
-	tar -jcvf $(SOURCES)/$(WCV).tar.bz2 --exclude=.git --transform="s/^\./$(WCV)/" .
+	tar -jcvf $(SOURCES)/$(WV).tar.bz2 --exclude=.git --transform="s/^\./$(WV)/" .
 	rpmbuild -ba resources/rpm/wader.spec
 
 deb:

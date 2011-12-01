@@ -1,7 +1,7 @@
 %define wader_root %{_datadir}/wader-core
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
-Name:           wader-core
+Name:           wader
 Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
 Release:        1%{?dist}
 Summary:        A ModemManager implementation written in Python
@@ -20,22 +20,46 @@ BuildRequires: python-setuptools
 
 %if 0%{?suse_version}
 BuildRequires:  dbus-1-python, python-zopeinterface, python-twisted
-Requires:       python-twisted, python-serial, dbus-1-python, python-tz, usb_modeswitch-data
 %else
 BuildRequires:  dbus-python, python-zope-interface, python-twisted-core
-Requires:       python-twisted-core, pyserial, dbus-python, pytz, usb_modeswitch-data >= 20100322
 %endif
-
-Requires:       python >= 2.5, python-crypto, python-messaging >= 0.5.11, usb_modeswitch >= 1.1.0, python-gudev, python-epsilon
-Obsoletes:      ModemManager
-Provides:       ModemManager
 
 %description
 Wader is a fork of the core of "Vodafone Mobile Connect Card driver for Linux",
 with some of its parts rewritten and improved to be able to interact via DBus
 with other applications of the Linux/OSX desktop. Wader has two main
-components, a core and a simple UI. The core can be extended to support more
-devices and distros/OSes through plugins.
+components, a core and a client access library. The core can be extended to
+support more devices and distros/OSes through plugins.
+
+%package        core
+Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
+Summary:        The core that controls modem devices and provides DBus services.
+Requires:	python-epsilon
+
+%if 0%{?suse_version}
+Requires:       python-twisted, python-serial, dbus-1-python, python-tz, usb_modeswitch-data
+%else
+Requires:       python-twisted-core, pyserial, dbus-python, pytz, usb_modeswitch-data >= 20100322
+%endif
+
+Obsoletes:      ModemManager
+Provides:       ModemManager
+
+%description    core
+Wader is a fork of the core of "Vodafone Mobile Connect Card driver for Linux",
+this package provides the core modem device access and DBus services.
+
+
+
+%package -n     python-wader
+Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
+Summary:        Library that provides access to wader core.
+Requires:       python >= 2.5, python-crypto, python-messaging >= 0.5.11, dbus-python, pytz
+
+%description -n python-wader
+Wader is a fork of the core of "Vodafone Mobile Connect Card driver for Linux",
+this package provides those common parts that are likely to be reused by Modem
+Manager clients written in python.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -52,7 +76,7 @@ touch %{buildroot}%{_datadir}/wader-core/plugins/dropin.cache
 %clean
 [ "%{buildroot}" != "/" ] && rm -rf %{buildroot}
 
-%post
+%post core
 if [ $1 = 1 ]; then
     # kill modem-manager asap
     kill -9 `pidof modem-manager` 2> /dev/null
@@ -64,28 +88,15 @@ if [ $1 = 2 ]; then
     fi
     # update plugins cache
     rm -rf /usr/share/wader-core/plugins/dropin.cache
-    python -c "from twisted.plugin import IPlugin, getPlugins;import wader.plugins; list(getPlugins(IPlugin, package=wader.plugins))"
+    python -c "import sys; sys.path.insert(0, '/usr/share/wader-core'); from twisted.plugin import IPlugin, getPlugins;import plugins; list(getPlugins(IPlugin, package=plugins))"
     # restart wader-core
     if [ -e /var/run/wader.pid ]; then
         /usr/bin/wader-core-ctl --restart 2>/dev/null || true
     fi
 fi
 
-%files
+%files core
 %defattr(-,root,root)
-%dir %{python_sitelib}/wader
-%{python_sitelib}/Wader-*
-%dir %{python_sitelib}/wader/common/
-%dir %{wader_root}/core/plugins/
-
-%{python_sitelib}/wader/*.py
-%{python_sitelib}/wader/*.py[co]
-%{python_sitelib}/wader/common/*.py
-%{python_sitelib}/wader/common/*.py[co]
-%{python_sitelib}/wader/common/backends/*.py
-%{python_sitelib}/wader/common/backends/*.py[co]
-%{wader_root}/core/plugins/*.py
-%{wader_root}/core/plugins/*.py[co]
 
 %dir %{wader_root}/
 %dir %{wader_root}/plugins/
@@ -116,6 +127,21 @@ fi
 %config %{_sysconfdir}/dbus-1/system.d/org.freedesktop.ModemManager.conf
 
 %{_bindir}/wader-core-ctl
+
+%doc LICENSE README
+
+%files -n python-wader
+%defattr(-,root,root)
+%dir %{python_sitelib}/wader
+%{python_sitelib}/Wader-*
+%dir %{python_sitelib}/wader/common/
+
+%{python_sitelib}/wader/*.py
+%{python_sitelib}/wader/*.py[co]
+%{python_sitelib}/wader/common/*.py
+%{python_sitelib}/wader/common/*.py[co]
+%{python_sitelib}/wader/common/backends/*.py
+%{python_sitelib}/wader/common/backends/*.py[co]
 
 %doc LICENSE README
 
