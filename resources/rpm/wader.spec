@@ -6,7 +6,6 @@ Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; p
 Release:        1%{?dist}
 Summary:        A ModemManager implementation written in Python
 Source:         ftp://ftp.noexists.org/pub/wader/%{name}-%{version}.tar.bz2
-Group:          Applications/Telephony
 License:        GPL
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
@@ -34,7 +33,8 @@ support more devices and distros/OSes through plugins.
 %package        core
 Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
 Summary:        The core that controls modem devices and provides DBus services.
-Requires:	python-epsilon
+Group:          System Environment/Daemons
+Requires:       python-epsilon
 
 %if 0%{?suse_version}
 Requires:       python-twisted, python-serial, dbus-1-python, python-tz, usb_modeswitch-data
@@ -42,8 +42,8 @@ Requires:       python-twisted, python-serial, dbus-1-python, python-tz, usb_mod
 Requires:       python-twisted-core, pyserial, dbus-python, pytz, usb_modeswitch-data >= 20100322
 %endif
 
-Obsoletes:      ModemManager
-Provides:       ModemManager
+Obsoletes:      ModemManager >= 0.4
+Provides:       ModemManager >= 0.4
 
 %description    core
 Wader is a fork of the core of "Vodafone Mobile Connect Card driver for Linux",
@@ -54,6 +54,7 @@ this package provides the core modem device access and DBus services.
 %package -n     python-wader
 Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
 Summary:        Library that provides access to wader core.
+Group:          System Environment/Libraries
 Requires:       python >= 2.5, python-crypto, python-messaging >= 0.5.11, dbus-python, pytz
 Conflicts:      wader-core <= 0.5.8
 
@@ -71,7 +72,7 @@ Manager clients written in python.
 %install
 %{__python} -c 'import setuptools; execfile("setup.py")' install -O1 --skip-build --root %{buildroot} --prefix=%{_prefix}
 
-# avoid %ghost warning
+# avoid ghost warning
 touch %{buildroot}%{_datadir}/wader-core/plugins/dropin.cache
 
 %clean
