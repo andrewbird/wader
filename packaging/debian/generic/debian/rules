@@ -34,9 +34,8 @@ install: build
 		--install-layout=deb \
 		--skip-build \
 		--root $(CURDIR)/debian/tmp
+	-find $(CURDIR)/debian/tmp/usr/lib -name '*.py[co]' | xargs rm -f
 #	DH_PYCENTRAL=nomove dh_pycentral
-#	dh_movefiles -p python-wader
-#	dh_movefiles -p wader-core
 	dh_install
 	dh_installman
 
