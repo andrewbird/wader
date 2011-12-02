@@ -55,6 +55,7 @@ this package provides the core modem device access and DBus services.
 Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
 Summary:        Library that provides access to wader core.
 Requires:       python >= 2.5, python-crypto, python-messaging >= 0.5.11, dbus-python, pytz
+Conflicts:      wader-core <= 0.5.8
 
 %description -n python-wader
 Wader is a fork of the core of "Vodafone Mobile Connect Card driver for Linux",
@@ -146,6 +147,8 @@ fi
 %doc LICENSE README
 
 %changelog
+* Fri Dec 02 2011 Andrew Bird <ajb@spheresystems.co.uk> 0.5.9
+- 0.5.9 Release
 * Mon Nov 14 2011 Andrew Bird <ajb@spheresystems.co.uk> 0.5.8
 - 0.5.8 Release
 * Sun Sep 11 2011 Andrew Bird <ajb@spheresystems.co.uk> 0.5.7
