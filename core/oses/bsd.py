@@ -18,6 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """BSD-based OS plugins"""
 
+from os import uname
+
 from core.oses.unix import UnixPlugin
 
 
@@ -32,11 +34,9 @@ class FreeBSDPlugin(UnixPlugin):
         return 0, 0
 
     def is_valid(self):
-        try:
-            __import__("freebsd")
+        if 'FreeBSD' in uname()[0]:
             return True
-        except ImportError:
-            return False
+        return False
 
     def update_dns_cache(self):
         raise NotImplementedError()
