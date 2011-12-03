@@ -771,6 +771,9 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_signal_quality(self):
         """Returns the signal level quality"""
+        if self.device.status < MM_MODEM_STATE_ENABLED:
+            return defer.succeed(0)
+
         d = super(WCDMAWrapper, self).get_signal_quality()
         d.addCallback(lambda response: int(response[0].group('rssi')))
         d.addCallback(rssi_to_percentage)
