@@ -34,7 +34,7 @@ support more devices and distros/OSes through plugins.
 Version:        %(%{__python} -c 'from wader.common.consts import APP_VERSION; print APP_VERSION')
 Summary:        The core that controls modem devices and provides DBus services.
 Group:          System Environment/Daemons
-Requires:       python-epsilon
+Requires:       python-epsilon, python-gudev
 
 %if 0%{?suse_version}
 Requires:       python-twisted, python-serial, dbus-1-python, python-tz, usb_modeswitch-data
