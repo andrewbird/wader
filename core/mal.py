@@ -163,13 +163,13 @@ class MessageAssemblyLayer(object):
 
         It returns the logical index where it was stored
         """
-        debug("MAL::_do_add_sms sms: %s indexes: %s" % (sms, indexes))
+        #debug("MAL::_do_add_sms sms: %s indexes: %s" % (sms, indexes))
         # save the real index if indexes is None
         if indexes:
             map(sms.real_indexes.add, indexes)
         else:
             sms.real_indexes.add(sms.index)
-        debug("MAL::_do_add_sms sms.real_indexes %s" % sms.real_indexes)
+        #debug("MAL::_do_add_sms sms.real_indexes %s" % sms.real_indexes)
         # assign a new logical index
         self.last_sms_index += 1
         sms.index = self.last_sms_index
@@ -314,6 +314,7 @@ class MessageAssemblyLayer(object):
 
         def gen_cache(messages):
             debug("MAL::list_sms::gen_cache")
+            self.sms_map = {}
             for sms in messages:
                 self._add_sms(sms)
 
