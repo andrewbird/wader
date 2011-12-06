@@ -17,6 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """DevicePlugin for OSX"""
 
+from dbus import Boolean
 from functools import partial
 import sys
 
@@ -109,7 +110,7 @@ class HardwareManager(object):
             set_property(MDM_INTFACE, 'Type', MM_MODEM_TYPE_REV['GSM'])
             set_property(MDM_INTFACE, 'Driver', 'notimplemented')
             set_property(MDM_INTFACE, 'IpMethod', MM_IP_METHOD_PPP)
-            set_property(MDM_INTFACE, 'Enabled', False)
+            set_property(MDM_INTFACE, 'Enabled', Boolean(False))
             set_property(MDM_INTFACE, 'UnlockRequired', "")
 
             # set to unknown

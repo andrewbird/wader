@@ -20,7 +20,7 @@
 
 # import inspect  # for debugging only
 
-from dbus import UInt32
+from dbus import Boolean, UInt32
 from pytz import timezone
 from time import time
 from twisted.internet import defer, reactor
@@ -118,6 +118,9 @@ class DevicePlugin(object):
         if status >= MM_MODEM_STATE_ENABLED and \
                 self._status < MM_MODEM_STATE_ENABLED:
             self.exporter.DeviceEnabled(self.opath)
+
+        self.set_property(MDM_INTFACE, 'Enabled',
+                            Boolean(status >= MM_MODEM_STATE_ENABLED))
 
         self.set_property(MDM_INTFACE, 'State', status)
 
