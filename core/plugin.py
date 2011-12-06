@@ -115,7 +115,8 @@ class DevicePlugin(object):
 #        finally:
 #            del caller
 
-        if status == MM_MODEM_STATE_ENABLED and self._status < status:
+        if status >= MM_MODEM_STATE_ENABLED and \
+                self._status < MM_MODEM_STATE_ENABLED:
             self.exporter.DeviceEnabled(self.opath)
 
         self.set_property(MDM_INTFACE, 'State', status)
