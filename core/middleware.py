@@ -461,16 +461,17 @@ class WCDMAWrapper(WCDMAProtocol):
     def _get_netreg_info_update_and_emit(self, _reginfo):
         """Update the cache, emit RegistrationInfo signal"""
 
-        reginfo = (dbus.UInt32(_reginfo[0]), _reginfo[1], _reginfo[2])
-
-        self.cached_registration = (time() + CACHETIME, reginfo)
-        self.device.exporter.RegistrationInfo(*reginfo)
-
         if self.device.status <= MM_MODEM_STATE_REGISTERED:
             if _reginfo[0] in [1, 5]:
                 self.device.set_status(MM_MODEM_STATE_REGISTERED)
             else:
                 self.device.set_status(MM_MODEM_STATE_SEARCHING)
+
+        reginfo = (dbus.UInt32(_reginfo[0]), _reginfo[1], _reginfo[2])
+
+        self.cached_registration = (time() + CACHETIME, reginfo)
+        self.device.exporter.RegistrationInfo(*reginfo)
+
         return reginfo
 
     def get_netreg_info(self):
