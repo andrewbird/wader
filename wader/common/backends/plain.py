@@ -18,15 +18,12 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 from __future__ import with_statement
 
-import errno
 import pickle
 from cStringIO import StringIO
 import os
-from signal import SIGKILL
 
 import dbus
 from dbus.service import signal, Object, BusName
-from twisted.python import log
 from zope.interface import implements
 
 from wader.common.aes import decryptData, encryptData
@@ -41,52 +38,6 @@ from wader.common.keyring import (KeyringManager, KeyringInvalidPassword,
 from wader.common.profile import Profile
 from wader.common.secrets import ProfileSecrets
 from wader.common.utils import patch_list_signature
-
-
-def proc_running(pid):
-    try:
-        pid = int(pid)
-    except (TypeError, ValueError):
-        return None
-
-    if pid <= 1:
-        return False    # No killing of process group members or all of init's
-                        # children
-    try:
-        os.kill(pid, 0)
-    except OSError, err:
-        if err.errno == errno.ESRCH:
-            return False
-        elif err.errno == errno.EPERM:
-            return pid
-        else:
-            return None  # Unknown error
-    else:
-        return pid
-
-
-def signal_process(name, pid, signal):
-    pid = proc_running(pid)
-    if not pid:
-        log.msg('wvdial: "%s" process (%s) already exited' %
-                (name, str(pid)))
-        return False
-
-    log.msg('wvdial: "%s" process (%s) will be sent %s' %
-                (name, str(pid), signal))
-    try:
-        os.kill(pid, SIGKILL)
-    except OSError, err:
-        if err.errno == errno.ESRCH:
-            log.msg('wvdial: "%s" process (%s) not found' %
-                (name, str(pid)))
-        elif err.errno == errno.EPERM:
-            log.msg('wvdial: "%s" process (%s) permission denied' %
-                (name, str(pid)))
-        else:
-            log.msg('wvdial: "%s" process exit "%s"' % (name, str(err)))
-
-    return True  # signal was sent
 
 
 class PlainProfile(Profile):
