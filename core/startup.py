@@ -21,9 +21,7 @@
 import os
 
 import dbus
-from dbus.mainloop.glib import DBusGMainLoop
 from dbus.service import Object, BusName, method, signal
-gloop = DBusGMainLoop(set_as_default=True)
 
 from twisted.application.service import Application, Service
 from twisted.internet import reactor, defer
@@ -213,8 +211,7 @@ class StartupController(Object, DBusExporterHelper):
     """
 
     def __init__(self):
-        name = BusName(consts.WADER_SERVICE,
-                       bus=dbus.SystemBus(mainloop=gloop))
+        name = BusName(consts.WADER_SERVICE, bus=dbus.SystemBus())
         super(StartupController, self).__init__(bus_name=name,
                                         object_path=consts.WADER_OBJPATH)
         from core.oal import get_os_object

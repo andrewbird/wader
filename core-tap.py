@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2011  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -17,6 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """tap file for Wader"""
+
+# Make sure the very first thing we do is to set the glib loop as default
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+gloop = DBusGMainLoop(set_as_default=True)
 
 import locale
 # i10n stuff
