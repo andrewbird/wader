@@ -34,10 +34,10 @@ install: build
 		--install-layout=deb \
 		--skip-build \
 		--root $(CURDIR)/debian/tmp
-	-find $(CURDIR)/debian/tmp/usr/lib -name '*.py[co]' | xargs rm -f
-#	DH_PYCENTRAL=nomove dh_pycentral
+	-find $(CURDIR)/debian/tmp -name '*.py[co]' | xargs rm -f
 	dh_install
 	dh_installman
+	DH_PYCENTRAL=nomove dh_pycentral
 
 # Build architecture-independent files here.
 binary-indep: build install

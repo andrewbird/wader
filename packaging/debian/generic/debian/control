@@ -15,6 +15,7 @@ Depends: python-wader, python (>= 2.5), ${python:Depends}, python-twisted-core, 
 Recommends: python-twisted-conch
 Conflicts: modemmanager
 Provides: modemmanager
+XB-Python-Version: >= 2.5
 Description: Internet connection assistant for mobile devices.
  Wader is a tool that manages 3G devices and mobile phones offering a dbus
  interface so other applications can use its services as connecting to the
@@ -27,6 +28,7 @@ Architecture: all
 Section: python
 Depends: python (>= 2.5), ${python:Depends}, python-epsilon, python-dbus, python-tz, python-m2crypto, python-messaging (>= 0.5.11), mobile-broadband-provider-info
 Conflicts: wader-core (<= 0.5.8)
+XB-Python-Version: >= 2.5
 Description: Library that provides access to wader core
  This is the core package.
  .

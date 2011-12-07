@@ -116,6 +116,7 @@ setup(name=APP_NAME,
         'Operating System :: MacOS :: MacOS X',
         'Programming Language :: Python :: 2.5',
         'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
         'Topic :: Communications :: Telephony',
       ],
 )

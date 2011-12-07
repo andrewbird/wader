@@ -66,6 +66,8 @@ tidyup_modem_manager()
     pkill -9 modem-manager || true
 }
 
+#DEBHELPER#
+
 case "$1" in
     (configure)
        fix_peers
@@ -77,9 +79,6 @@ case "$1" in
     ;;
 esac
 
-reload_udev_rules
+reload_udev_rules || true
 
 exit 0
-
-#DEBHELPER#
-
