@@ -18,7 +18,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Linux-based OS plugin"""
 
-from dbus import Boolean
 from functools import partial
 from os.path import join, exists
 import re
@@ -339,6 +338,9 @@ class HardwareManager(object):
             set_property(consts.MDM_INTFACE, 'Type',
                          consts.MM_MODEM_TYPE_REV['GSM'])
             set_property(consts.MDM_INTFACE, 'Driver', info[DRIVER])
+
+            # import here else we start the dbus too early in startup
+            from dbus import Boolean
             set_property(consts.MDM_INTFACE, 'Enabled', Boolean(False))
 
             # set to unknown
