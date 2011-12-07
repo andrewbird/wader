@@ -5,7 +5,7 @@ build: build-stamp
 
 build-stamp:
 	dh_testdir
-	set -ex; for python in $(shell pyversions -r) ; do \
+	set -ex; for python in $(shell pyversions -r -i) ; do \
 		$$python -c 'import sys; print sys.version' >/dev/null 2>&1 \
 		&& \
 		$$python /usr/bin/nosetests \
