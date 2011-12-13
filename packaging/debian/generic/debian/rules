@@ -8,7 +8,7 @@ build-stamp:
 	set -ex; for python in $(shell pyversions -r -i) ; do \
 		$$python -c 'import sys; print sys.version' >/dev/null 2>&1 \
 		&& \
-		$$python /usr/bin/nosetests \
+		$$python /usr/bin/nosetests -w . test \
 			-m '(?:^|[\b_\./-])[Tt]est(?!_contact)(?!_dbus)' \
 			-e test_int_to_uint32_to_int_conversion \
 			-e test_populate_db_from_networks_py_real \
