@@ -20,6 +20,10 @@ Wader documentation build configuration file, created by
 sphinx-quickstart on Mon Apr 20 09:16:21 2009.
 """
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
+
 from wader.common.consts import APP_VERSION, APP_NAME
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -69,7 +73,7 @@ add_module_names = False
 show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'trac'
+pygments_style = 'sphinx'
 
 # Sphinx will recurse into subversion configuration folders and try to read
 # any document file within. These should be ignored.

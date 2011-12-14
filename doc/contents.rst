@@ -5,7 +5,7 @@ Wader documentation contents
 =============================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 9
 
    user/index
    devel/index
@@ -21,12 +21,14 @@ Indices, glossary and tables
 
 
 .. toctree::
+   :maxdepth: 9
    :hidden:
    :glob:
 
-   modules/*
-   modules/backends/*
-   modules/hardware/*
-   modules/oses/*
-   modules/statem/*
-
+   modules/core/*
+   modules/core/backends/*
+   modules/core/hardware/*
+   modules/core/oses/*
+   modules/core/statem/*
+   modules/wader/common/*
+   modules/wader/common/backends/*
