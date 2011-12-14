@@ -1,13 +1,32 @@
 # -*- coding: utf-8 -*-
+# Copyright (C) 2009  Warp Networks, S.L.
+# Author:  David Francos Cuartero <dfrancos@warp.es>
 #
-# Wader documentation build configuration file, created by
-# sphinx-quickstart on Mon Apr 20 09:16:21 2009.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+"""
+Wader documentation build configuration file, created by
+sphinx-quickstart on Mon Apr 20 09:16:21 2009.
+"""
 
 from wader.common.consts import APP_VERSION, APP_NAME
 
-# Add any Sphinx extension module names here, as strings. They can be extensions
-# coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.coverage']
+# Add any Sphinx extension module names here, as strings. They can be
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+extensions = ['sphinx.ext.autodoc',
+                'sphinx.ext.autosummary',
+                'sphinx.ext.coverage']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []
@@ -109,7 +128,8 @@ html_show_sourcelink = True
 #latex_font_size = '10pt'
 
 # Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title, author, document class [howto/manual]).
+# (source start file, target name, title, author,
+#   document class [howto/manual]).
 #latex_documents = []
 latex_documents = [
   ('index', 'wader.tex', 'Wader Documentation', 'The Wader project', 'manual'),
@@ -126,6 +146,6 @@ latex_documents = [
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-# If this isn't set to True, the LaTex writer can only handle six levels of headers.
+# If this isn't set to True, the LaTex writer can only handle six levels of
+# headers.
 latex_use_parts = True
-
