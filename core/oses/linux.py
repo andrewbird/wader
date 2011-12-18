@@ -21,10 +21,12 @@
 from functools import partial
 from os.path import join, exists
 import re
+import subprocess
 
 from zope.interface import implements
 from twisted.internet import defer, reactor, utils
 from twisted.python import log, reflect
+from twisted.python.procutils import which
 
 from wader.common.interfaces import IHardwareManager
 from core.hardware.base import identify_device, probe_ports
@@ -233,8 +235,33 @@ class HardwareManager(object):
                     if props.get(_prop, False):
                         found_devices[parent][_prop] = props['DEVNAME']
 
-        return [self._get_device_from_info(sysfs_path, info)
-                      for sysfs_path, info in found_devices.items()]
+        result = []
+        for sysfs_path, info in found_devices.items():
+            device = self._get_device_from_info(sysfs_path, info)
+            if device:
+                result.append(device)
+            else:
+                log.msg("Unknown device: %s" % info)
+                try:
+                    lsusb_path = which('lsusb')[0]
+                except IndexError:
+                    lsusb_path = '/usr/bin/lsusb'
+                try:
+                    id_vendor = info['ID_VENDOR_ID']
+                    id_model = info['ID_MODEL_ID']
+                    p = subprocess.Popen([lsusb_path, '-v',
+                                          '-d %x:%x' % (id_vendor, id_model)],
+                                         bufsize=-1,
+                                         stderr=subprocess.PIPE,
+                                         stdout=subprocess.PIPE,
+                                         universal_newlines=True,
+                                         shell=False)
+                    device_info, device_info_error = p.communicate()
+                    log.msg('lsusb device info:%s\n\n%s' %
+                            (device_info, device_info_error))
+                except (OSError, ValueError):
+                    pass
+        return result
 
     def _get_last_parent_that_matches_props(self, device, props):
         parent = device.get_parent()
@@ -415,7 +442,8 @@ class HardwareManager(object):
             plugin.ports = Ports(dport, cport)
             return plugin
 
-        raise RuntimeError("Could not find a plugin with info %s" % info)
+        log.msg("Could not find a plugin with info %s" % info)
+        return None
 
 
 def get_hw_manager():
