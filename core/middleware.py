@@ -1210,6 +1210,9 @@ class WCDMAWrapper(WCDMAProtocol):
         #    1/ connect_simple via simple state machine
         #    2/ directly by Connect() dbus method
 
+        self.device.set_property(MDM_INTFACE, 'LastApn',
+                                    unicode(settings.get('apn', '')))
+
         ip_method = self.device.get_property(MDM_INTFACE, 'IpMethod')
         if ip_method == MM_IP_METHOD_PPP:
             return self.connect_to_internet_ppp(settings)
