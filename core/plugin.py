@@ -174,6 +174,7 @@ class DevicePlugin(object):
             self.daemons.stop_daemons()
 
         d = defer.succeed(True)
+        d.addCallback(self.sconn.stop_traffic_monitoring)
         if not removed:
             d.addCallback(lambda _: self.sconn.enable_radio(False))
         d.addCallback(lambda _: self.set_status(MM_MODEM_STATE_DISABLED))

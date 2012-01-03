@@ -18,10 +18,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Dialer module abstracts the differences between dialers on different OSes"""
 
-from math import floor
-from time import time
-
-from gobject import timeout_add_seconds, source_remove
 import dbus
 from dbus.service import Object, BusName, method, signal
 from zope.interface import implements
@@ -33,7 +29,6 @@ from wader.common._dbus import DBusExporterHelper
 from wader.common.aterrors import CallIndexError
 import wader.common.consts as consts
 from wader.common.interfaces import IDialer
-from core.oal import get_os_object
 from wader.common.utils import convert_int_to_ip
 
 
@@ -149,26 +144,9 @@ class Dialer(Object):
         self.device = device
         self.opath = opath
         self.ctrl = ctrl
-        # iface name
-        self.iface = None
-        # timeout_add_seconds task ID
-        self.__time = 0
-        self.__rx_bytes = 0
-        self.__tx_bytes = 0
-        self.stats_id = None
-
-    def _emit_dial_stats(self):
-        stats = self.get_stats()
-        self.device.exporter.DialStats(stats)
-
-        # make sure this is repeatedly called
-        return True
 
     def close(self, path=None):
-        # remove the emit stats task
-        if self.stats_id is not None:
-            source_remove(self.stats_id)
-            self.stats_id = None
+        self.device.sconn.stop_traffic_monitoring()
         # remove from DBus bus
         try:
             self.remove_from_connection()
@@ -191,36 +169,6 @@ class Dialer(Object):
 
     def connect(self):
         """Connects to Internet"""
-
-    def get_stats(self):
-        """
-        Returns a tuple with the connection statistics for this dialer
-
-        :return: (in_bytes, out_bytes)
-        """
-        if self.iface is not None:
-            now = time()
-            rx_bytes, tx_bytes = get_os_object().get_iface_stats(self.iface)
-            # if any of these three are not 0, it means that this is at
-            # least the second time this method is executed, thus we
-            # should have cached meaningful data
-            if self.__rx_bytes or self.__tx_bytes or self.__time:
-                rx_delta = rx_bytes - self.__rx_bytes
-                tx_delta = tx_bytes - self.__tx_bytes
-                interval = now - self.__time
-                raw_rx_rate = int(floor(rx_delta / interval))
-                raw_tx_rate = int(floor(tx_delta / interval))
-                rx_rate = raw_rx_rate if raw_rx_rate >= 0 else 0
-                tx_rate = raw_tx_rate if raw_tx_rate >= 0 else 0
-            else:
-                # first time this is executed, we cannot reliably compute
-                # the rate. It is better to lie just once
-                rx_rate = tx_rate = 0
-
-            self.__rx_bytes, self.__tx_bytes = rx_bytes, tx_bytes
-            self.__time = now
-
-            return rx_bytes, tx_bytes, rx_rate, tx_rate
 
     def stop(self):
         """Stops a hung connection attempt"""
@@ -332,7 +280,8 @@ class DialerManager(Object, DBusExporterHelper):
             return conn_id
 
         def start_traffic_monitoring(conn_opath):
-            dialer.stats_id = timeout_add_seconds(1, dialer._emit_dial_stats)
+            dialer.device.sconn.start_traffic_monitoring()
+
             # transfer the dialer from connection_attempts to connections dict
             self.connections[conn_opath] = dialer, conf
             if device_opath in self.connection_attempts:
@@ -428,7 +377,8 @@ class DialerManager(Object, DBusExporterHelper):
 
     @method(consts.WADER_DIALUP_INTFACE, in_signature='a{sv}o',
             out_signature='o', async_callbacks=('async_cb', 'async_eb'))
-    def ActivateMmsConnection(self, settings, device_opath, async_cb, async_eb):
+    def ActivateMmsConnection(self, settings, device_opath, async_cb,
+                                                            async_eb):
         """See :meth:`DialerManager.activate_mms_connection`"""
         d = self.activate_mms_connection(settings, device_opath)
         return self.add_callbacks(d, async_cb, async_eb)

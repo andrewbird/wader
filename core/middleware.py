@@ -27,6 +27,8 @@ from collections import deque
 
 import dbus
 import serial
+from gobject import timeout_add_seconds, source_remove
+from math import floor
 from time import time
 from twisted.python import log
 from twisted.internet import defer, reactor, task
@@ -62,6 +64,7 @@ import wader.common.exceptions as ex
 from core.mal import MessageAssemblyLayer
 from core.mms import (send_m_send_req, send_m_notifyresp_ind,
                               get_payload)
+from core.oal import get_os_object
 from core.protocol import WCDMAProtocol
 from wader.common.signals import SIG_CREG
 from core.sim import (COM_READ_BINARY, EF_AD, EF_SPN, EF_ICCID, SW_OK,
@@ -90,6 +93,14 @@ class WCDMAWrapper(WCDMAProtocol):
 
         self.signal_matchs = []
         self.cached_registration = (0, (0, '', ''))
+
+        # timeout_add_seconds task ID
+        self.__time = 0
+        self.__rx_bytes = 0
+        self.__tx_bytes = 0
+        self.stats_id = None
+        # iface name
+        self.iface = None
 
     def connect_to_signals(self):
         bus = dbus.SystemBus()
@@ -1215,9 +1226,12 @@ class WCDMAWrapper(WCDMAProtocol):
 
         ip_method = self.device.get_property(MDM_INTFACE, 'IpMethod')
         if ip_method == MM_IP_METHOD_PPP:
-            return self.connect_to_internet_ppp(settings)
+            d = self.connect_to_internet_ppp(settings)
+        else:
+            d = self.connect_to_internet_hso(settings)
 
-        return self.connect_to_internet_hso(settings)
+        d.addCallback(self.start_traffic_monitoring)
+        return d
 
     def connect_to_internet_hso(self, settings):
         username = settings.get('username', '')
@@ -1260,9 +1274,12 @@ class WCDMAWrapper(WCDMAProtocol):
         """Disconnects the modem"""
         ip_method = self.device.get_property(MDM_INTFACE, 'IpMethod')
         if ip_method == MM_IP_METHOD_PPP:
-            return self.disconnect_from_internet_ppp()
+            d = self.disconnect_from_internet_ppp()
+        else:
+            d = self.disconnect_from_internet_hso()
 
-        return self.disconnect_from_internet_hso()
+        d.addCallback(self.stop_traffic_monitoring)
+        return d
 
     def disconnect_from_internet_hso(self):
         return self.hso_disconnect()
@@ -1303,6 +1320,36 @@ class WCDMAWrapper(WCDMAProtocol):
         # restore the speed in .1 seconds
         return task.deferLater(reactor, .1, restore_speed, speed)
 
+    def get_stats(self):
+        """
+        Returns a tuple with the connection statistics for this dialer
+
+        :return: (in_bytes, out_bytes)
+        """
+        if self.iface is not None:
+            now = time()
+            rx_bytes, tx_bytes = get_os_object().get_iface_stats(self.iface)
+            # if any of these three are not 0, it means that this is at
+            # least the second time this method is executed, thus we
+            # should have cached meaningful data
+            if self.__rx_bytes or self.__tx_bytes or self.__time:
+                rx_delta = rx_bytes - self.__rx_bytes
+                tx_delta = tx_bytes - self.__tx_bytes
+                interval = now - self.__time
+                raw_rx_rate = int(floor(rx_delta / interval))
+                raw_tx_rate = int(floor(tx_delta / interval))
+                rx_rate = raw_rx_rate if raw_rx_rate >= 0 else 0
+                tx_rate = raw_tx_rate if raw_tx_rate >= 0 else 0
+            else:
+                # first time this is executed, we cannot reliably compute
+                # the rate. It is better to lie just once
+                rx_rate = tx_rate = 0
+
+            self.__rx_bytes, self.__tx_bytes = rx_bytes, tx_bytes
+            self.__time = now
+
+            return rx_bytes, tx_bytes, rx_rate, tx_rate
+
     def register_with_netid(self, netid):
         """
         I will try my best to register with ``netid``
@@ -1312,6 +1359,24 @@ class WCDMAWrapper(WCDMAProtocol):
         netr_klass = self.device.custom.netr_klass
         netsm = netr_klass(self.device.sconn, netid)
         return netsm.start_netreg()
+
+    def start_traffic_monitoring(self, x=None):
+        ip_method = self.device.get_property(MDM_INTFACE, 'IpMethod')
+        if ip_method == MM_IP_METHOD_PPP:
+            self.iface = 'ppp0'  # XXX: don't hardcode to first PPP instance
+        else:
+            self.iface = self.device.get_property(MDM_INTFACE, 'Device')
+
+        if self.stats_id is None:
+            self.stats_id = timeout_add_seconds(1, self._emit_dial_stats)
+        return x
+
+    def stop_traffic_monitoring(self, x=None):
+        # remove the emit stats task
+        if self.stats_id is not None:
+            source_remove(self.stats_id)
+            self.stats_id = None
+        return x
 
     def enable_device(self, enable):
         """
@@ -1401,6 +1466,14 @@ class WCDMAWrapper(WCDMAProtocol):
         self.device.set_authtime(time())
 
         return result
+
+    def _emit_dial_stats(self):
+        stats = self.get_stats()
+        if stats is not None:
+            self.device.exporter.DialStats(stats)
+
+        # make sure this is repeatedly called
+        return True
 
 
 class BasicNetworkOperator(object):
