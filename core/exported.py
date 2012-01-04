@@ -20,6 +20,7 @@ I export :class:`~wader.common.middleware.WCDMAWrapper` methods over DBus
 """
 import dbus
 from dbus.service import Object, BusName, method, signal
+from twisted.internet import defer
 from twisted.python import log
 
 from wader.common.consts import (SMS_INTFACE, CTS_INTFACE, NET_INTFACE,
@@ -119,6 +120,25 @@ class ModemExporter(Object, DBusExporterHelper):
         :rtype: tuple
         """
         d = self.sconn.get_hardware_info()
+        return self.add_callbacks(d, async_cb, async_eb)
+
+    @method(MDM_INTFACE, in_signature='', out_signature='(uu)',
+            async_callbacks=('async_cb', 'async_eb'))
+    def GetStats(self, async_cb, async_eb):
+        """
+        Returns the current rx_bytes, tx_bytes of the network interface
+
+        :rtype: tuple
+        """
+
+        def sanitise(response):
+            if response is None:
+                return (0, 0)
+            else:
+                return response[:2]
+
+        d = defer.succeed(self.sconn.get_stats())
+        d.addCallback(sanitise)
         return self.add_callbacks(d, async_cb, async_eb)
 
     @method(MDM_INTFACE, in_signature='', out_signature='(uuuu)',
