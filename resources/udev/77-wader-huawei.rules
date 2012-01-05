@@ -55,9 +55,9 @@ ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14a5", ENV{.MM_USBIFNUM}=="03", ENV{
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ac", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ac", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
-# K3806
-ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_AUX}="1"
+# K3806 (breaks convention on ordering, but confirmed)
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14ae", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 
 # K4605
 ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14c6", ENV{.MM_USBIFNUM}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
