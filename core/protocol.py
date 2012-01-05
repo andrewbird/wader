@@ -422,6 +422,10 @@ class SerialProtocol(BufferingStateMachine):
             log.msg("%s: sending %r" % (self.state, cmd.cmd),
                     system=self._get_log_prefix())
             self.set_cmd(cmd)
+            if self.transport is None:  # Seems that the device went away
+                log.msg("port disappeared, ignoring cmd and releasing mutux")
+                self.mutex.release()
+                return
             self.transport.write(cmd.get_cmd())
 
         d = self.mutex.acquire()
