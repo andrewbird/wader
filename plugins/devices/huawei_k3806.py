@@ -33,11 +33,11 @@ class HuaweiK3806Wrapper(HuaweiWCDMAWrapper):
         d = self.get_radio_status()
 
         def get_radio_status_cb(status):
-            if status in [0, 4] and enable:
+            if status in [0, 7] and enable:
                 return self.send_at('AT+CFUN=1')
 
-            elif status in [1, 5, 6] and not enable:
-                return self.send_at('AT+CFUN=4')
+            elif status == 1 and not enable:
+                return self.send_at('AT+CFUN=7')
 
         d.addCallback(get_radio_status_cb)
         return d
