@@ -146,7 +146,6 @@ class Dialer(Object):
         self.ctrl = ctrl
 
     def close(self, path=None):
-        self.device.sconn.stop_traffic_monitoring()
         # remove from DBus bus
         try:
             self.remove_from_connection()
@@ -279,9 +278,7 @@ class DialerManager(Object, DBusExporterHelper):
 
             return conn_id
 
-        def start_traffic_monitoring(conn_opath):
-            dialer.device.sconn.start_traffic_monitoring()
-
+        def connect_cb(conn_opath):
             # transfer the dialer from connection_attempts to connections dict
             self.connections[conn_opath] = dialer, conf
             if device_opath in self.connection_attempts:
@@ -294,7 +291,7 @@ class DialerManager(Object, DBusExporterHelper):
         d = dialer.configure(conf)
         d.addCallback(get_conn_id)
         d.addCallback(lambda ign: dialer.connect())
-        d.addCallback(start_traffic_monitoring)
+        d.addCallback(connect_cb)
         return d
 
     def activate_mms_connection(self, settings, device_opath):
