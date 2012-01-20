@@ -230,16 +230,15 @@ class ProfileManager(object):
         # ppp
         props['ppp'] = dict(name='ppp')
 
-        # set ppp auth to values we handle
-        if 'PAP' in network.auth:
-            props['ppp']['refuse-eap'] = True
-            props['ppp']['refuse-chap'] = True
-            props['ppp']['refuse-mschap'] = True
-            props['ppp']['refuse-mschapv2'] = True
-        elif 'CHAP' in network.auth:
-            props['ppp']['refuse-pap'] = True
-        else:
-            pass  # allow all auths
+        # set ppp auth to values we handle, else allow all types
+        if network.auth is not None:
+            if 'PAP' in network.auth:
+                props['ppp']['refuse-eap'] = True
+                props['ppp']['refuse-chap'] = True
+                props['ppp']['refuse-mschap'] = True
+                props['ppp']['refuse-mschapv2'] = True
+            elif 'CHAP' in network.auth:
+                props['ppp']['refuse-pap'] = True
 
         # serial
         props['serial'] = dict(baud=115200,
