@@ -148,6 +148,8 @@ fi
 %doc LICENSE README
 
 %changelog
+* Mon Jan 23 2012 Andrew Bird <ajb@spheresystems.co.uk> 0.5.10
+- 0.5.10 Release
 * Fri Dec 02 2011 Andrew Bird <ajb@spheresystems.co.uk> 0.5.9
 - 0.5.9 Release
 * Mon Nov 14 2011 Andrew Bird <ajb@spheresystems.co.uk> 0.5.8
