@@ -142,6 +142,11 @@ class BufferingStateMachine(object, protocol.Protocol):
         else:
             log.err("No method registered for signal %s" % signal)
 
+    def connectionLost(self, reason):
+        super(BufferingStateMachine, self).connectionLost(reason)
+        log.msg("Serial connection was lost")
+        self.transport = None
+
     def dataReceived(self, data):
         """See `twisted.internet.protocol.Protocol.dataReceived`"""
         # XXX: Change the following zero to one to log all data from the modem
