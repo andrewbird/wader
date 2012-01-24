@@ -33,6 +33,7 @@ from wader.common.consts import (MDM_INTFACE, HSO_INTFACE, CRD_INTFACE,
                                  NET_INTFACE, USD_INTFACE,
                                  MM_MODEM_STATE_DISABLED,
                                  MM_MODEM_STATE_ENABLED)
+import wader.common.aterrors as at
 import wader.common.exceptions as ex
 import wader.common.interfaces as interfaces
 from wader.common.utils import flatten_list
@@ -218,6 +219,8 @@ class DevicePlugin(object):
             raise RuntimeError
 
         def do_init():
+            if not (self.sconn and self.sconn.transport):
+                return defer.fail(at.SerialSendFailed())
             log.msg('Enabling radio and initialising SIM')
             d = self.sconn.enable_radio(True)
             d.addCallback(initialize_sim)
