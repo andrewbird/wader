@@ -424,13 +424,14 @@ class SerialProtocol(BufferingStateMachine):
     def _process_at_cmd(self, cmd):
 
         def _transition_and_send(_):
+            if self.transport is None:  # Seems that the device went away
+                log.msg("Port disappeared, ignoring cmd and releasing mutex")
+                if self.mutex.locked:
+                    self.mutex.release()
+                return
             log.msg("%s: sending %r" % (self.state, cmd.cmd),
                     system=self._get_log_prefix())
             self.set_cmd(cmd)
-            if self.transport is None:  # Seems that the device went away
-                log.msg("port disappeared, ignoring cmd and releasing mutux")
-                self.mutex.release()
-                return
             self.transport.write(cmd.get_cmd())
 
         d = self.mutex.acquire()
