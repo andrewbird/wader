@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Logging Serial Port and related classes"""
 
+from twisted import version as TwistedVersion
 from twisted.internet.serialport import SerialPort as _SerialPort
 from twisted.python import log
 
@@ -83,6 +84,13 @@ class SerialPort(_SerialPort, log.Logger):
         super(SerialPort, self).__init__(protocol, port, reactor,
                                          baudrate=baudrate, timeout=timeout)
         self._port = port
+
+    # Note: fixup a long standing bug in twisted itself
+    def connectionLost(self, reason):
+        super(SerialPort, self).connectionLost(reason)
+        if TwistedVersion.major < 11 or \
+                (TwistedVersion.major == 11 and TwistedVersion.minor < 1):
+            self.protocol.connectionLost(reason)
 
     def logPrefix(self):
         """Returns the last part of the port being used"""
