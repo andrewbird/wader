@@ -249,9 +249,6 @@ insert into version values (%(version)d);
 INBOX, OUTBOX, DRAFTS = 1, 2, 3
 UNREAD, READ = 0x01, 0x02
 
-# tmp log file location
-BCM_STARTUP_FILE = "/tmp/bcm-core-provider.output"
-
 # GSM spec
 # 0 - Unread message that has been received
 # 1 - Read message that has been received
@@ -260,14 +257,6 @@ BCM_STARTUP_FILE = "/tmp/bcm-core-provider.output"
 # 4 - Any message
 
 TYPE_CONTRACT, TYPE_PREPAID = 'Contract', 'Prepaid'
-
-
-# functions
-def nick_debug(s):
-    # leave it by default at 0, otherwise the provider tests fail
-    if 0:
-        with open(BCM_STARTUP_FILE, 'a', 0) as f:
-            f.write("%s\n" % s)
 
 
 def message_read(flags):
@@ -572,8 +561,6 @@ class NetworkProvider(DBProvider):
         a list of network objects, and from the mobile-broadband-provider-info).
         It turns off autocommit during import for speed
         """
-        nick_debug("provider.py - populate_networks")
-
         try:
             # only will succeed on development
             networks = __import__('resources/extra/networks')
@@ -590,9 +577,6 @@ class NetworkProvider(DBProvider):
 
         # turn off autocommit
         self.conn.isolation_level = 'DEFERRED'
-
-        nick_debug("provider.py - populate_networks: "
-                   "conn.isolation_level: %s" % self.conn.isolation_level)
 
         self.populate_networks_from_objs([getattr(networks, item)()
                 for item in dir(networks) if is_valid(item)])
@@ -618,9 +602,6 @@ class NetworkProvider(DBProvider):
         :param networks: NetworkOperator instances
         :type networks: iter
         """
-
-        nick_debug("provider.py - populate_networks_from_objs")
-
         c = self.conn.cursor()
 
         for network in networks:
@@ -662,9 +643,6 @@ class NetworkProvider(DBProvider):
 
         :param xmlfile: the path to the mobile-broadband-provider-info xml file
         """
-        nick_debug("provider.py - populate_networks_from_mdpi")
-        nick_debug("provider.py - populate_networks_from_mdpi: xmlfile for  "
-                   "mbpi is: %s" % repr(xmlfile))
 
         def getAttributeValue(element, name):
             if element is None or not hasattr(element, 'attributes'):
