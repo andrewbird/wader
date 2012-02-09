@@ -56,6 +56,10 @@ ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="01", ENV{
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2003", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2003", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
+# MF181
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0117", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0117", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
 LABEL="wader_zte_tty_end"
 
 LABEL="wader_zte_end"
