@@ -37,7 +37,7 @@ from twisted.python.logfile import BaseLogFile, LogReader
 
 import wader.common.consts as consts
 from wader.common._dbus import DBusExporterHelper
-from wader.common.provider import NetworkProvider, nick_debug
+from wader.common.provider import NetworkProvider
 from core.serialport import SerialPort
 
 DELAY = 10
@@ -46,20 +46,6 @@ ATTACH_DELAY = 1
 OLDLOCK = os.path.join(consts.DATA_DIR, '.setup-done')
 
 _application = None
-
-
-def _get_application():
-    """
-    Factory function that returns an Application object.
-    If the object does not exist then it creates a new Application object.
-    (Internal use only).
-    """
-    global _application
-    if _application is not None:
-        return _application
-
-    _application = Application(consts.APP_NAME)
-    return _application
 
 
 class WaderLogFile(BaseLogFile):
@@ -168,14 +154,60 @@ class WaderLogFile(BaseLogFile):
 threadable.synchronize(WaderLogFile)
 
 
-def set_logger():
+def _get_application():
     """
-    Sets name, rotations and deleting of log file.
+    Factory function that returns an Application object.
+    If the object does not exist then it creates a new Application object.
+    (Internal use only).
     """
-    application = _get_application()
+    global _application
+    if _application is not None:
+        return _application
+
+    _application = Application(consts.APP_NAME)
     logfile = WaderLogFile(consts.LOG_NAME, consts.LOG_DIR,
                                             maxRotatedFiles=consts.LOG_NUMBER)
-    application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
+    _application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
+    return _application
+
+
+def create_skeleton_and_do_initial_setup():
+    """I perform the operations needed for the initial user setup"""
+    if os.path.exists(OLDLOCK):
+        # old way to signal that the setup is complete
+        os.unlink(OLDLOCK)
+
+    if os.path.exists(consts.NETWORKS_DB):
+        # new way to signal that the setup is complete
+        provider = NetworkProvider()
+        log.msg("Networks DB exists")
+
+        if provider.is_current():
+            provider.close()
+            log.msg(
+                "Networks DB was built previously from the current sources")
+            return
+
+        provider.close()
+        log.msg("Networks DB requires rebuild")
+        os.remove(consts.NETWORKS_DB)
+    else:
+        log.msg("Networks DB creation started")
+
+    # create new DB
+    provider = NetworkProvider()
+    try:
+        provider.populate_networks()
+        log.msg("Networks DB population complete")
+    except:
+        log.err()
+    finally:
+        provider.close()
+
+    # regenerate plugin cache
+    import plugins
+    log.msg("Regenerating plugin cache")
+    list(getPlugins(IPlugin, package=plugins))
 
 
 class WaderService(Service):
@@ -188,6 +220,19 @@ class WaderService(Service):
 
     def startService(self):
         """Starts the Wader service"""
+        create_skeleton_and_do_initial_setup()
+
+        # check if we have an OSPlugin for this OS/Distro
+        from core.oal import get_os_object
+        if get_os_object() is None:
+            message = 'OS/Distro not registered'
+            details = """
+The OS/Distro under which you are running %s is not
+registered in the OS database. Check the documentation
+for what you can do in order to support your OS/Distro
+""" % consts.APP_NAME
+            raise SystemExit("%s\n%s" % (message, details))
+
         from core.dialer import DialerManager
         self.ctrl = StartupController()
         self.dial = DialerManager(self.ctrl)
@@ -290,45 +335,3 @@ def setup_and_export_device(device):
 
     device.__repr__ = device.__str__
     return device
-
-
-def create_skeleton_and_do_initial_setup():
-    """I perform the operations needed for the initial user setup"""
-    set_logger()
-
-    if os.path.exists(OLDLOCK):
-        # old way to signal that the setup is complete
-        os.unlink(OLDLOCK)
-
-    if os.path.exists(consts.NETWORKS_DB):
-        # new way to signal that the setup is complete
-        provider = NetworkProvider()
-        log.msg("startup.py - create_skeleton_and_do_initial_setup - Network.db exists and provider is:" + repr(provider) + "\n")
-        nick_debug("startup.py - create_skeleton_and_do_initial_setup - Network.db exists and provider is: " + repr(provider))
-
-        if provider.is_current():
-            provider.close()
-            log.msg("Networks DB was built from current sources")
-            nick_debug("Networks DB was built from current sources")
-            return
-
-        provider.close()
-        log.msg("Networks DB requires rebuild")
-        nick_debug("startup.py - create_skeleton_and_do_initial_setup: Networks DB requires rebuild")
-        os.remove(consts.NETWORKS_DB)
-
-    # regenerate plugin cache
-    import plugins
-    list(getPlugins(IPlugin, package=plugins))
-
-    # create new DB
-    provider = NetworkProvider()
-    try:
-        nick_debug("startup.py - create_skeleton_and_do_initial_setup - create new DB and provider is the object:" +  repr(provider))
-        provider.populate_networks()
-        nick_debug("startup.py - create_skeleton_and_do_initial_setup - populate_networks complete.")
-
-    except:
-        log.err()
-    finally:
-        provider.close()
