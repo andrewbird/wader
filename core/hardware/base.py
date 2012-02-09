@@ -132,7 +132,7 @@ def check_auth_state(plugin):
     return deferToThread(do_check, port)
 
 
-def _identify_device(port):
+def raw_identify_device(port):
     """Returns the model of the device present at `port`"""
     BAD_REPLIES = ['AT+CGMM', 'OK', '']
     # as the readlines method blocks, this is executed in a parallel thread
@@ -146,14 +146,15 @@ def _identify_device(port):
 
         ser.write('AT+CGMM\r\n')
         lines = ser.readlines()
-        # clean up unsolicited notifications and \r\n's
-        resp = [r for r in [l.replace('\r\n', '') for l in lines
+        # clean up \r\n as pairs or singles and avoid unsolicited notifications
+        resp = [r for r in [l.strip('\r\n') for l in lines
                     if not l.startswith(('^', '_'))] if r not in BAD_REPLIES]
         if resp:
-            log.msg("at+cgmm response: %s" % resp)
+            log.msg("AT+CGMM response: %s" % resp)
             return resp[0]
 
-        raise ValueError("Modem %s reply was meaningless: %s" % (port, lines))
+        raise ValueError("Reply from modem %s was meaningless: %s"
+                            % (port, lines))
 
 
 def identify_device(plugin):
@@ -185,7 +186,7 @@ def identify_device(plugin):
         return check_auth_state(plugin)
 
     port = plugin.ports.get_application_port()
-    d = deferToThread(_identify_device, port.path)
+    d = deferToThread(raw_identify_device, port.path)
     d.addCallback(identify_device_cb)
     return d
 

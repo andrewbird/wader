@@ -26,7 +26,7 @@ from zope.interface import implements
 
 from wader.common.consts import (MDM_INTFACE, MM_MODEM_TYPE_REV,
                                  NET_INTFACE, MM_IP_METHOD_PPP)
-from core.hardware.base import _identify_device
+from core.hardware.base import raw_identify_device
 from wader.common.interfaces import IHardwareManager
 from core.oses.unix import UnixPlugin
 from core.plugin import PluginManager
@@ -88,7 +88,7 @@ class HardwareManager(object):
         deferreds = []
         for dev in devs_info:
             port = dev['dialin'] if dev['dialin'] else dev['callout']
-            d = defer.maybeDeferred(_identify_device, port)
+            d = defer.maybeDeferred(raw_identify_device, port)
             d.addCallback(self._get_device_from_model, dev)
             deferreds.append(d)
 
