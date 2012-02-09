@@ -13,6 +13,11 @@ SUBSYSTEM!="tty", GOTO="wader_zte_tty_end"
 # ONDA MT503HS
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0002", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0002", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
+# MF668
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0017", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0017", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
 # MF637U and others
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0031", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
 ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0031", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
