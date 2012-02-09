@@ -27,25 +27,9 @@ import locale
 # i10n stuff
 locale.setlocale(locale.LC_ALL, '')
 
-from wader.common.consts import APP_NAME
-
 import sys
 sys.path.insert(0, '/usr/share/wader-core')
 
-from core.startup import (create_skeleton_and_do_initial_setup,
-                          get_wader_application)
-# it will just return if its not necessary
-create_skeleton_and_do_initial_setup()
-
-# check if we have an OSPlugin for this OS/Distro
-from core.oal import get_os_object
-if get_os_object() is None:
-    message = 'OS/Distro not registered'
-    details = """
-The OS/Distro under which you are running %s
-is not registered in the OS database. Check the documentation for what
-you can do in order to support your OS/Distro
-""" % APP_NAME
-    raise SystemExit("%s\n%s" % (message, details))
+from core.startup import get_wader_application
 
 application = get_wader_application()
