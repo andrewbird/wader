@@ -313,8 +313,8 @@ class PluginManager(object):
     @classmethod
     def get_plugin_by_vendor_product_id(cls, product_id, vendor_id):
         """Get a plugin by its product and vendor ids"""
-        log.msg("get_plugin_by_id called with 0x%X and 0x%X" % (product_id,
-                                                            vendor_id))
+        log.msg("get_plugin_by_id called with 0x%04x and 0x%04x"
+                    % (product_id, vendor_id))
         for plugin in cls.get_plugins(interfaces.IDevicePlugin):
             props = flatten_list(plugin.__properties__.values())
             if int(product_id) in props and int(vendor_id) in props:
