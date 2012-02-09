@@ -257,10 +257,20 @@ class HardwareManager(object):
                                          universal_newlines=True,
                                          shell=False)
                     device_info, device_info_error = p.communicate()
-                    log.msg('lsusb device info:%s\n\n%s' %
-                            (device_info, device_info_error))
+                    log.msg('lsusb device info:%s' % device_info)
+                    if len(device_info_error):
+                        log.msg('lsusb device info_error:%s'
+                                    % device_info_error)
                 except (OSError, ValueError):
                     pass
+
+                from core.hardware.base import raw_identify_device
+                for port in info.get('DEVICES', []):
+                    try:
+                        log.msg('try to identify model on port "%s"' % port)
+                        raw_identify_device(port)
+                    except ValueError:
+                        pass
         return result
 
     def _get_last_parent_that_matches_props(self, device, props):
