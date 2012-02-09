@@ -16,36 +16,35 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from core.hardware.zte import ZTEWCDMADevicePlugin
-
-from plugins.zte_mf626 import ZTEMF626
-from plugins.zte_mf636 import ZTEMF636
-from plugins.zte_mf637u import ZTEMF637U
+from core.hardware.zte import (ZTEWCDMADevicePlugin,
+                                       ZTEWCDMACustomizer,
+                                       ZTEWrapper)
 
 
-class ZTEMother0031(ZTEWCDMADevicePlugin):
-    """:class:`~core.plugin.DevicePlugin` for ZTE's PID 0x031 Family"""
-    name = "ZTE Mother 0x0031"
+class ZTEMF626Wrapper(ZTEWrapper):
+
+    def send_ussd(self, ussd):
+        """Sends the ussd command ``ussd``"""
+        # XXX: assumes it's the same as 637U
+        # MF626 wants request in ascii chars even though current
+        # set might be ucs2
+        return super(ZTEMF626Wrapper, self).send_ussd(ussd, force_ascii=True)
+
+
+class ZTEMF626Customizer(ZTEWCDMACustomizer):
+    wrapper_klass = ZTEMF626Wrapper
+
+
+class ZTEMF626(ZTEWCDMADevicePlugin):
+    """:class:`~core.plugin.DevicePlugin` for ZTE's MF626"""
+    name = "ZTE MF626"
     version = "0.1"
     author = u"Andrew Bird"
+    custom = ZTEMF626Customizer()
 
-    __remote_name__ = None
+    __remote_name__ = "MF626"
 
     __properties__ = {
         'ID_VENDOR_ID': [0x19d2],
         'ID_MODEL_ID': [0x0031],
     }
-
-    def __init__(self):
-        super(ZTEMother0031, self).__init__()
-
-        self.mapping = {
-            'MF620': ZTEMF637U,  # Just MF637U now but usb-modeswitch-data suggests
-                                 # that M110 / MF112 are candidates also
-            'MF626': ZTEMF626,
-            'MF636': ZTEMF636,
-
-            'default': ZTEMF637U,
-        }
-
-zte_mother0031 = ZTEMother0031()
