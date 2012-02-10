@@ -455,7 +455,7 @@ class WCDMAWrapper(WCDMAProtocol):
             return resp.append(info[0])
 
         def get_netinfo_eb(failure):
-            failure.trap(E.NoNetwork)
+            failure.trap(E.NoNetwork, ex.LimitedServiceNetworkError)
             resp.append('')
 
         d = self.get_network_info('numeric')
