@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2008  Vodafone España, S.A.
+# Copyright (C) 2006-2012  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Jaime Soriano
 #
@@ -21,10 +21,12 @@
 # http://forge.vodafonebetavine.net/forum/message.php?msg_id=630
 #
 # OptionGTM378 integrated in Fuijitsu-Siemens Esprimo Mobile U Series
-from core.hardware.option import OptionHSOWCDMADevicePlugin
+
+from core.hardware.option import (OptionWCDMADevicePlugin,
+                                  OptionHSOWCDMADevicePlugin)
 
 
-class OptionGTM378(OptionHSOWCDMADevicePlugin):
+class OptionGTM378(OptionWCDMADevicePlugin):
     """
     :class:`~core.plugin.DevicePlugin` for Option's GTM378
     """
@@ -36,7 +38,25 @@ class OptionGTM378(OptionHSOWCDMADevicePlugin):
 
     __properties__ = {
         'ID_VENDOR_ID': [0x0af0],
-        'ID_MODEL_ID': [0x6901, 0x6911],
+        'ID_MODEL_ID': [0x6901],
     }
 
 optiongtm378 = OptionGTM378()
+
+
+class OptionHSOGTM378(OptionHSOWCDMADevicePlugin):
+    """
+    :class:`~core.plugin.DevicePlugin` for Option's GTM378
+    """
+    name = "Option GT M378"
+    version = "0.1"
+    author = "Ulf Michel"
+
+    __remote_name__ = 'GTM378'
+
+    __properties__ = {
+        'ID_VENDOR_ID': [0x0af0],
+        'ID_MODEL_ID': [0x6911],
+    }
+
+optionhsogtm378 = OptionHSOGTM378()
