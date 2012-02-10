@@ -1165,8 +1165,14 @@ class WCDMAWrapper(WCDMAProtocol):
                 self.device.set_property(MDM_INTFACE, 'EquipmentIdentifier',
                                          imei))
         d.addCallback(lambda _: self.get_iccid())
-        d.addCallback(lambda iccid:
-                self.device.set_property(CRD_INTFACE, 'SimIdentifier', iccid))
+
+        def iccid_eb(failure):
+            failure.trap(E.General)
+            self.device.set_property(CRD_INTFACE, 'SimIdentifier', ''),
+
+        d.addCallbacks(lambda iccid:
+                self.device.set_property(CRD_INTFACE, 'SimIdentifier', iccid),
+            iccid_eb)
         return d
 
     def get_simple_status(self):
