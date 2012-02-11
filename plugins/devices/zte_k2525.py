@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2009  Vodafone España, S.A.
+# Copyright (C) 2006-2012  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Andrew Bird
 #
@@ -23,15 +23,16 @@ from twisted.internet.task import deferLater
 
 from wader.common import consts
 import wader.common.aterrors as E
-from core.command import build_cmd_dict
 from wader.common.encoding import (unpack_ucs2_bytes, pack_ucs2_bytes,
                                    check_if_ucs2)
 from wader.common.exceptions import LimitedServiceNetworkError
+from core.command import build_cmd_dict
 from core.middleware import WCDMAWrapper, NetworkOperator
 from core.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper,
                                        ZTE_CMD_DICT)
+from core.sim import SIMBaseClass
 
 ZTEK2525_ALLOWED_DICT = {
     consts.MM_ALLOWED_MODE_ANY: None,
@@ -216,6 +217,23 @@ class ZTEK2525Wrapper(ZTEWrapper):
         return d
 
 
+class ZTEK2525SIMClass(SIMBaseClass):
+    """SIM class for ZTE K2525 devices"""
+
+    def __init__(self, sconn):
+        super(ZTEK2525SIMClass, self).__init__(sconn)
+
+    def setup_sms(self):
+        # Select SIM storage
+        self.sconn.send_at('AT+CPMS="SM","SM","SM"')
+
+        # Notification when a SMS arrives...
+        self.sconn.set_sms_indication(1, 1, 0, 1, 0)
+
+        # set PDU mode
+        self.sconn.set_sms_format(0)
+
+
 class ZTEK2525Customizer(ZTEWCDMACustomizer):
     allowed_dict = ZTEK2525_ALLOWED_DICT
     band_dict = {}
@@ -229,6 +247,7 @@ class ZTEK2525(ZTEWCDMADevicePlugin):
     name = "Vodafone K2525"
     version = "0.1"
     author = "Andrew Bird"
+    sim_klass = ZTEK2525SIMClass
     custom = ZTEK2525Customizer()
 
     __remote_name__ = "K2525"
@@ -237,6 +256,5 @@ class ZTEK2525(ZTEWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x19d2],
         'ID_MODEL_ID': [0x0022],
     }
-
 
 zte_k2525 = ZTEK2525()
