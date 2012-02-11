@@ -149,7 +149,7 @@ class ZTEK2525Wrapper(ZTEWrapper):
                 # we should raise an exception here
                 raise E.NoNetwork()
 
-            conn_type = 'GPRS'
+            conn_type = consts.MM_GSM_ACCESS_TECH_GPRS
             netname = netinfo.group('netname')
 
             if netname in ['Limited Service',
