@@ -25,8 +25,9 @@ from twisted.python.failure import Failure
 from twisted.python import log
 
 import wader.common.aterrors as E
-from core.command import ATCmd
 import wader.common.signals as S
+
+from core.command import ATCmd
 
 # Standard unsolicited notifications
 CALL_RECV = re.compile('\r\nRING\r\n')
@@ -349,9 +350,11 @@ class BufferingStateMachine(object, protocol.Protocol):
             if match:
                 exception, error, m = match
                 e = exception(error)
-                log.err(e, "waiting")
+                f = Failure(e)
+                if not f.check(*self.cmd.nolog):
+                    log.err(e, "waiting")
                 # send the failure back
-                self.notify_failure(Failure(e))
+                self.notify_failure(f)
                 # remove the exception string from the waitbuf
                 self.waitbuf = self.waitbuf.replace(m.group(), '', 1)
                 self.transition_to_idle()

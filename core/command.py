@@ -265,10 +265,11 @@ CMD_DICT = {
 class ATCmd(object):
     """I encapsulate all the data related to an AT command"""
 
-    def __init__(self, cmd, name=None, eol='\r\n'):
+    def __init__(self, cmd, name=None, eol='\r\n', nolog=tuple()):
         self.cmd = cmd
         self.name = name
         self.eol = eol
+        self.nolog = nolog
         # Some commands like sending a sms require an special handling this
         # is because we have to wait till we receive a prompt like '\r\n> '
         # if splitcmd is set, the second part will be send 0.1 seconds later
