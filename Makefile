@@ -14,6 +14,8 @@ rpm:
 		exit 1;\
 	fi
 
+	touch resources/extra/networks.py
+
 	tar -jcvf $(SOURCES)/$(WV).tar.bz2 --exclude=.git --transform="s/^\./$(WV)/" .
 	rpmbuild -ba resources/rpm/wader.spec
 
@@ -23,6 +25,8 @@ deb:
 		echo 'Debian package directory does not exist, are you running on a non Debian based system?';\
 		exit 1;\
 	fi
+
+	touch resources/extra/networks.py
 
 	@if [ -d packaging/debian/$(TARGET)/debian ] ;\
 	then\
