@@ -16,17 +16,19 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import re
 from twisted.internet import defer
 
 from wader.common import consts
-from core.command import ATCmd
 from wader.common.encoding import pack_ucs2_bytes
+
+from core.command import ATCmd, build_cmd_dict
 from core.hardware.base import build_band_dict
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
-                                          HuaweiWCDMACustomizer,
-                                          HuaweiWCDMAWrapper,
-                                          HUAWEI_BAND_DICT)
-
+                                  HuaweiWCDMACustomizer,
+                                  HuaweiWCDMAWrapper,
+                                  HUAWEI_BAND_DICT, HUAWEI_CMD_DICT)
+from core.middleware import WCDMAWrapper
 
 ALLOWED_DICT = {
     consts.MM_ALLOWED_MODE_ANY: None,
@@ -37,6 +39,10 @@ CONN_DICT = {
     consts.MM_NETWORK_MODE_ANY: None,
     consts.MM_NETWORK_MODE_2G_ONLY: None,
 }
+
+CMD_DICT = HUAWEI_CMD_DICT.copy()
+CMD_DICT['get_radio_status'] = \
+    build_cmd_dict(re.compile('\r\n\+CFUN:\s?(?P<status>\d)\r\n'))
 
 
 class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
@@ -62,6 +68,12 @@ class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
         cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
 
         return self.queue_at_cmd(cmd)
+
+    def enable_radio(self, enable):
+        # This device may not return anything from +CFUN?, so just do it blind
+        d = super(WCDMAWrapper, self).enable_radio(enable)
+        d.addCallback(lambda response: response[0].group('resp'))
+        return d
 
     def get_network_mode(self):
         """Returns the current network mode preference"""
@@ -97,13 +109,14 @@ class HuaweiK2540Customizer(HuaweiWCDMACustomizer):
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,
 
-                   consts.MM_NETWORK_BAND_G850,#  850
-                   consts.MM_NETWORK_BAND_EGSM,#  900
-                   consts.MM_NETWORK_BAND_DCS, # 1800
-                   consts.MM_NETWORK_BAND_PCS])# 1900
+                   consts.MM_NETWORK_BAND_G850,   # 850
+                   consts.MM_NETWORK_BAND_EGSM,   # 900
+                   consts.MM_NETWORK_BAND_DCS,   # 1800
+                   consts.MM_NETWORK_BAND_PCS])  # 1900
 
     allowed_dict = ALLOWED_DICT
     conn_dict = CONN_DICT
+    cmd_dict = CMD_DICT
 
 
 class HuaweiK2540(HuaweiWCDMADevicePlugin):
