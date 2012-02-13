@@ -293,14 +293,15 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
 
         :rtype: list
         """
+        exceptions = (E.NotFound, E.InvalidIndex, E.General)
 
         def not_found_eb(failure):
-            failure.trap(E.NotFound, E.InvalidIndex, E.General)
+            failure.trap(*exceptions)
             return []
 
         def get_them(ignored=None):
             cmd = ATCmd('AT^CPBR=1,%d' % self.device.sim.size,
-                        name='list_contacts')
+                        name='list_contacts', nolog=exceptions)
             d = self.queue_at_cmd(cmd)
             d.addCallback(
                 lambda matches: map(self._regexp_to_contact, matches))

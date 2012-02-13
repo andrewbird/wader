@@ -630,8 +630,10 @@ class WCDMAProtocol(SerialProtocol):
 
         :rtype: list
         """
+        # Note: don't log these exceptions
+        exceptions = (E.General, E.NotFound)
         cmd = ATCmd('AT+CPBR=1,%d' % self.device.sim.size,
-                    name='list_contacts')
+                    name='list_contacts', nolog=exceptions)
         return self.queue_at_cmd(cmd)
 
     def get_imei(self):
