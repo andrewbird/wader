@@ -72,8 +72,6 @@ from core.sim import (COM_READ_BINARY, EF_AD, EF_SPN, EF_ICCID, SW_OK,
 from wader.common.sms import Message
 from wader.common.utils import rssi_to_percentage
 
-CACHETIME = 5
-
 
 class WCDMAWrapper(WCDMAProtocol):
     """
@@ -92,7 +90,6 @@ class WCDMAWrapper(WCDMAProtocol):
         self.mal = MessageAssemblyLayer(self)
 
         self.signal_matchs = []
-        self.cached_registration = (0, (0, '', ''))
 
         # timeout_add_seconds task ID
         self.__time = 0
@@ -101,6 +98,29 @@ class WCDMAWrapper(WCDMAProtocol):
         self.stats_id = None
         # iface name
         self.iface = None
+
+        self.caches = {
+            'signal': (0, 0),
+            'registration': (0, (0, '', '')),
+        }
+
+    def maybecached(self, name, fn, cblist):
+        if self.caches[name][0] >= time():  # cache hasn't expired
+            log.msg("get '%s' (cached path)" % name, system='CACHE')
+            d = defer.succeed(self.caches[name][1])
+        else:
+            log.msg("get '%s' (noncached path)" % name, system='CACHE')
+            d = fn()
+            for cb in cblist:
+                d.addCallback(cb)
+            d.addCallback(self.updatecache, name)
+        return d
+
+    def updatecache(self, value, name):
+        CACHETIME = 5
+
+        self.caches[name] = (time() + CACHETIME, value)
+        return value
 
     def connect_to_signals(self):
         bus = dbus.SystemBus()
@@ -469,8 +489,8 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda _: tuple(resp))
         return d
 
-    def _get_netreg_info_update_and_emit(self, _reginfo):
-        """Update the cache, emit RegistrationInfo signal"""
+    def _get_netreg_info_emit(self, _reginfo):
+        """Convert type and emit RegistrationInfo signal"""
 
         if self.device.status <= MM_MODEM_STATE_REGISTERED:
             if _reginfo[0] in [1, 5]:
@@ -480,29 +500,22 @@ class WCDMAWrapper(WCDMAProtocol):
 
         reginfo = (dbus.UInt32(_reginfo[0]), _reginfo[1], _reginfo[2])
 
-        self.cached_registration = (time() + CACHETIME, reginfo)
         self.device.exporter.RegistrationInfo(*reginfo)
 
         return reginfo
 
     def get_netreg_info(self):
         """Get the registration status and the current operator"""
-
-        if self.cached_registration[0] >= time():  # cache hasn't expired
-            log.msg("middleware::get_netreg_info served from cache")
-            d = defer.succeed(self.cached_registration[1])
-        else:
-            d = self.get_netreg_status()
-            d.addCallback(lambda info: info[1])
-            d.addCallback(self._get_netreg_info)
-            d.addCallback(self._get_netreg_info_update_and_emit)
-        return d
+        return self.maybecached('registration', self.get_netreg_status,
+                [lambda info: info[1], self._get_netreg_info,
+                    self._get_netreg_info_emit])
 
     def on_creg_cb(self, status):
         """Callback for +CREG notifications"""
         d = defer.succeed(status)
         d.addCallback(self._get_netreg_info)
-        d.addCallback(self._get_netreg_info_update_and_emit)
+        d.addCallback(self._get_netreg_info_emit)
+        d.addCallback(self.updatecache, 'registration')
         return d
 
     def get_netreg_status(self):
@@ -786,10 +799,10 @@ class WCDMAWrapper(WCDMAProtocol):
         if self.device.status < MM_MODEM_STATE_ENABLED:
             return defer.succeed(0)
 
-        d = super(WCDMAWrapper, self).get_signal_quality()
-        d.addCallback(lambda response: int(response[0].group('rssi')))
-        d.addCallback(rssi_to_percentage)
-        return d
+        return self.maybecached('signal',
+                    super(WCDMAWrapper, self).get_signal_quality,
+                    [lambda response: int(response[0].group('rssi')),
+                        rssi_to_percentage])
 
     def get_sms(self, index):
         return self.mal.get_sms(index)
@@ -1180,9 +1193,9 @@ class WCDMAWrapper(WCDMAProtocol):
         if self.device.status < MM_MODEM_STATE_ENABLED:
             return defer.succeed(dict(state=self.device.status))
 
-        def get_simple_status_cb((rssi, netinfo, band, net_mode)):
+        def get_simple_status_cb((sigstrength, netinfo, band, net_mode)):
             return dict(state=self.device.status,
-                        signal_quality=rssi,
+                        signal_quality=sigstrength,
                         operator_code=netinfo[1],
                         operator_name=netinfo[2],
                         band=band,
