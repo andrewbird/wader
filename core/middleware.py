@@ -1288,6 +1288,10 @@ class WCDMAWrapper(WCDMAProtocol):
         return d
 
     def disconnect_from_internet_hso(self):
+        # NM usually issues disconnect as part of a connect sequence
+        if self.device.status < MM_MODEM_STATE_CONNECTED:
+            return defer.succeed(True)
+
         return self.hso_disconnect()
 
     def disconnect_from_internet_ppp(self):
