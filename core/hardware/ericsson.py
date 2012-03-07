@@ -94,7 +94,8 @@ ERICSSON_CMD_DICT['get_phonebook_size'] = build_cmd_dict(re.compile(r"""
                 """, re.VERBOSE))
 
 # *ENAP: 1
-ERICSSON_CMD_DICT['get_enap'] = build_cmd_dict('\*ENAP:\s+(?P<status>\d+)')
+# *ENAP:2,""
+ERICSSON_CMD_DICT['get_enap'] = build_cmd_dict('\*ENAP:\s*(?P<status>\d+)')
 
 # *E2IPCFG: (<type>,<ip_addr>)(?:,(<type>,<ip_addr>)){0,3}
 # D5540 (f3607gw)
