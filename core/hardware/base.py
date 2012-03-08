@@ -122,6 +122,7 @@ def check_auth_state(plugin):
                             plugin.set_authtime(0)
                             return plugin
 
+                log.msg("check_auth_state: +CPIN? returned '%s'" % lines)
                 sleep(1)  # can do this as we are in a separate thread
 
         log.msg("check_auth_state: +CPIN? no match lines = %s" % str(lines))
