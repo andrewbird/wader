@@ -512,7 +512,9 @@ class WCDMAProtocol(SerialProtocol):
                            authentication is disabled
         :rtype: str
         """
-        cmd = ATCmd('AT+CPIN?', name='check_pin')
+        # Note: don't log these exceptions
+        exceptions = (E.SimFailure,)
+        cmd = ATCmd('AT+CPIN?', name='check_pin', nolog=exceptions)
         return self.queue_at_cmd(cmd)
 
     def delete_all_contacts(self):

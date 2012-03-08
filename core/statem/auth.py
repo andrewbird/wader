@@ -98,6 +98,7 @@ class AuthStateMachine(Modal):
     def sim_failure_eb(self, failure):
         """Executed when there's a SIM failure, try again in a while"""
         failure.trap(E.SimFailure)
+        log.msg("device returned SimFailure")
         self.num_sim_errors += 1
         if self.num_sim_errors >= MAX_NUM_SIM_ERRORS:
             # we can now consider that there's something wrong with the
@@ -141,7 +142,7 @@ class AuthStateMachine(Modal):
     # states
     class get_pin_status(mode):
         """
-        Ask the PIN what's the PIN status
+        Ask the SIM what's the PIN status
 
         The SIM can be in one of the following states:
          - SIM is ready (already authenticated, or PIN disabled)
@@ -160,7 +161,8 @@ class AuthStateMachine(Modal):
 
         def do_next(self):
             log.msg("%s: transition to get_pin_status mode...." % self)
-            d = self.device.sconn.check_pin()
+            d = self.device.sconn.send_at('AT+CMEE=1')
+            d.addCallback(lambda _: self.device.sconn.check_pin())
             d.addCallback(self.check_pin_cb)
             d.addErrback(self.pin_required_eb)
             d.addErrback(self.puk_required_eb)
