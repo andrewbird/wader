@@ -54,7 +54,7 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  MM_GSM_ACCESS_TECH_HSPA,
                                  MM_GSM_ACCESS_TECH_HSPA_PLUS,
                                  MM_GSM_ACCESS_TECH_LTE,
-                                 MM_IP_METHOD_PPP, HSO_PAP_AUTH)
+                                 MM_IP_METHOD_PPP)
 
 from core.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
@@ -1242,9 +1242,7 @@ class WCDMAWrapper(WCDMAProtocol):
     def connect_to_internet_hso(self, settings):
         username = settings.get('username', '')
         password = settings.get('password', '')
-        # XXX: One day Simple.Connect will receive auth too
-        # defaulting to PAP_AUTH as that's what we had before
-        auth = HSO_PAP_AUTH
+        auth = settings.get('allowed_auth', None)
 
         d = self.hso_authenticate(username, password, auth)
         d.addCallback(lambda _: self.hso_connect())

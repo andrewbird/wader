@@ -399,10 +399,16 @@ class OptionHSOWrapper(OptionWrapper):
         if not conn_id:
             raise E.CallIndexError("conn_id is None")
 
-        # XXX: I haven't been able to make NO_AUTH work, defaulting to PAP
-        if auth == consts.HSO_NO_AUTH:
-            auth = consts.HSO_PAP_AUTH
-        args = (conn_id, auth, user, passwd)
+        # Note: auth is now a bitfield, but option can only support one mode so
+        #       unless it's only NONE or CHAP, default to PAP
+        if auth == consts.MM_ALLOWED_AUTH_NONE:
+            _auth = 0   # No auth
+        elif auth == consts.MM_ALLOWED_AUTH_CHAP:
+            _auth = 2   # CHAP
+        else:
+            _auth = 1   # PAP
+
+        args = (conn_id, _auth, user, passwd)
         cmd = ATCmd('AT$QCPDPP=%d,%d,"%s","%s"' % args,
                     name='hso_authenticate')
         d = self.queue_at_cmd(cmd)

@@ -33,7 +33,8 @@ from zope.interface import implements
 
 from wader.common.backends.plain import PlainBackend as _PlainBackend
 from wader.common.consts import (APP_NAME, FALLBACK_DNS, MDM_INTFACE,
-                                 HSO_CHAP_AUTH, HSO_NO_AUTH, HSO_PAP_AUTH,
+                                 MM_ALLOWED_AUTH_NONE, MM_ALLOWED_AUTH_PAP,
+                                 MM_ALLOWED_AUTH_CHAP,
                                  MM_MODEM_STATE_REGISTERED,
                                  MM_MODEM_STATE_CONNECTING,
                                  MM_MODEM_STATE_DISCONNECTING,
@@ -538,11 +539,11 @@ class HSODialer(Dialer):
         self.conf = config
 
         if not config.refuse_chap:
-            auth = HSO_CHAP_AUTH
+            auth = MM_ALLOWED_AUTH_CHAP
         elif not config.refuse_pap:
-            auth = HSO_PAP_AUTH
+            auth = MM_ALLOWED_AUTH_PAP
         else:
-            auth = HSO_NO_AUTH
+            auth = MM_ALLOWED_AUTH_NONE
 
         d = self.device.sconn.set_apn(config.apn)
         d.addCallback(lambda _: self.device.sconn.hso_authenticate(

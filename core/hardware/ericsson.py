@@ -24,17 +24,18 @@ from twisted.internet.task import deferLater
 from twisted.python import log
 
 import wader.common.aterrors as E
-from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common import consts
-from core.contact import Contact
 from wader.common.encoding import (pack_ucs2_bytes, from_u, check_if_ucs2,
                                    from_ucs2)
+from wader.common.utils import revert_dict
+import wader.common.signals as S
+
+from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
+from core.contact import Contact
 from core.hardware.base import WCDMACustomizer
 from core.middleware import WCDMAWrapper
 from core.plugin import DevicePlugin
 from core.sim import SIMBaseClass
-from wader.common.utils import revert_dict
-import wader.common.signals as S
 
 CREG_MAX_RETRIES = 6
 CREG_RETRY_TIMEOUT = 4
@@ -559,16 +560,22 @@ class EricssonWrapper(WCDMAWrapper):
         if conn_id is None:
             raise E.CallIndexError("conn_id is None")
 
-        # XXX: We need to enrich the auth methods across the board
-        #      Bitfield '00111': MSCHAPv2, MSCHAP, CHAP, PAP, None
-        if auth is consts.HSO_NO_AUTH:
-            _auth = '00001'
-        elif auth is consts.HSO_PAP_AUTH:
-            _auth = '00010'
-        elif auth is consts.HSO_CHAP_AUTH:
-            _auth = '00100'
+        # Bitfield '00111': MSCHAPv2, MSCHAP, CHAP, PAP, None
+        if auth is None:
+            iauth = consts.MM_ALLOWED_AUTH_UNKNOWN
         else:
-            _auth = '00111'  # CHAP + PAP + NONE
+            iauth = auth & 0x1f                 # only the lowest 5 bits
+
+        if iauth == consts.MM_ALLOWED_AUTH_UNKNOWN:
+            iauth = consts.MM_ALLOWED_AUTH_PAP  # the old default
+
+        # convert to string
+        try:
+            _auth = bin(iauth)[2:].zfill(5)     # Python 2.6+
+        except:
+            _auth = ''
+            for i in range(5 - 1, -1, -1):
+                _auth += "%d" % ((iauth >> i) & 1)
 
         if self.device.sim.charset == 'UCS2':
             args = (conn_id, pack_ucs2_bytes(user),

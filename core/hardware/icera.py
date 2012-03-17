@@ -340,7 +340,16 @@ class IceraWrapper(WCDMAWrapper):
         if conn_id is None:
             raise E.CallIndexError("conn_id is None")
 
-        args = (conn_id, auth, user, passwd)
+        # Note: auth is now a bitfield, but icera can only support one mode so
+        #       unless it's only NONE or CHAP, default to PAP
+        if auth == consts.MM_ALLOWED_AUTH_NONE:
+            _auth = 0   # No auth
+        elif auth == consts.MM_ALLOWED_AUTH_CHAP:
+            _auth = 2   # CHAP
+        else:
+            _auth = 1   # PAP
+
+        args = (conn_id, _auth, user, passwd)
         cmd = ATCmd('AT%%IPDPCFG=%d,0,%d,"%s","%s"' % args,
                     name='hso_authenticate')
         d = self.queue_at_cmd(cmd)
