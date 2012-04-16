@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.icera import IceraWCDMADevicePlugin
 
 
@@ -33,5 +34,6 @@ class ZTEMF668(IceraWCDMADevicePlugin):
         'ID_MODEL_ID': [0x0017],
     }
 
+    conntype = WADER_CONNTYPE_USB
 
 zte_mf668 = ZTEMF668()

@@ -18,6 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # Stefano Rivera contributed this info through email on 20 Sept 2007
+
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
 from core.hardware.option import OptionWCDMADevicePlugin
 
 
@@ -35,5 +37,7 @@ class OptionGTFusion(OptionWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x0af0],
         'ID_MODEL_ID': [0x6000],
     }
+
+    conntype = WADER_CONNTYPE_PCMCIA
 
 optiongtfusion = OptionGTFusion()

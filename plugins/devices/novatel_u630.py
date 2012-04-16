@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
 from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
@@ -32,6 +33,8 @@ class NovatelU630(NovatelWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x00a4],
         'ID_MODEL_ID': [0x0276],
     }
+
+    conntype = WADER_CONNTYPE_PCMCIA
 
     # Unfortunately it is not possible to switch the Second port from DM
     # to AT mode on the x6xx models, so we have to run with only one port

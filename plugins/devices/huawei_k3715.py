@@ -97,3 +97,5 @@ class HuaweiK3715(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1001],
     }
+
+    conntype = consts.WADER_CONNTYPE_USB

@@ -73,10 +73,10 @@ class HuaweiE3735Customizer(HuaweiWCDMACustomizer):
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,
 
-                   consts.MM_NETWORK_BAND_G850,#  850
-                   consts.MM_NETWORK_BAND_EGSM,#  900
-                   consts.MM_NETWORK_BAND_DCS, # 1800
-                   consts.MM_NETWORK_BAND_PCS, # 1900
+                   consts.MM_NETWORK_BAND_G850,  # 850
+                   consts.MM_NETWORK_BAND_EGSM,  # 900
+                   consts.MM_NETWORK_BAND_DCS,  # 1800
+                   consts.MM_NETWORK_BAND_PCS,  # 1900
 
 #                   consts.MM_NETWORK_BAND_U900,
                    consts.MM_NETWORK_BAND_U2100])
@@ -98,3 +98,5 @@ class HuaweiE3735(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1001],
     }
+
+    conntype = consts.WADER_CONNTYPE_USB

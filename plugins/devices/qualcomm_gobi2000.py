@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_EMBEDDED
 from core.hardware.qualcomm import QualcommWCDMADevicePlugin
 
 
@@ -34,5 +35,6 @@ class QualcommWCDMAG2000(QualcommWCDMADevicePlugin):
                         0x9265, 0x9275],
     }
 
+    conntype = WADER_CONNTYPE_EMBEDDED
 
 qualcommwcdmag2000 = QualcommWCDMAG2000()

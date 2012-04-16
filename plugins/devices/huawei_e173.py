@@ -17,6 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from twisted.internet import defer
+
 from wader.common import consts
 from core.hardware.base import build_band_dict
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
@@ -76,6 +77,8 @@ class HuaweiE173(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x14a5],
     }
+
+    conntype = consts.WADER_CONNTYPE_USB
 
     def preprobe_init(self, ports, info):
         if info['ID_MODEL_ID'] == 0x1436:

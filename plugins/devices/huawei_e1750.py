@@ -70,6 +70,8 @@ class HuaweiE1750(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x0000],
     }
 
+    conntype = consts.WADER_CONNTYPE_USB
+
     def preprobe_init(self, ports, info):
         if info['ID_MODEL_ID'] == 0x140c:
             self.__properties__['ID_MODEL_ID'][0] = 0x140c

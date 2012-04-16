@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.zte import ZTEWCDMADevicePlugin
 
 
@@ -32,8 +33,9 @@ class ZTEK3565(ZTEWCDMADevicePlugin):
 
     __properties__ = {
         'ID_VENDOR_ID': [0x19d2],
-        'ID_MODEL_ID': [0x0049, 0x0052, 0x0063], # depends on fw ver
+        'ID_MODEL_ID': [0x0049, 0x0052, 0x0063],  # depends on fw ver
     }
 
+    conntype = WADER_CONNTYPE_USB
 
 zte_k3565 = ZTEK3565()

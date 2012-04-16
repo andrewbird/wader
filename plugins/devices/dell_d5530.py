@@ -16,6 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_EMBEDDED
 from core.hardware.ericsson import EricssonDevicePlugin
 
 
@@ -31,5 +32,7 @@ class EricssonD5530(EricssonDevicePlugin):
         'ID_VENDOR_ID': [0x413c],
         'ID_MODEL_ID': [0x8147],
     }
+
+    conntype = WADER_CONNTYPE_EMBEDDED
 
 ericssonD5530 = EricssonD5530()

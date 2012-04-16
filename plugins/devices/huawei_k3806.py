@@ -81,5 +81,6 @@ class HuaweiK3806(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x14ae],
     }
 
+    conntype = consts.WADER_CONNTYPE_USB
 
 huaweik3806 = HuaweiK3806()

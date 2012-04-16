@@ -65,10 +65,11 @@ class HuaweiE510(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x1411],
     }
 
+    conntype = consts.WADER_CONNTYPE_USB
+
     def preprobe_init(self, ports, info):
         # This device might be found by means of the mother plugin too
         if info['ID_MODEL_ID'] == 0x1001:
             self.__properties__['ID_MODEL_ID'][0] = 0x1001
-
 
 huaweie510 = HuaweiE510()

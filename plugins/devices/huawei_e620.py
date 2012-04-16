@@ -19,9 +19,10 @@
 
 import re
 
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
+from core.command import build_cmd_dict
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer)
-from core.command import build_cmd_dict
 
 E620_CMD_DICT = HuaweiWCDMACustomizer.cmd_dict.copy()
 E620_CMD_DICT['get_roaming_ids'] = build_cmd_dict(re.compile(
@@ -48,3 +49,5 @@ class HuaweiE620(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1001],
     }
+
+    conntype = WADER_CONNTYPE_PCMCIA

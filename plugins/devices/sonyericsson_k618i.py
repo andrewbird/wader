@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_UNKNOWN
 from core.hardware.sonyericsson import SonyEricssonCustomizer
 from core.plugin import RemoteDevicePlugin
 
@@ -31,5 +32,7 @@ class SonyEricssonK618i(RemoteDevicePlugin):
     custom = SonyEricssonCustomizer
 
     __remote_name__ = "AAD-3022042-BV"
+
+    conntype = WADER_CONNTYPE_UNKNOWN
 
 sonyericsson_k618i = SonyEricssonK618i()

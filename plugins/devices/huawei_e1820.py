@@ -100,5 +100,6 @@ class HuaweiE1820(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x14ac],
     }
 
+    conntype = consts.WADER_CONNTYPE_USB
 
 huaweie1820 = HuaweiE1820()

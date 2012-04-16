@@ -46,10 +46,10 @@ class HuaweiEM730VCustomizer(HuaweiWCDMACustomizer):
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,
 
-                   consts.MM_NETWORK_BAND_G850,#  850
-                   consts.MM_NETWORK_BAND_EGSM,#  900
-                   consts.MM_NETWORK_BAND_DCS, # 1800
-                   consts.MM_NETWORK_BAND_PCS, # 1900
+                   consts.MM_NETWORK_BAND_G850,  # 850
+                   consts.MM_NETWORK_BAND_EGSM,  # 900
+                   consts.MM_NETWORK_BAND_DCS,  # 1800
+                   consts.MM_NETWORK_BAND_PCS,  # 1900
 
 #                   consts.MM_NETWORK_BAND_U900,
                    consts.MM_NETWORK_BAND_U1900,
@@ -69,3 +69,5 @@ class HuaweiEM730V(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1001],
     }
+
+    conntype = consts.WADER_CONNTYPE_EMBEDDED

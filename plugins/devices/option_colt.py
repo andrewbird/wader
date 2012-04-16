@@ -25,6 +25,7 @@ DevicePlugin for Option Colt
 from epsilon.modal import mode
 from twisted.python import log
 
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
 from core.hardware.option import (OptionWCDMADevicePlugin,
                                         OptionWCDMACustomizer)
 from core.sim import SIMBaseClass
@@ -107,5 +108,6 @@ class OptionColt(OptionWCDMADevicePlugin):
         'ID_MODEL_ID': [0x5000],
     }
 
+    conntype = WADER_CONNTYPE_PCMCIA
 
 optioncolt = OptionColt()

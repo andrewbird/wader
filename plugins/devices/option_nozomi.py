@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
 from core.hardware.option import OptionWCDMADevicePlugin
 
 
@@ -32,6 +33,8 @@ class OptionNozomi(OptionWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x1931],
         'ID_MODEL_ID': [0xc],
     }
+
+    conntype = WADER_CONNTYPE_PCMCIA
 
 # device disabled in the udev transition as we couldn't find
 # a way to obtain its vendor and product ids cleanly. I'll

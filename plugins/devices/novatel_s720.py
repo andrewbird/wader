@@ -18,6 +18,8 @@
 
 # Plugin temporally disabled while we sort out the CDMA part
 
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
+
 
 class NovatelS720(object):
     """:class:`~core.plugin.DevicePlugin` for Novatel S720"""
@@ -31,3 +33,5 @@ class NovatelS720(object):
         'ID_VENDOR_ID': [0x1410],
         'ID_MODEL_ID': [0x1130],
     }
+
+    conntype = WADER_CONNTYPE_PCMCIA

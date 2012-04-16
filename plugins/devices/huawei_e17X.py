@@ -88,9 +88,9 @@ class HuaweiE17XCustomizer(HuaweiWCDMACustomizer):
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,
 
-                   consts.MM_NETWORK_BAND_G850,#  850
-                   consts.MM_NETWORK_BAND_EGSM,#  900
-                   consts.MM_NETWORK_BAND_DCS, # 1800
+                   consts.MM_NETWORK_BAND_G850,  # 850
+                   consts.MM_NETWORK_BAND_EGSM,  # 900
+                   consts.MM_NETWORK_BAND_DCS,  # 1800
 
                    consts.MM_NETWORK_BAND_U2100])
 
@@ -108,3 +108,5 @@ class HuaweiE17X(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1003],
     }
+
+    conntype = consts.WADER_CONNTYPE_USB

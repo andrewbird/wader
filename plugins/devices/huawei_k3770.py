@@ -17,6 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from twisted.internet import defer
+
 from wader.common import consts
 from core.hardware.base import build_band_dict
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
@@ -75,5 +76,6 @@ class HuaweiK3770(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x14c9],
     }
 
+    conntype = consts.WADER_CONNTYPE_USB
 
 huaweik3770 = HuaweiK3770()

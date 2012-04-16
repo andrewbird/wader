@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """DevicePlugin for the Sierra Wireless 850 datacard"""
 
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
 from core.hardware.sierra import SierraWCDMADevicePlugin
 
 
@@ -33,5 +34,7 @@ class SierraWireless850(SierraWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x192],
         'ID_MODEL_ID': [0x710],
     }
+
+    conntype = WADER_CONNTYPE_PCMCIA
 
 sierrawireless850 = SierraWireless850()

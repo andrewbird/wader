@@ -19,6 +19,7 @@
 DevicePlugin for the HP branded Sierra Wireless MC8755 embedded device
 """
 
+from wader.common.consts import WADER_CONNTYPE_EMBEDDED
 from core.hardware.sierra import SierraWCDMADevicePlugin
 
 
@@ -34,5 +35,7 @@ class SierraWirelessMC8755(SierraWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x03f0],
         'ID_MODEL_ID': [0x1e1d],
     }
+
+    conntype = WADER_CONNTYPE_EMBEDDED
 
 sierrawirelessmc8755 = SierraWirelessMC8755()

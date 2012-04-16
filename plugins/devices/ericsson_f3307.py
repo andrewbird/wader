@@ -16,8 +16,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_EMBEDDED
 from core.hardware.ericsson import (EricssonDevicePlugin,
                                             EricssonF3607gwCustomizer)
+
 
 #
 # Note F3307 is a F3607gw without GPS and only 2 bands - same firmware
@@ -36,5 +38,6 @@ class EricssonF3307(EricssonDevicePlugin):
         'ID_MODEL_ID': [0x1909, 0x190a],
     }
 
+    conntype = WADER_CONNTYPE_EMBEDDED
 
 ericssonF3307 = EricssonF3307()

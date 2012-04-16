@@ -17,12 +17,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common import consts
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMAWrapper,
                                           HuaweiWCDMACustomizer,
                                           HUAWEI_BAND_DICT)
 from core.hardware.base import build_band_dict
-from wader.common import consts
 
 
 class HuaweiK3520Wrapper(HuaweiWCDMAWrapper):
@@ -84,3 +84,5 @@ class HuaweiK3520(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1001],
     }
+
+    conntype = consts.WADER_CONNTYPE_USB

@@ -257,4 +257,6 @@ class ZTEK2525(ZTEWCDMADevicePlugin):
         'ID_MODEL_ID': [0x0022],
     }
 
+    conntype = consts.WADER_CONNTYPE_USB
+
 zte_k2525 = ZTEK2525()

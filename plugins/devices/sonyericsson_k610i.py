@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.sonyericsson import SonyEricssonCustomizer
 from core.plugin import DevicePlugin
 from core.middleware import WCDMAWrapper
@@ -51,5 +52,7 @@ class SonyEricssonK610iUSB(DevicePlugin):
         'ID_VENDOR_ID': [0x0fce],
         'ID_MODEL_ID': [0xd046],
     }
+
+    conntype = WADER_CONNTYPE_USB
 
 sonyericsson_k610iUSB = SonyEricssonK610iUSB()

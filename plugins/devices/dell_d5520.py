@@ -61,6 +61,8 @@ class NovatelD5520(NovatelWCDMADevicePlugin):
         'ID_MODEL_ID': [0x8137],
     }
 
+    conntype = consts.WADER_CONNTYPE_EMBEDDED
+
     def preprobe_init(self, ports, info):
         # Novatel secondary port needs to be flipped from DM to AT mode
         # before it will answer our AT queries. So the primary port

@@ -18,6 +18,7 @@
 
 import serial
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
@@ -35,6 +36,8 @@ class NovatelMC990D(NovatelWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x1410],
         'ID_MODEL_ID': [0x7001],
     }
+
+    conntype = WADER_CONNTYPE_USB
 
     def preprobe_init(self, ports, info):
         # Novatel secondary port needs to be flipped from DM to AT mode

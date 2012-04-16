@@ -16,6 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.option import (OptionHSOWCDMADevicePlugin,
                                           OptionHSOWCDMACustomizer,
                                           OptionHSOWrapper)
@@ -48,5 +49,7 @@ class OptionK3760(OptionHSOWCDMADevicePlugin):
           'ID_VENDOR_ID': [0xaf0],
           'ID_MODEL_ID': [0x7501, 0x7601],
     }
+
+    conntype = WADER_CONNTYPE_USB
 
 option_k3760 = OptionK3760()

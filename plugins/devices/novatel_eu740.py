@@ -15,6 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_EMBEDDED
 from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
@@ -30,5 +31,7 @@ class NovatelEU740(NovatelWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x930],
         'ID_MODEL_ID': [0x1303],
     }
+
+    conntype = WADER_CONNTYPE_EMBEDDED
 
 novateleu740 = NovatelEU740()

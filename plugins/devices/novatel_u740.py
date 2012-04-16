@@ -19,6 +19,7 @@
 
 import serial
 
+from wader.common.consts import WADER_CONNTYPE_PCMCIA
 from core.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NovatelWrapper)
@@ -57,6 +58,8 @@ class NovatelU740(NovatelWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x1410],
         'ID_MODEL_ID': [0x1400, 0x1410],
     }
+
+    conntype = WADER_CONNTYPE_PCMCIA
 
     def preprobe_init(self, ports, info):
         # Novatel secondary port needs to be flipped from DM to AT mode

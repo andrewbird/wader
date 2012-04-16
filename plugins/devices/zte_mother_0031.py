@@ -40,8 +40,9 @@ class ZTEMother0031(ZTEWCDMADevicePlugin):
         super(ZTEMother0031, self).__init__()
 
         self.mapping = {
-            'MF620': ZTEMF637U,  # Just MF637U now but usb-modeswitch-data suggests
-                                 # that M110 / MF112 are candidates also
+            'MF620': ZTEMF637U,     # Just MF637U now but usb-modeswitch-data
+                                    # suggests that M110 / MF112 are also
+                                    # candidates
             'MF626': ZTEMF626,
             'MF636': ZTEMF636,
 

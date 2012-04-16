@@ -16,6 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.huawei import (HuaweiWCDMACustomizer,
                                           HuaweiWCDMADevicePlugin)
 
@@ -36,5 +37,6 @@ class HuaweiE1752(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x141b],
     }
 
+    conntype = WADER_CONNTYPE_USB
 
 huaweie1752 = HuaweiE1752()

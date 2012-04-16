@@ -22,6 +22,7 @@
 #
 # OptionGTM378 integrated in Fuijitsu-Siemens Esprimo Mobile U Series
 
+from wader.common.consts import WADER_CONNTYPE_EMBEDDED
 from core.hardware.option import (OptionWCDMADevicePlugin,
                                   OptionHSOWCDMADevicePlugin)
 
@@ -41,6 +42,8 @@ class OptionGTM378(OptionWCDMADevicePlugin):
         'ID_MODEL_ID': [0x6901],
     }
 
+    conntype = WADER_CONNTYPE_EMBEDDED
+
 optiongtm378 = OptionGTM378()
 
 
@@ -58,5 +61,7 @@ class OptionHSOGTM378(OptionHSOWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x0af0],
         'ID_MODEL_ID': [0x6911],
     }
+
+    conntype = WADER_CONNTYPE_EMBEDDED
 
 optionhsogtm378 = OptionHSOGTM378()

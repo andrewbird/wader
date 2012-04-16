@@ -18,8 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from wader.common import consts
-from core.command import ATCmd
 from wader.common.encoding import pack_ucs2_bytes
+from core.command import ATCmd
 from core.hardware.base import build_band_dict
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
@@ -68,8 +68,8 @@ class HuaweiE220Customizer(HuaweiWCDMACustomizer):
                   HUAWEI_BAND_DICT,
                   [consts.MM_NETWORK_BAND_ANY,
 
-                   consts.MM_NETWORK_BAND_EGSM,#  900
-                   consts.MM_NETWORK_BAND_DCS, # 1800
+                   consts.MM_NETWORK_BAND_EGSM,  # 900
+                   consts.MM_NETWORK_BAND_DCS,  # 1800
 
                    consts.MM_NETWORK_BAND_U2100])
 
@@ -122,3 +122,5 @@ class HuaweiE220(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1003, 0x1004],
     }
+
+    conntype = consts.WADER_CONNTYPE_USB

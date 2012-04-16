@@ -17,8 +17,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from wader.common.consts import MM_IP_METHOD_STATIC, WADER_CONNTYPE_USB
 from core.hardware.icera import IceraWCDMADevicePlugin
-from wader.common.consts import MM_IP_METHOD_STATIC
 
 
 class ZTEK4510(IceraWCDMADevicePlugin):
@@ -34,8 +34,8 @@ class ZTEK4510(IceraWCDMADevicePlugin):
         'ID_MODEL_ID': [0x1173],
     }
 
+    conntype = WADER_CONNTYPE_USB
     dialer = 'hso'
     ipmethod = MM_IP_METHOD_STATIC
-
 
 zte_k4510 = ZTEK4510()

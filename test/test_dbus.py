@@ -276,6 +276,14 @@ class DBusTestCase(unittest.TestCase):
         self.failUnlessIsInstance(method, (int, dbus.UInt32))
         self.failUnlessIn(method, [0, 1, 2])
 
+    def test_ModemConnTypeProperty(self):
+        conntype = self.device.Get(MDM_INTFACE, 'ConnType',
+                                 dbus_interface=dbus.PROPERTIES_IFACE)
+        self.failUnlessIsInstance(conntype, dbus.UInt32)
+        # Note: Don't accept '0' as valid here because we want to flag
+        #       unknown devices so that we notice and add the correct value
+        self.failUnlessIn(conntype, [1, 2, 3, 4, 5, 6, 7])
+
     def test_ModemGetInfo(self):
         """Test for Modem.GetInfo"""
         info = self.device.GetInfo(dbus_interface=MDM_INTFACE)

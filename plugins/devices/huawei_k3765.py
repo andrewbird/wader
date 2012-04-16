@@ -67,5 +67,6 @@ class HuaweiK3765(HuaweiWCDMADevicePlugin):
         'ID_MODEL_ID': [0x1451, 0x1465],
     }
 
+    conntype = consts.WADER_CONNTYPE_USB
 
 huaweik3765 = HuaweiK3765()

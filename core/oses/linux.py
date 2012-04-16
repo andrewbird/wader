@@ -18,6 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Linux-based OS plugin"""
 
+import dbus
+
 from functools import partial
 from os.path import join, exists
 import re
@@ -28,14 +30,15 @@ from twisted.internet import defer, reactor, utils
 from twisted.python import log, reflect
 from twisted.python.procutils import which
 
+from wader.common import consts
 from wader.common.interfaces import IHardwareManager
+from wader.common.utils import get_file_data, natsort
+
 from core.hardware.base import identify_device, probe_ports
 from core.plugin import PluginManager
-from wader.common import consts
 from core.oses.unix import UnixPlugin
 from core.startup import setup_and_export_device
 from core.serialport import Ports
-from wader.common.utils import get_file_data, natsort
 
 
 IDLE, BUSY = range(2)
@@ -448,6 +451,13 @@ class HardwareManager(object):
                     # allows us to specify a method in a driver independent way
                     set_property(consts.MDM_INTFACE, 'IpMethod',
                                  plugin.ipmethod)
+
+            if hasattr(plugin, 'conntype') and plugin.conntype:
+                set_property(consts.MDM_INTFACE, 'ConnType',
+                                dbus.UInt32(plugin.conntype))
+            else:
+                set_property(consts.MDM_INTFACE, 'ConnType',
+                                dbus.UInt32(consts.WADER_CONNTYPE_UNKNOWN))
 
             plugin.ports = Ports(dport, cport)
             return plugin

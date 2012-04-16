@@ -19,11 +19,11 @@
 
 import serial
 
+from wader.common import consts
+from core.hardware.base import build_band_dict
 from core.hardware.novatel import (NovatelWCDMADevicePlugin,
                                            NovatelWCDMACustomizer,
                                            NOVATEL_BAND_DICT)
-from core.hardware.base import build_band_dict
-from wader.common import consts
 
 
 class NovatelX950DCustomizer(NovatelWCDMACustomizer):
@@ -61,6 +61,8 @@ class NovatelX950D(NovatelWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x1410],
         'ID_MODEL_ID': [0x1450],
     }
+
+    conntype = consts.WADER_CONNTYPE_PCMCIA
 
     def preprobe_init(self, ports, info):
         # Novatel secondary port needs to be flipped from DM to AT mode

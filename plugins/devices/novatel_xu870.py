@@ -71,6 +71,8 @@ class NovatelXU870(NovatelWCDMADevicePlugin):
         'ID_MODEL_ID': [0x1430],
     }
 
+    conntype = consts.WADER_CONNTYPE_PCMCIA
+
     def preprobe_init(self, ports, info):
         # Novatel secondary port needs to be flipped from DM to AT mode
         # before it will answer our AT queries. So the primary port

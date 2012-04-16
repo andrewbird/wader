@@ -20,6 +20,7 @@
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.zte import (ZTEWCDMADevicePlugin,
                                        ZTEWCDMACustomizer,
                                        ZTEWrapper)
@@ -79,5 +80,6 @@ class ZTEK3765(ZTEWCDMADevicePlugin):
         'ID_MODEL_ID': [0x2002],
     }
 
+    conntype = WADER_CONNTYPE_USB
 
 zte_k3765 = ZTEK3765()

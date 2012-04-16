@@ -16,8 +16,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from core.command import ATCmd
+from wader.common.consts import WADER_CONNTYPE_USB
 from wader.common.encoding import pack_ucs2_bytes
+from core.command import ATCmd
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
                                           HuaweiWCDMACustomizer,
                                           HuaweiWCDMAWrapper)
@@ -68,3 +69,5 @@ class HuaweiB970(HuaweiWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x12d1],
         'ID_MODEL_ID': [0x1003],
     }
+
+    conntype = WADER_CONNTYPE_USB

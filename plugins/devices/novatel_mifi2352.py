@@ -18,6 +18,7 @@
 
 import serial
 
+from wader.common.consts import WADER_CONNTYPE_USB
 from core.hardware.novatel import NovatelWCDMADevicePlugin
 
 
@@ -35,6 +36,8 @@ class NovatelMiFi2352(NovatelWCDMADevicePlugin):
         'ID_VENDOR_ID': [0x1410],
         'ID_MODEL_ID': [0x7003],
     }
+
+    conntype = WADER_CONNTYPE_USB
 
     def preprobe_init(self, ports, info):
         # This device might be found by means of the mother plugin too
