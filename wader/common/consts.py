@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2011  Vodafone España, S.A.
+# Copyright (C) 2006-2012  Vodafone España, S.A.
 # Copyright (C) 2008-2009  Warp Networks, S.L.
 # Author:  Pablo Martí
 #
@@ -26,7 +26,7 @@ from dbus import UInt32
 # app name
 APP_NAME = 'Wader'
 APP_SLUG_NAME = 'wader-core'
-APP_VERSION = '0.5.10'
+APP_VERSION = '0.5.11'
 
 # DBus stuff
 WADER_SERVICE = 'org.freedesktop.ModemManager'
