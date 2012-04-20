@@ -311,6 +311,10 @@ class DBProvider(object):
 
     def close(self):
         """Closes the provider and frees resources"""
+        try:
+            self.conn.cursor().execute("vacuum")
+        except sqlite3.OperationalError:
+            pass
         self.conn.close()
 
 
@@ -589,6 +593,11 @@ class NetworkProvider(DBProvider):
         # update timestamps
         objs = os.path.join(EXTRA_DIR, 'networks.py')
         args = (get_tz_aware_mtime(objs), get_tz_aware_mtime(MBPI))
+
+        # Note: cascades over apn table too
+        self.conn.cursor().execute("delete from network_info")
+
+        self.conn.cursor().execute("delete from sources_info")
         self.conn.cursor().execute(
                                 "insert into sources_info values (?,?)", args)
 

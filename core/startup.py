@@ -177,28 +177,15 @@ def create_skeleton_and_do_initial_setup():
         # old way to signal that the setup is complete
         os.unlink(OLDLOCK)
 
-    if os.path.exists(consts.NETWORKS_DB):
-        # new way to signal that the setup is complete
-        provider = NetworkProvider()
-        log.msg("Networks DB exists")
-
-        if provider.is_current():
-            provider.close()
-            log.msg(
-                "Networks DB was built previously from the current sources")
-            return
-
-        provider.close()
-        log.msg("Networks DB requires rebuild")
-        os.remove(consts.NETWORKS_DB)
-    else:
-        log.msg("Networks DB creation started")
-
-    # create new DB
+    # maybe create new networks DB
     provider = NetworkProvider()
     try:
-        provider.populate_networks()
-        log.msg("Networks DB population complete")
+        if provider.is_current():
+            log.msg("Networks DB is current")
+        else:
+            log.msg("Networks DB creation started")
+            provider.populate_networks()
+            log.msg("Networks DB population complete")
     except:
         log.err()
     finally:
