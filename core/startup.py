@@ -19,6 +19,7 @@
 """Utilities used at startup"""
 
 import os
+from os.path import join
 
 import dbus
 from dbus.service import Object, BusName, method, signal
@@ -43,7 +44,7 @@ from core.serialport import SerialPort
 DELAY = 10
 ATTACH_DELAY = 1
 
-OLDLOCK = os.path.join(consts.DATA_DIR, '.setup-done')
+OLDLOCK = join(consts.DATA_DIR, '.setup-done')
 
 _application = None
 
@@ -173,6 +174,9 @@ def _get_application():
 
 def create_skeleton_and_do_initial_setup():
     """I perform the operations needed for the initial user setup"""
+    PLUGINS = join(consts.BASE_DIR, 'usr', 'share', consts.APP_SLUG_NAME,
+                    'plugins')
+
     if os.path.exists(OLDLOCK):
         # old way to signal that the setup is complete
         os.unlink(OLDLOCK)
@@ -191,10 +195,34 @@ def create_skeleton_and_do_initial_setup():
     finally:
         provider.close()
 
-    # regenerate plugin cache
-    import plugins
-    log.msg("Regenerating plugin cache")
-    list(getPlugins(IPlugin, package=plugins))
+    # maybe regenerate plugin cache
+    regenerate = False
+
+    # remove any compiled python files that are orphans
+    for cmpname in glob.glob(join(PLUGINS, '*.py[co]')):
+        pyname = cmpname[:-1]
+        if not os.path.exists(pyname):
+            regenerate = True
+            os.unlink(cmpname)
+
+    # check if any python is newer than the cache
+    if not regenerate:
+        try:
+            timestamp = os.stat(join(PLUGINS, 'dropin.cache'))[8]
+            for pyname in glob.glob(join(PLUGINS, '*.py')) + \
+                            glob.glob(join(PLUGINS, '*.py[co]')):
+                if timestamp < os.stat(pyname)[8]:
+                    raise ValueError
+        except:
+                regenerate = True
+
+    if regenerate:
+        log.msg("Plugin cache generation started")
+        import plugins
+        list(getPlugins(IPlugin, package=plugins))
+        log.msg("Plugin cache generation complete")
+    else:
+        log.msg("Plugin cache is current")
 
 
 class WaderService(Service):
