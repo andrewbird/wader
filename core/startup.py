@@ -220,6 +220,8 @@ class WaderService(Service):
 
     def startService(self):
         """Starts the Wader service"""
+        log.msg("%s (%s) started" % (consts.APP_NAME, consts.APP_VERSION))
+
         create_skeleton_and_do_initial_setup()
 
         # check if we have an OSPlugin for this OS/Distro
