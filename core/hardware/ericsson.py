@@ -120,6 +120,34 @@ ERICSSON_CMD_DICT['get_ip4_config'] = build_cmd_dict(
         """, re.VERBOSE))
 
 
+def ericsson_new_indication(args, device):
+    indication = args.split(',')
+    try:
+        itype = int(indication[0])
+        value = int(indication[1])
+    except (ValueError, TypeError, IndexError):
+        return None
+
+    if itype is 2:      # Signal quality
+        strength = value * 20
+        device.sconn.updatecache(strength, 'signal')
+        device.exporter.SignalQuality(strength)
+    elif itype is 5:    # Service indicator
+        pass
+    elif itype is 7:    # Message Received (SMS)
+        pass
+    elif itype is 8:    # Call in progress indicator
+        pass
+    elif itype is 9:    # roam indicator
+        pass
+    elif itype is 10:   # SMS memory full
+        pass
+    else:
+        log.msg('Unknown indication of "+CIEV: %s"' % args)
+
+    return None
+
+
 class EricssonSIMClass(SIMBaseClass):
     """Ericsson SIM Class"""
 
@@ -713,14 +741,15 @@ class EricssonCustomizer(WCDMACustomizer):
     band_dict = ERICSSON_BAND_DICT
     cmd_dict = ERICSSON_CMD_DICT
     conn_dict = ERICSSON_CONN_DICT
-    device_capabilities = [S.SIG_SMS_NOTIFY_ONLINE]
+    device_capabilities = [S.SIG_SMS_NOTIFY_ONLINE,
+                           S.SIG_RSSI]
 
     signal_translations = {
+        '+CIEV': (None, ericsson_new_indication),
         '*ESTKDISP': (None, None),
         '*ESTKSMENU': (None, None),
         '*EMWI': (None, None),
         '*E2NAP': (None, None),
-        '+CIEV': (None, None),
         '+PACSP0': (None, None)}
 
     wrapper_klass = EricssonWrapper
