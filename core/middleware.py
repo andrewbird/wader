@@ -122,6 +122,14 @@ class WCDMAWrapper(WCDMAProtocol):
         self.caches[name] = (time() + CACHETIME, value)
         return value
 
+    def emit_rssi(self, value):
+        """
+        Method to validate, convert ``value`` to dbus UInt32 and emit
+        """
+        if value < 0 or value > 100:
+            return
+        self.device.exporter.SignalQuality(dbus.UInt32(value))
+
     def connect_to_signals(self):
         bus = dbus.SystemBus()
         device = bus.get_object(WADER_SERVICE, self.device.sconn.device.opath)

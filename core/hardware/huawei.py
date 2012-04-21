@@ -116,10 +116,15 @@ def huawei_new_conn_mode(args, device):
         return consts.MM_NETWORK_MODE_UNKNOWN
 
 
-def huawei_new_rssi(rssi, device):
-    strength = rssi_to_percentage(int(rssi))
+def huawei_new_rssi(args, device):
+    try:
+        strength = rssi_to_percentage(int(args))
+    except (ValueError, TypeError):
+        return None
+
     device.sconn.updatecache(strength, 'signal')
-    return strength
+    device.sconn.emit_rssi(strength)
+    return None
 
 HUAWEI_CMD_DICT = get_cmd_dict_copy()
 HUAWEI_CMD_DICT['get_syscfg'] = build_cmd_dict(re.compile(r"""
@@ -630,7 +635,7 @@ class HuaweiWCDMACustomizer(WCDMACustomizer):
 
     signal_translations = {
         '^MODE': (S.SIG_NETWORK_MODE, huawei_new_conn_mode),
-        '^RSSI': (S.SIG_RSSI, huawei_new_rssi),
+        '^RSSI': (None, huawei_new_rssi),
         '^DSFLOWRPT': (None, None),
         '^BOOT': (None, None),
         '^SRVST': (None, None),

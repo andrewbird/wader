@@ -131,7 +131,7 @@ def ericsson_new_indication(args, device):
     if itype is 2:      # Signal quality
         strength = value * 20
         device.sconn.updatecache(strength, 'signal')
-        device.exporter.SignalQuality(strength)
+        device.sconn.emit_rssi(strength)
     elif itype is 5:    # Service indicator
         pass
     elif itype is 7:    # Message Received (SMS)

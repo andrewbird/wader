@@ -111,6 +111,17 @@ OPTION_CMD_DICT['get_ip4_config'] = build_cmd_dict(re.compile(r"""
                                              \r\r\n""", re.X))
 
 
+def option_new_rssi(args, device):
+    try:
+        strength = rssi_to_percentage(int(args.split(',')[0]))
+    except (ValueError, TypeError, IndexError):
+        return None
+
+    device.sconn.updatecache(strength, 'signal')
+    device.sconn.emit_rssi(strength)
+    return None
+
+
 class OptionSIMClass(SIMBaseClass):
     """
     Option SIM Class
@@ -471,8 +482,9 @@ class OptionWCDMACustomizer(WCDMACustomizer):
                            S.SIG_RSSI]
     signal_translations = {
         '_OSSYSI': (S.SIG_NETWORK_MODE, new_conn_mode_cb),
-        '_OSIGQ': (S.SIG_RSSI, lambda args, device:
-                        (rssi_to_percentage(int(args.split(',')[0]))))}
+        '_OSIGQ': (None, option_new_rssi),
+    }
+
     wrapper_klass = OptionWrapper
 
 
