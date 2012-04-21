@@ -22,17 +22,17 @@ import re
 
 from twisted.internet import defer, reactor
 
-import wader.common.aterrors as E
-from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from wader.common import consts
-from core.middleware import WCDMAWrapper
+import wader.common.aterrors as E
+import wader.common.signals as S
+from wader.common.utils import rssi_to_percentage, revert_dict
+
+from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
 from core.exported import HSOExporter
 from core.hardware.base import WCDMACustomizer
-from wader.common.aterrors import General
-from core.sim import SIMBaseClass
+from core.middleware import WCDMAWrapper
 from core.plugin import DevicePlugin
-from wader.common.utils import rssi_to_percentage, revert_dict
-import wader.common.signals as S
+from core.sim import SIMBaseClass
 
 NUM_RETRIES = 30
 RETRY_TIMEOUT = 4
@@ -111,6 +111,22 @@ OPTION_CMD_DICT['get_ip4_config'] = build_cmd_dict(re.compile(r"""
                                              \r\r\n""", re.X))
 
 
+def option_new_mode(args, device):
+    """
+    Translates Option's unsolicited notifications to Wader's representation
+    """
+    ossysi_args_dict = {
+        '0': consts.MM_NETWORK_MODE_GPRS,
+        '2': consts.MM_NETWORK_MODE_UMTS,
+        '3': consts.MM_NETWORK_MODE_UNKNOWN,
+    }
+    netmode = ossysi_args_dict.get(args, consts.MM_NETWORK_MODE_UNKNOWN)
+
+    device.sconn.emit_network_mode(netmode)
+
+    return None
+
+
 def option_new_rssi(args, device):
     try:
         strength = rssi_to_percentage(int(args.split(',')[0]))
@@ -174,7 +190,7 @@ class OptionSIMClass(SIMBaseClass):
                                             process_sim_state, auxdef)
                     else:
                         msg = "Max number of attempts reached %d"
-                        auxdef.errback(General(msg % self.num_retries))
+                        auxdef.errback(E.General(msg % self.num_retries))
 
                 return
 
@@ -184,18 +200,6 @@ class OptionSIMClass(SIMBaseClass):
             return auxdef
 
         return process_sim_state(deferred)
-
-
-def new_conn_mode_cb(args, device):
-    """
-    Translates Option's unsolicited notifications to Wader's representation
-    """
-    ossysi_args_dict = {
-        '0': consts.MM_NETWORK_MODE_GPRS,
-        '2': consts.MM_NETWORK_MODE_UMTS,
-        '3': consts.MM_NETWORK_MODE_UNKNOWN,
-    }
-    return ossysi_args_dict[args]
 
 
 class OptionWrapper(WCDMAWrapper):
@@ -481,7 +485,7 @@ class OptionWCDMACustomizer(WCDMACustomizer):
                            S.SIG_SMS_NOTIFY_ONLINE,
                            S.SIG_RSSI]
     signal_translations = {
-        '_OSSYSI': (S.SIG_NETWORK_MODE, new_conn_mode_cb),
+        '_OSSYSI': (None, option_new_mode),
         '_OSIGQ': (None, option_new_rssi),
     }
 
