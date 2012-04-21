@@ -238,7 +238,7 @@ class DBusTestCase(unittest.TestCase):
 
         def check_if_valid_device(device):
             # Huawei, Novatel, ZTE, Old options, etc.
-            for name in ['tty', 'hso', 'usb']:
+            for name in ['tty', 'hso', 'usb', 'wwan']:
                 if name in device:
                     return True
 
