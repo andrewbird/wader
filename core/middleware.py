@@ -35,8 +35,8 @@ from twisted.internet import defer, reactor, task
 
 import wader.common.aterrors as E
 from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
-                                 NET_INTFACE, USD_INTFACE,
-                                 MM_NETWORK_BAND_ANY, MM_NETWORK_MODE_ANY,
+                                 NET_INTFACE, USD_INTFACE, MM_NETWORK_BAND_ANY,
+                                 MM_NETWORK_MODE_ANY, MM_NETWORK_MODE_LAST,
                                  MM_MODEM_STATE_DISABLED,
                                  MM_MODEM_STATE_ENABLING,
                                  MM_MODEM_STATE_ENABLED,
@@ -55,22 +55,22 @@ from wader.common.consts import (WADER_SERVICE, MDM_INTFACE, CRD_INTFACE,
                                  MM_GSM_ACCESS_TECH_HSPA_PLUS,
                                  MM_GSM_ACCESS_TECH_LTE,
                                  MM_IP_METHOD_PPP)
-
-from core.contact import Contact
 from wader.common.encoding import (from_ucs2, from_u, unpack_ucs2_bytes,
                                    pack_ucs2_bytes, check_if_ucs2, LATIN_EX_B,
                                    from_8bit_in_gsm_or_ts31101)
 import wader.common.exceptions as ex
+from wader.common.signals import SIG_CREG
+from wader.common.sms import Message
+from wader.common.utils import rssi_to_percentage
+
+from core.contact import Contact
 from core.mal import MessageAssemblyLayer
 from core.mms import (send_m_send_req, send_m_notifyresp_ind,
                               get_payload)
 from core.oal import get_os_object
 from core.protocol import WCDMAProtocol
-from wader.common.signals import SIG_CREG
 from core.sim import (COM_READ_BINARY, EF_AD, EF_SPN, EF_ICCID, SW_OK,
                               RETRY_ATTEMPTS, RETRY_TIMEOUT)
-from wader.common.sms import Message
-from wader.common.utils import rssi_to_percentage
 
 
 class WCDMAWrapper(WCDMAProtocol):
@@ -121,6 +121,14 @@ class WCDMAWrapper(WCDMAProtocol):
 
         self.caches[name] = (time() + CACHETIME, value)
         return value
+
+    def emit_network_mode(self, value):
+        """
+        Method to validate, convert ``value`` to dbus UInt32 and emit
+        """
+        if value < 0 or value > MM_NETWORK_MODE_LAST:
+            return
+        self.device.exporter.NetworkMode(dbus.UInt32(value))
 
     def emit_rssi(self, value):
         """
