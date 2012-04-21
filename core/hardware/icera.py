@@ -24,14 +24,15 @@ from twisted.internet import defer, reactor
 
 from wader.common import consts
 import wader.common.aterrors as E
+import wader.common.signals as S
+from wader.common.utils import revert_dict, rssi_to_percentage
+
 from core.command import get_cmd_dict_copy, build_cmd_dict, ATCmd
+from core.exported import HSOExporter
 from core.hardware.base import WCDMACustomizer
 from core.middleware import WCDMAWrapper
-from core.exported import HSOExporter
 from core.sim import SIMBaseClass
 from core.plugin import DevicePlugin
-from wader.common.utils import revert_dict
-import wader.common.signals as S
 
 HSO_MAX_RETRIES = 10
 HSO_RETRY_TIMEOUT = 3
@@ -132,17 +133,23 @@ E.ERROR_DICT['+CME ERROR: 769'] = E.SimBusy
 
 
 def icera_new_conn_mode(args, device):
-    if not args:
-        return consts.MM_NETWORK_MODE_UNKNOWN
+    try:
+        args = args.replace(' ', '')
 
-    # ['4', '23415', '3G-HSDPA', '-', '0']
-    rssi, network, tech, connected, regulation = args.split(',')
+        # ['4', '23415', '3G-HSDPA', '-', '0']
+        rssi, network, tech, connected, regulation = args.split(',')
 
-    if tech in ICERA_CONN_DICT_REV:
-        return ICERA_CONN_DICT_REV[tech]
-    else:
-        # ['0', '2g', '3g'] '*g' == only C/S attached
-        return consts.MM_NETWORK_MODE_UNKNOWN
+        strength = rssi_to_percentage(int(rssi))
+        netmode = ICERA_CONN_DICT_REV.get(tech, consts.MM_NETWORK_MODE_UNKNOWN)
+    except (ValueError, TypeError, IndexError):
+        return None
+
+    device.sconn.updatecache(strength, 'signal')
+    device.sconn.emit_rssi(strength)
+
+    device.sconn.emit_network_mode(netmode)
+
+    return None
 
 
 def icera_connection_state(args, device):
@@ -401,9 +408,10 @@ class IceraWCDMACustomizer(WCDMACustomizer):
     conn_dict = ICERA_MODE_DICT
     cmd_dict = ICERA_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE,
-                           S.SIG_SMS_NOTIFY_ONLINE]
+                           S.SIG_SMS_NOTIFY_ONLINE,
+                           S.SIG_RSSI]
     signal_translations = {
-        '%NWSTATE': (S.SIG_NETWORK_MODE, icera_new_conn_mode),
+        '%NWSTATE': (None, icera_new_conn_mode),
         '%IPDPACT': (None, icera_connection_state),
     }
     wrapper_klass = IceraWrapper
