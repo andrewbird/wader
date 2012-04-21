@@ -105,6 +105,7 @@ CMD_DICT = {
                             "(?P<number>[+0-9a-fA-F]+)",
                             (?P<cat>\d+),
                             "(?P<name>.*)"
+                            (?P<ignored>,.*)?
                             \r\n""", re.X)),
 
     'list_contacts': build_cmd_dict(
