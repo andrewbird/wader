@@ -372,6 +372,7 @@ class HardwareManager(object):
             # set DBus properties (Modem interface)
             set_property(consts.MDM_INTFACE, 'IpMethod',
                          consts.MM_IP_METHOD_PPP)
+            set_property(consts.MDM_INTFACE, 'LastApn', '')
             set_property(consts.MDM_INTFACE, 'MasterDevice',
                          'udev:%s' % sysfs_path)
             # XXX: Fix CDMA
@@ -379,14 +380,14 @@ class HardwareManager(object):
                          consts.MM_MODEM_TYPE_REV['GSM'])
             set_property(consts.MDM_INTFACE, 'Driver', info[DRIVER])
 
-            # import here else we start the dbus too early in startup
-            from dbus import Boolean
-            set_property(consts.MDM_INTFACE, 'Enabled', Boolean(False))
+            set_property(consts.MDM_INTFACE, 'Enabled', dbus.Boolean(False))
 
             # set to unknown
-            set_property(consts.NET_INTFACE, 'AccessTechnology', 0)
-            # set to -1 so any comparison will fail and will update it
-            set_property(consts.NET_INTFACE, 'AllowedMode', -1)
+            set_property(consts.NET_INTFACE, 'AccessTechnology',
+                            dbus.UInt32(0))
+            # set to preposterous initial number so any comparison will fail
+            set_property(consts.NET_INTFACE, 'AllowedMode',
+                            dbus.UInt32(0xffff))
 
             # preprobe stuff
             if hasattr(plugin, 'preprobe_init'):
