@@ -616,11 +616,10 @@ class WCDMAWrapper(WCDMAProtocol):
 
     def get_network_modes(self):
         """Returns the supported network modes"""
-        modes = self.custom.conn_dict.keys()
+        modes = self.custom.conn_dict.copy()
         if MM_NETWORK_MODE_ANY in modes:
             modes.pop(MM_NETWORK_MODE_ANY)
-        # cast it to UInt32
-        return defer.succeed(dbus.UInt32(sum(modes)))
+        return defer.succeed(sum(modes.keys()))
 
     def get_network_names(self):
         """
@@ -1174,25 +1173,24 @@ class WCDMAWrapper(WCDMAProtocol):
     # some high-level methods exported over DBus
     def init_properties(self):
         # XXX: Implement UnlockRetries
-        self.device.set_property(MDM_INTFACE, 'UnlockRetries', 999)
+        self.device.set_property(MDM_INTFACE,
+                                        'UnlockRetries', dbus.UInt32(999))
 
         # There's no way to query this, so we have to assume :-(
         self.device.set_property(USD_INTFACE, 'State', 'idle')
 
         d = self.get_bands()
-        d.addCallback(lambda bands:
-                self.device.set_property(CRD_INTFACE, 'SupportedBands', bands))
+        d.addCallback(lambda bands: self.device.set_property(CRD_INTFACE,
+                                        'SupportedBands', dbus.UInt32(bands)))
         d.addCallback(lambda _: self.get_network_modes())
-        d.addCallback(lambda modes:
-                self.device.set_property(CRD_INTFACE, 'SupportedModes', modes))
+        d.addCallback(lambda modes: self.device.set_property(CRD_INTFACE,
+                                        'SupportedModes', dbus.UInt32(modes)))
         d.addCallback(lambda _: self.get_pin_status())
-        d.addCallback(lambda active:
-                self.device.set_property(CRD_INTFACE, 'PinEnabled',
-                                         bool(active)))
+        d.addCallback(lambda active: self.device.set_property(CRD_INTFACE,
+                                        'PinEnabled', dbus.Boolean(active)))
         d.addCallback(lambda _: self.get_imei())
-        d.addCallback(lambda imei:
-                self.device.set_property(MDM_INTFACE, 'EquipmentIdentifier',
-                                         imei))
+        d.addCallback(lambda imei: self.device.set_property(MDM_INTFACE,
+                                        'EquipmentIdentifier', imei))
         d.addCallback(lambda _: self.get_iccid())
 
         def iccid_eb(failure):
@@ -1200,8 +1198,8 @@ class WCDMAWrapper(WCDMAProtocol):
             self.device.set_property(CRD_INTFACE, 'SimIdentifier', ''),
 
         d.addCallbacks(lambda iccid:
-                self.device.set_property(CRD_INTFACE, 'SimIdentifier', iccid),
-            iccid_eb)
+                self.device.set_property(CRD_INTFACE,
+                                        'SimIdentifier', iccid), iccid_eb)
         return d
 
     def get_simple_status(self):
