@@ -486,10 +486,10 @@ class ContactsExporter(CardExporter):
 class NetworkExporter(ContactsExporter):
     """I export the org.freedesktop.ModemManager.Modem.Gsm.Network interface"""
 
-    @method(NET_INTFACE, in_signature='', out_signature='s',
+    @method(NET_INTFACE, in_signature='', out_signature='a(us)',
             async_callbacks=('async_cb', 'async_eb'))
     def GetApns(self, async_cb, async_eb):
-        """Returns all the APNS stored in the system"""
+        """Returns all the APNs stored in the system"""
         d = self.sconn.get_apns()
         return self.add_callbacks(d, async_cb, async_eb)
 
