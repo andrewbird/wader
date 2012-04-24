@@ -275,6 +275,20 @@ class OptionWrapper(WCDMAWrapper):
         return self.send_at('AT_OPSYS?', name='get_network_mode',
                          callback=get_network_mode_cb)
 
+    def get_roaming_ids(self):
+        # Many Option devices panic if AT+CPOL is sent while in UCS2, we will
+        # switch to IRA, perform the operation and switch back to UCS2
+        self.set_charset("IRA")
+        d = super(OptionWrapper, self).get_roaming_ids()
+
+        def get_roaming_ids_cb(rids):
+            d2 = self.set_charset("UCS2")
+            d2.addCallback(lambda _: rids)
+            return d2
+
+        d.addCallback(get_roaming_ids_cb)
+        return d
+
     def set_band(self, band):
         """Sets the band to ``band``"""
 
