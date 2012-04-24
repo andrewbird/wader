@@ -195,6 +195,7 @@ CMD_DICT = {
                               \+CPOL:\s(?P<index>\d+),
                               (?P<type>\d),
                               "(?P<netid>\d+)"
+                              (?P<ignored>,.*)?
                               """, re.X)),
 
     'list_sms': build_cmd_dict(re.compile(r"""
