@@ -596,6 +596,11 @@ class WCDMAProtocol(SerialProtocol):
         cmd = ATCmd('AT+CGDCONT?', name='get_apns')
         return self.queue_at_cmd(cmd)
 
+    def get_apn_range(self):
+        """Returns the range of APN context IDs in the SIM"""
+        cmd = ATCmd('AT+CGDCONT=?', name='get_apn_range')
+        return self.queue_at_cmd(cmd)
+
     def get_card_model(self):
         """Returns the SIM card model"""
         cmd = ATCmd('AT+CGMM', name='get_card_model')

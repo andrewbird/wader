@@ -91,11 +91,17 @@ CMD_DICT = {
     'get_apns': build_cmd_dict(re.compile(r"""
                             \r\n
                             \+CGDCONT:\s
-                            (?P<index>\d),
+                            (?P<index>\d+),
                             "[A-Za-z0-9]*",
                             "(?P<apn>.*)",
                             "(?P<ip>.*)",
                             \d,\d""", re.X)),
+
+    'get_apn_range': build_cmd_dict(re.compile(r"""
+                            \r\n
+                            \+CGDCONT:\s*\((?P<lo4>\d+)-(?P<hi4>\d+)\),
+                            (?P<ip4>(?:"IP")|(?:"00490050"))(?P<ignored>.*)
+                            """, re.X)),
 
     'get_charsets': build_cmd_dict(re.compile('"(?P<lang>.*?)",?')),
 

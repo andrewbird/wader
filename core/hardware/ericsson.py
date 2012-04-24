@@ -67,6 +67,13 @@ ENAP_DISCONNECTED, ENAP_CONNECTED, ENAP_CONNECTING = 0, 1, 2
 
 ERICSSON_CMD_DICT = get_cmd_dict_copy()
 
+# +CGDCONT: (1-10),("00490050"),,,(0-1),(0-1)
+ERICSSON_CMD_DICT['get_apn_range'] = build_cmd_dict(re.compile(r"""
+                \r\n
+                \+CGDCONT:\s*\((?P<lo4>\d+)-(?P<hi4>\d+)\),
+                \((?P<ip4>(?:"IP")|(?:"00490050"))\)(?P<ignored>.*)
+                """, re.VERBOSE))
+
 ERICSSON_CMD_DICT['get_card_model'] = build_cmd_dict('\s*(?P<model>\S*)\r\n')
 
 # +CIND: 5,5,0,0,1,0,1,0,1,1,0,0
@@ -252,8 +259,7 @@ class EricssonWrapper(WCDMAWrapper):
         if self.device.sim.charset != 'UCS2':
             return super(EricssonWrapper, self).get_apns()
 
-        cmd = ATCmd("AT+CGDCONT?", name='get_apns')
-        d = self.queue_at_cmd(cmd)
+        d = super(WCDMAWrapper, self).get_apns()
         d.addCallback(lambda resp:
             [(int(r.group('index')), from_ucs2(r.group('apn'))) for r in resp])
         return d
@@ -420,8 +426,10 @@ class EricssonWrapper(WCDMAWrapper):
 
             try:
                 conn_id = max([idx for idx, _ in apns]) + 1
+                if conn_id < self.apn_range[0] or conn_id > self.apn_range[1]:
+                    raise ValueError
             except (ValueError, TypeError):
-                conn_id = 1
+                conn_id = self.apn_range[0]
 
             self.state_dict['conn_id'] = conn_id
             args = tuple([conn_id] + map(pack_ucs2_bytes, ["IP", the_apn]))

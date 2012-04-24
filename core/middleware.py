@@ -99,6 +99,8 @@ class WCDMAWrapper(WCDMAProtocol):
         # iface name
         self.iface = None
 
+        self.apn_range = None
+
         self.caches = {
             'signal': (0, 0),
             'registration': (0, (0, '', '')),
@@ -323,6 +325,16 @@ class WCDMAWrapper(WCDMAProtocol):
         d = super(WCDMAWrapper, self).get_apns()
         d.addCallback(lambda resp:
                 [(int(r.group('index')), r.group('apn')) for r in resp])
+        return d
+
+    def get_apn_range(self):
+        """
+        Returns the range of context IDs in the SIM
+
+        :rtype: tuple
+        """
+        d = super(WCDMAWrapper, self).get_apn_range()
+        d.addCallback(lambda r: (int(r.group('lo4')), int(r.group('hi4'))))
         return d
 
     def get_band(self):
@@ -1107,8 +1119,10 @@ class WCDMAWrapper(WCDMAProtocol):
 
             try:
                 conn_id = max([idx for idx, _ in apns]) + 1
+                if conn_id < self.apn_range[0] or conn_id > self.apn_range[1]:
+                    raise ValueError
             except (ValueError, TypeError):
-                conn_id = 1
+                conn_id = self.apn_range[0]
 
             self.state_dict['conn_id'] = conn_id
             d = super(WCDMAWrapper, self).set_apn(conn_id, the_apn)
@@ -1462,6 +1476,21 @@ class WCDMAWrapper(WCDMAProtocol):
 
             return resp
 
+        def setdefaults(resp):
+
+            def apn_range_cb(result):
+                self.apn_range = result
+                return resp
+
+            def apn_range_eb(e):
+                self.apn_range = (1, 3)
+                return resp
+
+            d = self.device.sconn.get_apn_range()
+            d.addCallback(apn_range_cb)
+            d.addErrback(apn_range_eb)
+            return d
+
         from core.startup import attach_to_serial_port
 
         def process_device_and_initialize(device):
@@ -1479,6 +1508,7 @@ class WCDMAWrapper(WCDMAProtocol):
             # will just return the given exception
             d.addErrback(set_status)
             d.addCallback(self.device.initialize)
+            d.addCallback(setdefaults)
             d.addCallback(signals)
             return d
 
