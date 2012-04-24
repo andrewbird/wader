@@ -126,6 +126,9 @@ ERICSSON_CMD_DICT['get_ip4_config'] = build_cmd_dict(
             "(?P<v4>(?:\d+\.\d+\.\d+\.\d+)|(?:[\dA-Fa-f]+))"\))?
         """, re.VERBOSE))
 
+# Map to SimBusy for early contact accesses
+E.ERROR_DICT['+CME ERROR: 264'] = E.SimBusy
+
 
 def ericsson_new_indication(args, device):
     indication = args.split(',')
