@@ -2,70 +2,69 @@
 # This can remove the need to probe at all, but generally it's used to
 # ensure that the data/modem port is identified
 
-ACTION!="add", GOTO="wader_zte_end"
+ACTION!="add|change", GOTO="wader_zte_end"
+SUBSYSTEM!="tty", GOTO="wader_zte_end"
 
-SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", \
-   ENV{.MM_USBIFNUM}="$attr{bInterfaceNumber}"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="19d2", GOTO="wader_zte_vendormatch"
+GOTO="wader_zte_end"
 
-# Tag the interface with type
-SUBSYSTEM!="tty", GOTO="wader_zte_tty_end"
+LABEL="wader_zte_vendormatch"
+SUBSYSTEMS=="usb", ATTRS{idProduct}=="?*", ENV{.MM_PRODUCT}="$attr{idProduct}"
 
 # ONDA MT503HS
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0002", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0002", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0002", ATTRS{bInterfaceNumber}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0002", ATTRS{bInterfaceNumber}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # MF668
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0017", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0017", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0017", ATTRS{bInterfaceNumber}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0017", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # MF626, MF636, MF637U and others
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0031", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0031", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0031", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0031", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # ONDA MSA405HS
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0037", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0037", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0037", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0037", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # K3520-Z
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0025", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0025", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0055", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0055", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0025", ATTRS{bInterfaceNumber}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0025", ATTRS{bInterfaceNumber}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0055", ATTRS{bInterfaceNumber}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0055", ATTRS{bInterfaceNumber}=="04", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # K3565-Z
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0049", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0049", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_AUX}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0052", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0052", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0063", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0063", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0049", ATTRS{bInterfaceNumber}=="04", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0049", ATTRS{bInterfaceNumber}=="02", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0052", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0052", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0063", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0063", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # K3570-Z
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1008", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1008", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="1008", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="1008", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # K3571-Z
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1010", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="1010", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="1010", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="1010", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # K3765-Z
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2002", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2002", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="2002", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="2002", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 # K4505-Z
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0016", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0016", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0104", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0016", ATTRS{bInterfaceNumber}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0016", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0104", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0104", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # MF180
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2003", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="2003", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="2003", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="2003", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # MF181
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0117", ENV{.MM_USBIFNUM}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0117", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0117", ATTRS{bInterfaceNumber}=="02", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0117", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 # MF190
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0082", ENV{.MM_USBIFNUM}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0082", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0124", ENV{.MM_USBIFNUM}=="04", ENV{ID_MM_PORT_TYPE_MODEM}="1"
-ATTRS{idVendor}=="19d2", ATTRS{idProduct}=="0124", ENV{.MM_USBIFNUM}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
-
-LABEL="wader_zte_tty_end"
+ENV{.MM_PRODUCT}=="0082", ATTRS{bInterfaceNumber}=="03", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0082", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+ENV{.MM_PRODUCT}=="0124", ATTRS{bInterfaceNumber}=="04", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="0124", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
 
 LABEL="wader_zte_end"

@@ -1,0 +1,19 @@
+# Used to tag the ports with their usage, based on USB interface numbers.
+# This can remove the need to probe at all, but generally it's used to
+# ensure that the data/modem port is identified
+
+ACTION!="add|change", GOTO="wader_dell_end"
+SUBSYSTEM!="tty", GOTO="wader_dell_end"
+
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="413c", GOTO="wader_dell_vendormatch"
+GOTO="wader_dell_end"
+
+LABEL="wader_dell_vendormatch"
+SUBSYSTEMS=="usb", ATTRS{idProduct}=="?*", ENV{.MM_PRODUCT}="$attr{idProduct}"
+
+# Dell D5520 module (rebranded Novatel Expedite EU870)
+# Needs confirmation
+ENV{.MM_PRODUCT}=="8137", ATTRS{bInterfaceNumber}=="00", ENV{ID_MM_PORT_TYPE_MODEM}="1"
+ENV{.MM_PRODUCT}=="8137", ATTRS{bInterfaceNumber}=="01", ENV{ID_MM_PORT_TYPE_AUX}="1"
+
+LABEL="wader_dell_end"
