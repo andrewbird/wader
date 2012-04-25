@@ -60,8 +60,6 @@ class DevicePlugin(object):
     exporter = None
     # dialer
     dialer = 'default'
-    # Whether SIM authentication persists over disable / re-enable
-    auth_persists_over_disable = True
 
     def __init__(self):
         super(DevicePlugin, self).__init__()

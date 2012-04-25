@@ -62,9 +62,6 @@ class HuaweiK4605(HuaweiWCDMADevicePlugin):
     author = u"Andrew Bird"
     custom = HuaweiK4605Customizer()
 
-    # After disable / enable we must re-authenticate the SIM
-    auth_persists_over_disable = False
-
     __remote_name__ = "K4605"
 
     __properties__ = {

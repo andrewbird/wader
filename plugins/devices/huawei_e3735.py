@@ -89,9 +89,6 @@ class HuaweiE3735(HuaweiWCDMADevicePlugin):
     author = u"Andrew Bird"
     custom = HuaweiE3735Customizer()
 
-    # After disable / enable we must re-authenticate the SIM
-    auth_persists_over_disable = False
-
     __remote_name__ = "E3735"
 
     __properties__ = {

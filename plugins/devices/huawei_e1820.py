@@ -90,9 +90,6 @@ class HuaweiE1820(HuaweiWCDMADevicePlugin):
     author = u"Andrew Bird"
     custom = HuaweiE1820Customizer()
 
-    # After disable / enable we must re-authenticate the SIM
-    auth_persists_over_disable = False
-
     __remote_name__ = "E1820"
 
     __properties__ = {

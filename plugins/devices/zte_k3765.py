@@ -70,9 +70,6 @@ class ZTEK3765(ZTEWCDMADevicePlugin):
     author = "Andrew Bird"
     custom = ZTEK3765Customizer()
 
-    # After disable / enable we must re-authenticate the SIM
-    auth_persists_over_disable = False
-
     __remote_name__ = "K3765-Z"
 
     __properties__ = {

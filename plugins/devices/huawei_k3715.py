@@ -88,9 +88,6 @@ class HuaweiK3715(HuaweiWCDMADevicePlugin):
     author = u"Andrew Bird"
     custom = HuaweiK3715Customizer()
 
-    # After disable / enable we must re-authenticate the SIM
-    auth_persists_over_disable = False
-
     __remote_name__ = "K3715"
 
     __properties__ = {
