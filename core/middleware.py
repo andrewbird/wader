@@ -1143,6 +1143,12 @@ class WCDMAWrapper(WCDMAProtocol):
         d.addCallback(lambda ignored: self.device.sim.set_charset(charset))
         return d
 
+    def set_error_level(self, level):
+        """Sets the modem's error reporting level to ``level``"""
+        d = super(WCDMAWrapper, self).set_error_level(level)
+        d.addCallback(lambda response: response[0].group('resp'))
+        return d
+
     def set_network_mode(self, mode):
         """Sets the network mode to ``mode``"""
         raise NotImplementedError()

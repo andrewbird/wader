@@ -161,7 +161,10 @@ class AuthStateMachine(Modal):
 
         def do_next(self):
             log.msg("%s: transition to get_pin_status mode...." % self)
-            d = self.device.sconn.send_at('AT+CMEE=1')
+
+            from core.startup import attach_to_serial_port
+            d = attach_to_serial_port(self.device)
+            d.addCallback(lambda _: self.device.sconn.set_error_level(1))
             d.addCallback(lambda _: self.device.sconn.check_pin())
             d.addCallback(self.check_pin_cb)
             d.addErrback(self.pin_required_eb)

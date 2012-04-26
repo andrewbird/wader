@@ -246,6 +246,8 @@ CMD_DICT = {
 
     'set_charset': build_cmd_dict(),
 
+    'set_error_level': build_cmd_dict(),
+
     'set_netreg_notification': build_cmd_dict(),
 
     'set_network_info_format': build_cmd_dict(),

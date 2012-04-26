@@ -48,6 +48,9 @@ OLDLOCK = join(consts.DATA_DIR, '.setup-done')
 
 _application = None
 
+# Wow, this is fantastic if you need to know where to add an errorback
+#defer.setDebugging(True)
+
 
 class WaderLogFile(BaseLogFile):
     """

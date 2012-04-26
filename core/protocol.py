@@ -415,7 +415,8 @@ class SerialProtocol(BufferingStateMachine):
         """Transitions to idle state and processes next queued `ATCmd`"""
         super(SerialProtocol, self).transition_to_idle()
         # release the lock and check the queue
-        self.mutex.release()
+        if self.mutex.locked:
+            self.mutex.release()
         self._check_queue()
 
     def send_splitcmd(self):
@@ -427,15 +428,18 @@ class SerialProtocol(BufferingStateMachine):
     def _process_at_cmd(self, cmd):
 
         def _transition_and_send(_):
-            if self.transport is None:  # Seems that the device went away
-                log.msg("Port disappeared, ignoring cmd and releasing mutex")
-                if self.mutex.locked:
-                    self.mutex.release()
-                return
-            log.msg("%s: sending %r" % (self.state, cmd.cmd),
-                    system=self._get_log_prefix())
             self.set_cmd(cmd)
-            self.transport.write(cmd.get_cmd())
+            msg = "%s: sending %r" % (self.state, cmd.cmd)
+
+            if self.transport is None:  # Seems that the device went away
+                log.msg(msg + ' cancelled', system=self._get_log_prefix())
+
+                self.notify_failure(E.SerialSendFailed('port disappeared'))
+                self.transition_to_idle()
+            else:
+                log.msg(msg, system=self._get_log_prefix())
+
+                self.transport.write(cmd.get_cmd())
 
         d = self.mutex.acquire()
         d.addCallback(_transition_and_send)
@@ -828,6 +832,11 @@ class WCDMAProtocol(SerialProtocol):
     def set_charset(self, charset):
         """Sets the character set used on the SIM"""
         cmd = ATCmd('AT+CSCS="%s"' % charset, name='set_charset')
+        return self.queue_at_cmd(cmd)
+
+    def set_error_level(self, level):
+        """Sets the modem error level"""
+        cmd = ATCmd('AT+CMEE=%d' % level, name='set_error_level')
         return self.queue_at_cmd(cmd)
 
     def set_netreg_notification(self, val=1):

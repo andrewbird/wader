@@ -92,7 +92,7 @@ class SIMBaseClass(object):
         in the SIM. It returns a deferred with the SIM size.
         """
         # set up extended error reporting
-        self.sconn.send_at('AT+CMEE=1')
+        self.sconn.set_error_level(1)
 
         if set_encoding:
             self._setup_encoding()
