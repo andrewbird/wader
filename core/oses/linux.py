@@ -277,8 +277,13 @@ class HardwareManager(object):
         return result
 
     def _get_last_parent_that_matches_props(self, device, props):
-        parent = device.get_parent()
+        last = device
         while 1:
+            parent = last.get_parent()
+            if parent is None:
+                path = device.get_sysfs_path()
+                raise ValueError("Could not find %s parent" % path)
+
             properties = {}
             for key in parent.get_property_keys():
                 properties[key] = parent.get_property(key)
@@ -291,17 +296,14 @@ class HardwareManager(object):
                     properties[MODEL] = int(model, 16)
 
             if VENDOR in properties and MODEL in properties:
-                if (props[VENDOR] != properties[VENDOR] and
-                        props[MODEL] != properties[MODEL]):
+                if ((props[VENDOR] != properties[VENDOR]) or
+                        (props[MODEL] != properties[MODEL])):
                     break
 
-            parent = parent.get_parent()
-            if parent is None:
-                path = device.get_sysfs_path()
-                raise ValueError("Could not find %s parent" % path)
+            last = parent
 
         # XXX: need to check with modemmanager if it matches
-        return parent.get_sysfs_path()
+        return last.get_sysfs_path()
 
     def _register_client(self, plugin, emit=False):
         """
