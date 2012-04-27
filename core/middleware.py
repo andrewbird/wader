@@ -1274,7 +1274,7 @@ class WCDMAWrapper(WCDMAProtocol):
         #    1/ connect_simple via simple state machine
         #    2/ directly by Connect() dbus method
 
-        self.device.set_property(MDM_INTFACE, 'LastApn',
+        self.device.set_property(NET_INTFACE, 'LastApn',
                                     unicode(settings.get('apn', '')))
 
         ip_method = self.device.get_property(MDM_INTFACE, 'IpMethod')

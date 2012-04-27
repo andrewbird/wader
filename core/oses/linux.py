@@ -374,7 +374,6 @@ class HardwareManager(object):
             # set DBus properties (Modem interface)
             set_property(consts.MDM_INTFACE, 'IpMethod',
                          consts.MM_IP_METHOD_PPP)
-            set_property(consts.MDM_INTFACE, 'LastApn', '')
             set_property(consts.MDM_INTFACE, 'MasterDevice',
                          'udev:%s' % sysfs_path)
             # XXX: Fix CDMA
@@ -390,6 +389,7 @@ class HardwareManager(object):
             # set to preposterous initial number so any comparison will fail
             set_property(consts.NET_INTFACE, 'AllowedMode',
                             dbus.UInt32(0xffff))
+            set_property(consts.NET_INTFACE, 'LastApn', '')
 
             # preprobe stuff
             if hasattr(plugin, 'preprobe_init'):

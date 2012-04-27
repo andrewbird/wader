@@ -375,15 +375,6 @@ class DBusTestCase(unittest.TestCase):
                                         dbus_interface=dbus.PROPERTIES_IFACE)
         self.assertIsInstance(prop, dbus.UInt32)
 
-    def test_ModemLastApnProperty(self):
-        """Test for Modem.LastApn property"""
-        if not TEST_WADER_EXTENSIONS:
-            raise unittest.SkipTest(GENERIC_SKIP_MSG)
-
-        prop = self.device.Get(MDM_INTFACE, 'LastApn',
-                                        dbus_interface=dbus.PROPERTIES_IFACE)
-        self.assertIsInstance(prop, basestring)
-
     def test_ModemMasterDeviceProperty(self):
         """Test for Modem.MasterDevice property"""
         prop = self.device.Get(MDM_INTFACE, 'MasterDevice',
@@ -963,6 +954,15 @@ class DBusTestCase(unittest.TestCase):
         self.assertIsInstance(quality, dbus.UInt32)
         self.assertGreaterEqual(quality, 0)
         self.assertLessEqual(quality, 100)
+
+    def test_NetworkLastApnProperty(self):
+        """Test for Modem.Gsm.Network.LastApn property"""
+        if not TEST_WADER_EXTENSIONS:
+            raise unittest.SkipTest(GENERIC_SKIP_MSG)
+
+        prop = self.device.Get(NET_INTFACE, 'LastApn',
+                                        dbus_interface=dbus.PROPERTIES_IFACE)
+        self.assertIsInstance(prop, basestring)
 
     def test_NetworkScan(self):
         """Test for Modem.Gsm.Network.Scan"""
