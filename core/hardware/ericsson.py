@@ -319,8 +319,11 @@ class EricssonWrapper(WCDMAWrapper):
                 else:
                     return auxdef.callback((mode, status))
 
+            def get_netreg_status_eb(failure):
+                return auxdef.errback(failure)
+
             d = super(EricssonWrapper, self).get_netreg_status()
-            d.addCallback(get_netreg_status_cb)
+            d.addCallbacks(get_netreg_status_cb, get_netreg_status_eb)
             return auxdef
 
         return get_it(deferred)
