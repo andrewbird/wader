@@ -22,6 +22,7 @@ from gobject import timeout_add_seconds, source_remove
 from time import time
 from twisted.python import log
 
+import wader.common.aterrors as E
 from wader.common.consts import (MM_MODEM_STATE_UNKNOWN,
                                  MM_MODEM_STATE_CONNECTED)
 import wader.common.signals as S
@@ -97,18 +98,22 @@ class NetworkRegistrationDaemon(WaderDaemon):
     """I monitor several network registration parameters"""
 
     def function(self):
-
         # when our next invocation will occur
         self.expiry = time() + self.frequency
 
-        def is_registered((status, number, name)):
+        def is_registered_cb((status, number, name)):
             return status in [1, 5] and number and name
+
+        def is_registered_eb(failure):
+            failure.trap(E.SerialSendFailed)
+            # Fake registration to stop polling
+            return 1
 
         def schedule_if_necessary(registered):
 
             def poll():
                 d = self.device.sconn.get_netreg_info()
-                d.addCallback(is_registered)
+                d.addCallbacks(is_registered_cb, is_registered_eb)
                 d.addCallback(schedule_if_necessary)
                 return False  # once only
 
@@ -117,7 +122,7 @@ class NetworkRegistrationDaemon(WaderDaemon):
                 timeout_add_seconds(SIG_REG_INFO_POLL, poll)
 
         d = self.device.sconn.get_netreg_info()
-        d.addCallback(is_registered)
+        d.addCallbacks(is_registered_cb, is_registered_eb)
         d.addCallback(schedule_if_necessary)
 
         return True
@@ -147,7 +152,6 @@ class SmsNotifyOnlineDaemon(WaderDaemon):
             self.smslist = polled
 
     def function(self):
-
         if self.device.status is MM_MODEM_STATE_CONNECTED:
             if self.device.status != self.last_status:
                 # we just got connected
