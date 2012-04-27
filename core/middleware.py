@@ -1159,12 +1159,9 @@ class WCDMAWrapper(WCDMAProtocol):
 
         It will not enable it if its already enabled and viceversa
         """
-        if self.device.status >= MM_MODEM_STATE_ENABLED and enable:
-            # no need to enable an enabled device
-            return defer.succeed("OK")
 
         def check_if_necessary(status):
-            if (status and enable) or (not status and not enable):
+            if (status == 1 and enable) or (status == 0 and not enable):
                 return defer.succeed('OK')
 
             d = super(WCDMAWrapper, self).enable_radio(enable)
