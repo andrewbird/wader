@@ -48,22 +48,23 @@ OPTION_ALLOWED_DICT = {
     consts.MM_ALLOWED_MODE_3G_ONLY: 1,
 }
 
-# The option band dictionary does not need to be specified as we
-# modelled the band dict after it
-OPTION_BAND_MAP_DICT = {
-    'ANY': consts.MM_NETWORK_BAND_ANY,
-    'EGSM': consts.MM_NETWORK_BAND_EGSM,
-    'DCS': consts.MM_NETWORK_BAND_DCS,
-    'PCS': consts.MM_NETWORK_BAND_PCS,
-    'G850': consts.MM_NETWORK_BAND_G850,
-    'U2100': consts.MM_NETWORK_BAND_U2100,
-    'U1900': consts.MM_NETWORK_BAND_U1900,
-    'U1700': consts.MM_NETWORK_BAND_U1700,
-    '17IV': consts.MM_NETWORK_BAND_17IV,
-    'U850': consts.MM_NETWORK_BAND_U850,
-    'U800': consts.MM_NETWORK_BAND_U850,
-    'U900': consts.MM_NETWORK_BAND_U900,
-    'U17IX': consts.MM_NETWORK_BAND_U17IX,
+# The MM band dictionary was modelled after the Option band dict, but there are
+# now some differences
+OPTION_BAND_DICT = {
+    consts.MM_NETWORK_BAND_ANY: 'ANY',
+    consts.MM_NETWORK_BAND_EGSM: 'EGSM',
+    consts.MM_NETWORK_BAND_DCS: 'DCS',
+    consts.MM_NETWORK_BAND_PCS: 'PCS',
+    consts.MM_NETWORK_BAND_G850: 'G850',
+    consts.MM_NETWORK_BAND_U2100: 'U2100',
+    consts.MM_NETWORK_BAND_U1800: 'U1700',  # Option calls this U1700
+    consts.MM_NETWORK_BAND_U17IV: 'U17IV',
+    consts.MM_NETWORK_BAND_U800: 'U800',
+    consts.MM_NETWORK_BAND_U850: 'U850',
+    consts.MM_NETWORK_BAND_U900: 'U900',
+    consts.MM_NETWORK_BAND_U17IX: 'U17IX',
+    consts.MM_NETWORK_BAND_U1900: 'U1900',
+                                            # Option has no U2600
 }
 
 OPTION_CONN_DICT = {
@@ -87,6 +88,13 @@ OPTION_CMD_DICT['get_sim_status'] = build_cmd_dict(re.compile(r"""
 
 OPTION_CMD_DICT['get_band'] = build_cmd_dict(re.compile(r"""
                                              \r\n(?P<name>.*):\s+(?P<active>\d)
+                                             """, re.VERBOSE))
+
+# AT_OPBM=?
+# _OPBM: ("ANY","EGSM","DCS","PCS","G850","U2100","U1900","U1700","U17IV",
+#           "U850","U800","U900","U17IX")
+OPTION_CMD_DICT['get_bands'] = build_cmd_dict(re.compile(r"""
+                                             "(?P<name>[A-Za-z0-9]+)"(?:,|\))
                                              """, re.VERBOSE))
 
 OPTION_CMD_DICT['get_network_mode'] = build_cmd_dict(re.compile(r"""
@@ -206,7 +214,7 @@ class OptionWrapper(WCDMAWrapper):
     """Wrapper for all Option cards"""
 
     def _get_band_dict(self):
-        """Returns a dict with the available bands and its status"""
+        """Returns a dict with the currently selected bands"""
 
         def callback(resp):
             bands = {}
@@ -223,19 +231,16 @@ class OptionWrapper(WCDMAWrapper):
     def get_band(self):
         """Returns the current used band"""
 
-        def get_band_dict_cb(bands):
-            if 'ANY' in bands and bands['ANY'] == 1:
+        def get_band_dict_cb(current):
+            if 'ANY' in current and current['ANY'] == 1:
                 # can't be combined by design
                 return consts.MM_NETWORK_BAND_ANY
 
             ret = 0
-            for name, active in bands.items():
-                if not active:
-                    continue
-
-                if name in OPTION_BAND_MAP_DICT:
-                    ret |= OPTION_BAND_MAP_DICT[name]
-
+            for key, value in self.custom.band_dict.items():
+                for name, active in current.items():
+                    if name == value and active:
+                        ret |= key
             return ret
 
         d = self._get_band_dict()
@@ -243,32 +248,36 @@ class OptionWrapper(WCDMAWrapper):
         return d
 
     def get_bands(self):
-        """Returns the supported bands"""
+        """
+        Returns the supported bands from the device, but filtered to the set
+        supported in the custom band_dict. This means we can remove any
+        awkward bands from problematic devices e.g. K3760 / U2100
+        """
 
-        def get_band_dict_cb(bands):
+        def callback(resp):
+            bands = [r.group('name') for r in resp]
+
             ret = 0
-            for key in bands:
-                if key == 'ANY':
+            for key, value in self.custom.band_dict.items():
+                if key == consts.MM_NETWORK_BAND_ANY:
                     # skip ANY
                     continue
 
-                if key in OPTION_BAND_MAP_DICT:
-                    ret |= OPTION_BAND_MAP_DICT[key]
+                if value in bands:
+                    ret |= key
 
             return ret
 
-        d = self._get_band_dict()
-        d.addCallback(get_band_dict_cb)
-        return d
+        return self.send_at('AT_OPBM=?', name='get_bands', callback=callback)
 
     def get_network_mode(self):
         """Returns the current network mode"""
 
         def get_network_mode_cb(resp):
             mode = int(resp[0].group('mode'))
-            OPTION_BAND_DICT_REV = revert_dict(OPTION_CONN_DICT)
-            if mode in OPTION_BAND_DICT_REV:
-                return OPTION_BAND_DICT_REV[mode]
+            OPTION_CONN_DICT_REV = revert_dict(OPTION_CONN_DICT)
+            if mode in OPTION_CONN_DICT_REV:
+                return OPTION_CONN_DICT_REV[mode]
 
             raise KeyError("Unknown network mode %d" % mode)
 
@@ -290,40 +299,33 @@ class OptionWrapper(WCDMAWrapper):
         return d
 
     def set_band(self, band):
-        """Sets the band to ``band``"""
+        """Sets the band set to requested ``band``"""
 
-        def get_band_dict_cb(bands):
-            responses = []
-
+        def get_band_dict_cb(current):
             at_str = 'AT_OPBM="%s",%d'
 
+            todo = []
             if band == consts.MM_NETWORK_BAND_ANY:
-                if 'ANY' in bands and bands['ANY'] == 1:
-                    # if ANY is already enabled, do nothing
-                    return defer.succeed(True)
-
                 # enabling ANY should suffice
-                responses.append(self.send_at(at_str % ('ANY', 1)))
+                todo.append(self.send_at(at_str % ('ANY', 1)))
             else:
-                # ANY is not sought, if ANY is enabled we should remove it
-                # before bitwising bands
-                if 'ANY' in bands and bands['ANY'] == 1:
-                    responses.append(self.send_at(at_str % ('ANY', 0)))
+                supported = self.custom.band_dict.copy()
+                supported.pop(consts.MM_NETWORK_BAND_ANY)
 
-                for key, value in OPTION_BAND_MAP_DICT.items():
-                    if value == consts.MM_NETWORK_BAND_ANY:
-                        # do not attempt to combine it
-                        continue
-
-                    if value & band:
+                # turn on the bits we want first
+                for key, value in supported.items():
+                    if key & band and current[value] != 1:
                         # enable required band
-                        responses.append(self.send_at(at_str % (key, 1)))
-                    else:
-                        # disable required band
-                        responses.append(self.send_at(at_str % (key, 0)))
+                        todo.append(self.send_at(at_str % (value, 1)))
 
-            if responses:
-                dlist = defer.DeferredList(responses, consumeErrors=1)
+                # turn off the bits we don't want
+                for key, value in supported.items():
+                    if (not key & band) and current[value] != 0:
+                        # disable unrequired band
+                        todo.append(self.send_at(at_str % (value, 0)))
+
+            if todo:
+                dlist = defer.DeferredList(todo, consumeErrors=1)
                 dlist.addCallback(lambda l: [x[1] for x in l])
                 return dlist
 
@@ -489,10 +491,8 @@ class OptionWCDMACustomizer(WCDMACustomizer):
                 \r\n
                 (?P<signal>_O[A-Z]{3,}):\s(?P<args>.*)
                 \r\n""", re.VERBOSE)
-    # the dict is reverted as we are interested in the range of bands
-    # that the device supports (get_bands)
     allowed_dict = OPTION_ALLOWED_DICT
-    band_dict = revert_dict(OPTION_BAND_MAP_DICT)
+    band_dict = OPTION_BAND_DICT
     conn_dict = OPTION_CONN_DICT
     cmd_dict = OPTION_CMD_DICT
     device_capabilities = [S.SIG_NETWORK_MODE,

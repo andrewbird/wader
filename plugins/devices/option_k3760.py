@@ -16,10 +16,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from wader.common.consts import WADER_CONNTYPE_USB
-from core.hardware.option import (OptionHSOWCDMADevicePlugin,
-                                          OptionHSOWCDMACustomizer,
-                                          OptionHSOWrapper)
+from wader.common.consts import MM_NETWORK_BAND_U2100, WADER_CONNTYPE_USB
+
+from core.hardware.option import (OPTION_BAND_DICT,
+                                  OptionHSOWCDMADevicePlugin,
+                                  OptionHSOWCDMACustomizer,
+                                  OptionHSOWrapper)
 
 
 class OptionK3760Wrapper(OptionHSOWrapper):
@@ -34,6 +36,9 @@ class OptionK3760Wrapper(OptionHSOWrapper):
 
 class OptionK3760Customizer(OptionHSOWCDMACustomizer):
     wrapper_klass = OptionK3760Wrapper
+    band_dict = OPTION_BAND_DICT.copy()
+    band_dict.pop(MM_NETWORK_BAND_U2100)    # VF firmware seems to support this
+                                            # but has trouble unsetting it
 
 
 class OptionK3760(OptionHSOWCDMADevicePlugin):
