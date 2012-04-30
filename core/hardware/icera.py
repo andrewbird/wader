@@ -238,10 +238,6 @@ class IceraWrapper(WCDMAWrapper):
         if mode not in self.custom.allowed_dict:
             raise KeyError("Mode %s not found" % mode)
 
-        if self.device.get_property(consts.NET_INTFACE, "AllowedMode") == mode:
-            # NOOP
-            return defer.succeed("OK")
-
         def set_allowed_mode_cb(orig=None):
             self.device.set_property(consts.NET_INTFACE, "AllowedMode", mode)
             return orig

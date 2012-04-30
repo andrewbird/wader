@@ -446,11 +446,6 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
                 # NOOP
                 return "OK"
 
-            _mode = self.device.get_property(consts.NET_INTFACE, "AllowedMode")
-            if _mode == mode:
-                # NOOP
-                return "OK"
-
             _mode, acqorder = self.custom.allowed_dict[mode]
             band, roam, srv = info['theband'], info['roam'], info['srv']
             band = 0x3FFFFFFF
