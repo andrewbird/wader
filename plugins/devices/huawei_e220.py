@@ -17,8 +17,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from twisted.internet import defer
+
 from wader.common import consts
 from wader.common.encoding import pack_ucs2_bytes
+
 from core.command import ATCmd
 from core.hardware.base import build_band_dict
 from core.hardware.huawei import (HuaweiWCDMADevicePlugin,
@@ -51,6 +54,11 @@ class HuaweiE220Wrapper(HuaweiWCDMAWrapper):
         cmd = ATCmd('AT^CPBW=%d,"%s",%d,"%s",%d' % args, name='add_contact')
 
         return self.queue_at_cmd(cmd)
+
+    def get_roaming_ids(self):
+        # Note: We have to disable this and return an empty list or the device
+        # resets and drops off the USB bus
+        return defer.succeed([])
 
     def send_ussd(self, ussd):
         return self._send_ussd_ucs2_mode(ussd)
