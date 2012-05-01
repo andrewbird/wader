@@ -214,19 +214,18 @@ def build_daemon_collection(device):
     """Returns a :class:`WaderServiceCollection` customized for ``device``"""
     collection = WaderDaemonCollection()
 
-    if device.ports.has_two():
-        # check capabilities
-        if S.SIG_RSSI not in device.custom.device_capabilities:
-            # device doesn't sends unsolicited notifications about RSSI
-            # changes, we will have to monitor it ourselves every 15s
-            daemon = SignalQualityDaemon(SIG_RSSI_FREQ, device)
-            collection.append_daemon(S.SIG_RSSI, daemon)
-
+    # check capabilities
+    if not device.ports.has_two() or \
+            S.SIG_RSSI not in device.custom.device_capabilities:
+        # The device doesn't send unsolicited notifications about RSSI changes,
+        # or it has only one port which means it will never be able to send us
+        # unsolicited notifications, so we'll have to fake them.
+        interval = SIG_RSSI_FREQ
     else:
-        # device with just one port will never be able to send us
-        # unsolicited notifications, we'll have to fake 'em
-        daemon = SignalQualityDaemon(SIG_RSSI_FREQ, device)
-        collection.append_daemon(S.SIG_RSSI, daemon)
+        # Ensure we at least update every two minutes
+        interval = 120
+    daemon = SignalQualityDaemon(interval, device)
+    collection.append_daemon(S.SIG_RSSI, daemon)
 
     if S.SIG_SMS_NOTIFY_ONLINE not in device.custom.device_capabilities:
         # device doesn't send unsolicited notifications whilst
