@@ -75,6 +75,11 @@ class HuaweiK2540Wrapper(HuaweiWCDMAWrapper):
         d.addCallback(lambda response: response[0].group('resp'))
         return d
 
+    def get_roaming_ids(self):
+        # Note: We have to disable this and return an empty list or the device
+        # resets and drops off the USB bus
+        return defer.succeed([])
+
     def get_network_mode(self):
         """Returns the current network mode preference"""
         return defer.succeed(consts.MM_NETWORK_MODE_2G_ONLY)
