@@ -823,8 +823,8 @@ class WCDMAWrapper(WCDMAProtocol):
         """Returns the network ids stored in the SIM to roam"""
         # a.k.a. AT+CPOL?
         d = super(WCDMAWrapper, self).get_roaming_ids()
-        d.addCallback(lambda raw:
-                [BasicNetworkOperator(obj.group('netid')) for obj in raw])
+        d.addCallback(lambda raw: [BasicNetworkOperator(
+                obj.group('netid')) for obj in raw if int(obj.group('netid'))])
         return d
 
     def get_signal_quality(self):
