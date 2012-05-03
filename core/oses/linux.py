@@ -439,7 +439,9 @@ class HardwareManager(object):
                 msg = 'No data port and no control port with ports: %s'
                 raise RuntimeError(msg % ports)
 
-            set_property(consts.MDM_INTFACE, 'Device', dport.split('/')[-1])
+            if dport is not None:
+                set_property(consts.MDM_INTFACE, 'Device',
+                                                        dport.split('/')[-1])
 
             if info[DRIVER] == 'cdc_acm':
                 # MBM device
