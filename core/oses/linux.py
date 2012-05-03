@@ -51,6 +51,40 @@ REQUIRED_PROPS = [VENDOR, MODEL, DRIVER, "ID_BUS", "DEVNAME"]
 BAD_DEVFILE = re.compile('^/dev/(tty\d*?|console|ptmx)$')
 
 
+def get_ancestor(device):
+    """
+    Returns the greatest ancestor with matching vid / pid
+    """
+
+    def get_vidpid(device):
+        vendor = None
+        model = None
+
+        for key in device.get_property_keys():
+            if key == VENDOR:
+                try:
+                    vendor = int(device.get_property(key), 16)
+                except (ValueError, TypeError):
+                    pass
+            if key == MODEL:
+                try:
+                    model = int(device.get_property(key), 16)
+                except (ValueError, TypeError):
+                    pass
+
+        return (vendor, model)
+
+    vidpid = get_vidpid(device)
+
+    ancestor = parent = device
+    while parent is not None:
+        if get_vidpid(parent) == vidpid:
+            ancestor = parent
+        parent = parent.get_parent()
+
+    return ancestor
+
+
 class HardwareManager(object):
     """
     I find and configure devices on Linux
@@ -213,7 +247,7 @@ class HardwareManager(object):
                     props[mm_prop] = bool(int(device.get_property(mm_prop)))
 
             # now find out the device parent
-            parent = self._get_last_parent_that_matches_props(device, props)
+            parent = get_ancestor(device).get_sysfs_path()
 
             if parent in self.clients:
                 # this device has already been setup
@@ -275,35 +309,6 @@ class HardwareManager(object):
                     except ValueError:
                         pass
         return result
-
-    def _get_last_parent_that_matches_props(self, device, props):
-        last = device
-        while 1:
-            parent = last.get_parent()
-            if parent is None:
-                path = device.get_sysfs_path()
-                raise ValueError("Could not find %s parent" % path)
-
-            properties = {}
-            for key in parent.get_property_keys():
-                properties[key] = parent.get_property(key)
-                if key == "PRODUCT":
-                    # udev seems to miss the ID_VENDOR_ID and ID_MODEL_ID attrs
-                    # and all of the sudden a "PRODUCT" attribute appears with
-                    # a value of ID_VENDOR_ID/ID_MODEL_ID/UNKNOWN.
-                    vendor, model = parent.get_property(key).split('/')[:2]
-                    properties[VENDOR] = int(vendor, 16)
-                    properties[MODEL] = int(model, 16)
-
-            if VENDOR in properties and MODEL in properties:
-                if ((props[VENDOR] != properties[VENDOR]) or
-                        (props[MODEL] != properties[MODEL])):
-                    break
-
-            last = parent
-
-        # XXX: need to check with modemmanager if it matches
-        return last.get_sysfs_path()
 
     def _register_client(self, plugin, emit=False):
         """
