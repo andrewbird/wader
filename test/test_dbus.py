@@ -48,8 +48,11 @@ try:
 except ImportError:
     import unittest
 
-# Duplicate any consts rather than include wader/common/consts
+if sys.platform.startswith('linux'):
+    import gudev
+    from core.oses.linux import get_ancestor, get_devices
 
+# Duplicate any consts rather than include wader/common/consts
 MM_SERVICE = 'org.freedesktop.ModemManager'
 MM_OBJPATH = '/org/freedesktop/ModemManager'
 MM_INTFACE = MM_SERVICE
@@ -1560,3 +1563,57 @@ class DBusTestCase(unittest.TestCase):
         self._test_ZDisableReEnable(10)
 
     test_ZDisableReEnable10.timeout = 60
+
+
+class UdevTestCase(unittest.TestCase):
+    """Test the udev attributes if linux"""
+
+    @classmethod
+    def setUpClass(cls):
+        if not sys.platform.startswith('linux'):
+            raise unittest.SkipTest("Cannot be tested on OS != Linux")
+
+        cls.gudev_client = gudev.Client(["tty", "usb", "net"])
+
+    def group_devices(self, devices):
+        """
+        Returns a list of lists of devices that share common ancestors
+        """
+
+        unique_ancestors = \
+            list(set([get_ancestor(x).get_sysfs_path() for x in devices]))
+
+        ret = []
+        for ancestor in unique_ancestors:
+            dlist = [device for device in devices \
+                        if get_ancestor(device).get_sysfs_path() == ancestor]
+            ret.append(dlist)
+
+        return ret
+
+    def test_ancestor(self):
+        """Test for valid resolution of ancestor"""
+
+        # Note: will break if more than one modem device plugged in
+        devices = get_devices(self.gudev_client)
+
+        unique = list(set([get_ancestor(x).get_sysfs_path() for x in devices]))
+
+        self.assertEqual(len(unique), 1)
+        self.assertNotRegexpMatches(unique[0], r'.*tty.*')
+
+    def test_one_attr_only(self):
+        """Test for unique ID_MM_PORT_TYPES"""
+
+        for group in self.group_devices(get_devices(self.gudev_client)):
+            aux = 0
+            modem = 0
+            for device in group:
+                if device.get_property_as_int('ID_MM_PORT_TYPE_AUX'):
+                    aux += 1
+
+                if device.get_property_as_int('ID_MM_PORT_TYPE_MODEM'):
+                    modem += 1
+
+            self.assertLessEqual(aux, 1)
+            self.assertLessEqual(modem, 1)
