@@ -85,6 +85,42 @@ def get_ancestor(device):
     return ancestor
 
 
+def is_valid_device(device):
+    """Checks whether ``device`` is valid"""
+    if not device.get_device_file():
+        return False
+
+    # before checking all the properties, filter out all the /dev/tty%d
+    if BAD_DEVFILE.match(device.get_device_file()):
+        return False
+
+    # filter out /dev/usb/foo/bar/foo like too
+    parts = device.get_device_file().split('/')
+    if len(parts) > 3:
+        return False
+
+    # check that it has all the required properties
+    # otherwise we are not interested on it
+    props = device.get_property_keys()
+    for prop in REQUIRED_PROPS:
+        if prop not in props:
+            return False
+
+    return True
+
+
+def get_devices(client):
+    devices = []
+
+    # get all the devices under the tty, usb and net subsystems
+    for subsystem in SUBSYSTEMS:
+        for device in client.query_by_subsystem(subsystem):
+            if is_valid_device(device):
+                devices.append(device)
+
+    return devices
+
+
 class HardwareManager(object):
     """
     I find and configure devices on Linux
@@ -128,7 +164,7 @@ class HardwareManager(object):
         elif action == 'add':
             # if valid, append it to the list of hotplugged devices
             # for later processing
-            if self._is_valid_device(device):
+            if is_valid_device(device):
                 self._hotplugged_devices.append(device)
 
             if self._call is None:
@@ -159,14 +195,7 @@ class HardwareManager(object):
         if self.clients:
             return defer.succeed(self.clients.values())
 
-        devices = []
-        # get all the devices under the tty, usb and net subsystems
-        for subsystem in SUBSYSTEMS:
-            for device in self.gudev_client.query_by_subsystem(subsystem):
-                if self._is_valid_device(device):
-                    devices.append(device)
-
-        return self._process_found_devices(devices)
+        return self._process_found_devices(get_devices(self.gudev_client))
 
     def _process_hotplugged_devices(self):
         # get DevicePlugin out of a list of gudev.Device
@@ -188,29 +217,6 @@ class HardwareManager(object):
             deferreds.append(d)
 
         return defer.gatherResults(deferreds)
-
-    def _is_valid_device(self, device):
-        """Checks whether ``device`` is valid"""
-        if not device.get_device_file():
-            return False
-
-        # before checking all the properties, filter out all the /dev/tty%d
-        if BAD_DEVFILE.match(device.get_device_file()):
-            return False
-
-        # filter out /dev/usb/foo/bar/foo like too
-        parts = device.get_device_file().split('/')
-        if len(parts) > 3:
-            return False
-
-        # check that it has all the required properties
-        # otherwise we are not interested on it
-        props = device.get_property_keys()
-        for prop in REQUIRED_PROPS:
-            if prop not in props:
-                return False
-
-        return True
 
     def _setup_devices(self, devices):
         """Sets up ``devices``"""
