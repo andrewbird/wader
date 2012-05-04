@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 from twisted.internet.task import deferLater
 
 from wader.common import consts
@@ -32,28 +32,23 @@ class HuaweiK4505Wrapper(HuaweiWCDMAWrapper):
     :class:`~core.hardware.huawei.HuaweiWCDMAWrapper` for the K4505
     """
 
-    def check_pin(self):
+    def enable_radio(self, enable):
         """
-        Returns the SIM's auth state
+        Enables the radio according to ``enable``
 
-        :raise SimPinRequired: Raised if SIM PIN is required
-        :raise SimPukRequired: Raised if SIM PUK is required
-        :raise SimPuk2Required: Raised if SIM PUK2 is required
+        It will not enable it if it's already enabled and viceversa
         """
-        # XXX: this device needs to be enabled before pin can be checked
+
+        def check_if_necessary(status):
+            if (status == 1 and enable) or (status == 0 and not enable):
+                return defer.succeed('OK')
+
+            d = super(HuaweiK4505Wrapper, self).enable_radio(enable)
+            d.addCallback(lambda x: deferLater(reactor, 5, lambda: x))
+            return d
 
         d = self.get_radio_status()
-
-        def get_radio_status_cb(status):
-            if status != 1:
-                self.send_at('AT+CFUN=1')
-
-                # delay here 2 secs, or we perhaps we should wait for ^SRVST:1
-                return deferLater(reactor, 2, lambda: None)
-
-        d.addCallback(get_radio_status_cb)
-        d.addCallback(lambda x: super(HuaweiK4505Wrapper, self).check_pin())
-
+        d.addCallback(check_if_necessary)
         return d
 
     def send_ussd(self, ussd):
@@ -89,6 +84,9 @@ class HuaweiK4505(HuaweiWCDMADevicePlugin):
     version = "0.1"
     author = u"Andrew Bird"
     custom = HuaweiK4505Customizer()
+    quirks = {
+        'needs_enable_before_pin_check': True,
+    }
 
     __remote_name__ = "K4505"
 
