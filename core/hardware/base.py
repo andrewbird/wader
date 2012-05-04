@@ -103,6 +103,11 @@ def check_auth_state(plugin):
     def do_check(port):
         with closing(serial.Serial(port.path, timeout=.5)) as ser:
 
+            # some devices need to be enabled before pin can be checked
+            if plugin.quirks.get('needs_enable_before_pin_check', False):
+                ser.write('AT+CFUN=1\r\n')
+                lines = ser.readlines()
+
             for i in range(15):  # some devices/SIMs are slow to be available
                 ser.flushOutput()
                 ser.flushInput()

@@ -233,7 +233,13 @@ class WCDMAWrapper(WCDMAProtocol):
         :raise SimPukRequired: Raised if SIM PUK is required
         :raise SimPuk2Required: Raised if SIM PUK2 is required
         """
-        d = super(WCDMAWrapper, self).check_pin()
+
+        if self.device.quirks.get('needs_enable_before_pin_check', False):
+            # Note: this device needs to be enabled before pin can be checked
+            d = self.enable_radio(True)
+            d.addCallback(lambda x: super(WCDMAWrapper, self).check_pin())
+        else:
+            d = super(WCDMAWrapper, self).check_pin()
 
         def process_result(resp):
             result = resp[0].group('resp')
@@ -1458,7 +1464,9 @@ class WCDMAWrapper(WCDMAProtocol):
             return d
 
         if self.device.status >= MM_MODEM_STATE_ENABLED:
-            return self.device.close()
+            self.device.close()
+
+        return defer.succeed(None)
 
     def _do_enable_device(self):
         if self.device.status >= MM_MODEM_STATE_ENABLED:

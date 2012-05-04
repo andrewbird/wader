@@ -60,6 +60,8 @@ class DevicePlugin(object):
     exporter = None
     # dialer
     dialer = 'default'
+    # place for device specific hints to the core
+    quirks = {}
 
     def __init__(self):
         super(DevicePlugin, self).__init__()
