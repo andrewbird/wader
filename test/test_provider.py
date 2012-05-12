@@ -240,6 +240,30 @@ class TestNetworkProvider(unittest.TestCase):
         # leave it as we found it
         c.execute("delete from network_info")
 
+    def test_get_network_by_id(self):
+        extra = None
+        for p in ['resources/extra', '../resources/extra']:
+            if os.path.exists(p):
+                extra = p
+                break
+        if extra is None:
+            raise unittest.SkipTest('Path to "networks.py" not valid')
+
+        sys.path.insert(0, extra)
+        import networks
+
+        def is_valid(item):
+            return not item.startswith(("__", "Base", "NetworkOperator"))
+
+        self.provider.populate_networks_from_objs([getattr(networks, item)()
+                          for item in dir(networks) if is_valid(item)])
+
+        for x in ['21401', '23415', '26202']:
+            nets = self.provider.get_network_by_id(x + '9106787580')
+
+            self.assertIn(x, [net.netid[0] for net in nets],
+                                    msg="%s not in nets %s " % (x, str(nets)))
+
     def test_populate_db_from_mbpi_merge_network_no_clash(self):
         networks = [NetworkOperator(["21401"], "Preloaded",
                         "Preloaded", "Preloaded", "10.0.0.1", "10.0.0.2",
