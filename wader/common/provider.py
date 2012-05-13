@@ -582,6 +582,9 @@ class NetworkProvider(DBProvider):
         # turn off autocommit
         self.conn.isolation_level = 'DEFERRED'
 
+        # Note: cascades over apn table too
+        self.conn.cursor().execute("delete from network_info")
+
         self.populate_networks_from_objs([getattr(networks, item)()
                 for item in dir(networks) if is_valid(item)])
 
@@ -593,9 +596,6 @@ class NetworkProvider(DBProvider):
         # update timestamps
         objs = os.path.join(EXTRA_DIR, 'networks.py')
         args = (get_tz_aware_mtime(objs), get_tz_aware_mtime(MBPI))
-
-        # Note: cascades over apn table too
-        self.conn.cursor().execute("delete from network_info")
 
         self.conn.cursor().execute("delete from sources_info")
         self.conn.cursor().execute(

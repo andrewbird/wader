@@ -193,8 +193,8 @@ def create_skeleton_and_do_initial_setup():
             log.msg("Networks DB creation started")
             provider.populate_networks()
             log.msg("Networks DB population complete")
-    except:
-        log.err()
+    except Exception, e:
+        log.err(str(e))
     finally:
         provider.close()
 
