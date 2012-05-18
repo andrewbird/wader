@@ -19,24 +19,19 @@
 GConf-powered config
 
 This module lives in wader.common so it can be used from applications
-that depend on wader-core. Do not try to use it in the core as it will
+that depend on python-wader. Do not try to use it in the core as it will
 fail.
 """
 
 from os.path import join
 
-from wader.common.consts import APP_SLUG_NAME
 from wader.common._gconf import GConfHelper
-
-CONF_PATH = '/apps/%s' % APP_SLUG_NAME
-
-DEFAULT_KEYS = ['plugins', 'test']
 
 
 class WaderConfig(GConfHelper):
     """I manage Wader config"""
 
-    def __init__(self, keys=DEFAULT_KEYS, base_path=CONF_PATH):
+    def __init__(self, keys, base_path):
         # despite the fact that having default mutable types as
         # argument in python, keys will never be modified, only
         # read, so we are safe using it this way.
@@ -60,6 +55,3 @@ class WaderConfig(GConfHelper):
         """Sets ``value`` at ``section/option``"""
         path = join(self.base_path, section, option)
         self.set_value(path, value)
-
-
-config = WaderConfig()
