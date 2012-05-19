@@ -670,8 +670,6 @@ class NMLaterProfileManager(NMProfileManager):
         self._store_new_profile(opath)
 
     def _get_profile_from_nm_connection(self, props):
-        print "NMLaterProfileManager::_get_profile_from_nm_connection()"
-
         props = transpose_from_NM(props)
         uuid = props['connection']['uuid']
         try:
@@ -686,8 +684,6 @@ class NMLaterProfileManager(NMProfileManager):
         # operation to other profile activities when in fact we do it via the
         # same mechanism again, this means that two NM connection updates are
         # generated for every client profile save.
-        print "NMLaterProfileManager::_keyring_set_callback()"
-
         passwd = secrets['gsm']['passwd']
 
         if uuid in self.nm_profiles:
@@ -706,7 +702,6 @@ class NMLaterProfileManager(NMProfileManager):
             1/ from signal handler when NM has a new connection
             2/ by get_profiles to populate the profiles cache
         """
-        print "NMLaterProfileManager::_store_new_profile()"
         obj = self.bus.get_object(self.NM_SETTINGS, opath)
 
         props = obj.GetSettings(dbus_interface=self.NM_SETTINGS_CONNECTION)
@@ -742,7 +737,6 @@ class NMLaterProfileManager(NMProfileManager):
         return self.profiles.values()
 
     def remove_profile(self, profile):
-        print "NMLaterProfileManager::remove_profile()"
         """
         Removes profile ``profile``
 
@@ -779,7 +773,6 @@ class NMLaterProfileManager(NMProfileManager):
         Should initiate the NM connection update, but the update of our
         profile should be done by the signal handler
         """
-        print "NMLaterProfileManager::update_profile()"
         uuid = profile.get_settings()['connection']['uuid']
         nm_props = transpose_to_NM(props, new=False)
 
@@ -849,8 +842,6 @@ class NM084ProfileManager(NMLaterProfileManager):
         # Absolutely the bare minimum wanted here, if the keyring doesn't exist
         # don't create it, and if we fail because we aren't on a gnome system or
         # the value doesn't exist then just return None
-        print "NM084ProfileManager::_keyring_get_callback() trying GnomeKeyring"
-
         attr = {
             'setting-name': 'gsm',
             'setting-key': 'password',
@@ -871,12 +862,9 @@ class NM084ProfileManager(NMLaterProfileManager):
         # Getting the secrets probably will need to be obtained from Gnome Keyring
         # directly on NM 0.8.4 as the DBus config usually restricts the secrets
         # access to root only
-        print "NM084ProfileManager::_keyring_get_callback()"
-
         try:
             secrets = self.nm_profiles[uuid].GetSecrets('gsm', ['password',], True,
                                     dbus_interface=NM084_SETTINGS_CONNECTION_SECRETS)
-            print "NM084ProfileManager::_keyring_get_callback() got secrets from NM"
             return transpose_from_NM(secrets)
 
         except KeyError:
@@ -884,11 +872,6 @@ class NM084ProfileManager(NMLaterProfileManager):
             return {u'gsm': {u'passwd': u'not found'}}
 
         except dbus.exceptions.DBusException, e:
-            if 'AccessDenied' in str(e):
-                print "NM084ProfileManager::_keyring_get_callback() DBus config prevents access to secrets"
-            else:
-                print str(e)
-
             passwd = self._get_secrets_gnome(uuid)
             if passwd is not None:
                 return {u'gsm': {u'passwd': unicode(passwd)}}
