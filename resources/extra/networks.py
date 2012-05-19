@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2008-2011  Vodafone Group Services Limited
+# Copyright (C) 2008-2012  Vodafone Group Services Limited
 # Author:  Andrew Bird
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
-Automatically generated from VMB OpCo_Settings_10.2.301_RC1 file
+Automatically generated from VMB Opco_Settings_10.3.200.36472_RC1 file
 """
 
 
@@ -264,6 +264,54 @@ class Vodafone_23415_Prepaid(NetworkOperator):
     wap_username = "wap"
     wap_password = "wap"
     wap2 = "212.183.137.12:8799"
+
+
+class Vodafone_23415_Prepaid_Segment_3(NetworkOperator):
+    netid = ["23415"]
+    name = "Vodafone UK"
+    country = "United Kingdom"
+    type = "Prepaid"
+    smsc = "+447785016005"
+    apn = "PPBUNDLE.INTERNET"
+    auth = "PAP"
+    username = "web"
+    password = "web"
+
+
+class Vodafone_23415_Prepaid_Segment_4(NetworkOperator):
+    netid = ["23415"]
+    name = "Vodafone UK"
+    country = "United Kingdom"
+    type = "Prepaid"
+    smsc = "+447785016005"
+    apn = "PP.INTERNET"
+    auth = "PAP"
+    username = "web"
+    password = "web"
+
+
+class Vodafone_23415_Prepaid_Segment_5(NetworkOperator):
+    netid = ["23415"]
+    name = "Vodafone UK"
+    country = "United Kingdom"
+    type = "Prepaid"
+    smsc = "+447785016005"
+    apn = "PP.VODAFONE.CO.UK"
+    auth = "PAP"
+    username = "web"
+    password = "web"
+
+
+class Vodafone_23415_Prepaid_Segment_6(NetworkOperator):
+    netid = ["23415"]
+    name = "Vodafone UK"
+    country = "United Kingdom"
+    type = "Prepaid"
+    smsc = "+447785016005"
+    apn = "PP.VODAFONE.CO.UK"
+    auth = "PAP"
+    username = "web"
+    password = "web"
 
 
 class Vodafone_26202_Contract(NetworkOperator):
@@ -782,7 +830,7 @@ class Vodafone_62002_Prepaid(NetworkOperator):
     type = "Prepaid"
     smsc = "+233200000007"
     apn = "browse"
-    auth = "MSCHAPv2"
+    auth = "PAP"
 
 
 class Vodafone_65101_Contract(NetworkOperator):
