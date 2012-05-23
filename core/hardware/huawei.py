@@ -182,6 +182,25 @@ HUAWEI_CMD_DICT['list_contacts'] = build_cmd_dict(
                          (?P<raw>\d+)
                        """, re.VERBOSE))
 
+HUAWEI_CMD_DICT['list_sms'] = build_cmd_dict(re.compile(r"""
+                       \r\n
+                       \+CMGL:\s*
+                       (?P<id>\d+),
+                       (?P<where>\d),["\w\s]*,\d+
+                       \r\n(?P<pdu>\w+)""", re.VERBOSE))
+
+# +CMGR: 0,"416E64726577",23^M
+# 0791447758100650040C914497716247010000215032511142400444F3190D^M
+# ^M
+# OK^M
+HUAWEI_CMD_DICT['get_sms'] = build_cmd_dict(re.compile(r"""
+                       \r\n
+                       \+CMGR:\s
+                       (?P<where>\d),["\w\s]*,
+                       \d+\r\n
+                       (?P<pdu>\w+)
+                       \r\n""", re.VERBOSE))
+
 
 class HuaweiWCDMAWrapper(WCDMAWrapper):
     """Wrapper for all Huawei cards"""
