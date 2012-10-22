@@ -1503,6 +1503,8 @@ class DBusTestCase(unittest.TestCase):
             request, regex = ('*118#', r'^Spain.*$')
         elif imsi.startswith("23415"):
             request, regex = ('*#100#', r'^07\d{9}$')
+        elif imsi.startswith("26207"):
+            request, regex = ('*100#', r'^(?:Hauptmen)|(?:Prepaid).*')
         else:
             raise unittest.SkipTest("Untested")
 
