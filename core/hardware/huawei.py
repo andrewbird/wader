@@ -572,9 +572,12 @@ class HuaweiWCDMAWrapper(WCDMAWrapper):
                             " - please report")
                     raise E.MalformedUssdPduError(resp)
 
-            ret = unpack_msg(resp)
-            if is_gsm_text(ret):
-                return ret
+            try:
+                ret = unpack_msg(resp).decode("gsm0338")
+                if is_gsm_text(ret):
+                    return ret
+            except UnicodeError:
+                pass
 
             try:
                 return resp.decode('hex')
