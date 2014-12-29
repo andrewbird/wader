@@ -166,7 +166,7 @@ end;
 
 NETWORKS_SCHEMA = """
 create table network_info(
-    id text primary key,
+    id integer primary key,
     name text,
     country text);
 
@@ -614,7 +614,14 @@ class NetworkProvider(DBProvider):
         c = self.conn.cursor()
 
         for network in networks:
-            for netid in network.netid:
+            for snetid in network.netid:
+
+                # DB field is int not string
+                try:
+                    netid = int(snetid)
+                except (ValueError, TypeError):
+                    continue
+
                 # check if this network object exists in the database
                 c.execute("select 1 from network_info where id=?", (netid,))
                 try:
@@ -706,7 +713,12 @@ class NetworkProvider(DBProvider):
             for networkid in getElementsByTagNameNoDescend(gsm, "network-id"):
                 mcc = getAttributeValue(networkid, "mcc")
                 mnc = getAttributeValue(networkid, "mnc")
-                netid = mcc + mnc
+
+                # DB field is int not string
+                try:
+                    netid = int(mcc + mnc)
+                except (ValueError, TypeError):
+                    continue
 
                 # check if this network object exists in the database
                 c.execute("select 1 from network_info where id=?", (netid,))
