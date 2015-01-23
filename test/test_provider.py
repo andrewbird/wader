@@ -938,14 +938,13 @@ class TestUsageProvider(unittest.TestCase):
         self.provider.close()
 
     def test_add_usage_item(self):
-        now = get_tz_aware_now()
-        later = now + timedelta(minutes=30)
-        umts, bytes_recv, bytes_sent = True, 12345460, 12333211
-        item = self.provider.add_usage_item(now, later, bytes_recv,
-                                            bytes_sent, umts)
-        usage_items = self.provider.get_usage_for_day(date.today())
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 45))     # DST not applied
+
+        later = dt + timedelta(minutes=30)
+        item = self.provider.add_usage_item(dt, later, 12345460, 12333211, True)
+        usage_items = self.provider.get_usage_for_day(dt.date())
         self.assertIn(item, usage_items)
-        self.provider.delete_usage_item(item)
 
     def test_delete_usage_item(self):
         now = get_tz_aware_now()
