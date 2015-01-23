@@ -947,16 +947,19 @@ class TestUsageProvider(unittest.TestCase):
         self.assertIn(item, usage_items)
 
     def test_delete_usage_item(self):
-        now = get_tz_aware_now()
-        later = now + timedelta(minutes=60)
-        umts, bytes_recv, bytes_sent = True, 12345470, 12333212
-        item = self.provider.add_usage_item(now, later, bytes_recv,
-                                            bytes_sent, umts)
-        usage_items = self.provider.get_usage_for_day(date.today())
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 45))     # DST not applied
+
+        later = dt + timedelta(minutes=60)
+        item = self.provider.add_usage_item(dt, later, 12345470, 12333212, True)
+
+        # check it's there
+        usage_items = self.provider.get_usage_for_day(dt.date())
         self.assertIn(item, usage_items)
         self.provider.delete_usage_item(item)
+
         # now check that it is indeed gone
-        usage_items = self.provider.get_usage_for_day(date.today())
+        usage_items = self.provider.get_usage_for_day(dt.date())
         self.assertNotIn(item, usage_items)
 
     def _make_day_usage_items(self, dt):
