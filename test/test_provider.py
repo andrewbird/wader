@@ -960,42 +960,61 @@ class TestUsageProvider(unittest.TestCase):
         usage_items = self.provider.get_usage_for_day(date.today())
         self.assertNotIn(item, usage_items)
 
-    def test_get_usage_for_day(self):
+    def _make_day_usage_items(self, dt):
         # add one usage item for today (45m)
-        now1 = get_tz_aware_now()
+        now1 = dt
         later1 = now1 + timedelta(minutes=45)
-        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
-        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
-                                             bytes_sent1, umts1)
+        item1 = self.provider.add_usage_item(now1, later1, 100034, 14566, True)
+
         # add another usage item for today (17m)  55 minutes later
-        now2 = get_tz_aware_now() + timedelta(minutes=55)
-        later2 = now1 + timedelta(minutes=17)
-        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
-        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
-                                             bytes_sent2, umts2)
+        now2 = dt + timedelta(minutes=55)
+        later2 = now2 + timedelta(minutes=17)
+        item2 = self.provider.add_usage_item(now2, later2, 12000, 1245, True)
 
         # add another usage item for tomorrow (25m)
-        now3 = get_tz_aware_now() + timedelta(days=1)
+        now3 = dt + timedelta(days=1)
         later3 = now3 + timedelta(minutes=25)
-        umts3, bytes_recv3, bytes_sent3 = True, 14000, 1785
-        item3 = self.provider.add_usage_item(now3, later3, bytes_recv3,
-                                             bytes_sent3, umts3)
+        item3 = self.provider.add_usage_item(now3, later3, 14000, 1785, True)
+
+        return (item1, item2, item3)
+
+    def test_get_usage_for_day_gmt_within(self):
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 30))     # DST not applied
+
+        item1, item2, item3 = self._make_day_usage_items(dt)
 
         # now get the usage for today
-        today_items = self.provider.get_usage_for_day(date.today())
+        today_items = self.provider.get_usage_for_day(dt.date())
         self.assertIn(item1, today_items)
         self.assertIn(item2, today_items)
         self.assertNotIn(item3, today_items)
+
         # get the usage for tomorrow
-        tomorrow = date.today() + timedelta(days=1)
+        tomorrow = dt.date() + timedelta(days=1)
         tomorrow_items = self.provider.get_usage_for_day(tomorrow)
         self.assertNotIn(item1, tomorrow_items)
         self.assertNotIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)
 
-        # leave it as we found it
-        for i in [item1, item2, item3]:
-            self.provider.delete_usage_item(i)
+    def test_get_usage_for_day_gmt_overlap(self):
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 1, 17, 23, 30))     # DST not applied
+
+        item1, item2, item3 = self._make_day_usage_items(dt)
+
+        # now get the usage for today
+        today_items = self.provider.get_usage_for_day(dt.date())
+        self.assertIn(item1, today_items)
+        self.assertIn(item2, today_items)
+        self.assertNotIn(item3, today_items)
+
+        # get the usage for tomorrow
+        tomorrow = dt.date() + timedelta(days=1)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        self.assertNotIn(item1, tomorrow_items)
+        self.assertNotIn(item2, tomorrow_items)
+        self.assertIn(item3, tomorrow_items)
 
     def test_get_usage_for_month(self):
         current_month = date.today().month
