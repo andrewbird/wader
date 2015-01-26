@@ -943,7 +943,7 @@ class TestUsageProvider(unittest.TestCase):
 
         later = dt + timedelta(minutes=30)
         item = self.provider.add_usage_item(dt, later, 12345460, 12333211, True)
-        usage_items = self.provider.get_usage_for_day(dt.date())
+        usage_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertIn(item, usage_items)
 
     def test_delete_usage_item(self):
@@ -954,12 +954,12 @@ class TestUsageProvider(unittest.TestCase):
         item = self.provider.add_usage_item(dt, later, 12345470, 12333212, True)
 
         # check it's there
-        usage_items = self.provider.get_usage_for_day(dt.date())
+        usage_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertIn(item, usage_items)
         self.provider.delete_usage_item(item)
 
         # now check that it is indeed gone
-        usage_items = self.provider.get_usage_for_day(dt.date())
+        usage_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertNotIn(item, usage_items)
 
     def _make_day_usage_items(self, dt):
@@ -987,14 +987,14 @@ class TestUsageProvider(unittest.TestCase):
         item1, item2, item3 = self._make_day_usage_items(dt)
 
         # now get the usage for today
-        today_items = self.provider.get_usage_for_day(dt.date())
+        today_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertIn(item1, today_items)
         self.assertIn(item2, today_items)
         self.assertNotIn(item3, today_items)
 
         # get the usage for tomorrow
         tomorrow = dt.date() + timedelta(days=1)
-        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow, tz)
         self.assertNotIn(item1, tomorrow_items)
         self.assertNotIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)
@@ -1006,14 +1006,14 @@ class TestUsageProvider(unittest.TestCase):
         item1, item2, item3 = self._make_day_usage_items(dt)
 
         # now get the usage for today, but all items have end time tomorrow
-        today_items = self.provider.get_usage_for_day(dt.date())
+        today_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertNotIn(item1, today_items)
         self.assertNotIn(item2, today_items)
         self.assertNotIn(item3, today_items)
 
         # get the usage for tomorrow
         tomorrow = dt.date() + timedelta(days=1)
-        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow, tz)
         self.assertIn(item1, tomorrow_items)
         self.assertIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)
@@ -1025,14 +1025,14 @@ class TestUsageProvider(unittest.TestCase):
         item1, item2, item3 = self._make_day_usage_items(dt)
 
         # now get the usage for today
-        today_items = self.provider.get_usage_for_day(dt.date())
+        today_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertIn(item1, today_items)
         self.assertIn(item2, today_items)
         self.assertNotIn(item3, today_items)
 
         # get the usage for tomorrow
         tomorrow = dt.date() + timedelta(days=1)
-        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow, tz)
         self.assertNotIn(item1, tomorrow_items)
         self.assertNotIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)
@@ -1044,14 +1044,14 @@ class TestUsageProvider(unittest.TestCase):
         item1, item2, item3 = self._make_day_usage_items(dt)
 
         # now get the usage for today, but all items have end time tomorrow
-        today_items = self.provider.get_usage_for_day(dt.date())
+        today_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertNotIn(item1, today_items)
         self.assertNotIn(item2, today_items)
         self.assertNotIn(item3, today_items)
 
         # get the usage for tomorrow
         tomorrow = dt.date() + timedelta(days=1)
-        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow, tz)
         self.assertIn(item1, tomorrow_items)
         self.assertIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)
@@ -1063,14 +1063,14 @@ class TestUsageProvider(unittest.TestCase):
         item1, item2, item3 = self._make_day_usage_items(dt)
 
         # now get the usage for today
-        today_items = self.provider.get_usage_for_day(dt.date())
+        today_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertIn(item1, today_items)
         self.assertIn(item2, today_items)
         self.assertNotIn(item3, today_items)
 
         # get the usage for tomorrow
         tomorrow = dt.date() + timedelta(days=1)
-        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow, tz)
         self.assertNotIn(item1, tomorrow_items)
         self.assertNotIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)
@@ -1082,14 +1082,14 @@ class TestUsageProvider(unittest.TestCase):
         item1, item2, item3 = self._make_day_usage_items(dt)
 
         # now get the usage for today, but all items have end time tomorrow
-        today_items = self.provider.get_usage_for_day(dt.date())
+        today_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertNotIn(item1, today_items)
         self.assertNotIn(item2, today_items)
         self.assertNotIn(item3, today_items)
 
         # get the usage for tomorrow
         tomorrow = dt.date() + timedelta(days=1)
-        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow, tz)
         self.assertIn(item1, tomorrow_items)
         self.assertIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)

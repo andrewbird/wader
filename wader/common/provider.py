@@ -286,10 +286,15 @@ sqlite3.register_adapter(datetime.datetime, adapt_datetime)
 sqlite3.register_converter("datetime", convert_datetime)
 
 
-def date_to_datetime(date):
-    # takes a date which is in local time and returns a timezone aware datetime
-    timestamp = mktime(date.timetuple())
-    return datetime.datetime.fromtimestamp(timestamp, timezone('UTC'))
+def date_to_datetime(date, tz=None):
+    # takes a date which is in local time (or optionally has timezone) and
+    # returns a timezone aware datetime
+
+    if tz is None:
+        timestamp = mktime(date.timetuple())
+        return datetime.datetime.fromtimestamp(timestamp, timezone('UTC'))
+
+    return tz.localize(datetime.datetime(date.year, date.month, date.day, 0, 0))
 
 
 # common classes
@@ -385,11 +390,12 @@ class UsageProvider(DBProvider):
         c = self.conn.cursor()
         c.execute("delete from usage where id=?", (item.index,))
 
-    def get_usage_for_day(self, day):
+    def get_usage_for_day(self, day, tz=None):
         """
         Returns all `UsageItem` for ``day``
 
         :type day: ``datetime.date``
+        :type tz: ``pytz.tzfile``
         """
         c = self.conn.cursor()
 
@@ -397,7 +403,7 @@ class UsageProvider(DBProvider):
             raise ValueError("Don't know what to do with %s" % day)
 
         tomorrow = day + datetime.timedelta(days=1)
-        args = (date_to_datetime(day), date_to_datetime(tomorrow))
+        args = (date_to_datetime(day, tz), date_to_datetime(tomorrow, tz))
         c.execute("select * from usage where end_time >= ? and end_time < ?",
                   args)
 
