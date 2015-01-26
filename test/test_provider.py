@@ -980,6 +980,82 @@ class TestUsageProvider(unittest.TestCase):
 
         return (item1, item2, item3)
 
+    def test_get_usage_for_day_bst_within(self):
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 6, 17, 15, 30))     # DST applied
+
+        item1, item2, item3 = self._make_day_usage_items(dt)
+
+        # now get the usage for today
+        today_items = self.provider.get_usage_for_day(dt.date())
+        self.assertIn(item1, today_items)
+        self.assertIn(item2, today_items)
+        self.assertNotIn(item3, today_items)
+
+        # get the usage for tomorrow
+        tomorrow = dt.date() + timedelta(days=1)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        self.assertNotIn(item1, tomorrow_items)
+        self.assertNotIn(item2, tomorrow_items)
+        self.assertIn(item3, tomorrow_items)
+
+    def test_get_usage_for_day_bst_overlap(self):
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 6, 17, 23, 30))     # DST applied
+
+        item1, item2, item3 = self._make_day_usage_items(dt)
+
+        # now get the usage for today, but all items have end time tomorrow
+        today_items = self.provider.get_usage_for_day(dt.date())
+        self.assertNotIn(item1, today_items)
+        self.assertNotIn(item2, today_items)
+        self.assertNotIn(item3, today_items)
+
+        # get the usage for tomorrow
+        tomorrow = dt.date() + timedelta(days=1)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        self.assertIn(item1, tomorrow_items)
+        self.assertIn(item2, tomorrow_items)
+        self.assertIn(item3, tomorrow_items)
+
+    def test_get_usage_for_day_est_within(self):
+        tz = timezone('America/New_York')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 30))     # DST not applied
+
+        item1, item2, item3 = self._make_day_usage_items(dt)
+
+        # now get the usage for today
+        today_items = self.provider.get_usage_for_day(dt.date())
+        self.assertIn(item1, today_items)
+        self.assertIn(item2, today_items)
+        self.assertNotIn(item3, today_items)
+
+        # get the usage for tomorrow
+        tomorrow = dt.date() + timedelta(days=1)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        self.assertNotIn(item1, tomorrow_items)
+        self.assertNotIn(item2, tomorrow_items)
+        self.assertIn(item3, tomorrow_items)
+
+    def test_get_usage_for_day_est_overlap(self):
+        tz = timezone('America/New_York')
+        dt = tz.localize(datetime(2015, 1, 17, 23, 30))     # DST not applied
+
+        item1, item2, item3 = self._make_day_usage_items(dt)
+
+        # now get the usage for today, but all items have end time tomorrow
+        today_items = self.provider.get_usage_for_day(dt.date())
+        self.assertNotIn(item1, today_items)
+        self.assertNotIn(item2, today_items)
+        self.assertNotIn(item3, today_items)
+
+        # get the usage for tomorrow
+        tomorrow = dt.date() + timedelta(days=1)
+        tomorrow_items = self.provider.get_usage_for_day(tomorrow)
+        self.assertIn(item1, tomorrow_items)
+        self.assertIn(item2, tomorrow_items)
+        self.assertIn(item3, tomorrow_items)
+
     def test_get_usage_for_day_gmt_within(self):
         tz = timezone('Europe/London')
         dt = tz.localize(datetime(2015, 1, 17, 15, 30))     # DST not applied
