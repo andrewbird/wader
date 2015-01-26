@@ -1005,17 +1005,17 @@ class TestUsageProvider(unittest.TestCase):
 
         item1, item2, item3 = self._make_day_usage_items(dt)
 
-        # now get the usage for today
+        # now get the usage for today, but all items have end time tomorrow
         today_items = self.provider.get_usage_for_day(dt.date())
-        self.assertIn(item1, today_items)
-        self.assertIn(item2, today_items)
+        self.assertNotIn(item1, today_items)
+        self.assertNotIn(item2, today_items)
         self.assertNotIn(item3, today_items)
 
         # get the usage for tomorrow
         tomorrow = dt.date() + timedelta(days=1)
         tomorrow_items = self.provider.get_usage_for_day(tomorrow)
-        self.assertNotIn(item1, tomorrow_items)
-        self.assertNotIn(item2, tomorrow_items)
+        self.assertIn(item1, tomorrow_items)
+        self.assertIn(item2, tomorrow_items)
         self.assertIn(item3, tomorrow_items)
 
     def test_get_usage_for_month(self):

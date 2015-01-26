@@ -398,7 +398,7 @@ class UsageProvider(DBProvider):
 
         tomorrow = day + datetime.timedelta(days=1)
         args = (date_to_datetime(day), date_to_datetime(tomorrow))
-        c.execute("select * from usage where start_time >= ? and end_time < ?",
+        c.execute("select * from usage where end_time >= ? and end_time < ?",
                   args)
 
         return [UsageItem.from_row(row) for row in c.fetchall()]
