@@ -409,7 +409,7 @@ class UsageProvider(DBProvider):
 
         return [UsageItem.from_row(row) for row in c.fetchall()]
 
-    def get_usage_for_month(self, month):
+    def get_usage_for_month(self, month, tz=None):
         """
         Returns all ``UsageItem`` for ``month``
 
@@ -430,13 +430,13 @@ class UsageProvider(DBProvider):
 
         first_next_month_day = month.replace(day=1, month=_month, year=_year)
 
-        args = (date_to_datetime(first_current_month_day),
-                date_to_datetime(first_next_month_day))
-        c.execute("select * from usage where start_time >= ? and start_time < ?",
+        args = (date_to_datetime(first_current_month_day, tz),
+                date_to_datetime(first_next_month_day, tz))
+        c.execute("select * from usage where end_time >= ? and end_time < ?",
                   args)
         return [UsageItem.from_row(row) for row in c.fetchall()]
 
-    def get_total_usage(self, month=None):
+    def get_total_usage(self, month=None, tz=None):
         c = self.conn.cursor()
 
         if month is None:
@@ -446,8 +446,8 @@ class UsageProvider(DBProvider):
             if not isinstance(month, datetime.date):
                 raise ValueError("Don't know what to do with %s" % month)
 
-            sql = "select * from usage where start_time >= ?"
-            c.execute(sql, (date_to_datetime(month),))
+            sql = "select * from usage where end_time >= ?"
+            c.execute(sql, (date_to_datetime(month, tz),))
 
         return [UsageItem.from_row(row) for row in c.fetchall()]
 

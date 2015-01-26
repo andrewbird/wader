@@ -1095,22 +1095,22 @@ class TestUsageProvider(unittest.TestCase):
         self.assertIn(item3, tomorrow_items)
 
     def test_get_usage_for_month(self):
-        current_month = date.today().month
-        current_year = date.today().year
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 30))     # DST not applied
+
+        current_month = dt.month
+        current_year = dt.year
+
         # add one usage item for day 12 of this month (45m)
-        now1 = datetime(date.today().year, current_month, 12, 13, 10,
-                        tzinfo=timezone('UTC'))
+        now1 = tz.localize(datetime(current_year, current_month, 12, 13, 10))
         later1 = now1 + timedelta(minutes=45)
-        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
-        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
-                                             bytes_sent1, umts1)
+        item1 = self.provider.add_usage_item(now1, later1, 100034, 12566, True)
+
         # add another usage item for day 13 of this month (17m)
-        now2 = datetime(date.today().year, current_month, 13, 15, 10,
-                        tzinfo=timezone('UTC'))
-        later2 = now1 + timedelta(minutes=17)
-        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
-        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
-                                             bytes_sent2, umts2)
+        now2 = tz.localize(datetime(current_year, current_month, 13, 15, 10))
+        later2 = now2 + timedelta(minutes=17)
+        item2 = self.provider.add_usage_item(now2, later2, 12000, 1245, True)
+
         # add another usage item for next month
         if current_month < 12:
             month = current_month + 1
@@ -1120,71 +1120,62 @@ class TestUsageProvider(unittest.TestCase):
             year = current_year + 1
 
         # next month at 6.50am (25m)
-        now3 = datetime(year, month, 2, 6, 50, tzinfo=timezone('UTC'))
+        now3 = tz.localize(datetime(year, month, 2, 6, 50))
         later3 = now3 + timedelta(minutes=25)
-        umts3, bytes_recv3, bytes_sent3 = True, 14000, 1785
-        item3 = self.provider.add_usage_item(now3, later3, bytes_recv3,
-                                             bytes_sent3, umts3)
+        item3 = self.provider.add_usage_item(now3, later3, 14000, 1785, True)
+
         # now get the usage for this month
-        this_month_items = self.provider.get_usage_for_month(now1.date())
+        this_month_items = self.provider.get_usage_for_month(now1.date(), tz)
         self.assertIn(item1, this_month_items)
         self.assertIn(item2, this_month_items)
         self.assertNotIn(item3, this_month_items)
+
         # now get the usage for next month
-        next_month_items = self.provider.get_usage_for_month(now3)
+        next_month_items = self.provider.get_usage_for_month(now3.date(), tz)
         self.assertNotIn(item1, next_month_items)
         self.assertNotIn(item2, next_month_items)
         self.assertIn(item3, next_month_items)
-        # leave it as we found it
-        for i in [item1, item2, item3]:
-            self.provider.delete_usage_item(i)
 
     def test_get_total_usage(self):
-        current_month = date.today().month
-        current_year = date.today().year
-        # add one usage item for day 12 of this month (45m)
-        now1 = datetime(current_year, current_month, 12, 13, 10,
-                        tzinfo=timezone('UTC'))
-        later1 = now1 + timedelta(minutes=45)
-        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
-        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
-                                             bytes_sent1, umts1)
-        # add another usage item for day 13 of this month (17m), one year ago
-        now2 = datetime(current_year - 1, current_month, 13, 15, 10,
-                        tzinfo=timezone('UTC'))
-        later2 = now1 + timedelta(minutes=17)
-        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
-        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
-                                             bytes_sent2, umts2)
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 30))     # DST not applied
 
-        items = self.provider.get_total_usage()
+        current_month = dt.month
+        current_year = dt.year
+
+        # add one usage item for day 12 of this month (45m)
+        now1 = tz.localize(datetime(current_year, current_month, 12, 13, 10))
+        later1 = now1 + timedelta(minutes=45)
+        item1 = self.provider.add_usage_item(now1, later1, 100034, 12566, True)
+
+        # add another usage item for day 13 of this month (17m), one year ago
+        now2 = tz.localize(datetime(current_year - 1, current_month,
+                                    13, 15, 10))
+        later2 = now2 + timedelta(minutes=17)
+        item2 = self.provider.add_usage_item(now2, later2, 12000, 1245, True)
+
+        items = self.provider.get_total_usage(tz=tz)
         self.assertIn(item1, items)
         self.assertIn(item2, items)
-        # leave it as we found it
-        for i in [item1, item2]:
-            self.provider.delete_usage_item(i)
 
     def test_get_total_usage_passing_a_date(self):
-        current_month = date.today().month
-        current_year = date.today().year
-        # add one usage item for day 12 of this month (45m)
-        now1 = datetime(current_year, current_month, 12, 13, 10,
-                        tzinfo=timezone('UTC'))
-        later1 = now1 + timedelta(minutes=45)
-        umts1, bytes_recv1, bytes_sent1 = True, 1200034, 124566
-        item1 = self.provider.add_usage_item(now1, later1, bytes_recv1,
-                                             bytes_sent1, umts1)
-        # add another usage item for day 13 of this month (17m), one year ago
-        now2 = datetime(current_year - 1, current_month, 13, 15, 10,
-                        tzinfo=timezone('UTC'))
-        later2 = now1 + timedelta(minutes=17)
-        umts2, bytes_recv2, bytes_sent2 = True, 12000, 1245
-        item2 = self.provider.add_usage_item(now2, later2, bytes_recv2,
-                                             bytes_sent2, umts2)
+        tz = timezone('Europe/London')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 30))     # DST not applied
 
-        items = self.provider.get_total_usage(now1.date())
+        current_month = dt.month
+        current_year = dt.year
+
+        # add one usage item for day 12 of this month (45m)
+        now1 = tz.localize(datetime(current_year, current_month, 12, 13, 10))
+        later1 = now1 + timedelta(minutes=45)
+        item1 = self.provider.add_usage_item(now1, later1, 100034, 12566, True)
+
+        # add another usage item for day 13 of this month (17m), one year ago
+        now2 = tz.localize(datetime(current_year - 1, current_month,
+                                    13, 15, 10))
+        later2 = now2 + timedelta(minutes=17)
+        item2 = self.provider.add_usage_item(now2, later2, 12000, 1245, True)
+
+        items = self.provider.get_total_usage(now1.date(), tz=tz)
         self.assertIn(item1, items)
         self.assertNotIn(item2, items)
-        # leave it as we found it
-        for i in [item1, item2]:
-            self.provider.delete_usage_item(i)
