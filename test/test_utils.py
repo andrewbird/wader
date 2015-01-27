@@ -32,7 +32,7 @@ from wader.common.utils import (get_file_data, save_file, natsort,
                                 convert_int_to_uint32, convert_uint32_to_int,
                                 rssi_to_percentage, flatten_list,
                                 revert_dict, get_tz_aware_now,
-                                get_tz_aware_mtime)
+                                get_tz_aware_mtime, get_localzone_wader_implementation)
 
 
 def ip_generator(n):
@@ -140,3 +140,36 @@ class TestUtilities(unittest.TestCase):
 
         # tidy up
         os.remove(path)
+
+    def test_get_localzone_wader_implementation_env(self):
+        # Test file
+        name = 'America/New_York'
+
+        os.environ['TZ'] = name
+        path = 'get_localzone.test'
+        with open(path, 'w') as f:
+            f.write('Europe/London\n')
+
+        self.assertEqual(get_localzone_wader_implementation(path),
+                            timezone(name))
+
+        # tidy up
+        os.remove(path)
+
+
+    def test_get_localzone_wader_implementation_file(self):
+        # Test file
+        name = 'America/New_York'
+
+        os.environ['TZ'] = ''
+        path = 'get_localzone.test'
+        with open(path, 'w') as f:
+            f.write(name + '\n')
+
+        self.assertEqual(get_localzone_wader_implementation(path),
+                            timezone(name))
+
+        # tidy up
+        os.remove(path)
+
+

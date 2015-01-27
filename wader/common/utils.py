@@ -31,6 +31,27 @@ from pytz import timezone
 from wader.common import consts
 
 
+def get_localzone_wader_implementation(fname='/etc/timezone'):
+    try:
+        return timezone(os.environ['TZ'].strip().replace(' ', '_'))
+    except (KeyError, AttributeError, ValueError):
+        pass
+
+    with open(fname, "r") as f:
+        l = f.readlines()
+        try:
+            return timezone(l[0].strip().replace(' ', '_'))
+        except (KeyError, AttributeError, ValueError):
+            pass
+
+    return None
+
+try:
+    from tzlocal import get_localzone
+except ImportError:
+    get_localzone = get_localzone_wader_implementation
+
+
 def convert_network_mode_to_access_technology(mode):
     trans_table = {
         consts.MM_NETWORK_MODE_GPRS: consts.MM_GSM_ACCESS_TECH_GPRS,
