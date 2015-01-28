@@ -663,15 +663,27 @@ class TestSmsProvider(unittest.TestCase):
         self.assertNotIn(sms, list(self.provider.list_sms()))
 
     def test_sms_time_storage(self):
-        zones = ['Europe/London', # UTC+0(without DST), UTC+1(with DST)
-                 'Europe/Paris',  # UTC+1(without DST), UTC+2(with DST)
-                 'Asia/Jakarta']  # UTC+7(no DST adjustment in 2010)
+        tests = [
+            # UTC+0(without DST)
+            ('Europe/London', datetime(2015, 1, 17, 23, 35, 41)),
+            # UTC+1(with DST)
+            ('Europe/London', datetime(2015, 6, 17, 23, 35, 41)),
+            # UTC+1(without DST)
+            ('Europe/Paris', datetime(2015, 1, 17, 23, 35, 41)),
+            # UTC+2(with DST)
+            ('Europe/Paris', datetime(2015, 6, 17, 23, 35, 41)),
+            # UTC-5(without DST)
+            ('America/New_York', datetime(2015, 1, 17, 23, 35, 41)),
+            # UTC-4(with DST)
+            ('America/New_York', datetime(2015, 6, 17, 23, 35, 41)),
+            # UTC+7(no DST adjustment in 2010)
+            ('Asia/Jakarta', datetime(2015, 1, 17, 23, 35, 41))
+        ]
 
-        for tzstring in zones:
+        for tzstring, dt in tests:
             tz = timezone(tzstring)
 
-            # db resolution is secs
-            now = datetime.now(tz).replace(microsecond=0)
+            now = tz.localize(dt)
 
             sms = Message('+447917267410', tzstring, _datetime=now)
             sms = self.provider.add_sms(sms)
