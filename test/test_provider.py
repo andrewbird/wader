@@ -20,7 +20,7 @@
 
 from datetime import datetime, timedelta, date
 import os
-from pytz import timezone
+from pytz import timezone, UTC
 import sqlite3
 import sys
 from time import time
@@ -945,6 +945,25 @@ class TestUsageProvider(unittest.TestCase):
         item = self.provider.add_usage_item(dt, later, 12345460, 12333211, True)
         usage_items = self.provider.get_usage_for_day(dt.date(), tz)
         self.assertIn(item, usage_items)
+
+    def test_add_usage_item_cet(self):
+        tz = timezone('Europe/Paris')
+        dt = tz.localize(datetime(2015, 1, 17, 15, 45))     # DST not applied
+        dt2 = datetime(2015, 1, 17, 14, 45, tzinfo=UTC)
+        dt3 = dt2 + timedelta(minutes=30)
+
+        later = dt + timedelta(minutes=30)
+
+        item = self.provider.add_usage_item(dt, later, 12345460, 12333211, True)
+        usage_items = self.provider.get_usage_for_day(dt.date(), tz)
+
+        self.assertEqual(dt2, dt.astimezone(UTC))
+
+        self.assertEqual(dt2, item.start_time.astimezone(UTC))
+        self.assertEqual(dt2, usage_items[0].start_time.astimezone(UTC))
+
+        self.assertEqual(dt3, item.end_time.astimezone(UTC))
+        self.assertEqual(dt3, usage_items[0].end_time.astimezone(UTC))
 
     def test_delete_usage_item(self):
         tz = timezone('Europe/London')
