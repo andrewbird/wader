@@ -1,3 +1,9 @@
+wader (0.5.13-1) trusty; urgency=low
+
+  * New upstream version
+
+ -- Andrew Bird <ajb@spheresystems.co.uk>  Thu, 17 Sep 2015 08:27:40 +0100
+
 wader (0.5.12-1) lucid; urgency=low
 
   * New upstream version
